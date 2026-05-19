@@ -1,0 +1,169 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    LSP D-PLANNER - RELEASE BETA 1.1                          ║
+║                         MILESTONE SNAPSHOT                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🎯 PROJECT MILESTONE: RELEASE BETA 1.1
+📅 Release Date: May 19, 2026
+✅ Status: PRODUCTION READY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 WHAT'S INCLUDED IN THIS RELEASE
+
+✅ DIVE PLANNING FEATURES
+  • Rec (Recreational Dive Planner) - PADI lookup tables
+  • Bühlmann ZH-L16C - 16 tissue compartment model
+  • Multi-Dive Planning - Up to 4 consecutive dives
+  • NDL Tables & Deco Calculations
+  • Gradient Factors (Baker safety model)
+
+✅ USER INTERFACE
+  • Professional LSP D-PLANNER branding
+  • Responsive design (all screen sizes)
+  • Dark/Light theme support
+  • Tab navigation (Dive Planner, Multi-Dive, Reference)
+  • Algorithm switcher (Rec ↔ Bühlmann)
+
+✅ INSTAGRAM INTEGRATION
+  • Square gradient icon (bottom center)
+  • Scannable QR code in Reference section
+  • Direct link to @threecats_lsp profile
+  • Professional Instagram gradient colors
+
+✅ DEPLOYMENT OPTIONS
+  • Web version (HTML5, PWA compatible)
+  • Android APK (full native app)
+  • GitHub Actions (automated builds)
+  • Netlify ready (web hosting)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 HOW TO USE THIS BASELINE
+
+This is your STABLE FOUNDATION for future versions. Here's how to proceed:
+
+FOR FUTURE DEVELOPMENT:
+  1. Always use this release as your starting point
+  2. Update version numbers when making changes
+  3. Keep three files in perfect sync:
+     • index.html (main source)
+     • www/index.html (web copy)
+     • android/app/src/main/assets/app.html (APK copy)
+  4. Create new RELEASE_[VERSION].md for each update
+  5. Test in browser, PWA, and APK before release
+
+BRANCH STRATEGY:
+  • main = Production ready (current: Beta 1.1)
+  • develop = Active development
+  • feature/* = Individual features
+  • release/* = Release candidates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 CRITICAL RULES FOR FUTURE DEVELOPMENT
+
+FILE SYNC:
+  ✓ index.html must equal www/index.html
+  ✓ index.html must equal android/.../app.html
+  Verify with: diff index.html www/index.html
+
+STORAGE KEY:
+  • Current version uses: lspDiveSettings_v3
+  • Old keys (v1, v2) are auto-cleaned on load
+
+GITHUB ACTIONS:
+  • Requires "Read and write permissions" enabled
+  • APK folder auto-created in main branch
+  • See FIX_GITHUB_PERMISSIONS.md for setup
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 FEATURE CHECKLIST
+
+Core Features:
+  ✅ Rec dive planning
+  ✅ Bühlmann calculations
+  ✅ Multi-dive support
+  ✅ Settings persistence
+  ✅ Algorithm memory
+  ✅ NDL tables
+  ✅ Deco calculations
+
+UI/UX Features:
+  ✅ Responsive design
+  ✅ Dark mode
+  ✅ Tab navigation
+  ✅ Algorithm switcher
+  ✅ Professional branding
+
+Instagram Integration:
+  ✅ Square gradient icon
+  ✅ Working QR code
+  ✅ Direct profile link
+  ✅ Professional styling
+
+Deployment:
+  ✅ Web version
+  ✅ Android APK
+  ✅ GitHub Actions
+  ✅ Netlify config
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 SUGGESTED NEXT FEATURES (Not in Beta 1.1)
+
+  ☐ Custom user profiles
+  ☐ Dive history log
+  ☐ Weather integration
+  ☐ Real-time dive computer sync
+  ☐ Cloud backup
+  ☐ Offline QR code
+  ☐ Multi-language support
+  ☐ Advanced statistics
+  ☐ Buddy system
+  ☐ Export to PDF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 DELIVERABLES
+
+File: dive-planner-complete-web-apk.zip (117 KB)
+
+Contains:
+  • index.html - Main application source
+  • www/ - Web version
+  • android/ - Android APK project
+  • .github/workflows/ - CI/CD automation
+  • Configuration files (capacitor, netlify, gradle)
+  • Documentation (README, QUICK_START, RELEASE notes)
+  • Icons, assets, and resources
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🤿 CREDITS
+
+LSP Diving Team
+Instagram: @threecats_lsp
+Algorithms: PADI RDP + Bühlmann ZH-L16C
+Development: May 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  IMPORTANT NOTES
+
+• Training use only - Not for live diving
+• No real-time dive computer sync in Beta 1.1
+• Local storage only (no cloud backup)
+• Offline-only (QR code requires internet)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FOR DETAILED INFORMATION, READ: RELEASE_BETA_1.1.md
+
+This document contains complete feature list, technical stack, usage guidelines,
+and development instructions for future versions.
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║      THIS IS YOUR STABLE BASELINE FOR FUTURE DEVELOPMENT 🎉                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
