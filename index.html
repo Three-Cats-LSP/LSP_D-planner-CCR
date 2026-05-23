@@ -179,9 +179,8 @@ header {
 /* ── ALGO SWITCHER ── */
 .algo-switcher {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .algo-label-text {
@@ -221,6 +220,35 @@ header {
   background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,100,200,0.25));
   color: var(--accent);
   border: 1px solid rgba(0,200,255,0.3);
+}
+
+.gf-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.gf-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 200, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.15);
+}
+.gf-btn.active {
+  background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,150,255,0.15));
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.25);
 }
 
 .header-warn {
@@ -637,11 +665,30 @@ body.algo-buh .buh-only { display: flex !important; }
     </div>
   </div>
   <div class="algo-switcher">
-    <span class="algo-label-text">Algorithm:</span>
-    <div class="algo-toggle">
-      <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
-      <button class="algo-btn" id="algoBUH"  onclick="setAlgo('buh')">Bühlmann ZH-L16C</button>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="algo-label-text">Algorithm:</span>
+      <div class="algo-toggle" style="display: flex; align-items: center; gap: 8px;">
+        <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
+        <button class="algo-btn" id="algoBUH" onclick="setAlgo('buh')">Bühlmann ZH-L16C</button>
+      </div>
     </div>
+    
+    <!-- GF selector (hidden by default, second row) -->
+    <div id="gfSelector" style="display: none; align-items: center; gap: 12px; padding: 8px 0;">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="gf-btn active" id="gfPreset1" onclick="setGF(30, 70)" title="Conservative - Maximum safety">GF 30/70</button>
+        <button class="gf-btn" id="gfPreset2" onclick="setGF(40, 80)" title="Moderate - Balanced">GF 40/80</button>
+        <button class="gf-btn" id="gfPreset3" onclick="setGF(50, 90)" title="Liberal - Shorter deco">GF 50/90</button>
+      </div>
+      <div style="height: 20px; width: 1px; background: var(--border);"></div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Custom GF</span>
+        <input type="number" id="gfLowInput" min="5" max="100" value="30" style="width: 40px; padding: 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-alt); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center;" oninput="setCustomGF()" maxlength="3">
+        <span style="color: var(--muted); font-size: 11px; font-weight: 600;">/</span>
+        <input type="number" id="gfHighInput" min="5" max="100" value="70" style="width: 40px; padding: 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-alt); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center;" oninput="setCustomGF()" maxlength="3">
+      </div>
+    </div>
+    
     <div class="header-warn">⚠ Training Use Only</div>
   </div>
 </header>
@@ -680,14 +727,6 @@ body.algo-buh .buh-only { display: flex !important; }
       <div class="seg">
         <button class="seg-btn active" onclick="setStopDur(3)" id="sdur3">3 min</button>
         <button class="seg-btn" onclick="setStopDur(5)" id="sdur5">5 min</button>
-      </div>
-    </div>
-
-    <!-- Bühlmann GF row -->
-    <div id="gfRow" class="gf-row" style="display:none;">
-      <div class="field" style="max-width:90px;">
-        <label>GF Low / High</label>
-        <input type="text" id="gfStr" value="30/70" placeholder="30/70" oninput="autoSlashGF(this)" maxlength="6">
       </div>
     </div>
 
@@ -846,7 +885,6 @@ body.algo-buh .buh-only { display: flex !important; }
       </div>
       <div class="field"><label>Descent Rate (m/min)</label><input type="number" id="descentRate" value="22" min="5" max="30" step="1"></div>
       <div class="field"><label>Ascent Rate (m/min)</label><input type="number" id="ascentRate" value="9" min="3" max="18" step="1"></div>
-      <div class="field"><label>GF Low / High</label><input type="text" id="decoGFStr" value="30/70" placeholder="30/70" oninput="autoSlashGF(this)" maxlength="6"></div>
       <div class="field">
         <label>Deco Step Size</label>
         <select id="decoStep">
@@ -1082,10 +1120,11 @@ function setAlgo(a) {
   document.getElementById('algoSubtitle').textContent = isBuh ? 'Bühlmann ZH-L16C · Gradient Factors' : 'Recreational Dive Planner';
   document.getElementById('brandIcon').textContent = isBuh ? '🫧' : '🤿';
   document.getElementById('plannerTitle').textContent = isBuh ? 'Bühlmann Dive Plan' : 'Single Dive Plan';
-  document.getElementById('gfRow').style.display = isBuh ? 'flex' : 'none';
   document.getElementById('gasMixField').style.display = isBuh ? 'block' : 'none';
   document.getElementById('mGFRow').style.display = isBuh ? 'flex' : 'none';
   document.getElementById('buhRefCard').style.display = isBuh ? 'block' : 'none';
+  document.getElementById('gfSelector').style.display = isBuh ? 'flex' : 'none';
+  
   // Reset result
   document.getElementById('plannerResult').style.display = 'none';
   document.getElementById('multiResult').style.display = 'none';
@@ -1098,6 +1137,56 @@ function setAlgo(a) {
   buildDiveBlocks();
   
   // Save algorithm change
+  if (typeof appSettings !== 'undefined' && appSettings.save) {
+    setTimeout(() => appSettings.save(false), 100);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// GF SELECTOR
+// ═══════════════════════════════════════════════
+function setGF(low, high) {
+  mGF.low = low;
+  mGF.high = high;
+  // Update input fields
+  document.getElementById('gfLowInput').value = low;
+  document.getElementById('gfHighInput').value = high;
+  // Update button states
+  document.querySelectorAll('.gf-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  if (low === 30 && high === 70) document.getElementById('gfPreset1').classList.add('active');
+  else if (low === 40 && high === 80) document.getElementById('gfPreset2').classList.add('active');
+  else if (low === 50 && high === 90) document.getElementById('gfPreset3').classList.add('active');
+  
+  renderNDLTable();
+  document.getElementById('plannerResult').style.display = 'none';
+  
+  // Save GF settings
+  if (typeof appSettings !== 'undefined' && appSettings.save) {
+    setTimeout(() => appSettings.save(false), 100);
+  }
+}
+
+function setCustomGF() {
+  const low = parseInt(document.getElementById('gfLowInput').value) || 30;
+  const high = parseInt(document.getElementById('gfHighInput').value) || 70;
+  mGF.low = Math.max(5, Math.min(100, low));
+  mGF.high = Math.max(5, Math.min(100, high));
+  
+  // Update inputs with validated values
+  document.getElementById('gfLowInput').value = mGF.low;
+  document.getElementById('gfHighInput').value = mGF.high;
+  
+  // Mark as custom (no preset active)
+  document.querySelectorAll('.gf-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  renderNDLTable();
+  document.getElementById('plannerResult').style.display = 'none';
+  
+  // Save GF settings
   if (typeof appSettings !== 'undefined' && appSettings.save) {
     setTimeout(() => appSettings.save(false), 100);
   }
@@ -1308,10 +1397,8 @@ function runPlanner() {
   const rawD = parseFloat(document.getElementById('depth').value)||30;
   const depthM = isMetric ? rawD : rawD/3.28084;
   const bt  = parseInt(document.getElementById('bt').value)||25;
-  const gfStr = document.getElementById('gfStr').value || '30/70';
-  const parts = gfStr.split('/').map(Number);
-  const gfL = isNaN(parts[0]) ? 30 : parts[0];
-  const gfH = isNaN(parts[1]) ? 70 : parts[1];
+  const gfL = mGF.low;
+  const gfH = mGF.high;
   const mix = document.getElementById('gasMix').value;
   const fN2 = getN2Frac(mix);
   const dDisp = isMetric ? rawD+' m' : rawD+' ft';
@@ -1426,11 +1513,7 @@ function renderNDLTable() {
     let buhNDLVal = '';
     if (isBuh) {
       const fN2 = FN2_AIR;
-      const gfStr = document.getElementById('gfStr').value || '30/70';
-      const parts = gfStr.split('/').map(Number);
-      const gfL = isNaN(parts[0]) ? 30 : parts[0];
-      const gfH = isNaN(parts[1]) ? 70 : parts[1];
-      buhNDLVal = buhNDL(depthM, fN2, gfL, gfH);
+      buhNDLVal = buhNDL(depthM, fN2, mGF.low, mGF.high);
     }
     const dUnit = isM ? ' m' : ' ft';
     const isDeep = depthM > 30;
@@ -1441,7 +1524,7 @@ function renderNDLTable() {
     const group = PADI_GROUPS[groupIdx];
 
     const ndlDisplay = isBuh
-      ? `${buhNDLVal>=500?'500+':buhNDLVal} min <span style="color:var(--muted);font-size:10px;">(Rec: ${ndl})</span>`
+      ? `${buhNDLVal>=500?'500+':buhNDLVal} min <span style="color:var(--muted);font-size:10px;">(Rec: ${ndl}) GF ${mGF.low}/${mGF.high}</span>`
       : `${ndl} min`;
 
     tbody.innerHTML += `<tr class="${rowClass}">
@@ -1553,9 +1636,7 @@ function runDecoSchedule() {
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
   const rate        = Math.max(1, parseInt(document.getElementById('ascentRate').value)  || 9);
   const descentRate = Math.max(1, parseInt(document.getElementById('descentRate').value) || 22);
-  const gfStr  = document.getElementById('decoGFStr').value || '30/70';
-  const parts  = gfStr.split('/').map(Number);
-  const gfH    = (isNaN(parts[1]) ? 70 : parts[1]) / 100;
+  const gfH    = mGF.high / 100;
   const ppo2High  = parseFloat(document.getElementById('ppo2High').value)  || 1.6; // 45–100% O2
   const ppo2Mid   = parseFloat(document.getElementById('ppo2Mid').value)   || 1.5; // 28–44%  O2
   const ppo2Low   = parseFloat(document.getElementById('ppo2Low').value)   || 1.4; // ≤28%    O2
@@ -2221,7 +2302,7 @@ self.addEventListener('fetch', e => {
       const bottomGasVal = document.getElementById('decoGas').value;
       const ascentRateVal = document.getElementById('ascentRate').value;
       const descentRateVal = document.getElementById('descentRate').value;
-      const gfVal = document.getElementById('decoGFStr').value;
+      const gfVal = `${mGF.low}/${mGF.high}`;
       const lastStopVal = document.getElementById('lastDecoStop').value;
       const decoStepVal = document.getElementById('decoStep').value;
       
@@ -2353,7 +2434,7 @@ const appSettings = {
   // All tracked fields organized by mode
   DECO_FIELDS: [
     'decoDepth', 'decoBT', 'decoGas', 'decoCustomO2',
-    'descentRate', 'ascentRate', 'decoGFStr', 'decoStep', 'lastDecoStop',
+    'descentRate', 'ascentRate', 'decoStep', 'lastDecoStop',
     'ppo2High', 'ppo2Mid', 'ppo2Low'
   ],
   
