@@ -751,10 +751,12 @@ body.algo-buh .buh-only { display: flex !important; }
 
 /* ── MOBILE: card-style deco table ── */
 @media (max-width: 600px) {
-  .deco-table thead { display:none; }
-  .deco-table, .deco-table tbody, .deco-table tr, .deco-table td { display:block; width:100%; }
+  #tableViewToggle { display:flex !important; }
 
-  .deco-table tr {
+  .deco-table:not(.table-view) thead { display:none; }
+  .deco-table:not(.table-view), .deco-table:not(.table-view) tbody, .deco-table:not(.table-view) tr, .deco-table:not(.table-view) td { display:block; width:100%; }
+
+  .deco-table:not(.table-view) tr {
     margin-bottom:8px;
     border-radius:8px;
     border:1px solid var(--border);
@@ -763,14 +765,14 @@ body.algo-buh .buh-only { display: flex !important; }
   }
 
   /* Gas switch row — keep as full-width banner */
-  .deco-table tr td[colspan] {
+  .deco-table:not(.table-view) tr td[colspan] {
     border-radius:8px;
     padding:10px 12px;
     font-size:11px;
   }
 
   /* First cell = icon header bar */
-  .deco-table td:first-child {
+  .deco-table:not(.table-view) td:first-child {
     width:100% !important;
     display:flex;
     align-items:center;
@@ -784,7 +786,7 @@ body.algo-buh .buh-only { display: flex !important; }
   }
 
   /* Other cells: show label on left, value on right */
-  .deco-table td:not(:first-child) {
+  .deco-table:not(.table-view) td:not(:first-child) {
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -793,7 +795,7 @@ body.algo-buh .buh-only { display: flex !important; }
     border-bottom:1px solid var(--border);
   }
 
-  .deco-table td:not(:first-child)::before {
+  .deco-table:not(.table-view) td:not(:first-child)::before {
     content: attr(data-label);
     font-size:9px;
     letter-spacing:1.5px;
@@ -804,7 +806,42 @@ body.algo-buh .buh-only { display: flex !important; }
     margin-right:8px;
   }
 
-  .deco-table td:last-child { border-bottom:none; }
+  .deco-table:not(.table-view) td:last-child { border-bottom:none; }
+
+  /* Table view on mobile — force standard table layout */
+  .deco-table.table-view {
+    display:block !important;
+    overflow-x:auto !important;
+    font-size:10px !important;
+  }
+  .deco-table.table-view thead { display:table-header-group !important; }
+  .deco-table.table-view tbody { display:table-row-group !important; }
+  .deco-table.table-view tr {
+    display:table-row !important;
+    background:none !important;
+    border:none !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    overflow:visible !important;
+  }
+  .deco-table.table-view td {
+    display:table-cell !important;
+    padding:5px 6px !important;
+    font-size:10px !important;
+    width:auto !important;
+    border-bottom:1px solid var(--border) !important;
+  }
+  .deco-table.table-view td:first-child {
+    display:table-cell !important;
+    width:28px !important;
+    background:none !important;
+    text-align:center !important;
+    padding:5px 4px !important;
+    font-size:10px !important;
+  }
+  .deco-table.table-view td::before { display:none !important; }
+  .deco-table.table-view th { display:table-cell !important; padding:5px 6px !important; font-size:8px !important; }
+  .deco-table.table-view thead tr { display:table-row !important; background:none !important; }
 }
 
 /* NDL reference table */
@@ -1186,6 +1223,7 @@ body.algo-buh .buh-only { display: flex !important; }
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="card-title" style="margin:0;">Dive Profile</div>
         <div style="display:flex;gap:8px;align-items:center;">
+          <button id="tableViewToggle" onclick="toggleTableView()" style="display:none;padding:8px 12px;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Switch table view">⊞ Cards</button>
           <button onclick="exportDecoSchedule()" style="padding:8px 16px;background:var(--accent);color:var(--bg);border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">📥 TXT</button>
           <button onclick="exportPDF()" style="padding:8px 16px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">⬇ PDF</button>
         </div>
@@ -1208,7 +1246,7 @@ body.algo-buh .buh-only { display: flex !important; }
           <span style="font-size:16px;color:#80e0a0;">↑</span> Ascent
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
-          <span style="font-size:15px;">🔴</span> Mandatory Deco Stop
+          <span style="font-size:15px;">🔴</span> Deco Stop
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
           <span style="font-size:15px;">🟢</span> Safety Stop
@@ -1482,6 +1520,53 @@ function setAlgo(a) {
 // ═══════════════════════════════════════════════
 // THEME TOGGLE
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// TABLE VIEW TOGGLE (mobile)
+// ═══════════════════════════════════════════════
+function toggleTableView() {
+  const table  = document.querySelector('#decoTableBody')?.closest('table');
+  const btn    = document.getElementById('tableViewToggle');
+  if (!table || !btn) return;
+  const isTable = table.classList.toggle('table-view');
+
+  // Wrap in scroll container when switching to table view
+  if (isTable) {
+    if (!table.parentElement.classList.contains('table-scroll-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll-wrap';
+      wrap.style.cssText = 'overflow-x:auto;-webkit-overflow-scrolling:touch;';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    }
+  } else {
+    if (table.parentElement.classList.contains('table-scroll-wrap')) {
+      const wrap = table.parentElement;
+      wrap.parentNode.insertBefore(table, wrap);
+      wrap.remove();
+    }
+  }
+
+  btn.textContent = isTable ? '⊟ Table' : '⊞ Cards';
+  btn.style.color = isTable ? 'var(--accent)' : 'var(--muted)';
+  btn.style.borderColor = isTable ? 'var(--accent)' : 'var(--border)';
+  localStorage.setItem('decoTableView', isTable ? 'table' : 'cards');
+}
+
+function loadTableViewPreference() {
+  const saved = localStorage.getItem('decoTableView');
+  // Default is 'table' — only switch to cards if explicitly saved
+  if (saved !== 'cards') {
+    const table = document.querySelector('#decoTableBody')?.closest('table');
+    const btn   = document.getElementById('tableViewToggle');
+    if (table) table.classList.add('table-view');
+    if (btn) {
+      btn.textContent = '⊟ Table';
+      btn.style.color = 'var(--accent)';
+      btn.style.borderColor = 'var(--accent)';
+    }
+  }
+}
+
 function toggleTheme() {
   const body = document.body;
   const isLight = body.classList.toggle('light-theme');
@@ -2284,7 +2369,7 @@ function runDecoSchedule() {
   rowRT += descentTimeMin;
   const descentPPO2 = ((rawD/2/10+1)*(1-bottomFN2)).toFixed(2); // avg depth ppO2
   tbody.innerHTML += `<tr class="asc-row" data-phase="descent">
-    <td><span style="font-size:18px;color:#ff8080;">↓</span> <span style="font-size:11px;color:#ff8080;letter-spacing:1px;">DESCENT</span></td>
+    <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
     <td data-label="Depth" style="color:#ff8080;">0 → ${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
     <td data-label="Stop" style="color:#ff8080;">${descentTimeMin} min</td>
     <td data-label="Run" style="color:#ff8080;">${Math.round(rowRT)} min</td>
@@ -2298,7 +2383,7 @@ function runDecoSchedule() {
   const btPPO2 = ((rawD/10+1)*(1-bottomFN2)).toFixed(2);
   const btCNS  = rowCNS(parseFloat(btPPO2), bt);
   tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">
-    <td>🔵 <span style="font-size:11px;color:var(--accent);letter-spacing:1px;">BOTTOM</span></td>
+    <td>🔵</td>
     <td data-label="Depth" style="color:var(--accent);">${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
     <td data-label="Stop" style="color:var(--accent);">${bt} min</td>
     <td data-label="Run" style="color:var(--accent);">${Math.round(rowRT)} min</td>
@@ -2327,9 +2412,10 @@ function runDecoSchedule() {
       const sppVal = parseFloat(switchPpO2);
       const switchLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
       const sppColor = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);' : `color:${swColor};`;
-      tbody.innerHTML += `<tr style="background:${swBg};">
+      tbody.innerHTML += `<tr style="background:${swBg};" data-phase="switch">
+        <td style="color:${swColor};font-size:16px;text-align:center;padding:9px 6px;">⇄</td>
         <td colspan="6" style="color:${swColor};font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:9px 10px;">
-          ⇄ <strong>${s.gas.toUpperCase()}</strong> &nbsp;·&nbsp; at ${switchDepthDisp} &nbsp;·&nbsp; <span style="${sppColor}">ppO₂ ${switchPpO2}</span>
+          <strong>${s.gas.toUpperCase()}</strong> &nbsp;·&nbsp; at ${switchDepthDisp} &nbsp;·&nbsp; <span style="${sppColor}">ppO₂ ${switchPpO2}</span>
         </td>
       </tr>`;
     }
@@ -2344,7 +2430,7 @@ function runDecoSchedule() {
       const cnsPct = rowCNS(pO2Val, stepDur);
       const cnsColor = parseFloat(cnsPct) > 80 ? 'color:var(--red);font-weight:700;' : parseFloat(cnsPct) > 40 ? 'color:var(--yellow);' : 'color:var(--muted);';
       tbody.innerHTML += `<tr class="deco-row" data-phase="deco">
-        <td>🔴 <span style="font-size:11px;letter-spacing:1px;">DECO STOP</span></td>
+        <td>🔴</td>
         <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
         <td data-label="Stop" style="color:var(--red);">${s.dur} min</td>
         <td data-label="Run">${rtDisp}</td>
@@ -2356,7 +2442,7 @@ function runDecoSchedule() {
     } else if (s.type === 'safety') {
       const cnsPct = rowCNS(pO2Val, stepDur);
       tbody.innerHTML += `<tr class="safe-row" data-phase="safety">
-        <td>🟢 <span style="font-size:11px;letter-spacing:1px;">SAFETY STOP</span></td>
+        <td style="font-size:16px;">🟢</td>
         <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
         <td data-label="Stop" style="color:var(--green);">${stepDur} min</td>
         <td data-label="Run">${rtDisp}</td>
@@ -2368,7 +2454,7 @@ function runDecoSchedule() {
     } else {
       const cnsPct = rowCNS(pO2Val, stepDur);
       tbody.innerHTML += `<tr class="asc-row" data-phase="ascent">
-        <td><span style="font-size:18px;color:#80e0a0;">↑</span> <span style="font-size:11px;color:#80e0a0;letter-spacing:1px;">ASCENT</span></td>
+        <td><span style="font-size:18px;color:#80e0a0;">↑</span></td>
         <td data-label="Depth" style="color:#80e0a0;">${dU ? s.from+' m' : mToFt(s.from)+' ft'} → ${dU ? s.to+' m' : mToFt(s.to)+' ft'}</td>
         <td data-label="Stop" style="color:#80e0a0;">${typeof s.dur === 'number' ? s.dur.toFixed(1) : s.dur} min</td>
         <td data-label="Run" style="color:#80e0a0;">${rtDisp}</td>
@@ -3415,10 +3501,10 @@ function exportPDF() {
   // Collect deco table
   let decoRows = '';
   document.querySelectorAll('#decoTableBody tr').forEach(tr => {
-    // Gas switch rows (colspan)
-    if (tr.querySelector('td[colspan]')) {
-      const txt = tr.querySelector('td').textContent.trim();
-      decoRows += `<tr><td colspan="7" style="color:#006600;font-weight:700;font-size:11px;padding:6px 10px;background:#f0fff4;">⇄ ${txt.replace(/^⇄\s*/, '')}</td></tr>`;
+    // Gas switch rows
+    if (tr.dataset.phase === 'switch') {
+      const txt = tr.querySelector('td[colspan]')?.textContent?.trim() || '';
+      decoRows += `<tr><td style="padding:6px 8px;color:#006600;">⇄</td><td colspan="6" style="color:#006600;font-weight:700;font-size:11px;padding:6px 10px;background:#f0fff4;">${txt}</td></tr>`;
       return;
     }
     const phase = tr.dataset.phase;
@@ -3453,7 +3539,7 @@ function exportPDF() {
       <span><span style="color:#cc4444;font-weight:bold;">↓</span> Descent</span>
       <span>🔵 Bottom</span>
       <span><span style="color:#337744;font-weight:bold;">↑</span> Ascent</span>
-      <span>🔴 Mandatory Deco Stop</span>
+      <span>🔴 Deco Stop</span>
       <span>🟢 Safety Stop</span>
       <span><strong>⇄</strong> Gas Switch</span>
     </div>`;
@@ -3597,6 +3683,7 @@ function exportPDF() {
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th { background: #0055aa; color: white; padding: 6px 8px; text-align: left; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+  th:first-child, td:first-child { text-align: center; width: 32px; padding: 6px 4px; }
   tr:nth-child(even) td { background: #f8f9ff; }
   .safety { background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 8px 12px; margin: 12px 0; font-size: 11px; color: #7a4700; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .page-break { page-break-before: always; }
@@ -3896,7 +3983,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Load theme preference first
   loadThemePreference();
-  
+  loadTableViewPreference();
+
   // Init new Beta 3 features
   calcCNS();
   
