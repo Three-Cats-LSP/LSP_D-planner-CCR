@@ -1,0 +1,9 @@
+{
+  "appId": "com.diveplanner.app",
+  "appName": "LSP D-Planner",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

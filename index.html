@@ -1,0 +1,3924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LSP D-Planner · Rec & Bühlmann</title>
+
+<!-- PWA manifest -->
+<link rel="manifest" id="pwaManifest">
+
+<!-- Theme & status bar -->
+<meta name="theme-color" content="#030c18">
+<meta name="background-color" content="#030c18">
+
+<!-- iOS / Safari PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dive Planner">
+
+<!-- Android / Chrome PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Dive Planner">
+
+<!-- Description for install prompt -->
+<meta name="description" content="Professional dive planner with Rec NDL tables and Bühlmann ZH-L16C decompression algorithm.">
+
+<!-- Inline SVG icons injected via JS below -->
+<link rel="apple-touch-icon" id="appleTouchIcon">
+<link rel="icon" type="image/svg+xml" id="faviconSVG">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   SHARED DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  /* DARK THEME (Default) */
+  --bg:        #030c18;
+  --surface:   #07121f;
+  --card:      #0a1a2e;
+  --card2:     #0d2038;
+  --border:    rgba(0,200,255,0.09);
+  --border-hi: rgba(0,200,255,0.28);
+
+  /* PADI accent (cyan/teal) */
+  --padi-accent:  #00d9ff;
+  --padi-teal:    #00b8a0;
+  --padi-mid:     #1a5c9a;
+
+  /* Bühlmann accent (electric blue / magenta) */
+  --buh-accent:   #00b4ff;
+  --buh-mag:      #e040fb;
+  --buh-accent2:  #0077cc;
+
+  /* Active accent — swapped on algo change */
+  --accent:   #00d9ff;
+  --accent2:  #00b8a0;
+
+  --green:  #26d07c;
+  --yellow: #ffb703;
+  --orange: #ff6d00;
+  --red:    #ff4757;
+  --gold:   #d4af37;
+
+  --text:   #d8eef8;
+  --muted:  #3e6882;
+  --dim:    #142535;
+  
+  /* Theme toggle */
+  --theme-toggle-size: 20px;
+}
+
+/* LIGHT THEME - High Contrast for Outdoor Use */
+body.light-theme {
+  --bg:        #ffffff;
+  --surface:   #f8f9fa;
+  --card:      #eff3f8;
+  --card2:     #e8ecf1;
+  --border:    rgba(0,100,200,0.25);
+  --border-hi: rgba(0,100,200,0.45);
+
+  /* PADI accent - darker, more visible */
+  --padi-accent:  #0055aa;
+  --padi-teal:    #005544;
+  --padi-mid:     #1a5c9a;
+
+  /* Bühlmann accent - darker, more visible */
+  --buh-accent:   #0033dd;
+  --buh-mag:      #a80099;
+  --buh-accent2:  #002299;
+
+  /* Active accent - darker */
+  --accent:   #0055aa;
+  --accent2:  #005544;
+
+  --green:  #116622;
+  --yellow: #cc7700;
+  --orange: #dd5500;
+  --red:    #bb0000;
+  --gold:   #996600;
+
+  --text:   #1a1a1a;
+  --muted:  #555555;
+  --dim:    #cccccc;
+}
+
+body.algo-buh {
+  --accent:  #00b4ff;
+  --accent2: #e040fb;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: all 0.4s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 60%, rgba(0,100,180,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 20%, rgba(0,60,140,0.18) 0%, transparent 60%),
+    linear-gradient(160deg, #030c18 0%, #050e1c 60%, #030c18 100%);
+  z-index: 0;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+body.light-theme::before {
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 60%, rgba(100,180,255,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 20%, rgba(100,150,255,0.04) 0%, transparent 60%),
+    linear-gradient(160deg, #ffffff 0%, #ffffff 60%, #ffffff 100%);
+}
+
+/* Force dark text in light theme */
+body.light-theme {
+  color: #000000 !important;
+}
+
+body.light-theme * {
+  color: inherit;
+}
+
+body.light-theme h1, body.light-theme h2, body.light-theme h3, body.light-theme h4, body.light-theme h5, body.light-theme h6 {
+  color: #000000 !important;
+}
+
+body.light-theme button, body.light-theme input, body.light-theme textarea, body.light-theme select {
+  color: #000000 !important;
+}
+
+body.light-theme .text, body.light-theme p, body.light-theme span, body.light-theme div {
+  color: #1a1a1a !important;
+}
+
+/* Keep algo-label bright cyan in light theme */
+body.light-theme .algo-label {
+  color: #00d9ff !important;
+}
+
+/* Keep deco table phase colors in light theme */
+body.light-theme .deco-table td span[style*="color:#ff8080"],
+body.light-theme .deco-table td span[style*="color:#80e0a0"] {
+  color: inherit !important;
+}
+body.light-theme .deco-table tr[data-phase="descent"] td span { color: #cc3333 !important; }
+body.light-theme .deco-table tr[data-phase="ascent"]  td span { color: #228844 !important; }
+
+/* Grid lines for Bühlmann mode */
+body.algo-buh::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,180,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,180,255,0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Bubbles for PADI mode */
+.bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bubble {
+  position: absolute; border-radius: 50%;
+  background: rgba(0,217,255,0.04);
+  border: 1px solid rgba(0,217,255,0.1);
+  animation: rise linear infinite;
+}
+@keyframes rise {
+  0%   { transform: translateY(0) translateX(0);   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+}
+body.algo-buh .bubbles { display: none; }
+
+.app {
+  position: relative; z-index: 1;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 20px 16px 80px;
+}
+
+/* ══ HEADER ══ */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0 20px;
+  border-bottom: 1px solid var(--border-hi);
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-icon {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(0,100,200,0.1));
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 24px rgba(0,200,255,0.2);
+  transition: all 0.4s ease;
+  animation: iconGlow 4s ease-in-out infinite;
+}
+@keyframes iconGlow {
+  0%,100% { box-shadow: 0 0 20px rgba(0,200,255,0.2); }
+  50%      { box-shadow: 0 0 40px rgba(0,200,255,0.4); }
+}
+
+.brand-text h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: var(--text);
+  line-height: 1;
+}
+.brand-text h1 .algo-label { color: #00d9ff; transition: color 0.4s; }
+
+.brand-text p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── ALGO SWITCHER ── */
+.algo-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.algo-label-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.algo-toggle {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.algo-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #00d9ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.algo-btn:hover { color: #00d9ff; }
+.algo-btn.active {
+  background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,100,200,0.25));
+  color: #00d9ff;
+  border: 1px solid rgba(0,200,255,0.3);
+}
+
+.gf-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.gf-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 200, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.15);
+}
+.gf-btn.active {
+  background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,150,255,0.15));
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.25);
+}
+
+/* Custom GF Input Styling */
+#gfLowInput, #gfHighInput {
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--muted);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+#gfLowInput:focus, #gfHighInput:focus {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(0, 200, 255, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.15) !important;
+}
+
+#gfLowInput.active, #gfHighInput.active {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(0, 200, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.25) !important;
+}
+
+.header-warn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  background: rgba(255,107,0,0.08);
+  border: 1px solid rgba(255,107,0,0.3);
+  color: #ff9a50;
+  text-transform: uppercase;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: rgba(0, 200, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 200, 255, 0.15);
+}
+
+.theme-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:active .theme-icon {
+  transform: rotate(360deg);
+}
+
+/* ── TABS ── */
+.tabs-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); background: rgba(0,200,255,0.06); }
+.tab-btn.active {
+  background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(0,100,200,0.2));
+  color: var(--accent);
+  border: 1px solid rgba(0,200,255,0.2);
+}
+
+/* Bühlmann-only tabs hidden in PADI mode */
+.buh-only { display: none !important; }
+body.algo-buh .buh-only { display: flex !important; }
+
+/* ── PANELS ── */
+.panel { display: none; animation: fadeUp 0.35s ease; }
+.panel.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
+}
+
+.card-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.4s;
+}
+.card-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border-hi), transparent);
+  margin-left: 8px;
+}
+
+/* ── UNIT / SEG CONTROLS ── */
+.ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ctrl-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.seg {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  padding: 7px 13px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active {
+  background: rgba(0,200,255,0.14);
+  color: var(--accent);
+}
+
+/* ── FORM ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.field input, .field select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 11px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,200,255,0.1);
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2300d9ff' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  cursor: pointer;
+}
+
+/* ── BUTTON ── */
+.btn-calc {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(0,200,255,0.12), rgba(0,100,200,0.18));
+  color: var(--accent);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all 0.25s;
+}
+.btn-calc:hover {
+  background: linear-gradient(135deg, rgba(0,200,255,0.25), rgba(0,100,200,0.32));
+  box-shadow: 0 0 20px rgba(0,200,255,0.2);
+  transform: translateY(-1px);
+}
+
+/* ── STATS ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.stat {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.stat:hover { border-color: var(--border-hi); }
+
+.stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 5px;
+  color: var(--accent);
+}
+.stat-val.g { color: var(--green); }
+.stat-val.y { color: var(--yellow); }
+.stat-val.o { color: var(--orange); }
+.stat-val.r { color: var(--red); }
+
+.stat-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── ALERTS ── */
+.alert {
+  border-radius: 8px;
+  padding: 11px 14px;
+  margin: 10px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid;
+}
+.alert span { flex-shrink: 0; }
+.ok    { background:rgba(38,208,124,0.07);  border-color:rgba(38,208,124,0.22); color:#70f0aa; }
+.warn  { background:rgba(255,183,3,0.07);   border-color:rgba(255,183,3,0.22);  color:#ffcc40; }
+.dang  { background:rgba(255,71,87,0.07);   border-color:rgba(255,71,87,0.22);  color:#ff7080; }
+.info  { background:rgba(0,200,255,0.06);   border-color:rgba(0,200,255,0.2);   color:#60d8ff; }
+.deco  { background:rgba(255,71,87,0.07);  border-color:rgba(255,71,87,0.25); color:#ff8090; }
+
+/* ── BAR ── */
+.bar-wrap { background:var(--dim); border-radius:4px; height:6px; overflow:hidden; margin-top:8px; }
+.bar-fill  { height:100%; border-radius:4px; transition:width 0.5s ease; }
+
+/* ── DIVE BLOCKS ── */
+.dive-block {
+  background: rgba(0,200,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 4px;
+  transition: border-color 0.2s;
+}
+.dive-block:hover { border-color: var(--border-hi); }
+
+.dive-hdr { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+
+.dive-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--accent);
+  background: rgba(0,200,255,0.08);
+  flex-shrink: 0;
+  transition: border-color 0.4s, color 0.4s;
+}
+
+.dive-hdr-lbl {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  transition: color 0.4s;
+}
+
+/* SI connector */
+.si-connector { display:flex; align-items:center; gap:10px; padding:6px 10px; }
+.si-line { flex:1; height:1px; background:var(--border-hi); }
+.si-inner {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(0,200,255,0.04); border:1px solid var(--border);
+  border-radius:6px; padding:6px 12px; flex-shrink:0;
+}
+.si-inner label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+.si-inner input {
+  width:68px; background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  padding:5px 8px; color:#fff; font-family:'JetBrains Mono',monospace; font-size:12px;
+  outline:none; text-align:center;
+}
+.si-inner input:focus { border-color:var(--accent); }
+
+/* Result dive cards */
+.result-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:8px; }
+.result-card.c-ok   { border-left:3px solid var(--green); }
+.result-card.c-warn { border-left:3px solid var(--yellow); }
+.result-card.c-dang { border-left:3px solid var(--red); }
+.result-card.c-deco { border-left:3px solid #e040fb; }
+
+.rc-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.rc-title { display:flex; align-items:center; gap:8px; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:var(--accent); }
+
+.si-strip {
+  display:flex; align-items:center; gap:10px; padding:6px 12px; margin:3px 0;
+  background:rgba(0,200,255,0.03); border-radius:5px;
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+}
+
+/* ── INFO BOX ── */
+.info-box {
+  border-left:2px solid var(--accent); background:rgba(0,200,255,0.04);
+  padding:10px 14px; border-radius:0 6px 6px 0;
+  font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.6; margin:10px 0;
+  transition: border-color 0.4s;
+}
+
+/* ── TISSUE BARS (Bühlmann) ── */
+.tissue-grid {
+  display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin-top:14px;
+}
+.t-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.t-bar-wrap {
+  width:100%; height:78px; background:var(--dim); border-radius:3px; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  border:1px solid var(--border); position:relative;
+}
+.t-bar { width:100%; border-radius:2px 2px 0 0; transition:height 0.6s ease; min-height:2px; }
+.t-num  { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); }
+.t-pct  { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; }
+
+/* ── DECO TABLE ── */
+.deco-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; margin-top:10px; }
+.deco-table th { padding:8px 10px; text-align:left; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.05); }
+.deco-table td { padding:7px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+.deco-table th:first-child, .deco-table td:first-child { text-align:center; width:36px; }
+.deco-table tr:hover td { background:rgba(0,200,255,0.04); }
+.deco-table .deco-row td { color:var(--red); font-weight:600; }
+.deco-table .safe-row td { color:var(--green); }
+.deco-table .asc-row  td { color:var(--muted); }
+
+/* ── MOBILE: card-style deco table ── */
+@media (max-width: 600px) {
+  .deco-table thead { display:none; }
+  .deco-table, .deco-table tbody, .deco-table tr, .deco-table td { display:block; width:100%; }
+
+  .deco-table tr {
+    margin-bottom:8px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    overflow:hidden;
+    background:var(--card);
+  }
+
+  /* Gas switch row — keep as full-width banner */
+  .deco-table tr td[colspan] {
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:11px;
+  }
+
+  /* First cell = icon header bar */
+  .deco-table td:first-child {
+    width:100% !important;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    padding:9px 12px;
+    font-size:16px;
+    background:rgba(0,200,255,0.04);
+    border-bottom:1px solid var(--border);
+    text-align:left !important;
+  }
+
+  /* Other cells: show label on left, value on right */
+  .deco-table td:not(:first-child) {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 14px;
+    font-size:12px;
+    border-bottom:1px solid var(--border);
+  }
+
+  .deco-table td:not(:first-child)::before {
+    content: attr(data-label);
+    font-size:9px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+    flex-shrink:0;
+    margin-right:8px;
+  }
+
+  .deco-table td:last-child { border-bottom:none; }
+}
+
+/* NDL reference table */
+.ndl-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; }
+.ndl-table th { padding:9px 12px; text-align:center; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.06); }
+.ndl-table td { padding:8px 12px; border-bottom:1px solid rgba(0,200,255,0.05); text-align:center; }
+.ndl-table tr:hover td { background:rgba(0,200,255,0.04); }
+.ndl-table .warn-row td { background:rgba(255,183,3,0.05); }
+.ndl-table .danger-row td { background:rgba(255,71,87,0.05); }
+.td-g { color:var(--green); font-weight:600; }
+.td-o { color:var(--orange); font-weight:600; }
+.td-r { color:var(--red); font-weight:700; }
+
+.group-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:50%;
+  background:rgba(212,175,55,0.15); border:1.5px solid var(--gold);
+  color:var(--gold); font-family:'Bebas Neue',sans-serif; font-size:13px;
+}
+
+/* GF sliders */
+.gf-row { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+.gf-field { display:flex; flex-direction:column; gap:5px; min-width:110px; }
+.gf-field label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.gf-field input[type=range] { accent-color:var(--accent); cursor:pointer; width:100%; }
+.gf-val { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--accent); text-align:center; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px) {
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .tissue-grid { grid-template-columns:repeat(4,1fr); }
+  header { flex-direction:column; align-items:flex-start; }
+  .brand-text h1 { font-size:22px; }
+  .tabs-nav { flex-wrap:wrap; }
+}
+</style>
+</head>
+<body>
+<!-- Bubbles (PADI mode) -->
+<div class="bubbles" id="bubbles"></div>
+
+<div class="app">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="brand">
+    <div class="brand-icon" id="brandIcon">🤿</div>
+    <div class="brand-text">
+      <h1>LSP D-PLANNER · <span class="algo-label" id="algoLabel">Rec</span></h1>
+      <p id="algoSubtitle">Recreational Dive Tables · RDP Reference</p>
+    </div>
+  </div>
+  <div class="algo-switcher">
+    <!-- Row 1: Algorithm -->
+    <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="algo-label-text">Algorithm:</span>
+        <div class="algo-toggle" style="display: flex; align-items: center; gap: 8px;">
+          <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
+          <button class="algo-btn" id="algoBUH" onclick="setAlgo('buh')">Bühlmann ZH-L16C</button>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+      </button>
+    </div>
+    
+    <!-- Row 2: GF Presets (hidden by default) -->
+    <div id="gfPresetsRow" style="display: none; align-items: center; gap: 8px;">
+      <button class="gf-btn active" id="gfPreset1" onclick="setGF(30, 70)" title="Conservative - Maximum safety">GF 30/70</button>
+      <button class="gf-btn" id="gfPreset2" onclick="setGF(40, 80)" title="Moderate - Balanced">GF 40/80</button>
+      <button class="gf-btn" id="gfPreset3" onclick="setGF(50, 90)" title="Liberal - Shorter deco">GF 50/90</button>
+    </div>
+    
+    <!-- Row 3: Custom GF (hidden by default) -->
+    <div id="gfCustomRow" style="display: none; align-items: center; gap: 8px;">
+      <button class="gf-btn" style="background: var(--bg-alt); border: 1px solid var(--border); cursor: default; pointer-events: none;" title="Custom Gradient Factors">Custom GF</button>
+      <input type="number" id="gfLowInput" min="5" max="100" placeholder="30" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()" maxlength="3">
+      <span style="color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">/</span>
+      <input type="number" id="gfHighInput" min="5" max="100" placeholder="70" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()" maxlength="3">
+    </div>
+    
+    <div class="header-warn">⚠ Training Use Only</div>
+  </div>
+</header>
+
+<!-- ══ TABS ══ -->
+<div class="tabs-nav">
+  <button class="tab-btn active" onclick="switchTab('planner',this)">Dive Planner</button>
+  <button class="tab-btn" onclick="switchTab('ndlref',this)">NDL Tables</button>
+  <button class="tab-btn" onclick="switchTab('multi',this)">Multi Dive</button>
+  <button class="tab-btn buh-only" onclick="switchTab('tissues',this)">Tissue Sat.</button>
+  <button class="tab-btn buh-only" onclick="switchTab('deco',this)">Deco Schedule</button>
+  <button class="tab-btn buh-only" onclick="switchTab('gfcurve',this)">GF Curve</button>
+  <button class="tab-btn" onclick="switchTab('cns',this)">CNS O₂</button>
+  <button class="tab-btn" onclick="switchTab('reference',this)">Reference</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     PLANNER TAB
+══════════════════════════════════════ -->
+<div class="panel active" id="planner">
+  <div class="card">
+    <div class="card-title" id="plannerTitle">Single Dive Plan</div>
+
+    <!-- Controls row -->
+    <div class="ctrl-row">
+      <span class="ctrl-label">Units:</span>
+      <div class="seg">
+        <button class="seg-btn" onclick="setUnits('imperial')" id="uImp">ft</button>
+        <button class="seg-btn active" onclick="setUnits('metric')" id="uMet">m</button>
+      </div>
+
+      <!-- Safety stop -->
+      <span class="ctrl-label" style="margin-left:6px;">Safety Stop:</span>
+      <div class="seg">
+        <button class="seg-btn" onclick="setStopDepth(3)" id="sd3">3 m</button>
+        <button class="seg-btn active" onclick="setStopDepth(6)" id="sd6">6 m</button>
+      </div>
+      <div class="seg">
+        <button class="seg-btn active" onclick="setStopDur(3)" id="sdur3">3 min</button>
+        <button class="seg-btn" onclick="setStopDur(5)" id="sdur5">5 min</button>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label id="depthLbl">Depth (m)</label>
+        <input type="number" id="depth" value="" min="1" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Bottom Time (min)</label>
+        <input type="number" id="bt" value="" min="1" max="300" step="1">
+      </div>
+      <div class="field" id="gasMixField" style="display:none;">
+        <label>Gas Mix</label>
+        <select id="gasMix" onchange="toggleCustomO2()">
+          <option value="air">Air (21% O₂)</option>
+          <option value="ean32">EAN 32 (32%)</option>
+          <option value="ean36">EAN 36 (36%)</option>
+          <option value="custom">Custom O₂ %</option>
+        </select>
+      </div>
+      <div class="field" id="customO2Field" style="display:none;">
+        <label>O₂ % (21–40)</label>
+        <input type="number" id="customO2" value="32" min="21" max="40" step="1">
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="runPlanner()">▶ CALCULATE DIVE</button>
+  </div>
+
+  <div id="plannerResult" style="display:none;"></div>
+  <canvas id="plannerProfileCanvas" width="700" height="240" style="display:none;width:100%;margin-top:16px;border-radius:10px;background:var(--card2);border:1px solid var(--border);"></canvas>
+</div>
+
+<!-- ══════════════════════════════════════
+     NDL TABLES TAB
+══════════════════════════════════════ -->
+<div class="panel" id="ndlref">
+  <div class="card">
+    <div class="card-title">No-Decompression Limits</div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Units:</span>
+      <div class="seg">
+        <button class="seg-btn" onclick="setNDLUnits('imperial')" id="ndlUImp">ft</button>
+        <button class="seg-btn active" onclick="setNDLUnits('metric')" id="ndlUMet">m</button>
+      </div>
+      <div class="field" style="min-width:180px; margin-bottom:0;">
+        <select id="ndlRange" onchange="renderNDLTable()" style="padding:7px 10px; font-size:12px;">
+          <option value="shallow">10–12 m (35–40 ft)</option>
+          <option value="moderate">15–18 m (50–60 ft)</option>
+          <option value="deeper">21–27 m (70–90 ft)</option>
+          <option value="deep">30–40 m (100–130 ft)</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px;">
+      <table class="ndl-table">
+        <thead><tr>
+          <th id="ndlDepthHdr">Depth (m)</th>
+          <th id="ndlNDLHdr">NDL (min)</th>
+          <th>Pressure Group / Notes</th>
+          <th>Min Surface Interval</th>
+        </tr></thead>
+        <tbody id="ndlBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex; gap:14px; margin-top:12px; flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(38,208,124,0.5);"></div>Safe</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(255,183,3,0.4);"></div>Caution</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(255,71,87,0.4);"></div>Deep / Tech</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MULTI DIVE TAB
+══════════════════════════════════════ -->
+<div class="panel" id="multi">
+  <div class="card">
+    <div class="card-title">Daily Dive Plan</div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Units:</span>
+      <div class="seg">
+        <button class="seg-btn" onclick="setMultiUnits('imperial')" id="mUImp">ft</button>
+        <button class="seg-btn active" onclick="setMultiUnits('metric')" id="mUMet">m</button>
+      </div>
+      <span class="ctrl-label" style="margin-left:4px;">Dives:</span>
+      <div class="seg">
+        <button class="seg-btn active" onclick="setDiveCount(2)" id="dc2">2</button>
+        <button class="seg-btn" onclick="setDiveCount(3)" id="dc3">3</button>
+        <button class="seg-btn" onclick="setDiveCount(4)" id="dc4">4</button>
+      </div>
+    </div>
+    <div id="diveBlocks"></div>
+    <button class="btn-calc" onclick="runMulti()">▶ CALCULATE DAY PLAN</button>
+  </div>
+  <div id="multiResult" style="display:none;">
+    <div class="card">
+      <div class="card-title">Results</div>
+      <div id="multiCards"></div>
+      <div id="multiWarnings" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TISSUE SATURATION (Bühlmann only)
+══════════════════════════════════════ -->
+<div class="panel" id="tissues">
+  <div class="card">
+    <div class="card-title">Compartment Saturation</div>
+    <div class="info-box">Bühlmann ZH-L16C models <strong>16 tissue compartments</strong> with N₂ half-times from 4 to 635 min. Bars show saturation relative to GF-adjusted M-value. Calculate a dive on the Planner tab first.</div>
+    <div class="tissue-grid" id="tissueGrid">
+      <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:24px;">Run a Bühlmann dive calculation to see tissue saturation.</div>
+    </div>
+  </div>
+  <div class="card" id="tissueTableCard" style="display:none;">
+    <div class="card-title">Compartment Detail</div>
+    <div style="overflow-x:auto;">
+      <table class="deco-table">
+        <thead><tr><th>#</th><th>Half-time</th><th>N₂ Load (bar)</th><th>M-value (bar)</th><th>Sat %</th><th>Status</th></tr></thead>
+        <tbody id="tissueTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DECO SCHEDULE (Bühlmann only)
+══════════════════════════════════════ -->
+<div class="panel" id="deco">
+  <div class="card">
+    <div class="card-title">Decompression Schedule</div>
+    <div class="info-box">Generates a full ascent profile with deco stops using Bühlmann ZH-L16C + Gradient Factors. Configure up to two decompression gases below — they switch automatically at the specified depths during ascent and are factored into tissue off-gassing.</div>
+    <div class="form-grid">
+      <div class="field"><label id="decoDepthLbl">Depth (m)</label><input type="number" id="decoDepth" value="40" min="1" max="120" step="1"></div>
+      <div class="field"><label>Bottom Time (min)</label><input type="number" id="decoBT" value="30" min="1" max="300" step="1"></div>
+      <div class="field"><label>Bottom Gas</label>
+        <select id="decoGas" onchange="toggleDecoCustomO2('decoGas','decoCustomO2Field')">
+          <option value="air">Air (21%)</option>
+          <option value="ean32">EAN 32 (32%)</option>
+          <option value="ean36">EAN 36 (36%)</option>
+          <option value="custom">Custom O₂ %</option>
+        </select>
+      </div>
+      <div class="field" id="decoCustomO2Field" style="display:none;">
+        <label>Bottom Gas O₂ %</label>
+        <input type="number" id="decoCustomO2" value="21" min="21" max="40" step="1">
+      </div>
+      <div class="field"><label>Descent Rate (m/min)</label><input type="number" id="descentRate" value="22" min="5" max="30" step="1"></div>
+      <div class="field"><label>Ascent Rate (m/min)</label><input type="number" id="ascentRate" value="9" min="3" max="18" step="1"></div>
+      <div class="field">
+        <label>Deco Step Size</label>
+        <select id="decoStep">
+          <option value="1">1 m</option>
+          <option value="3" selected>3 m (default)</option>
+          <option value="5">5 m</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Last Deco Stop</label>
+        <select id="lastDecoStop">
+          <option value="6" selected>6 m</option>
+          <option value="3">3 m</option>
+          <option value="1">1 m</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ppO2 Thresholds by O2 fraction band -->
+    <div style="border:1px solid var(--border-hi);border-radius:8px;padding:14px;margin-top:10px;background:rgba(0,200,255,0.03);">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;">ppO₂ THRESHOLDS BY O₂ FRACTION</div>
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="field">
+          <label>45–100% O₂ (rich mix)</label>
+          <select id="ppo2High">
+            <option value="1.6" selected>1.6 bar</option>
+            <option value="1.5">1.5 bar</option>
+            <option value="1.4">1.4 bar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>28–44% O₂ (nitrox)</label>
+          <select id="ppo2Mid">
+            <option value="1.6">1.6 bar</option>
+            <option value="1.5" selected>1.5 bar</option>
+            <option value="1.4">1.4 bar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Up to 28% O₂ (air/lean)</label>
+          <select id="ppo2Low">
+            <option value="1.6">1.6 bar</option>
+            <option value="1.5">1.5 bar</option>
+            <option value="1.4" selected>1.4 bar</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deco Gas 1 -->
+    <div style="border:1px solid rgba(224,64,251,0.2);border-radius:8px;padding:14px;margin-top:10px;background:rgba(224,64,251,0.04);">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#e040fb;margin-bottom:10px;">🟣 DECO GAS 1 (optional)</div>
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="field">
+          <label>Gas Mix</label>
+          <select id="dg1Mix" onchange="toggleDecoCustomO2('dg1Mix','dg1CustomField')">
+            <option value="none">— None —</option>
+            <option value="ean50" selected>EAN 50 (50%)</option>
+            <option value="o2">100% O₂</option>
+            <option value="custom">Custom O₂ %</option>
+          </select>
+        </div>
+        <div class="field" id="dg1CustomField" style="display:none;">
+          <label>O₂ %</label>
+          <input type="number" id="dg1CustomO2" value="50" min="21" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Optimal Switch Depth</label>
+          <input type="text" id="dg1SwitchDepthDisplay" readonly
+            style="background:rgba(224,64,251,0.08);border-color:rgba(224,64,251,0.3);color:#e080ff;cursor:default;"
+            placeholder="Calculate to see">
+        </div>
+      </div>
+    </div>
+
+    <!-- Deco Gas 2 -->
+    <div style="border:1px solid rgba(224,64,251,0.15);border-radius:8px;padding:14px;margin-top:8px;background:rgba(224,64,251,0.03);">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#c050d0;margin-bottom:10px;">🟣 DECO GAS 2 (optional)</div>
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="field">
+          <label>Gas Mix</label>
+          <select id="dg2Mix" onchange="toggleDecoCustomO2('dg2Mix','dg2CustomField')">
+            <option value="none">— None —</option>
+            <option value="ean50">EAN 50 (50%)</option>
+            <option value="o2" selected>100% O₂</option>
+            <option value="custom">Custom O₂ %</option>
+          </select>
+        </div>
+        <div class="field" id="dg2CustomField" style="display:none;">
+          <label>O₂ %</label>
+          <input type="number" id="dg2CustomO2" value="80" min="21" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Optimal Switch Depth</label>
+          <input type="text" id="dg2SwitchDepthDisplay" readonly
+            style="background:rgba(224,64,251,0.08);border-color:rgba(224,64,251,0.3);color:#e080ff;cursor:default;"
+            placeholder="Calculate to see">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="runDecoSchedule()" style="margin-top:14px;">▶ GENERATE SCHEDULE</button>
+  </div>
+  <div id="decoResult" style="display:none;">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title" style="margin:0;">Dive Profile</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="exportDecoSchedule()" style="padding:8px 16px;background:var(--accent);color:var(--bg);border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">📥 TXT</button>
+          <button onclick="exportPDF()" style="padding:8px 16px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">⬇ PDF</button>
+        </div>
+      </div>
+      <div id="decoSummary"></div>
+      <canvas id="decoProfileCanvas" width="700" height="240" style="width:100%;margin:14px 0;border-radius:10px;background:var(--card2);border:1px solid var(--border);"></canvas>
+      <table class="deco-table">
+        <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>Mix</th><th>PPO2</th><th>CNS%</th></tr></thead>
+        <tbody id="decoTableBody"></tbody>
+      </table>
+      <!-- Icon legend -->
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding:12px 14px;background:var(--card2);border-radius:8px;border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:16px;color:#ff8080;">↓</span> Descent
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:15px;">🔵</span> Bottom
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:16px;color:#80e0a0;">↑</span> Ascent
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:15px;">🔴</span> Mandatory Deco Stop
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:15px;">🟢</span> Safety Stop
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);">
+          <span style="font-size:15px;">⇄</span> Gas Switch
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     REFERENCE TAB
+══════════════════════════════════════ -->
+<!-- ══════════════════════════════════════
+   GF CURVE PANEL (Bühlmann only)
+══════════════════════════════════════ -->
+<div class="panel buh-only-panel" id="gfcurve">
+  <div class="card">
+    <div class="card-title">GF Gradient Factor Curve</div>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Visualizes how gradient factors control the ascent ceiling at each deco stop. The curve interpolates linearly from GF Low (first stop) to GF High (surface).</p>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+      <div class="stat" style="min-width:80px;"><div class="stat-val" id="gfCurveGFL" style="color:var(--accent)">30</div><div class="stat-lbl">GF Low</div></div>
+      <div class="stat" style="min-width:80px;"><div class="stat-val" id="gfCurveGFH" style="color:var(--accent)">70</div><div class="stat-lbl">GF High</div></div>
+      <div class="stat" style="min-width:80px;"><div class="stat-val" id="gfCurveStops">—</div><div class="stat-lbl">Deco Stops</div></div>
+    </div>
+    <canvas id="gfCurveCanvas" width="700" height="320" style="width:100%;border-radius:8px;background:var(--card2);border:1px solid var(--border);"></canvas>
+    <div style="margin-top:12px;display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+        <div style="width:20px;height:3px;background:#00d9ff;border-radius:2px;"></div> GF Ceiling line
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+        <div style="width:20px;height:3px;background:var(--green);border-radius:2px;"></div> Actual ascent
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--red);"></div> Deco stop
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+   CNS OXYGEN PANEL
+══════════════════════════════════════ -->
+<div class="panel" id="cns">
+  <div class="card">
+    <div class="card-title">CNS Oxygen Toxicity Tracker</div>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tracks Central Nervous System (CNS) O₂ toxicity based on ppO₂ and exposure time. NOAA limits: keep CNS below 80% per dive, 100% per day.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="field">
+        <label>Depth (m)</label>
+        <input type="number" id="cnsDepth" value="30" min="0" max="60" oninput="calcCNS()">
+      </div>
+      <div class="field">
+        <label>Bottom time (min)</label>
+        <input type="number" id="cnsBT" value="40" min="1" max="300" oninput="calcCNS()">
+      </div>
+      <div class="field">
+        <label>Gas O₂ %</label>
+        <input type="number" id="cnsO2" value="21" min="16" max="100" oninput="calcCNS()">
+      </div>
+      <div class="field">
+        <label>Number of dives today</label>
+        <input type="number" id="cnsDives" value="1" min="1" max="10" oninput="calcCNS()">
+      </div>
+    </div>
+
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat"><div class="stat-val" id="cnsPPO2">—</div><div class="stat-lbl">ppO₂ (bar)</div></div>
+      <div class="stat"><div class="stat-val" id="cnsSinglePct">—</div><div class="stat-lbl">CNS% single dive</div></div>
+      <div class="stat"><div class="stat-val" id="cnsDailyPct">—</div><div class="stat-lbl">CNS% daily total</div></div>
+      <div class="stat"><div class="stat-val" id="cnsOTU">—</div><div class="stat-lbl">OTU (pulmonary)</div></div>
+    </div>
+
+    <!-- CNS bar -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+        <span style="font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;">CNS% — Single Dive</span>
+        <span id="cnsSingleLabel">—</span>
+      </div>
+      <div style="height:14px;background:var(--dim);border-radius:7px;overflow:hidden;border:1px solid var(--border);">
+        <div id="cnsSingleBar" style="height:100%;width:0%;border-radius:7px;transition:width 0.5s ease,background 0.3s;background:var(--green);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;">
+        <span>0%</span><span style="color:var(--yellow);">80% limit</span><span>100%</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+        <span style="font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;">CNS% — Daily Total</span>
+        <span id="cnsDailyLabel">—</span>
+      </div>
+      <div style="height:14px;background:var(--dim);border-radius:7px;overflow:hidden;border:1px solid var(--border);">
+        <div id="cnsDailyBar" style="height:100%;width:0%;border-radius:7px;transition:width 0.5s ease,background 0.3s;background:var(--green);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;">
+        <span>0%</span><span style="color:var(--red);">100% limit</span>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div id="cnsStatus" class="result-card c-ok" style="margin-top:8px;">
+      <div class="rc-title"><span>⚡</span> Status</div>
+      <div id="cnsStatusText" style="font-size:13px;color:var(--text);">Enter dive parameters above.</div>
+    </div>
+
+    <!-- NOAA table -->
+    <div style="margin-top:20px;">
+      <div class="card-title" style="margin-bottom:10px;">NOAA CNS Exposure Limits</div>
+      <div style="overflow-x:auto;">
+        <table class="ndl-table">
+          <thead><tr><th>ppO₂ (bar)</th><th>Single limit (min)</th><th>Daily limit (min)</th></tr></thead>
+          <tbody>
+            <tr><td>0.6</td><td>720</td><td>—</td></tr>
+            <tr><td>0.7</td><td>570</td><td>—</td></tr>
+            <tr><td>0.8</td><td>450</td><td>—</td></tr>
+            <tr><td>0.9</td><td>360</td><td>—</td></tr>
+            <tr><td>1.0</td><td>300</td><td>600</td></tr>
+            <tr><td>1.1</td><td>240</td><td>480</td></tr>
+            <tr><td>1.2</td><td>210</td><td>420</td></tr>
+            <tr><td>1.3</td><td>180</td><td>360</td></tr>
+            <tr><td style="color:var(--yellow);">1.4</td><td style="color:var(--yellow);">150</td><td style="color:var(--yellow);">300</td></tr>
+            <tr><td style="color:var(--orange);">1.5</td><td style="color:var(--orange);">120</td><td style="color:var(--orange);">240</td></tr>
+            <tr><td style="color:var(--red);">1.6</td><td style="color:var(--red);">45</td><td style="color:var(--red);">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="reference">
+  <div class="card">
+    <div class="card-title">Algorithm Comparison</div>
+    <div class="info-box"><strong>Rec (Recreational Dive Planner):</strong> A conservative lookup table derived from the Bühlmann model and US Navy tables. Fixed depth/time grid — easy to use, no computation. Uses pressure groups (A–Z) to track nitrogen load between dives. Best for recreational divers within 40 m.</div>
+    <div class="info-box"><strong>Bühlmann ZH-L16C:</strong> Full tissue compartment model by Dr. Albert Bühlmann (Zürich, 1983). Computes N₂ saturation per-minute using the Schreiner equation across 16 parallel compartments. Gradient Factors (Baker, 1998) add a safety buffer. Used in virtually all modern dive computers. More precise for multi-level and multi-day diving.</div>
+    <div class="info-box"><strong>When to use which:</strong> Rec for simple recreational dives with a table-based approach. Bühlmann for dive computer-style planning, deeper dives (30–40 m), technical diving consideration, or when you want to understand what your computer is computing.</div>
+
+    <div style="margin-top:16px;">
+      <div class="card-title">Key Depth Limits</div>
+      <div class="stats" style="margin-top:0;">
+        <div class="stat"><div class="stat-val g">40 m</div><div class="stat-lbl">Rec. Max (130 ft)</div></div>
+        <div class="stat"><div class="stat-val">18 m</div><div class="stat-lbl">OW Max (60 ft)</div></div>
+        <div class="stat"><div class="stat-val">30 m</div><div class="stat-lbl">Advanced (100 ft)</div></div>
+        <div class="stat"><div class="stat-val y">1.4 bar</div><div class="stat-lbl">ppO₂ Limit</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px; padding-top:24px; border-top: 1px solid var(--border); text-align:center;">
+      <div class="card-title">Follow LSP Diving Team</div>
+      <p style="color: var(--muted); font-size:13px; margin: 8px 0;">Scan QR code to visit Instagram</p>
+      <a href="https://www.instagram.com/threecats_lsp" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-top:12px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.instagram.com/threecats_lsp" alt="Instagram QR Code" style="width: 140px; height: 140px; border: 3px solid var(--muted); border-radius: 8px; padding: 6px; background: white; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"/>
+      </a>
+      <p style="color: var(--muted); font-size:12px; margin-top:8px;">@threecats_lsp</p>
+    </div>
+  </div>
+
+  <div class="card" id="buhRefCard" style="display:none;">
+    <div class="card-title">Bühlmann ZH-L16C · 16 Compartments</div>
+    <div style="overflow-x:auto;">
+      <table class="deco-table">
+        <thead><tr><th>#</th><th>N₂ Half-time (min)</th><th>a (bar)</th><th>b</th><th>Speed</th></tr></thead>
+        <tbody id="buhRefBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Instagram Footer -->
+<div style="text-align: center; padding: 24px; background: transparent; border-top: 1px solid var(--border);">
+  <a href="https://www.instagram.com/threecats_lsp" target="_blank" rel="noopener noreferrer" title="Follow @threecats_lsp on Instagram" style="display: inline-block; transition: transform 0.2s ease, opacity 0.2s ease; cursor: pointer; opacity: 0.8;" onmouseover="this.style.transform='scale(1.15)'; this.style.opacity='1'" onmouseout="this.style.transform='scale(1)'; this.style.opacity='0.8'">
+    <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="instaGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#feda75;stop-opacity:1" />
+          <stop offset="5%" style="stop-color:#fa7e1e;stop-opacity:1" />
+          <stop offset="45%" style="stop-color:#d92e7f;stop-opacity:1" />
+          <stop offset="60%" style="stop-color:#9b36b7;stop-opacity:1" />
+          <stop offset="90%" style="stop-color:#515bd4;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Inner rounded square outline -->
+      <rect x="5" y="5" width="40" height="40" rx="10" ry="10" fill="none" stroke="url(#instaGradient)" stroke-width="2"/>
+      <!-- Camera circle -->
+      <circle cx="25" cy="25" r="7" fill="none" stroke="url(#instaGradient)" stroke-width="1.2"/>
+      <!-- Center dot -->
+      <circle cx="25" cy="25" r="2.5" fill="url(#instaGradient)"/>
+      <!-- Flash dot -->
+      <circle cx="36" cy="12" r="1.8" fill="url(#instaGradient)"/>
+    </svg>
+  </a>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════
+// BÜHLMANN ZH-L16C DATA
+// ═══════════════════════════════════════════════
+const ZHL16C = [
+  [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
+  [18.5,  0.7562, 0.7825],[27.0,  0.6667, 0.8126],[38.5,  0.5933, 0.8434],
+  [54.3,  0.5282, 0.8693],[77.0,  0.4701, 0.8910],[109.0, 0.4187, 0.9092],
+  [146.0, 0.3798, 0.9222],[187.0, 0.3497, 0.9319],[239.0, 0.3223, 0.9403],
+  [305.0, 0.2971, 0.9477],[390.0, 0.2737, 0.9544],[498.0, 0.2523, 0.9602],
+  [635.0, 0.2327, 0.9653],
+];
+
+// Rec RDP data
+const PADI_DEPTHS_M  = [10,12,15,18,21,24,27,30,33,36,40];
+const PADI_DEPTHS_FT = [35,40,50,60,70,80,90,100,110,120,130];
+const PADI_NDL_M  = [310,230,100,60,35,25,20,15,13,10,8];
+const PADI_NDL_FT = [310,230,100,60,35,25,20,15,13,10,8];
+const PADI_GROUPS = ['A','B','C','D','E','F','G','H','I','J','K'];
+
+const SURFACE_P = 1.013;
+const FN2_AIR   = 0.79;
+const FN2_EAN32 = 0.68;
+const FN2_EAN36 = 0.64;
+
+// ═══ STATE ═══
+let algo       = 'padi';
+let units      = 'metric';
+let ndlUnits   = 'metric';
+let multiUnits = 'metric';
+let diveCount  = 2;
+let stopDepthM = 6;
+let stopDurMin = 3;
+let mGF        = { low: 30, high: 70 };
+let lastTissues = null;
+
+// ═══════════════════════════════════════════════
+// ALGO SWITCH
+// ═══════════════════════════════════════════════
+function setAlgo(a) {
+  algo = a;
+  const isBuh = a === 'buh';
+  document.body.classList.toggle('algo-buh', isBuh);
+  document.getElementById('algoPADI').classList.toggle('active', !isBuh);
+  document.getElementById('algoBUH').classList.toggle('active', isBuh);
+  document.getElementById('algoLabel').textContent = isBuh ? 'BÜHLMANN' : 'Rec';
+  document.getElementById('algoSubtitle').textContent = isBuh ? 'Bühlmann ZH-L16C · Gradient Factors' : 'Recreational Dive Planner';
+  document.getElementById('brandIcon').textContent = isBuh ? '🫧' : '🤿';
+  document.getElementById('plannerTitle').textContent = isBuh ? 'Bühlmann Dive Plan' : 'Single Dive Plan';
+  document.getElementById('gasMixField').style.display = isBuh ? 'block' : 'none';
+  document.getElementById('buhRefCard').style.display = isBuh ? 'block' : 'none';
+  document.getElementById('gfPresetsRow').style.display = isBuh ? 'flex' : 'none';
+  document.getElementById('gfCustomRow').style.display = isBuh ? 'flex' : 'none';
+  
+  // Reset result
+  document.getElementById('plannerResult').style.display = 'none';
+  document.getElementById('multiResult').style.display = 'none';
+  // Ensure active tab is valid
+  const activeBuhOnly = document.querySelector('.panel.active.buh-only-panel');
+  if (!isBuh && ['tissues','deco'].includes(document.querySelector('.panel.active')?.id)) {
+    switchTab('planner', null);
+  }
+  renderNDLTable();
+  buildDiveBlocks();
+  
+  // Save algorithm change
+  if (typeof appSettings !== 'undefined' && appSettings.save) {
+    setTimeout(() => appSettings.save(false), 100);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════════
+function toggleTheme() {
+  const body = document.body;
+  const isLight = body.classList.toggle('light-theme');
+  const icon = document.getElementById('themeIcon');
+  
+  // Update icon
+  icon.textContent = isLight ? '☀️' : '🌙';
+  
+  // Save preference
+  localStorage.setItem('diveTheme', isLight ? 'light' : 'dark');
+  
+  // Update PWA theme color
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', isLight ? '#f5f7f9' : '#030c18');
+  }
+  
+  console.log('[LSP] Theme switched to:', isLight ? 'LIGHT' : 'DARK');
+
+  // Redraw canvases for new theme
+  setTimeout(() => {
+    drawPlannerProfile();
+    drawDecoProfile();
+    drawGFCurve();
+  }, 50);
+}
+
+// Load theme preference on page load
+function loadThemePreference() {
+  const savedTheme = localStorage.getItem('diveTheme');
+  const body = document.body;
+  const icon = document.getElementById('themeIcon');
+  
+  if (savedTheme === 'light') {
+    body.classList.add('light-theme');
+    if (icon) icon.textContent = '☀️';
+  } else {
+    body.classList.remove('light-theme');
+    if (icon) icon.textContent = '🌙';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// GF SELECTOR
+// ═══════════════════════════════════════════════
+function setGF(low, high) {
+  mGF.low = low;
+  mGF.high = high;
+  
+  // Update input fields with explicit values
+  const lowInput = document.getElementById('gfLowInput');
+  const highInput = document.getElementById('gfHighInput');
+  
+  if (lowInput) lowInput.value = low;
+  if (highInput) highInput.value = high;
+  
+  // Update button states
+  document.querySelectorAll('.gf-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  if (low === 30 && high === 70) document.getElementById('gfPreset1').classList.add('active');
+  else if (low === 40 && high === 80) document.getElementById('gfPreset2').classList.add('active');
+  else if (low === 50 && high === 90) document.getElementById('gfPreset3').classList.add('active');
+  
+  renderNDLTable();
+  document.getElementById('plannerResult').style.display = 'none';
+  
+  // Save GF settings
+  if (typeof appSettings !== 'undefined' && appSettings.save) {
+    setTimeout(() => appSettings.save(false), 100);
+  }
+}
+
+function setCustomGF() {
+  const lowInput = document.getElementById('gfLowInput');
+  const highInput = document.getElementById('gfHighInput');
+  const customButton = document.querySelector('#gfCustomRow .gf-btn');
+  
+  const lowVal = lowInput ? lowInput.value : '';
+  const highVal = highInput ? highInput.value : '';
+  
+  // If empty, use current mGF values (from preset) as defaults
+  const low = (lowVal === '' || lowVal === null) ? mGF.low : parseInt(lowVal) || mGF.low;
+  const high = (highVal === '' || highVal === null) ? mGF.high : parseInt(highVal) || mGF.high;
+  
+  mGF.low = Math.max(5, Math.min(100, low));
+  mGF.high = Math.max(5, Math.min(100, high));
+  
+  // Mark as custom (no preset active) only if user has entered values
+  if (lowVal !== '' || highVal !== '') {
+    // Remove active from all preset buttons
+    document.querySelectorAll('.gf-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    // Add active to custom button and inputs
+    if (customButton) {
+      customButton.classList.add('active');
+    }
+    if (lowInput) {
+      lowInput.classList.add('active');
+    }
+    if (highInput) {
+      highInput.classList.add('active');
+    }
+  } else {
+    // If empty, remove active from custom button and inputs
+    if (customButton) {
+      customButton.classList.remove('active');
+    }
+    if (lowInput) {
+      lowInput.classList.remove('active');
+    }
+    if (highInput) {
+      highInput.classList.remove('active');
+    }
+  }
+  
+  renderNDLTable();
+  document.getElementById('plannerResult').style.display = 'none';
+  
+  // Save GF settings
+  if (typeof appSettings !== 'undefined' && appSettings.save) {
+    setTimeout(() => appSettings.save(false), 100);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b.getAttribute('onclick')?.includes(`'${name}'`)) b.classList.add('active');
+    });
+  }
+  // Trigger tab-specific updates
+  if (name === 'gfcurve') setTimeout(drawGFCurve, 50);
+  if (name === 'cns')     setTimeout(calcCNS, 50);
+}
+
+// ═══════════════════════════════════════════════
+// UNIT HELPERS
+// ═══════════════════════════════════════════════
+function ftToM(ft)   { return (ft / 3.28084).toFixed(1); }
+function mToFt(m)    { return Math.round(m * 3.28084); }
+function depthDisp(m, u) { return u === 'metric' ? `${m} m` : `${mToFt(m)} ft`; }
+
+function setUnits(u) {
+  const prev = units; units = u;
+  document.getElementById('uImp').classList.toggle('active', u==='imperial');
+  document.getElementById('uMet').classList.toggle('active', u==='metric');
+  const inp = document.getElementById('depth');
+  const v = parseFloat(inp.value)||0;
+  if (u==='metric' && prev==='imperial') { inp.value = parseFloat(ftToM(v)); inp.max=100; }
+  if (u==='imperial' && prev==='metric') { inp.value = mToFt(v); inp.max=330; }
+  document.getElementById('depthLbl').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
+  document.getElementById('decoDepthLbl').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
+}
+
+function setNDLUnits(u) {
+  ndlUnits = u;
+  document.getElementById('ndlUImp').classList.toggle('active', u==='imperial');
+  document.getElementById('ndlUMet').classList.toggle('active', u==='metric');
+  document.getElementById('ndlDepthHdr').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
+  document.getElementById('ndlNDLHdr').textContent = 'NDL (min)';
+  renderNDLTable();
+}
+
+function setMultiUnits(u) {
+  multiUnits = u;
+  document.getElementById('mUImp').classList.toggle('active', u==='imperial');
+  document.getElementById('mUMet').classList.toggle('active', u==='metric');
+  buildDiveBlocks();
+}
+
+// ═══════════════════════════════════════════════
+// SAFETY STOP CONTROLS
+// ═══════════════════════════════════════════════
+function setStopDepth(m) {
+  stopDepthM = m;
+  document.getElementById('sd3').classList.toggle('active', m===3);
+  document.getElementById('sd6').classList.toggle('active', m===6);
+}
+function setStopDur(min) {
+  stopDurMin = min;
+  document.getElementById('sdur3').classList.toggle('active', min===3);
+  document.getElementById('sdur5').classList.toggle('active', min===5);
+}
+
+// ═══════════════════════════════════════════════
+// GF CONTROLS
+// ═══════════════════════════════════════════════
+function autoSlashGF(input) {
+  const oldVal = input.value;
+  const oldPos = input.selectionStart;
+  
+  // If backspace was pressed at or near the slash, handle specially
+  if (oldVal.length > 0 && oldVal[2] === '/' && oldPos === 3) {
+    // Cursor is right after slash — delete the slash and one Low digit
+    input.value = oldVal.slice(0, 1) + oldVal.slice(3);
+    input.selectionStart = input.selectionEnd = 1;
+    return;
+  }
+  
+  // Normal digit-only filtering and slash insertion
+  let v = input.value.replace(/[^\d/]/g, '');
+  const digits = v.replace('/', '');
+  
+  if (digits.length >= 2) {
+    v = digits.slice(0, 2) + '/' + digits.slice(2, 4);
+  } else {
+    v = digits;
+  }
+  
+  input.value = v;
+  
+  // Smart cursor positioning: jump over the slash
+  if (oldPos === 2 && v[2] === '/') {
+    // User just typed the 2nd digit, move cursor past the slash
+    input.selectionStart = input.selectionEnd = 3;
+  } else if (oldPos === 3 && v[2] === '/') {
+    // Cursor at slash position, move past it
+    input.selectionStart = input.selectionEnd = 3;
+  }
+}
+
+function updateGF() {
+  // gfStr now holds "30/70" format — no separate display elements needed
+  // Just validate on input via autoSlashGF
+}
+
+
+// ═══════════════════════════════════════════════
+// BÜHLMANN PHYSICS
+// ═══════════════════════════════════════════════
+function initTissues() {
+  const pN2 = SURFACE_P * FN2_AIR;
+  return ZHL16C.map(() => pN2);
+}
+
+function toggleCustomO2() {
+  const isCustom = document.getElementById('gasMix').value === 'custom';
+  document.getElementById('customO2Field').style.display = isCustom ? 'block' : 'none';
+}
+
+function getN2Frac(mix) {
+  if (mix === 'ean32') return FN2_EAN32;
+  if (mix === 'ean36') return FN2_EAN36;
+  if (mix === 'custom') {
+    const o2pct = parseFloat(document.getElementById('customO2')?.value) || 21;
+    return (100 - Math.min(40, Math.max(21, o2pct))) / 100;
+  }
+  return FN2_AIR;
+}
+
+function depthBar(m)   { return SURFACE_P + m * 0.1; }
+function schreiner(p0, pGas, ht, t) { return pGas + (p0-pGas) * Math.exp(-Math.LN2/ht*t); }
+
+function saturate(tissues, depthM, t, fN2) {
+  const pN2 = depthBar(depthM) * fN2;
+  return tissues.map((p0,i) => schreiner(p0, pN2, ZHL16C[i][0], t));
+}
+
+function ceiling(tissues, gfHigh) {
+  let maxC = 0;
+  tissues.forEach((pN2, i) => {
+    const [,a,b] = ZHL16C[i];
+    const pAmbMin = (pN2 - a*gfHigh) * b;
+    const cM = Math.max(0, (pAmbMin - SURFACE_P) / 0.1);
+    if (cM > maxC) maxC = cM;
+  });
+  return maxC;
+}
+
+function buhNDL(depthM, fN2, gfLow, gfHigh) {
+  let tissues = initTissues();
+  for (let t=0; t<=500; t++) {
+    const next = saturate(tissues, depthM, 1, fN2);
+    if (ceiling(next, gfHigh/100) > 0) return t;
+    tissues = next;
+  }
+  return 500;
+}
+
+function maxSatPct(tissues, gfHigh) {
+  let max = 0;
+  tissues.forEach((pN2, i) => {
+    const [,a,b] = ZHL16C[i];
+    const mv = a*(gfHigh/100) + SURFACE_P/b;
+    const pct = Math.round((pN2/mv)*100);
+    if (pct > max) max = pct;
+  });
+  return max;
+}
+
+// ═══════════════════════════════════════════════
+// PADI LOOKUP
+// ═══════════════════════════════════════════════
+function padiNDL(depthM) {
+  const depths = PADI_DEPTHS_M;
+  const ndls   = PADI_NDL_M;
+  let closest = 0, minDiff = Infinity;
+  depths.forEach((d,i) => { const diff = Math.abs(d-depthM); if(diff<minDiff){minDiff=diff;closest=i;} });
+  return ndls[closest];
+}
+function padiGroup(depthM, time) {
+  const depths = PADI_DEPTHS_M;
+  const ndls   = PADI_NDL_M;
+  let idx = 0, minDiff = Infinity;
+  depths.forEach((d,i) => { const diff=Math.abs(d-depthM); if(diff<minDiff){minDiff=diff;idx=i;} });
+  const ndl = ndls[idx];
+  const pct = time/ndl;
+  const gi  = Math.min(PADI_GROUPS.length-1, Math.floor(pct * PADI_GROUPS.length * 0.7));
+  return PADI_GROUPS[gi];
+}
+
+// ═══════════════════════════════════════════════
+// PLANNER
+// ═══════════════════════════════════════════════
+function runPlanner() {
+  const isMetric = units === 'metric';
+  const rawD = parseFloat(document.getElementById('depth').value)||30;
+  const depthM = isMetric ? rawD : rawD/3.28084;
+  const bt  = parseInt(document.getElementById('bt').value)||25;
+  const gfL = mGF.low;
+  const gfH = mGF.high;
+  const mix = document.getElementById('gasMix').value;
+  const fN2 = getN2Frac(mix);
+  const dDisp = isMetric ? rawD+' m' : rawD+' ft';
+  const stopFt = stopDepthM === 3 ? 10 : 20;
+
+  let html = '';
+
+  if (algo === 'padi') {
+    const ndl = padiNDL(depthM);
+    const rem = Math.max(0, ndl-bt);
+    const group = padiGroup(depthM, bt);
+    const pct = Math.min(100, Math.round((bt/ndl)*100));
+    const bc  = pct>=100?'var(--red)':pct>=80?'var(--orange)':pct>=65?'var(--yellow)':'var(--green)';
+    const btOk = bt <= ndl;
+
+    html = `<div class="card">
+      <div class="card-title">Rec Results · ${dDisp} for ${bt} min</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-val ${ndl<999?(btOk?'g':'r'):'g'}">${ndl}</div><div class="stat-lbl">NDL (min)</div></div>
+        <div class="stat"><div class="stat-val ${btOk?'g':'r'}">${bt}</div><div class="stat-lbl">Your BT (min)</div></div>
+        <div class="stat"><div class="stat-val ${rem===0?'r':rem<10?'o':'g'}">${rem}</div><div class="stat-lbl">Remaining (min)</div></div>
+        <div class="stat"><div class="stat-val" style="font-size:22px;"><span class="group-badge">${group}</span></div><div class="stat-lbl">Pressure Group</div></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:1px;"><span>NDL USAGE</span><span>${pct}%</span></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc};"></div></div>
+      </div>
+      ${!btOk ? '<div class="alert dang" style="margin-top:12px;"><span>⚠</span><div><strong>NDL EXCEEDED.</strong> Not permitted for recreational diving. Reduce bottom time.</div></div>' : ''}
+      ${btOk && pct>=80 ? '<div class="alert warn" style="margin-top:12px;"><span>⚡</span><div><strong>APPROACHING LIMIT.</strong> 80%+ NDL used. Monitor closely and ascend conservatively.</div></div>' : ''}
+      ${btOk && pct<80 ? '<div class="alert ok" style="margin-top:12px;"><span>✓</span><div><strong>WITHIN LIMITS.</strong> '+rem+' minutes remaining. Good safety margin.</div></div>' : ''}
+      ${safetyStopHTML(stopDepthM, stopFt, stopDurMin)}
+    </div>`;
+
+  } else {
+    // Bühlmann
+    let tissues = initTissues();
+    tissues = saturate(tissues, depthM, bt, fN2);
+    lastTissues = tissues;
+    const gfHF = gfH/100;
+    const ndl = buhNDL(depthM, fN2, gfL, gfH);
+    const ceil = ceiling(tissues, gfHF);
+    const sat  = maxSatPct(tissues, gfH);
+    const rem  = Math.max(0, ndl-bt);
+    const pct  = Math.min(100, Math.round((bt/ndl)*100));
+    const bc   = pct>=100?'var(--red)':pct>=85?'var(--orange)':pct>=70?'var(--yellow)':'var(--green)';
+    const btOk = bt <= ndl && ceil <= 0;
+    const pO2  = floorPPO2(depthBar(depthM)*(1-fN2));
+
+    updateTissueViz(tissues, gfH);
+
+    html = `<div class="card">
+      <div class="card-title">Bühlmann Results · ${dDisp} for ${bt} min · GF ${gfL}/${gfH}</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-val ${ndl>=500?'g':btOk?'g':'r'}">${ndl>=500?'500+':ndl}</div><div class="stat-lbl">NDL (min)</div></div>
+        <div class="stat"><div class="stat-val ${btOk?'g':'r'}">${bt}</div><div class="stat-lbl">Your BT (min)</div></div>
+        <div class="stat"><div class="stat-val ${rem===0?'r':rem<10?'o':'g'}">${rem}</div><div class="stat-lbl">Remaining (min)</div></div>
+        <div class="stat"><div class="stat-val ${ceil>0?'r':'g'}">${ceil>0?Math.ceil(ceil)+' m':'0 m'}</div><div class="stat-lbl">Deco Ceiling</div></div>
+        <div class="stat"><div class="stat-val ${sat>=100?'r':sat>=85?'o':sat>=70?'y':'g'}">${sat}%</div><div class="stat-lbl">Max Sat</div></div>
+        <div class="stat"><div class="stat-val ${pO2>1.4?'r':'g'}">${pO2.toFixed(1)}</div><div class="stat-lbl">ppO₂ (bar)</div></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:1px;"><span>NDL USAGE</span><span>${pct}%</span></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc};"></div></div>
+      </div>
+      ${ceil>0 ? '<div class="alert deco" style="margin-top:12px;"><span>🟣</span><div><strong>DECOMPRESSION REQUIRED.</strong> Deco ceiling at '+Math.ceil(ceil)+' m. See Deco Schedule tab for full profile.</div></div>' : ''}
+      ${!btOk && ceil<=0 ? '<div class="alert dang" style="margin-top:12px;"><span>⚠</span><div><strong>NDL EXCEEDED.</strong> Reduce bottom time by '+(bt-ndl)+' min.</div></div>' : ''}
+      ${btOk ? '<div class="alert ok" style="margin-top:12px;"><span>✓</span><div><strong>WITHIN NDL.</strong> GF '+gfL+'/'+gfH+'. '+rem+' minutes remaining.</div></div>' : ''}
+      ${pO2>1.4 ? '<div class="alert dang"><span>⚠</span><div><strong>ppO₂ EXCEEDS 1.4 bar.</strong> CNS oxygen toxicity risk. Use lower O₂ mix or reduce depth.</div></div>' : ''}
+      <div style="margin-top:8px;"><div class="alert info" style="margin-bottom:0;"><span>💡</span><div>Tissue saturation chart updated — see <strong>Tissue Sat.</strong> tab.</div></div></div>
+      ${safetyStopHTML(stopDepthM, stopFt, stopDurMin)}
+    </div>`;
+  }
+
+  document.getElementById('plannerResult').innerHTML = html;
+  document.getElementById('plannerResult').style.display = 'block';
+  setTimeout(drawPlannerProfile, 30);
+}
+
+function safetyStopHTML(depthM, depthFt, dur) {
+  const desc = depthM === 3
+    ? '3 m standard safety stop. Ascend at max 9 m/min (30 ft/min) and hold for ' + dur + ' min.'
+    : depthM === 6
+      ? '6 m deep stop: recommended for dives below 30 m. Follow with a standard 3 m stop before surfacing.'
+      : '5 m safety stop. Ascend at max 9 m/min (30 ft/min) and hold for ' + dur + ' min.';
+  return `<div style="background:rgba(38,208,124,0.06);border:1px solid rgba(38,208,124,0.2);border-radius:10px;padding:14px;margin-top:14px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:var(--green);margin-bottom:10px;">SAFETY STOP</div>
+    <div class="stats" style="margin-top:0;">
+      <div class="stat" style="padding:10px;"><div class="stat-val g" style="font-size:22px;">${depthM} m</div><div class="stat-lbl">${depthFt} ft</div></div>
+      <div class="stat" style="padding:10px;"><div class="stat-val g" style="font-size:22px;">${dur} min</div><div class="stat-lbl">Duration</div></div>
+      <div class="stat" style="padding:10px;"><div class="stat-val g" style="font-size:22px;">9 m/min</div><div class="stat-lbl">Max ascent</div></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;">${desc}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// NDL TABLE
+// ═══════════════════════════════════════════════
+function renderNDLTable() {
+  const isM  = ndlUnits === 'metric';
+  const ranges = { shallow:[0,1], moderate:[2,3], deeper:[4,6], deep:[7,10] };
+  const sel = document.getElementById('ndlRange').value;
+  const [from, to] = ranges[sel];
+  const depths = isM ? PADI_DEPTHS_M.slice(from, to+1) : PADI_DEPTHS_FT.slice(from, to+1);
+  const ndls   = PADI_NDL_M.slice(from, to+1);
+  const isBuh  = algo === 'buh';
+  const tbody  = document.getElementById('ndlBody');
+  tbody.innerHTML = '';
+
+  depths.forEach((d, i) => {
+    const depthM = isM ? d : d/3.28084;
+    let ndl = ndls[i];
+    let buhNDLVal = '';
+    if (isBuh) {
+      const fN2 = FN2_AIR;
+      buhNDLVal = buhNDL(depthM, fN2, mGF.low, mGF.high);
+    }
+    const dUnit = isM ? ' m' : ' ft';
+    const isDeep = depthM > 30;
+    const isCaution = depthM > 21 && depthM <= 30;
+    let rowClass = isDeep ? 'danger-row' : isCaution ? 'warn-row' : '';
+    let ndlClass = isDeep ? 'td-r' : isCaution ? 'td-o' : 'td-g';
+    const groupIdx = Math.min(PADI_GROUPS.length-1, Math.floor(i * PADI_GROUPS.length / depths.length));
+    const group = PADI_GROUPS[groupIdx];
+
+    const ndlDisplay = isBuh
+      ? `${buhNDLVal>=500?'500+':buhNDLVal} min <span style="color:var(--muted);font-size:10px;">(Rec: ${ndl}) GF ${mGF.low}/${mGF.high}</span>`
+      : `${ndl} min`;
+
+    tbody.innerHTML += `<tr class="${rowClass}">
+      <td><strong>${d}${dUnit}</strong></td>
+      <td class="${ndlClass}">${ndlDisplay}</td>
+      <td>${isBuh ? '—' : `<span class="group-badge">${group}</span>`}</td>
+      <td style="color:var(--muted);">60+ min recommended</td>
+    </tr>`;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// TISSUE VIZ (Bühlmann)
+// ═══════════════════════════════════════════════
+function updateTissueViz(tissues, gfH) {
+  const gfF = gfH/100;
+  const grid  = document.getElementById('tissueGrid');
+  const tbody = document.getElementById('tissueTableBody');
+  grid.innerHTML = ''; tbody.innerHTML = '';
+
+  tissues.forEach((pN2, i) => {
+    const [ht,a,b] = ZHL16C[i];
+    const mv  = a*gfF + SURFACE_P/b;
+    const pct = Math.min(100, Math.round((pN2/mv)*100));
+    const col = pct>=100?'var(--red)':pct>=85?'var(--orange)':pct>=70?'var(--yellow)':'var(--green)';
+    const tc  = pct>=100?'#ff7080':pct>=85?'#ff9a40':pct>=70?'#ffe060':'#70f0aa';
+    const status = pct>=100?'🔴 LIMIT':pct>=85?'🟠 HIGH':pct>=70?'🟡 MED':'🟢 OK';
+
+    const col_el = document.createElement('div');
+    col_el.className = 't-col';
+    col_el.innerHTML = `
+      <div class="t-bar-wrap"><div class="t-bar" style="height:${pct}%;background:${col};"></div></div>
+      <div class="t-num">C${i+1}</div>
+      <div class="t-pct" style="color:${tc}">${pct}%</div>`;
+    grid.appendChild(col_el);
+
+    tbody.innerHTML += `<tr>
+      <td>${i+1}</td><td>${ht}</td>
+      <td>${pN2.toFixed(3)}</td><td>${mv.toFixed(3)}</td>
+      <td style="color:${tc}">${pct}%</td><td>${status}</td>
+    </tr>`;
+  });
+  document.getElementById('tissueTableCard').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════
+// DECO SCHEDULE
+// ═══════════════════════════════════════════════
+function toggleDecoCustomO2(selectId, fieldId) {
+  const isCustom = document.getElementById(selectId).value === 'custom';
+  document.getElementById(fieldId).style.display = isCustom ? 'block' : 'none';
+}
+
+function getDecoGasFrac(selectId, customId) {
+  const mix = document.getElementById(selectId)?.value;
+  if (!mix || mix === 'none') return null;
+  if (mix === 'ean50')  return 0.50;  // fN2 = 50%
+  if (mix === 'ean80')  return 0.20;  // fN2 = 20%
+  if (mix === 'o2')     return 0.00;  // pure O2, fN2 = 0
+  if (mix === 'custom') {
+    const o2pct = parseFloat(document.getElementById(customId)?.value) || 50;
+    return (100 - Math.min(100, Math.max(21, o2pct))) / 100;
+  }
+  return null;
+}
+
+function getDecoGasLabel(selectId, customId) {
+  const mix = document.getElementById(selectId)?.value;
+  if (!mix || mix === 'none') return null;
+  if (mix === 'ean50')  return 'EAN 50';
+  if (mix === 'ean80')  return 'EAN 80';
+  if (mix === 'o2')     return '100% O₂';
+  if (mix === 'custom') return `EAN ${document.getElementById(customId)?.value || 50}`;
+  return null;
+}
+
+// Returns the best available gas at a given depth.
+// "Best" = lowest fN2 (highest O₂) whose floored ppO₂ at curDepthM is within
+// that gas's own ppO2 limit (determined by O2 fraction band via getPPO2Limit).
+// Switch depths are exact meters so gas switches happen precisely at the right ppO₂.
+function getActiveGas(curDepthM, bottomFN2, decoGases, getPPO2LimitFn, bottomLabel) {
+  let best = null;
+  for (const dg of decoGases) {
+    if (curDepthM > dg.depth) continue;
+    const limit = getPPO2LimitFn ? getPPO2LimitFn(dg.fN2) : 1.6;
+    const ppO2AtCur = floorPPO2((SURFACE_P + curDepthM * 0.1) * (1 - dg.fN2));
+    if (ppO2AtCur > limit) continue;
+    if (best === null || dg.fN2 < best.fN2) {
+      best = dg;
+    }
+  }
+  return best || { fN2: bottomFN2, label: bottomLabel || 'Bottom' };
+}
+
+// Truncate ppO2 to 1 decimal place (floor, not round) — 1.67 → 1.6
+function floorPPO2(val) {
+  return Math.floor(val * 10) / 10;
+}
+
+function ppO2Check(depthM, fN2) {
+  const o2frac = 1 - fN2;
+  return floorPPO2((SURFACE_P + depthM * 0.1) * o2frac).toFixed(1);
+}
+
+function runDecoSchedule() {
+  try {
+  const rawD   = parseFloat(document.getElementById('decoDepth').value) || 40;
+  const depthM = units === 'metric' ? rawD : rawD / 3.28084;
+  const bt     = parseInt(document.getElementById('decoBT').value) || 30;
+  const rate        = Math.max(1, parseInt(document.getElementById('ascentRate').value)  || 9);
+  const descentRate = Math.max(1, parseInt(document.getElementById('descentRate').value) || 22);
+  const gfH    = mGF.high / 100;
+  const ppo2High  = parseFloat(document.getElementById('ppo2High').value)  || 1.6; // 45–100% O2
+  const ppo2Mid   = parseFloat(document.getElementById('ppo2Mid').value)   || 1.5; // 28–44%  O2
+  const ppo2Low   = parseFloat(document.getElementById('ppo2Low').value)   || 1.4; // ≤28%    O2
+  const lastStop    = parseInt(document.getElementById('lastDecoStop').value) || 6;
+  const decoStep    = parseInt(document.getElementById('decoStep').value)     || 3;
+
+  // Returns the ppO2 limit for a given fN2 based on O2 fraction bands
+  function getPPO2Limit(fN2) {
+    const fO2pct = (1 - fN2) * 100;
+    if (fO2pct >= 45) return ppo2High;
+    if (fO2pct >= 28) return ppo2Mid;
+    return ppo2Low;
+  }
+
+  // Convenience: most permissive limit for colour coding thresholds in table
+  const maxPPO2 = Math.max(ppo2High, ppo2Mid, ppo2Low);
+
+  // Bottom gas
+  const bottomMix = document.getElementById('decoGas').value;
+  const bottomMixEl = document.getElementById('decoGas');
+  const bottomMixLabel = (bottomMixEl?.options[bottomMixEl?.selectedIndex]?.text || bottomMix).toUpperCase();
+  let bottomFN2;
+  if (bottomMix === 'custom') {
+    const o2 = parseFloat(document.getElementById('decoCustomO2')?.value) || 21;
+    bottomFN2 = (100 - Math.min(40, Math.max(21, o2))) / 100;
+  } else {
+    bottomFN2 = getN2Frac(bottomMix);
+  }
+
+  // ── Calculate optimal switch depth from ppO2 limit ──
+  // ppO2 = (SURFACE_P + depth * 0.1) * fO2  ≤  maxPPO2
+  // depth = (maxPPO2 / fO2 - SURFACE_P) / 0.1
+  function optimalSwitchDepth(fN2) {
+    const fO2 = 1 - fN2;
+    if (fO2 <= 0) return 0;
+    const limit = getPPO2Limit(fN2);
+    // Find deepest depth (1m resolution) where floor(ppO2*10)/10 <= limit
+    for (let d = 100; d >= 0; d--) {
+      const ppO2 = floorPPO2((SURFACE_P + d * 0.1) * fO2);
+      if (ppO2 <= limit) return d;
+    }
+    return 0;
+  }
+
+  // Deco gas 1
+  const dg1FN2   = getDecoGasFrac('dg1Mix', 'dg1CustomO2');
+  const dg1Label = getDecoGasLabel('dg1Mix', 'dg1CustomO2');
+  const dg1Depth = dg1FN2 !== null ? optimalSwitchDepth(dg1FN2) : null;
+
+  // Deco gas 2
+  const dg2FN2   = getDecoGasFrac('dg2Mix', 'dg2CustomO2');
+  const dg2Label = getDecoGasLabel('dg2Mix', 'dg2CustomO2');
+  const dg2Depth = dg2FN2 !== null ? optimalSwitchDepth(dg2FN2) : null;
+
+  // Update switch depth display fields
+  const dU = units === 'metric';
+  document.getElementById('dg1SwitchDepthDisplay').value =
+    dg1Depth !== null
+      ? (dU ? dg1Depth + ' m' : mToFt(dg1Depth) + ' ft') +
+        '  (ppO₂ ' + floorPPO2((SURFACE_P + dg1Depth * 0.1) * (1 - dg1FN2)).toFixed(1) + ')'
+      : '—';
+  document.getElementById('dg2SwitchDepthDisplay').value =
+    dg2Depth !== null
+      ? (dU ? dg2Depth + ' m' : mToFt(dg2Depth) + ' ft') +
+        '  (ppO₂ ' + floorPPO2((SURFACE_P + dg2Depth * 0.1) * (1 - dg2FN2)).toFixed(1) + ')'
+      : '—';
+
+  // Build sorted deco gases array (deepest first — getActiveGas takes last match = shallowest applicable)
+  const decoGases = [
+    dg1FN2 !== null ? { depth: dg1Depth, fN2: dg1FN2, label: dg1Label } : null,
+    dg2FN2 !== null ? { depth: dg2Depth, fN2: dg2FN2, label: dg2Label } : null,
+  ].filter(Boolean).sort((a, b) => b.depth - a.depth);
+
+  // Saturate tissues at depth for bottom time
+  let tissues = initTissues();
+
+  // Descent phase — saturate tissues as diver descends from surface to depthM
+  const descentTime = depthM / descentRate;
+  tissues = saturate(tissues, depthM / 2, descentTime, bottomFN2); // avg mid-depth for descent
+
+  // Bottom phase
+  tissues = saturate(tissues, depthM, bt, bottomFN2);
+
+  const steps = [];
+  let cur = depthM;
+  let rt  = descentTime + bt; // run time includes descent + bottom time
+
+  // ── Stop-based ascent engine ──
+  // 1. Candidate stop depths are every 3 m from bottom to lastStop (inclusive).
+  // 2. Travel between stops is instant (no tissue change during travel).
+  // 3. Deco is only held at stop depths until ceiling clears.
+  // 4. Gas is evaluated at each stop depth — best available gas wins.
+
+  // Build list of stop depths from current depth down to lastStop, step decoStep
+  const startStop = Math.ceil(cur / decoStep) * decoStep;
+  const stopDepths = [];
+  for (let d = startStop; d >= lastStop; d -= decoStep) {
+    stopDepths.push(d);
+  }
+  if (stopDepths[stopDepths.length - 1] !== lastStop) stopDepths.push(lastStop);
+
+  for (let si = 0; si < stopDepths.length; si++) {
+    const stopDepth = stopDepths[si];
+    const nextStop  = si + 1 < stopDepths.length ? stopDepths[si + 1] : 0;
+
+    // Travel from cur to stopDepth (instant — no tissue saturation during travel)
+    if (cur > stopDepth) {
+      const travelGas = getActiveGas(cur, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
+      const travelDur = (cur - stopDepth) / rate;
+      steps.push({
+        type: 'ascent', from: cur, to: stopDepth,
+        dur: travelDur, gas: travelGas.label,
+        pO2: ppO2Check(stopDepth, travelGas.fN2), fN2: travelGas.fN2
+      });
+      rt  += travelDur;
+      cur  = stopDepth;
+    }
+
+    // Select best gas available at this stop depth
+    const stopGas  = getActiveGas(cur, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
+    const stopFN2  = stopGas.fN2;
+    const gasLabel = stopGas.label;
+
+    // Must stop here if ceiling is deeper than the NEXT stop level —
+    // i.e. we cannot yet ascend to the next shallower stop
+    const ceil     = ceiling(tissues, gfH);
+    const mustStop = ceil > nextStop + 0.1;
+
+    if (mustStop) {
+      // Deco stop: hold until ceiling clears enough to proceed to next stop
+      let stopT = 0;
+      while (ceiling(tissues, gfH) > nextStop + 0.1 && stopT < 180) {
+        tissues = saturate(tissues, cur, 1, stopFN2);
+        stopT++; rt++;
+      }
+      // At 21 m and deeper: record all stops regardless of duration
+      // Shallower than 21 m: only record stop if it lasted more than 1 min
+      const recordStop = stopT > 0 && (cur >= 21 || stopT > 1);
+      if (recordStop) {
+        steps.push({ type: 'deco', depth: cur, dur: stopT, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+      }
+    } else if (cur === lastStop) {
+      // Last stop — always hold (safety or mandatory minimum)
+      const isDecoNeeded = steps.some(s => s.type === 'deco');
+      const stopType = isDecoNeeded ? 'deco' : 'safety';
+      let stopT = 0;
+      if (isDecoNeeded) {
+        // Clear any remaining ceiling, minimum 1 min
+        while (ceiling(tissues, gfH) > 0.1 && stopT < 180) {
+          tissues = saturate(tissues, cur, 1, stopFN2);
+          stopT++; rt++;
+        }
+        if (stopT === 0) { tissues = saturate(tissues, cur, 1, stopFN2); stopT = 1; rt++; }
+      } else {
+        // Safety stop — 3 min
+        stopT = 3;
+        tissues = saturate(tissues, cur, stopT, stopFN2);
+        rt += stopT;
+      }
+      steps.push({ type: stopType, depth: cur, dur: stopT, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+    }
+    // No stop needed and not lastStop — continue ascending
+  }
+
+  // Collapse consecutive ascent steps with the same gas into single rows
+  const collapsed = [];
+  for (const s of steps) {
+    const prev = collapsed[collapsed.length - 1];
+    if (s.type === 'ascent' && prev && prev.type === 'ascent' && prev.gas === s.gas) {
+      prev.to   = s.to;
+      prev.dur += s.dur;
+      prev.pO2  = s.pO2; // keep last ppO2
+    } else {
+      collapsed.push({ ...s });
+    }
+  }
+
+  const decoStops = collapsed.filter(s => s.type === 'deco');
+  const decoTime  = decoStops.reduce((a, s) => a + s.dur, 0);
+  const hasDeco   = decoStops.length > 0;
+  const gasUsed   = [...new Set(collapsed.map(s => s.gas))];
+  // Build gas info row with real values: label @ switch depth — O₂%
+  const bottomO2pct  = Math.round((1 - bottomFN2) * 100);
+  const bottomGasTag = `<span style="background:rgba(0,200,255,0.1);border:1px solid var(--accent);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--accent);">Bottom: ${bottomMixLabel} — ${bottomO2pct}% O₂ @ surface→${dU ? rawD+'m' : mToFt(rawD)+'ft'}</span>`;
+  const decoGasTags  = decoGases.map(dg => {
+    const o2pct = Math.round((1 - dg.fN2) * 100);
+    const depthDisp = dU ? dg.depth + ' m' : mToFt(dg.depth) + ' ft';
+    return `<span style="background:rgba(38,208,124,0.1);border:1px solid var(--green);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">Deco: ${dg.label.toUpperCase()} — ${o2pct}% O₂ @ ${depthDisp}</span>`;
+  }).join(' ');
+
+  document.getElementById('decoSummary').innerHTML = `
+    <div class="stats" style="margin-top:0;">
+      <div class="stat"><div class="stat-val">${rawD} m</div><div class="stat-lbl">Depth</div></div>
+      <div class="stat"><div class="stat-val">${bt} min</div><div class="stat-lbl">Bottom Time</div></div>
+      <div class="stat"><div class="stat-val" style="font-size:13px;">${bottomMixLabel}</div><div class="stat-lbl">Bottom Gas</div></div>
+      <div class="stat"><div class="stat-val ${hasDeco?'o':'g'}">${decoTime} min</div><div class="stat-lbl">Deco Time</div></div>
+      <div class="stat"><div class="stat-val">${Math.round(rt)} min</div><div class="stat-lbl">Total Run Time</div></div>
+      <div class="stat"><div class="stat-val">${mGF.low}/${mGF.high}</div><div class="stat-lbl">GF Low/High</div></div>
+      <div class="stat"><div class="stat-val">${lastStop} m</div><div class="stat-lbl">Last Stop</div></div>
+      <div class="stat"><div class="stat-val">${decoStep} m</div><div class="stat-lbl">Step Size</div></div>
+    </div>
+    ${decoGases.length > 0 || true ? `<div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      ${bottomGasTag} ${decoGasTags}
+    </div>` : ''}
+    ${hasDeco
+      ? '<div class="alert deco" style="margin-top:10px;"><span>🟣</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
+      : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}`;
+
+  const tbody = document.getElementById('decoTableBody');
+  const descentTimeMin = Math.round((depthM / descentRate) * 10) / 10;
+
+  tbody.innerHTML = '';
+  let prevGas = bottomMixLabel;
+  let rowRT = 0;
+
+  // CNS% helper for a given ppO2 and duration
+  function rowCNS(ppo2, dur) {
+    const key = Math.round(ppo2 * 10);
+    if (key < 6 || ppo2 <= 0.5) return '—';
+    const limits = {6:720,7:570,8:450,9:360,10:300,11:240,12:210,13:180,14:150,15:120,16:45};
+    const lo = Math.floor(ppo2*10), hi = lo+1;
+    const vLo = limits[lo]||0, vHi = limits[hi]||0;
+    const lim = vLo + (vHi-vLo)*(ppo2*10-lo);
+    if (lim <= 0) return '>100%';
+    const pct = (dur/lim)*100;
+    return pct.toFixed(1)+'%';
+  }
+
+  // ── DESCENT ROW ──
+  rowRT += descentTimeMin;
+  const descentPPO2 = ((rawD/2/10+1)*(1-bottomFN2)).toFixed(2); // avg depth ppO2
+  tbody.innerHTML += `<tr class="asc-row" data-phase="descent">
+    <td><span style="font-size:18px;color:#ff8080;">↓</span> <span style="font-size:11px;color:#ff8080;letter-spacing:1px;">DESCENT</span></td>
+    <td data-label="Depth" style="color:#ff8080;">0 → ${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
+    <td data-label="Stop" style="color:#ff8080;">${descentTimeMin} min</td>
+    <td data-label="Run" style="color:#ff8080;">${Math.round(rowRT)} min</td>
+    <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
+    <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
+    <td data-label="CNS%" style="color:var(--muted);">${rowCNS(parseFloat(descentPPO2), descentTimeMin)}</td>
+  </tr>`;
+
+  // ── BOTTOM ROW ──
+  rowRT += bt;
+  const btPPO2 = ((rawD/10+1)*(1-bottomFN2)).toFixed(2);
+  const btCNS  = rowCNS(parseFloat(btPPO2), bt);
+  tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">
+    <td>🔵 <span style="font-size:11px;color:var(--accent);letter-spacing:1px;">BOTTOM</span></td>
+    <td data-label="Depth" style="color:var(--accent);">${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
+    <td data-label="Stop" style="color:var(--accent);">${bt} min</td>
+    <td data-label="Run" style="color:var(--accent);">${Math.round(rowRT)} min</td>
+    <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
+    <td data-label="PPO2" style="color:var(--muted);">${btPPO2}</td>
+    <td data-label="CNS%" style="color:var(--muted);">${btCNS}</td>
+  </tr>`;
+
+  collapsed.forEach(s => {
+    const pO2Val   = parseFloat(s.pO2);
+    const gasLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
+    const pO2Color = pO2Val > gasLimit ? 'color:var(--red);font-weight:700;' : pO2Val > gasLimit * 0.97 ? 'color:var(--orange);' : 'color:var(--muted);';
+    const stepDur  = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
+    rowRT += stepDur;
+    const rtDisp = Math.round(rowRT) + ' min';
+
+    // ── GAS SWITCH ROW ──
+    if (s.gas !== prevGas && s.gas !== bottomMixLabel) {
+      const isO2     = s.fN2 === 0;
+      const swColor  = isO2 ? 'var(--accent)' : 'var(--green)';
+      const swBg     = isO2 ? 'rgba(0,200,255,0.1)' : 'rgba(38,208,124,0.1)';
+      const swBorder = isO2 ? 'var(--accent)' : 'var(--green)';
+      const switchDepth = s.type === 'deco' ? s.depth : s.from;
+      const switchDepthDisp = dU ? switchDepth + ' m' : mToFt(switchDepth) + ' ft';
+      const switchPpO2 = ppO2Check(switchDepth, s.fN2);
+      const sppVal = parseFloat(switchPpO2);
+      const switchLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
+      const sppColor = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);' : `color:${swColor};`;
+      tbody.innerHTML += `<tr style="background:${swBg};">
+        <td colspan="6" style="color:${swColor};font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:9px 10px;">
+          ⇄ <strong>${s.gas.toUpperCase()}</strong> &nbsp;·&nbsp; at ${switchDepthDisp} &nbsp;·&nbsp; <span style="${sppColor}">ppO₂ ${switchPpO2}</span>
+        </td>
+      </tr>`;
+    }
+    prevGas = s.gas;
+
+    const gasColor = s.type === 'deco'
+      ? 'var(--red)'
+      : s.fN2 === 0 ? 'var(--accent)' : 'var(--green)';
+
+    // ── DECO STOP ROW ──
+    if (s.type === 'deco') {
+      const cnsPct = rowCNS(pO2Val, stepDur);
+      const cnsColor = parseFloat(cnsPct) > 80 ? 'color:var(--red);font-weight:700;' : parseFloat(cnsPct) > 40 ? 'color:var(--yellow);' : 'color:var(--muted);';
+      tbody.innerHTML += `<tr class="deco-row" data-phase="deco">
+        <td>🔴 <span style="font-size:11px;letter-spacing:1px;">DECO STOP</span></td>
+        <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
+        <td data-label="Stop" style="color:var(--red);">${s.dur} min</td>
+        <td data-label="Run">${rtDisp}</td>
+        <td data-label="Mix" style="color:var(--red);">${s.gas.toUpperCase()}</td>
+        <td data-label="PPO2" style="${pO2Color}">${s.pO2}</td>
+        <td data-label="CNS%" style="${cnsColor}">${cnsPct}</td>
+      </tr>`;
+    // ── SAFETY STOP ROW ──
+    } else if (s.type === 'safety') {
+      const cnsPct = rowCNS(pO2Val, stepDur);
+      tbody.innerHTML += `<tr class="safe-row" data-phase="safety">
+        <td>🟢 <span style="font-size:11px;letter-spacing:1px;">SAFETY STOP</span></td>
+        <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
+        <td data-label="Stop" style="color:var(--green);">${stepDur} min</td>
+        <td data-label="Run">${rtDisp}</td>
+        <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
+        <td data-label="PPO2" style="color:var(--muted);">${s.pO2||'—'}</td>
+        <td data-label="CNS%" style="color:var(--muted);">${cnsPct}</td>
+      </tr>`;
+    // ── ASCENT ROW ──
+    } else {
+      const cnsPct = rowCNS(pO2Val, stepDur);
+      tbody.innerHTML += `<tr class="asc-row" data-phase="ascent">
+        <td><span style="font-size:18px;color:#80e0a0;">↑</span> <span style="font-size:11px;color:#80e0a0;letter-spacing:1px;">ASCENT</span></td>
+        <td data-label="Depth" style="color:#80e0a0;">${dU ? s.from+' m' : mToFt(s.from)+' ft'} → ${dU ? s.to+' m' : mToFt(s.to)+' ft'}</td>
+        <td data-label="Stop" style="color:#80e0a0;">${typeof s.dur === 'number' ? s.dur.toFixed(1) : s.dur} min</td>
+        <td data-label="Run" style="color:#80e0a0;">${rtDisp}</td>
+        <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
+        <td data-label="PPO2" style="${pO2Color}">${s.pO2}</td>
+        <td data-label="CNS%" style="color:var(--muted);">${cnsPct}</td>
+      </tr>`;
+    }
+  });
+
+  // ── Update Tissue Saturation tab with final deco tissues ──
+  lastTissues = tissues;
+  updateTissueViz(tissues, mGF.high);
+
+  document.getElementById('decoResult').style.display = 'block';
+  setTimeout(drawDecoProfile, 30);
+  } catch(err) {
+    document.getElementById('decoSummary').innerHTML = `<div class="alert dang"><span>⚠</span><div><strong>Error:</strong> ${err.message}</div></div>`;
+    document.getElementById('decoResult').style.display = 'block';
+  }
+}
+// ═══════════════════════════════════════════════
+// MULTI DIVE
+// ═══════════════════════════════════════════════
+const DEFAULT_DEPTHS_M  = ['','','',''];
+const DEFAULT_DEPTHS_FT = ['','','',''];
+
+function buildDiveBlocks() {
+  const isM = multiUnits === 'metric';
+  const dU  = isM ? 'm' : 'ft';
+  const defs = isM ? DEFAULT_DEPTHS_M : DEFAULT_DEPTHS_FT;
+  const dBTs = ['','','',''];
+  const dSIs = ['60','60','60','60'];
+  const showGas = algo === 'buh';
+
+  let html = '';
+  for (let i = 0; i < diveCount; i++) {
+    html += `<div class="dive-block">
+      <div class="dive-hdr">
+        <span class="dive-num">${i+1}</span>
+        <span class="dive-hdr-lbl">DIVE ${i+1}</span>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label class="mDLbl">Depth (${dU})</label>
+          <input type="number" class="mDepth" id="mD${i}" value="${defs[i]}" min="${isM?1:3}" max="${isM?100:330}" step="1">
+        </div>
+        <div class="field"><label>Bottom Time (min)</label>
+          <input type="number" class="mBT" id="mBT${i}" value="${dBTs[i]}" min="1" max="300" step="1">
+        </div>
+        ${showGas ? `<div class="field"><label>Gas Mix</label>
+          <select class="mGas" id="mGas${i}">
+            <option value="air">Air (21%)</option><option value="ean32">EAN 32</option><option value="ean36">EAN 36</option>
+          </select></div>` : ''}
+      </div>
+    </div>`;
+    if (i < diveCount-1) {
+      html += `<div class="si-connector">
+        <div class="si-line"></div>
+        <div class="si-inner">
+          <label>Surface Interval</label>
+          <input type="number" id="mSI${i}" value="${dSIs[i] || '60'}" min="10" max="1440" step="10">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);">min</span>
+        </div>
+        <div class="si-line"></div>
+      </div>`;
+    }
+  }
+  document.getElementById('diveBlocks').innerHTML = html;
+}
+
+function setDiveCount(n) {
+  diveCount = n;
+  [2,3,4].forEach(i => document.getElementById('dc'+i).classList.toggle('active', i===n));
+  buildDiveBlocks();
+}
+
+function runMulti() {
+  try {
+  const isM = multiUnits === 'metric';
+  const isBuh = algo === 'buh';
+  const gfHF = mGF.high/100;
+  const gfLF = mGF.low/100;
+
+  let tissues = isBuh ? initTissues() : initTissues(); // always track tissues for RNT
+  let cardsHTML = '', warnings = '', allSafe = true, anyDeco = false;
+
+  for (let i = 0; i < diveCount; i++) {
+    const rawD  = parseFloat(document.getElementById('mD'+i).value)||20;
+    const depthM = isM ? rawD : rawD/3.28084;
+    const bt    = parseInt(document.getElementById('mBT'+i).value)||20;
+    const mix   = isBuh ? document.getElementById('mGas'+i).value : 'air';
+    const fN2   = getN2Frac(mix);
+    const dDisp = isM ? rawD+' m' : rawD+' ft';
+
+    let ndl, ceil=0, sat=0, safe=false, group='';
+
+    if (isBuh) {
+      ndl  = buhNDL(depthM, fN2, mGF.low, mGF.high);
+      tissues = saturate(tissues, depthM, bt, fN2);
+      ceil = ceiling(tissues, gfHF);
+      sat  = maxSatPct(tissues, mGF.high);
+      safe = bt <= ndl && ceil <= 0;
+    } else {
+      // Rec mode: use Bühlmann tissue model internally for RNT, but report NDL from tables
+      const rawNDL = padiNDL(depthM);
+      tissues = saturate(tissues, depthM, bt, FN2_AIR);
+      // Residual nitrogen time: how many extra minutes of tissue loading we carry
+      const rnt = Math.max(0, Math.round(buhNDL(depthM, FN2_AIR, 50, 100) - rawNDL) * 0);
+      ndl   = rawNDL;
+      group = padiGroup(depthM, bt);
+      safe  = bt <= ndl;
+    }
+
+    if (!safe) allSafe = false;
+    if (ceil > 0) anyDeco = true;
+
+    const pct = Math.min(100, Math.round((bt/ndl)*100));
+    const bc  = pct>=100?'var(--red)':pct>=85?'var(--orange)':pct>=70?'var(--yellow)':'var(--green)';
+    const cc  = ceil>0?'c-deco':!safe?'c-dang':pct>=85?'c-warn':'c-ok';
+    const icon = ceil>0?'🟣':!safe?'⚠':pct>=85?'⚡':'✓';
+
+    const extraStats = isBuh
+      ? `<div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:18px; color:${sat>=100?'var(--red)':sat>=85?'var(--orange)':'var(--green)'};">${sat}%</div><div class="stat-lbl">Max Sat</div></div>
+         <div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:18px; color:${ceil>0?'var(--red)':'var(--green)'};">${ceil>0?Math.ceil(ceil)+' m':'0 m'}</div><div class="stat-lbl">Ceiling</div></div>`
+      : `<div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:22px;"><span class="group-badge">${group}</span></div><div class="stat-lbl">Group After</div></div>`;
+
+    cardsHTML += `<div class="result-card ${cc}">
+      <div class="rc-hdr">
+        <div class="rc-title"><span class="dive-num">${i+1}</span>DIVE ${i+1}</div>
+        <span>${icon}</span>
+      </div>
+      <div class="stats" style="margin-top:0;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;">
+        <div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:18px;">${dDisp}</div><div class="stat-lbl">Depth</div></div>
+        <div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:18px;">${bt}</div><div class="stat-lbl">BT (min)</div></div>
+        <div class="stat" style="padding:10px;"><div class="stat-val" style="font-size:18px;color:${ndl>=400?'var(--green)':'var(--accent)'};">${ndl>=400?'400+':ndl}</div><div class="stat-lbl">NDL (min)</div></div>
+        ${extraStats}
+      </div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;"><span>NDL USAGE</span><span>${pct}%</span></div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc};"></div></div>
+      </div>
+      ${ceil>0?`<div class="alert deco" style="margin-top:8px;padding:8px 12px;font-size:11px;"><span>🟣</span><div>Deco ceiling ${Math.ceil(ceil)} m after this dive.</div></div>`:''}
+      ${!safe&&ceil<=0?`<div class="alert dang" style="margin-top:8px;padding:8px 12px;font-size:11px;"><span>⚠</span><div>NDL exceeded by ${bt-ndl} min.</div></div>`:''}
+    </div>`;
+
+    // Surface interval strip
+    if (i < diveCount-1) {
+      const siMins = parseInt(document.getElementById('mSI'+i).value)||60;
+      const siHrs  = Math.floor(siMins/60);
+      const siRem  = siMins%60;
+      const siStr  = siHrs>0?`${siHrs}h${siRem>0?' '+siRem+'m':''}`:`${siMins} min`;
+
+      let clearText = '';
+      let recommendedSI = '';
+      
+      if (isBuh) {
+        tissues = saturate(tissues, 0, siMins, fN2);
+        const ceilAfter = ceiling(tissues, gfHF);
+        clearText = ceilAfter>0.5
+          ? `<span style="color:var(--orange);">⚠ Ceiling still ${Math.ceil(ceilAfter)} m</span>`
+          : `<span style="color:var(--green);">✓ Cleared</span>`;
+      } else {
+        // Rec mode — calculate recommended SI based on PADI RDP pressure groups
+        tissues = saturate(tissues, 0, siMins, FN2_AIR);
+        
+        // Get current dive pressure group after this dive
+        const currentGroup = group;
+        
+        // Get next dive depth if available
+        const nextDepthVal = i < diveCount-1 ? parseFloat(document.getElementById('mD'+(i+1)).value)||20 : 20;
+        const nextDepthM = isM ? nextDepthVal : nextDepthVal/3.28084;
+        const nextNDL = padiNDL(nextDepthM);
+        
+        // PADI RDP: given a pressure group and desired next dive depth,
+        // find minimum SI so that Adjusted No-Decompression Limit for next dive is safe
+        // Approximation: each SI minute reduces pressure group slightly
+        // Conservative estimate: need SI such that residual nitrogen + new dive doesn't exceed NDL
+        
+        // Pressure group off-gas rates (min to drop one group, approximate)
+        const groupOffGasTime = {
+          'A': 10,  'B': 12,  'C': 15,  'D': 18,  'E': 22,  'F': 25,  'G': 30,
+          'H': 35,  'I': 40,  'J': 50,  'K': 60,  'L': 70,  'M': 80,  'N': 100,
+          'O': 110, 'P': 130, 'Q': 150, 'R': 170, 'S': 200, 'T': 240, 'U': 300,
+          'V': 360, 'W': 450, 'X': 600, 'Y': 800, 'Z': 1200
+        };
+        
+        // Simplified algorithm: for given next depth, recommend SI to get to a safe pressure group
+        let minSI = 10; // absolute minimum
+        if (currentGroup && currentGroup !== 'Z') {
+          // For deeper next dives, need to off-gas more (longer SI)
+          const depthPenalty = nextDepthM > 30 ? 25 : nextDepthM > 21 ? 15 : nextDepthM > 12 ? 5 : 0;
+          const groupIndex = currentGroup.charCodeAt(0) - 65; // A=0...Z=25
+          
+          // Conservative: assume we need to drop at least 2 groups before next dive
+          // Each group drop takes roughly groupOffGasTime[group] minutes
+          if (groupIndex >= 2) {
+            minSI = (groupOffGasTime[currentGroup] || 10) + depthPenalty;
+          } else {
+            minSI = 10 + depthPenalty;
+          }
+          
+          // Cap at reasonable maximum for this scenario
+          minSI = Math.min(minSI, 600);
+        }
+        
+        const siAdequate = siMins >= minSI;
+        const siStatus = siAdequate 
+          ? `<span style="color:var(--green);">✓ Adequate (${minSI} min recommended for ${Math.round(nextDepthM)}m dive)</span>`
+          : `<span style="color:var(--orange);">⚠ Recommend ${minSI - siMins} more min (total ${minSI} min)</span>`;
+        
+        clearText = siStatus;
+        recommendedSI = `<div style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">
+          After dive: <strong style="color:var(--accent);">Group ${currentGroup}</strong> · 
+          Next dive depth: <strong>${Math.round(nextDepthM)}m</strong> · 
+          Recommended SI: <strong>${minSI} min</strong>
+        </div>`;
+      }
+
+      cardsHTML += `<div class="si-strip">
+        <span>⏱</span>
+        <strong style="color:var(--text);">SI: ${siStr}</strong>
+        <span style="margin-left:auto;">${clearText}</span>
+        ${recommendedSI}
+      </div>`;
+    }
+  }
+
+  if (allSafe)  warnings += `<div class="alert ok"><span>✓</span><div><strong>ALL DIVES WITHIN LIMITS.</strong> Perform 3 min safety stop at 5 m on every dive.</div></div>`;
+  if (anyDeco)  warnings += `<div class="alert deco"><span>🟣</span><div><strong>DECOMPRESSION OBLIGATION</strong> on one or more dives. Mandatory stops must not be skipped.</div></div>`;
+  if (diveCount>=3) warnings += `<div class="alert warn"><span>⚡</span><div><strong>${diveCount}-DIVE DAY:</strong> Cumulative nitrogen load is significant. Always dive deepest first and allow full surface intervals.</div></div>`;
+
+  document.getElementById('multiCards').innerHTML = cardsHTML;
+  document.getElementById('multiWarnings').innerHTML = warnings;
+  document.getElementById('multiResult').style.display = 'block';
+  } catch(err) {
+    document.getElementById('multiCards').innerHTML = `<div class="alert dang"><span>⚠</span><div><strong>Error:</strong> ${err.message}</div></div>`;
+    document.getElementById('multiResult').style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// REFERENCE TABLE
+// ═══════════════════════════════════════════════
+(function buildBuhRef() {
+  const speeds = ['Fast','Fast','Fast','Fast','Med','Med','Med','Med','Slow','Slow','Slow','Slow','V.Slow','V.Slow','V.Slow','V.Slow'];
+  const tbody = document.getElementById('buhRefBody');
+  ZHL16C.forEach(([ht,a,b],i) => {
+    tbody.innerHTML += `<tr><td>${i+1}</td><td>${ht}</td><td>${a}</td><td>${b}</td><td>${speeds[i]}</td></tr>`;
+  });
+})();
+
+// ═══════════════════════════════════════════════
+// BUBBLES (PADI mode)
+// ═══════════════════════════════════════════════
+function spawnBubbles() {
+  const c = document.getElementById('bubbles');
+  for (let i=0; i<35; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random()*8+4;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:-20px;animation-duration:${Math.random()*18+14}s;animation-delay:${Math.random()*8}s;`;
+    c.appendChild(b);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+spawnBubbles();
+renderNDLTable();
+buildDiveBlocks();
+
+// ═══════════════════════════════════════════════
+// PWA — MANIFEST + ICON + SERVICE WORKER
+// ═══════════════════════════════════════════════
+(function initPWA() {
+  // Generate SVG icon as data URL
+  const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="100" fill="#000000"/>
+    <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+    <defs>
+      <radialGradient id="bg" cx="30%" cy="70%" r="80%">
+        <stop offset="0%" stop-color="#0d4080"/>
+        <stop offset="100%" stop-color="#000000"/>
+      </radialGradient>
+    </defs>
+    <!-- Diver silhouette -->
+    <text x="256" y="300" font-size="220" text-anchor="middle" fill="#00d9ff" opacity="0.95">🤿</text>
+    <!-- App name -->
+    <text x="256" y="390" font-family="Arial,sans-serif" font-size="48" font-weight="bold"
+      text-anchor="middle" fill="#00d9ff" letter-spacing="4">DIVE</text>
+    <text x="256" y="440" font-family="Arial,sans-serif" font-size="36"
+      text-anchor="middle" fill="#7ac8e0" letter-spacing="3">PLANNER</text>
+    <!-- Glowing ring -->
+    <circle cx="256" cy="256" r="230" fill="none" stroke="#00d9ff" stroke-width="6" opacity="0.2"/>
+  </svg>`;
+
+  const iconURL = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(iconSVG)));
+
+  // Set favicon and apple touch icon
+  document.getElementById('faviconSVG').href = iconURL;
+  document.getElementById('appleTouchIcon').href = iconURL;
+
+  // Inject Web App Manifest as blob URL
+  const manifest = {
+    name: 'LSP D-Planner',
+    short_name: 'Dive Planner',
+    description: 'Recreational NDL tables and Bühlmann ZH-L16C decompression planner',
+    start_url: '.',
+    display: 'standalone',
+    orientation: 'portrait-primary',
+    background_color: '#030c18',
+    theme_color: '#030c18',
+    categories: ['sports', 'utilities'],
+    icons: [
+      { src: iconURL, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: iconURL, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  document.getElementById('pwaManifest').href = URL.createObjectURL(manifestBlob);
+
+  // Register service worker for offline support
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE = 'dive-planner-v1';
+const ASSETS = [self.location.href];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() =>
+      caches.match(self.location.href)
+    ))
+  );
+});`;
+
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL  = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL, { scope: './' })
+      .then(() => console.log('[PWA] Service worker registered'))
+      .catch(e => console.warn('[PWA] SW registration failed:', e));
+  }
+
+  // Show install prompt banner
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBanner();
+  });
+
+  function showInstallBanner() {
+    if (document.getElementById('installBanner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'installBanner';
+    banner.innerHTML = `
+      <div style="
+        position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+        background: var(--surface);
+        border:1px solid var(--border-hi); border-radius:12px;
+        padding:14px 20px; display:flex; align-items:center; gap:14px;
+        z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.3);
+        font-family:'Outfit',sans-serif; max-width:340px; width:90%;
+      ">
+        <span style="font-size:28px;">🤿</span>
+        <div style="flex:1;">
+          <div style="color: var(--text); font-weight:600;font-size:14px;">Install Dive Planner</div>
+          <div style="color: var(--muted); font-size:12px;margin-top:2px;">Add to home screen for offline use</div>
+        </div>
+        <button onclick="installPWA()" style="
+          background:linear-gradient(135deg,#00d9ff,#00b8a0);
+          border:none; border-radius:8px; padding:8px 14px;
+          color:#030c18; font-weight:700; font-size:12px; cursor:pointer;
+          font-family:'Outfit',sans-serif; letter-spacing:0.5px;
+        ">INSTALL</button>
+        <button onclick="this.closest('#installBanner').remove()" style="
+          background:none; border:none; color: var(--muted); font-size:20px;
+          cursor:pointer; padding:0; line-height:1;
+        ">×</button>
+      </div>`;
+    document.body.appendChild(banner);
+  }
+
+  window.exportDecoSchedule = function() {
+    try {
+      // Get all the dive parameters
+      const depthVal = document.getElementById('decoDepth').value;
+      const btVal = document.getElementById('decoBT').value;
+      const bottomGasVal = document.getElementById('decoGas').value;
+      const ascentRateVal = document.getElementById('ascentRate').value;
+      const descentRateVal = document.getElementById('descentRate').value;
+      const gfVal = `${mGF.low}/${mGF.high}`;
+      const lastStopVal = document.getElementById('lastDecoStop').value;
+      const decoStepVal = document.getElementById('decoStep').value;
+      
+      // Get summary stats
+      const summaryText = document.getElementById('decoSummary').innerText;
+      
+      // Get table rows
+      const tableBody = document.getElementById('decoTableBody');
+      const rows = tableBody.querySelectorAll('tr');
+      
+      let exportText = '═══════════════════════════════════════════\n';
+      exportText += 'DIVE PLANNER - DECOMPRESSION SCHEDULE\n';
+      exportText += '═══════════════════════════════════════════\n\n';
+      
+      // Add timestamp
+      const now = new Date();
+      exportText += `Generated: ${now.toLocaleString()}\n\n`;
+      
+      // Add dive parameters
+      exportText += '━━━ DIVE PARAMETERS ━━━\n';
+      exportText += `Depth: ${depthVal} m\n`;
+      exportText += `Bottom Time: ${btVal} min\n`;
+      exportText += `Bottom Gas: ${bottomGasVal}\n`;
+      exportText += `Descent Rate: ${descentRateVal} m/min\n`;
+      exportText += `Ascent Rate: ${ascentRateVal} m/min\n`;
+      exportText += `GF Low/High: ${gfVal}\n`;
+      exportText += `Last Stop: ${lastStopVal} m\n`;
+      exportText += `Step Size: ${decoStepVal} m\n\n`;
+      
+      // Add summary info
+      exportText += '━━━ DIVE SUMMARY ━━━\n';
+      exportText += summaryText.replace(/Deco Stops|Deco Time|Descent|Bottom Time|Total Run Time|ppO₂ Limits|Last Stop|Step Size/g, '\n$&').trim() + '\n\n';
+      
+      // Add ascent table
+      exportText += '━━━ ASCENT SCHEDULE ━━━\n';
+      exportText += 'Phase        | Depth      | Duration | Run Time | Type       | Gas\n';
+      exportText += '─────────────┼────────────┼──────────┼──────────┼────────────┼──────────────\n';
+      
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length > 0) {
+          const rowText = Array.from(cells).map((cell, idx) => {
+            const text = cell.innerText.trim().replace(/[↑🟣🟢]/g, '').trim();
+            if (idx === 0) return text.padEnd(12);
+            if (idx === 1) return text.padEnd(11);
+            if (idx === 2) return text.padEnd(9);
+            if (idx === 3) return text.padEnd(9);
+            if (idx === 4) return text.padEnd(11);
+            return text;
+          }).join('| ');
+          exportText += rowText + '\n';
+        }
+      });
+      
+      exportText += '\n═══════════════════════════════════════════\n';
+      exportText += '⚠️  IMPORTANT REMINDERS ⚠️\n';
+      exportText += '═══════════════════════════════════════════\n';
+      exportText += '• Do NOT skip mandatory decompression stops\n';
+      exportText += '• Check ppO₂ before each gas switch\n';
+      exportText += '• Never exceed your certification depth\n';
+      exportText += '• Plan conservatively - never dive the tables exactly\n';
+      exportText += '• Carry 3+ min of reserve gas\n';
+      exportText += '• Use your dive computer for backup planning\n';
+      exportText += '• Stop immediately if you feel unwell\n\n';
+      exportText += 'Dive Safe! 🤿\n';
+      
+      // Create blob and download
+      const blob = new Blob([exportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dive-plan-${now.toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      // Show success message
+      alert('✅ Dive plan exported successfully!');
+    } catch(err) {
+      alert('❌ Export failed: ' + err.message);
+    }
+  };
+
+  window.installPWA = async function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('installBanner')?.remove();
+  };
+
+  // iOS — show manual instructions since iOS doesn't support beforeinstallprompt
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isStandalone) {
+    setTimeout(() => {
+      const banner = document.createElement('div');
+      banner.id = 'installBanner';
+      banner.innerHTML = `
+        <div style="
+          position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+          background: var(--surface);
+          border:1px solid var(--border-hi); border-radius:12px;
+          padding:14px 20px; display:flex; align-items:center; gap:12px;
+          z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.6);
+          font-family:'Outfit',sans-serif; max-width:340px; width:90%;
+        ">
+          <span style="font-size:24px;">🤿</span>
+          <div style="flex:1;">
+            <div style="color: var(--text); font-weight:600;font-size:13px;">Install on iPhone</div>
+            <div style="color: var(--muted); font-size:11px;margin-top:3px;">Tap <strong style="color: var(--accent);">Share ↑</strong> then <strong style="color: var(--accent);">Add to Home Screen</strong></div>
+          </div>
+          <button onclick="this.closest('#installBanner').remove()" style="
+            background:none; border:none; color: var(--muted); font-size:20px;
+            cursor:pointer; padding:0; line-height:1;
+          ">×</button>
+        </div>`;
+      document.body.appendChild(banner);
+    }, 2000);
+  }
+})();
+
+// ═══════════════════════════════════════════════
+// CNS OXYGEN TOXICITY CALCULATOR
+// ═══════════════════════════════════════════════
+
+// NOAA CNS single-dive limits (min) keyed by ppO2 (x10 for integer key)
+const CNS_LIMITS = {
+  6: 720, 7: 570, 8: 450, 9: 360,
+  10: 300, 11: 240, 12: 210, 13: 180,
+  14: 150, 15: 120, 16: 45
+};
+
+function getCNSLimit(ppo2) {
+  const key = Math.round(ppo2 * 10);
+  if (key < 6) return Infinity;
+  if (key > 16) return 0;
+  // Interpolate between table entries
+  const lo = Math.floor(ppo2 * 10);
+  const hi = lo + 1;
+  const vLo = CNS_LIMITS[lo] || 0;
+  const vHi = CNS_LIMITS[hi] || 0;
+  const frac = ppo2 * 10 - lo;
+  return vLo + (vHi - vLo) * frac;
+}
+
+// ═══════════════════════════════════════════════
+// DIVE PROFILE GRAPH
+// ═══════════════════════════════════════════════
+
+function drawDiveProfile(canvasId, waypoints, opts) {
+  // waypoints: [{t, depth, type, label, ppo2, cns}]
+  // opts: { maxDepth, totalTime, isLight }
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PAD = { top: 20, right: 20, bottom: 40, left: 52 };
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top - PAD.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const isLight  = opts?.isLight ?? document.body.classList.contains('light-theme');
+  const maxDepth = (opts?.maxDepth || 10) * 1.15;
+  const totalTime = opts?.totalTime || 60;
+
+  const bg      = isLight ? '#eff3f8' : '#0a1828';
+  const grid    = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
+  const text    = isLight ? '#1a1a1a' : '#d8eef8';
+  const muted   = isLight ? '#888' : '#3e6882';
+  const accent  = '#00d9ff';
+  const red     = isLight ? '#bb0000' : '#ff4757';
+  const green   = isLight ? '#228844' : '#26d07c';
+  const orange  = isLight ? '#cc6600' : '#ffb703';
+  const profileLine = isLight ? '#0055aa' : '#00d9ff';
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  function toX(t)     { return PAD.left + (t / totalTime) * PW; }
+  function toY(depth) { return PAD.top  + (depth / maxDepth) * PH; }
+
+  // ── Grid ──
+  // Depth lines
+  const depStep = maxDepth > 50 ? 10 : maxDepth > 20 ? 5 : 3;
+  for (let d = 0; d <= maxDepth; d += depStep) {
+    const y = toY(d);
+    ctx.strokeStyle = grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + PW, y); ctx.stroke();
+    ctx.fillStyle = muted; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+    if (d > 0) ctx.fillText(d + 'm', PAD.left - 5, y + 4);
+  }
+  // Time lines
+  const timeStep = totalTime > 120 ? 20 : totalTime > 60 ? 10 : 5;
+  for (let t = 0; t <= totalTime; t += timeStep) {
+    const x = toX(t);
+    ctx.strokeStyle = grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + PH); ctx.stroke();
+    ctx.fillStyle = muted; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'center';
+    ctx.fillText(t + 'min', x, PAD.top + PH + 16);
+  }
+
+  // ── Axes ──
+  ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + PH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top + PH); ctx.lineTo(PAD.left + PW, PAD.top + PH); ctx.stroke();
+
+  // ── Safety / deco stop shading ──
+  waypoints.forEach((wp, i) => {
+    if (wp.type === 'stop' || wp.type === 'deco' || wp.type === 'safety') {
+      const next = waypoints[i + 1];
+      if (!next) return;
+      const x1 = toX(wp.t), x2 = toX(next.t);
+      const y  = toY(wp.depth);
+      ctx.fillStyle = wp.type === 'deco'
+        ? 'rgba(255,71,87,0.10)'
+        : 'rgba(38,208,124,0.10)';
+      ctx.fillRect(x1, y, x2 - x1, PAD.top + PH - y);
+      // horizontal stop line
+      ctx.strokeStyle = wp.type === 'deco' ? red : green;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+
+  // ── Profile line ──
+  if (waypoints.length > 1) {
+    ctx.beginPath();
+    ctx.strokeStyle = profileLine;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    waypoints.forEach((wp, i) => {
+      i === 0 ? ctx.moveTo(toX(wp.t), toY(wp.depth)) : ctx.lineTo(toX(wp.t), toY(wp.depth));
+    });
+    ctx.stroke();
+
+    // ── Fill under the line ──
+    ctx.beginPath();
+    waypoints.forEach((wp, i) => {
+      i === 0 ? ctx.moveTo(toX(wp.t), toY(wp.depth)) : ctx.lineTo(toX(wp.t), toY(wp.depth));
+    });
+    ctx.lineTo(toX(waypoints[waypoints.length - 1].t), toY(0));
+    ctx.lineTo(toX(waypoints[0].t), toY(0));
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + PH);
+    grad.addColorStop(0, isLight ? 'rgba(0,85,170,0.18)' : 'rgba(0,217,255,0.15)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  // ── Stop dots with PPO2/CNS colour ──
+  waypoints.forEach(wp => {
+    if (!wp.dot) return;
+    const x = toX(wp.t), y = toY(wp.depth);
+    const dotColor = wp.type === 'deco'   ? red
+                   : wp.type === 'safety' ? green
+                   : wp.type === 'bottom' ? accent
+                   : muted;
+
+    // PPO2 halo if elevated
+    if (wp.ppo2 >= 1.4) {
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI*2);
+      ctx.fillStyle = wp.ppo2 >= 1.6 ? 'rgba(255,71,87,0.3)' : 'rgba(255,183,3,0.3)';
+      ctx.fill();
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = dotColor; ctx.fill();
+    ctx.strokeStyle = bg; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Label
+    if (wp.label) {
+      ctx.fillStyle = text; ctx.font = 'bold 9px JetBrains Mono,monospace';
+      ctx.textAlign = x > PAD.left + PW * 0.75 ? 'right' : 'left';
+      const lx = ctx.textAlign === 'left' ? x + 8 : x - 8;
+      ctx.fillText(wp.label, lx, y - 6);
+      if (wp.ppo2) {
+        const pColor = wp.ppo2 >= 1.6 ? red : wp.ppo2 >= 1.4 ? orange : muted;
+        ctx.fillStyle = pColor; ctx.font = '9px JetBrains Mono,monospace';
+        ctx.fillText('ppO₂ ' + wp.ppo2.toFixed(1), lx, y + 14);
+      }
+    }
+  });
+
+  // ── Surface label ──
+  ctx.fillStyle = muted; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+  ctx.fillText('0m', PAD.left - 5, PAD.top + 4);
+}
+
+// ─── Build waypoints from Dive Planner (Rec mode) ───────────────────────────
+function drawPlannerProfile() {
+  const canvas = document.getElementById('plannerProfileCanvas');
+  if (!canvas) return;
+
+  const depthVal = parseFloat(document.getElementById('depth')?.value) || 0;
+  const btVal    = parseFloat(document.getElementById('bt')?.value)    || 0;
+  if (!depthVal || !btVal) { canvas.style.display = 'none'; return; }
+
+  const dRate = 18, aRate = 9; // default rates m/min
+  const descentT = depthVal / dRate;
+  const ascentT  = depthVal / aRate;
+  const safetyT  = 3;
+  const totalT   = descentT + btVal + ascentT + safetyT;
+
+  let t = 0;
+  const wps = [
+    { t: t, depth: 0, type: 'surface' },
+  ];
+  t += descentT;
+  wps.push({ t, depth: depthVal, type: 'bottom', dot: true, label: depthVal + 'm' });
+  t += btVal;
+  wps.push({ t, depth: depthVal, type: 'bottom' });
+  t += ascentT * (depthVal - 5) / depthVal;
+  wps.push({ t, depth: 5, type: 'safety' });
+  t += safetyT;
+  wps.push({ t, depth: 5, type: 'safety', dot: true, label: '5m' });
+  t += ascentT * 5 / depthVal;
+  wps.push({ t, depth: 0, type: 'surface' });
+
+  canvas.style.display = 'block';
+  drawDiveProfile('plannerProfileCanvas', wps, {
+    maxDepth: depthVal,
+    totalTime: Math.ceil(totalT),
+  });
+}
+
+// ─── Build waypoints from Deco Schedule ─────────────────────────────────────
+function drawDecoProfile() {
+  const canvas = document.getElementById('decoProfileCanvas');
+  if (!canvas) return;
+
+  const depthVal  = parseFloat(document.getElementById('decoDepth')?.value) || 0;
+  const btVal     = parseFloat(document.getElementById('decoBT')?.value)    || 0;
+  if (!depthVal || !btVal) return;
+
+  const dRate = parseFloat(document.getElementById('descentRate')?.value) || 22;
+  const aRate = parseFloat(document.getElementById('ascentRate')?.value)  || 9;
+  const descentT = depthVal / dRate;
+
+  const wps = [{ t: 0, depth: 0, type: 'surface' }];
+  let t = descentT;
+  wps.push({ t, depth: depthVal, type: 'bottom', dot: true, label: depthVal + 'm' });
+  t += btVal;
+  wps.push({ t, depth: depthVal, type: 'bottom' });
+
+  // Read stops from the table using data-phase
+  document.querySelectorAll('#decoTableBody tr[data-phase]').forEach(tr => {
+    const phase = tr.dataset.phase;
+    if (phase !== 'deco' && phase !== 'safety' && phase !== 'ascent') return;
+    const tds    = tr.querySelectorAll('td');
+    const run    = parseFloat(tds[3]?.textContent) || 0; // Run column
+    const depthTxt = tds[1]?.textContent?.trim() || '';
+    const ppo2   = parseFloat(tds[5]?.textContent) || 0;
+    const cns    = tds[6]?.textContent?.trim() || '';
+
+    if (phase === 'ascent') {
+      // parse "40m → 21m" — take the TO depth
+      const parts  = depthTxt.split('→');
+      const toDepth = parseFloat(parts[1]) || 0;
+      wps.push({ t: run, depth: toDepth, type: 'ascent' });
+    } else {
+      const depth = parseFloat(depthTxt) || 0;
+      wps.push({ t: run, depth, type: phase, dot: true,
+        label: depth + 'm ' + (tds[2]?.textContent?.trim() || ''),
+        ppo2: ppo2 || null
+      });
+    }
+  });
+
+  // Close to surface
+  const lastT = parseFloat(document.querySelectorAll('#decoTableBody tr[data-phase]')?.[
+    document.querySelectorAll('#decoTableBody tr[data-phase]').length - 1
+  ]?.querySelectorAll('td')[3]?.textContent) || btVal + descentT;
+  wps.push({ t: lastT, depth: 0, type: 'surface' });
+
+  drawDiveProfile('decoProfileCanvas', wps, {
+    maxDepth: depthVal,
+    totalTime: lastT,
+  });
+}
+
+function calcCNS() {
+  const depth  = parseFloat(document.getElementById('cnsDepth')?.value) || 0;
+  const bt     = parseFloat(document.getElementById('cnsBT')?.value)    || 0;
+  const fO2    = parseFloat(document.getElementById('cnsO2')?.value)    || 21;
+  const dives  = parseInt(document.getElementById('cnsDives')?.value)   || 1;
+
+  const ppo2 = (depth / 10 + 1) * (fO2 / 100);
+  const singleLimit = getCNSLimit(ppo2);
+  const dailyLimit  = singleLimit * 2; // NOAA daily ≈ 2× single
+
+  const singleCNS = singleLimit > 0 ? Math.min((bt / singleLimit) * 100, 999) : 999;
+  const dailyCNS  = dailyLimit  > 0 ? Math.min((bt * dives / dailyLimit) * 100, 999) : 999;
+  const otu = bt * Math.pow(Math.max(0, (ppo2 - 0.5) / 0.5), 0.833);
+
+  // Update stats
+  document.getElementById('cnsPPO2').textContent     = ppo2.toFixed(2);
+  document.getElementById('cnsSinglePct').textContent = singleCNS.toFixed(1) + '%';
+  document.getElementById('cnsDailyPct').textContent  = dailyCNS.toFixed(1) + '%';
+  document.getElementById('cnsOTU').textContent       = Math.round(otu);
+  document.getElementById('cnsSingleLabel').textContent = singleCNS.toFixed(1) + '%';
+  document.getElementById('cnsDailyLabel').textContent  = dailyCNS.toFixed(1) + '%';
+
+  // Color single bar
+  const sBar = document.getElementById('cnsSingleBar');
+  sBar.style.width = Math.min(singleCNS, 100) + '%';
+  sBar.style.background = singleCNS < 50 ? 'var(--green)' : singleCNS < 80 ? 'var(--yellow)' : 'var(--red)';
+
+  // Color daily bar
+  const dBar = document.getElementById('cnsDailyBar');
+  dBar.style.width = Math.min(dailyCNS, 100) + '%';
+  dBar.style.background = dailyCNS < 60 ? 'var(--green)' : dailyCNS < 100 ? 'var(--orange)' : 'var(--red)';
+
+  // ppO2 color on stat
+  const pEl = document.getElementById('cnsPPO2');
+  pEl.style.color = ppo2 < 1.2 ? 'var(--green)' : ppo2 < 1.4 ? 'var(--yellow)' : ppo2 < 1.6 ? 'var(--orange)' : 'var(--red)';
+
+  // Status message
+  const statusEl  = document.getElementById('cnsStatus');
+  const statusTxt = document.getElementById('cnsStatusText');
+  let cls = 'c-ok', msg = '';
+
+  if (ppo2 > 1.6) {
+    cls = 'c-dang'; msg = `⛔ ppO₂ ${ppo2.toFixed(2)} bar EXCEEDS maximum 1.6 bar! Serious seizure risk. Change gas or depth.`;
+  } else if (ppo2 > 1.4) {
+    cls = 'c-warn'; msg = `⚠️ ppO₂ ${ppo2.toFixed(2)} bar is above recreational limit (1.4 bar). Technical divers only.`;
+  } else if (dailyCNS >= 100) {
+    cls = 'c-dang'; msg = `⛔ Daily CNS ${dailyCNS.toFixed(0)}% exceeds 100% limit. No more diving today.`;
+  } else if (singleCNS >= 80) {
+    cls = 'c-warn'; msg = `⚠️ Single dive CNS ${singleCNS.toFixed(0)}% exceeds 80% limit. Reduce bottom time.`;
+  } else if (singleCNS >= 50) {
+    cls = 'c-warn'; msg = `🟡 CNS ${singleCNS.toFixed(0)}% — moderate. Monitor total daily exposure.`;
+  } else {
+    msg = `✅ ppO₂ ${ppo2.toFixed(2)} bar — CNS ${singleCNS.toFixed(0)}% single, ${dailyCNS.toFixed(0)}% daily. Within limits.`;
+  }
+
+  statusEl.className = 'result-card ' + cls;
+  statusTxt.textContent = msg;
+}
+
+// ═══════════════════════════════════════════════
+// GF CURVE VISUALIZER
+// ═══════════════════════════════════════════════
+
+function drawGFCurve() {
+  const canvas = document.getElementById('gfCurveCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PAD = { top: 24, right: 24, bottom: 48, left: 58 };
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top - PAD.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const isLight  = document.body.classList.contains('light-theme');
+  ctx.fillStyle  = isLight ? '#eff3f8' : '#0d2038';
+  ctx.fillRect(0, 0, W, H);
+
+  const textColor   = isLight ? '#1a1a1a' : '#d8eef8';
+  const gridColor   = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)';
+  const accentColor = '#00d9ff';
+  const greenColor  = isLight ? '#228844' : '#26d07c';
+  const redColor    = isLight ? '#bb0000' : '#ff4757';
+  const orangeColor = isLight ? '#cc6600' : '#ffb703';
+
+  // ── Read deco stops from table (depth in cells[1], stop time cells[2], data-phase) ──
+  const stops = [];
+  document.querySelectorAll('#decoTableBody tr[data-phase]').forEach(tr => {
+    const phase = tr.dataset.phase;
+    if (phase !== 'deco' && phase !== 'safety') return;
+    const tds = tr.querySelectorAll('td');
+    const depthTxt = tds[1]?.textContent?.trim() || '';
+    const stopTxt  = tds[2]?.textContent?.trim() || '';
+    const depth = parseFloat(depthTxt);
+    const dur   = parseFloat(stopTxt);
+    if (!isNaN(depth) && depth > 0) stops.push({ depth, dur, type: phase });
+  });
+
+  // Read bottom depth & GF settings
+  const bottomDepth = parseFloat(document.getElementById('decoDepth')?.value) || 40;
+  const gfLow  = mGF.low  / 100;
+  const gfHigh = mGF.high / 100;
+  const firstStop = stops.filter(s => s.type === 'deco').reduce((max, s) => Math.max(max, s.depth), 0);
+
+  // Update stats
+  document.getElementById('gfCurveGFL').textContent = mGF.low;
+  document.getElementById('gfCurveGFH').textContent = mGF.high;
+  document.getElementById('gfCurveStops').textContent = stops.filter(s => s.type === 'deco').length || '—';
+
+  const maxDepth = Math.max(bottomDepth, 10);
+  const maxDepthY = maxDepth * 1.08; // slight padding below bottom
+
+  function toX(gf)    { return PAD.left + (gf / 1.0) * PW; }
+  function toY(depth) { return PAD.top  + (depth / maxDepthY) * PH; }
+
+  // ── Grid lines ──
+  ctx.lineWidth = 1;
+  [0.2, 0.4, 0.6, 0.8, 1.0].forEach(gf => {
+    ctx.strokeStyle = gridColor;
+    ctx.beginPath(); ctx.moveTo(toX(gf), PAD.top); ctx.lineTo(toX(gf), PAD.top + PH); ctx.stroke();
+    ctx.fillStyle = textColor; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(gf * 100) + '%', toX(gf), PAD.top + PH + 18);
+  });
+  const depthTicks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60].filter(d => d <= maxDepth);
+  depthTicks.forEach(d => {
+    ctx.strokeStyle = gridColor;
+    ctx.beginPath(); ctx.moveTo(PAD.left, toY(d)); ctx.lineTo(PAD.left + PW, toY(d)); ctx.stroke();
+    ctx.fillStyle = textColor; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+    ctx.fillText(d + 'm', PAD.left - 6, toY(d) + 4);
+  });
+
+  // ── Axis labels ──
+  ctx.fillStyle = textColor; ctx.font = '11px Outfit,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Gradient Factor %', PAD.left + PW / 2, H - 6);
+  ctx.save(); ctx.translate(13, PAD.top + PH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Depth (m)', 0, 0); ctx.restore();
+
+  // ── GF Envelope line (dashed): GF Low at firstStop → GF High at surface ──
+  ctx.beginPath();
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  if (firstStop > 0) {
+    // From bottom to firstStop: vertical line at GF Low
+    ctx.moveTo(toX(gfLow), toY(maxDepth));
+    ctx.lineTo(toX(gfLow), toY(firstStop));
+    // From firstStop to surface: diagonal GF Low → GF High
+    ctx.lineTo(toX(gfHigh), toY(0));
+  } else {
+    // No deco — just show GF High line
+    ctx.moveTo(toX(gfHigh), toY(maxDepth));
+    ctx.lineTo(toX(gfHigh), toY(0));
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── GF Low / High labels ──
+  ctx.fillStyle = accentColor; ctx.font = 'bold 10px JetBrains Mono,monospace';
+  if (firstStop > 0) {
+    ctx.textAlign = 'right';
+    ctx.fillText('GFL ' + mGF.low + '%', toX(gfLow) - 4, toY(firstStop) + 14);
+    ctx.textAlign = 'left';
+    ctx.fillText('GFH ' + mGF.high + '%', toX(gfHigh) + 4, toY(0) + 14);
+  } else {
+    ctx.textAlign = 'left';
+    ctx.fillText('GFH ' + mGF.high + '%', toX(gfHigh) + 4, toY(maxDepth / 2));
+  }
+
+  if (stops.length === 0) {
+    // ── No deco data — placeholder ──
+    ctx.fillStyle = textColor; ctx.font = '13px Outfit,sans-serif'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.45;
+    ctx.fillText('Run a Bühlmann deco plan to see the GF curve', PAD.left + PW / 2, PAD.top + PH / 2 - 8);
+    ctx.fillText('Switch to Deco Schedule tab and click CALCULATE', PAD.left + PW / 2, PAD.top + PH / 2 + 12);
+    ctx.globalAlpha = 1;
+    return;
+  }
+
+  // ── Dive profile line ──
+  // Build waypoints: surface(0) → bottom → ascent through stops → surface
+  const waypoints = [
+    { depth: 0,           gf: gfHigh, label: null },
+    { depth: bottomDepth, gf: gfLow,  label: '🔵 ' + bottomDepth + 'm' },
+  ];
+  // Add deco stops (deepest first)
+  const decoStops = stops.filter(s => s.type === 'deco').sort((a, b) => b.depth - a.depth);
+  decoStops.forEach(s => {
+    const gfAtStop = firstStop > 0
+      ? gfLow + (gfHigh - gfLow) * (1 - s.depth / firstStop)
+      : gfHigh;
+    waypoints.push({ depth: s.depth, gf: gfAtStop, label: '🔴 ' + s.depth + 'm / ' + s.dur + 'min', isDeco: true });
+  });
+  // Safety stop
+  const safetySt = stops.find(s => s.type === 'safety');
+  if (safetySt) waypoints.push({ depth: safetySt.depth, gf: gfHigh * 0.95, label: '🟢 ' + safetySt.depth + 'm', isSafety: true });
+  waypoints.push({ depth: 0, gf: gfHigh, label: null });
+
+  // Draw profile line
+  ctx.beginPath();
+  ctx.strokeStyle = greenColor;
+  ctx.lineWidth = 2.5;
+  waypoints.forEach((wp, i) => {
+    i === 0 ? ctx.moveTo(toX(wp.gf), toY(wp.depth)) : ctx.lineTo(toX(wp.gf), toY(wp.depth));
+  });
+  ctx.stroke();
+
+  // Draw dots and labels at stops
+  waypoints.filter(wp => wp.label).forEach(wp => {
+    const x = toX(wp.gf), y = toY(wp.depth);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = wp.isDeco ? redColor : wp.isSafety ? '#26d07c' : accentColor;
+    ctx.fill();
+    ctx.strokeStyle = isLight ? '#fff' : '#0d2038';
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = textColor; ctx.font = 'bold 10px JetBrains Mono,monospace';
+    ctx.textAlign = x > PAD.left + PW * 0.7 ? 'right' : 'left';
+    ctx.fillText(wp.label, x + (ctx.textAlign === 'left' ? 8 : -8), y + 4);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════════════
+
+function exportPDF() {
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const isLight = document.body.classList.contains('light-theme');
+
+  const depth     = document.getElementById('decoDepth')?.value || '—';
+  const bt        = document.getElementById('decoBT')?.value    || '—';
+  const algo      = 'Bühlmann ZH-L16C';
+  const algoShort = 'Bühlmann';
+  const gfStr     = `GF ${mGF.low}/${mGF.high}`;
+  const gfLabel   = 'GF Setting';
+  const gasEl     = document.getElementById('decoGas');
+  const gasStr    = gasEl?.options[gasEl?.selectedIndex]?.text || 'Air';
+
+  // Collect result rows from planner
+  let resultRows = '';
+  document.querySelectorAll('#plannerResult .result-card').forEach(card => {
+    const title = card.querySelector('.rc-title')?.textContent?.trim() || '';
+    const strips = [];
+    card.querySelectorAll('.si-strip').forEach(s => strips.push(s.textContent.trim().replace(/\s+/g,' ')));
+    if (strips.length) resultRows += `<tr><td style="font-weight:600;color:#0055aa;">${title}</td><td>${strips.join('<br>')}</td></tr>`;
+  });
+
+  // Collect deco table
+  let decoRows = '';
+  document.querySelectorAll('#decoTableBody tr').forEach(tr => {
+    // Gas switch rows (colspan)
+    if (tr.querySelector('td[colspan]')) {
+      const txt = tr.querySelector('td').textContent.trim();
+      decoRows += `<tr><td colspan="7" style="color:#006600;font-weight:700;font-size:11px;padding:6px 10px;background:#f0fff4;">⇄ ${txt.replace(/^⇄\s*/, '')}</td></tr>`;
+      return;
+    }
+    const phase = tr.dataset.phase;
+    const tds   = Array.from(tr.querySelectorAll('td'));
+    // Read all cells as text EXCEPT first (icon) — build icon from phase
+    const c = tds.map(td => td.textContent.trim());
+    const textColor = phase === 'deco'    ? '#bb0000'
+                    : phase === 'safety'  ? '#116622'
+                    : phase === 'descent' ? '#cc4444'
+                    : phase === 'bottom'  ? '#0055aa'
+                    : phase === 'ascent'  ? '#337744'
+                    : '#555';
+    const icon = phase === 'deco'    ? '🔴'
+               : phase === 'safety'  ? '🟢'
+               : phase === 'descent' ? `<span style="color:#cc4444;font-size:15px;font-weight:bold;">↓</span>`
+               : phase === 'bottom'  ? '🔵'
+               : phase === 'ascent'  ? `<span style="color:#337744;font-size:15px;font-weight:bold;">↑</span>`
+               : c[0];
+    decoRows += `<tr>
+      <td style="padding:6px 8px;">${icon}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[1]||''}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[2]||''}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[3]||''}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[4]||''}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[5]||''}</td>
+      <td style="color:${textColor};padding:6px 8px;">${c[6]||''}</td>
+    </tr>`;
+  });
+
+  const pdfLegend = `
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;padding:10px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #ddd;font-size:11px;color:#555;">
+      <span><span style="color:#cc4444;font-weight:bold;">↓</span> Descent</span>
+      <span>🔵 Bottom</span>
+      <span><span style="color:#337744;font-weight:bold;">↑</span> Ascent</span>
+      <span>🔴 Mandatory Deco Stop</span>
+      <span>🟢 Safety Stop</span>
+      <span><strong>⇄</strong> Gas Switch</span>
+    </div>`;
+
+  // Read same fields as text export
+  const depthVal      = document.getElementById('decoDepth')?.value    || '—';
+  const btVal         = document.getElementById('decoBT')?.value        || '—';
+  const gasEl2        = document.getElementById('decoGas');
+  const bottomGasVal  = (gasEl2?.options[gasEl2?.selectedIndex]?.text || '—').toUpperCase();
+  const gfVal         = `${mGF.low}/${mGF.high}`;
+  const lastStopVal   = document.getElementById('lastDecoStop')?.value  || '—';
+  const stepVal       = document.getElementById('decoStep')?.value      || '—';
+
+  // Read Deco Time and Total Run Time from decoSummary stat cells (strip "min" suffix already there)
+  const summaryStats  = document.querySelectorAll('#decoSummary .stat');
+  const decoTimeVal   = (summaryStats[3]?.querySelector('.stat-val')?.textContent?.trim() || '—').replace(/\s*min\s*/i, '');
+  const totalRTVal    = (summaryStats[4]?.querySelector('.stat-val')?.textContent?.trim() || '—').replace(/\s*min\s*/i, '');
+
+  // Build gas info row for PDF (same as Dive Profile)
+  const pdfGasRows = Array.from(document.querySelectorAll('#decoSummary span[style*="border-radius"]'))
+    .map(s => s.textContent.trim())
+    .filter(Boolean)
+    .map(t => `<div style="display:inline-block;margin:3px 4px 3px 0;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:bold;background:#e8f0ff;border:1px solid #99aadd;color:#003399;">${t}</div>`)
+    .join('');
+
+  const statsHTML = `
+    <div class="param"><div class="param-val">${depthVal} m</div><div class="param-lbl">Depth</div></div>
+    <div class="param"><div class="param-val">${btVal} min</div><div class="param-lbl">Bottom Time</div></div>
+    <div class="param"><div class="param-val">${bottomGasVal}</div><div class="param-lbl">Bottom Gas</div></div>
+    <div class="param"><div class="param-val">${decoTimeVal} min</div><div class="param-lbl">Deco Time</div></div>
+    <div class="param"><div class="param-val">${totalRTVal} min</div><div class="param-lbl">Total Run Time</div></div>
+    <div class="param"><div class="param-val">${gfVal}</div><div class="param-lbl">GF Low/High</div></div>
+    <div class="param"><div class="param-val">${lastStopVal} m</div><div class="param-lbl">Last Stop</div></div>
+    <div class="param"><div class="param-val">${stepVal} m</div><div class="param-lbl">Step Size</div></div>
+  `;
+
+  // ── Capture dive profile graph ──
+  const profileCanvas = document.getElementById('decoProfileCanvas');
+  drawDecoProfile();
+  const profileImgSrc = profileCanvas ? profileCanvas.toDataURL('image/png') : null;
+
+  // ── Capture GF curve ──
+  drawGFCurve();
+  const gfCanvas = document.getElementById('gfCurveCanvas');
+  const gfImgSrc = gfCanvas ? gfCanvas.toDataURL('image/png') : null;
+
+  // ── Capture tissue saturation ── (read directly, resolve CSS vars to hex)
+  const tissueTbody = document.getElementById('tissueTableBody');
+  let tissueHTML = null;
+  if (tissueTbody && tissueTbody.rows.length > 0) {
+    // Convert rows to PDF-safe HTML with resolved colors
+    const colorMap = {
+      'var(--red)': '#bb0000', 'var(--orange)': '#cc6600',
+      'var(--yellow)': '#997700', 'var(--green)': '#116622',
+    };
+    let rows = '';
+    Array.from(tissueTbody.rows).forEach(tr => {
+      const cells = Array.from(tr.cells).map(td => {
+        let html = td.innerHTML;
+        Object.entries(colorMap).forEach(([v, h]) => { html = html.replaceAll(v, h); });
+        const style = td.getAttribute('style') || '';
+        let resolvedStyle = style;
+        Object.entries(colorMap).forEach(([v, h]) => { resolvedStyle = resolvedStyle.replaceAll(v, h); });
+        return `<td style="${resolvedStyle}">${td.textContent.trim()}</td>`;
+      });
+      rows += `<tr>${cells.join('')}</tr>`;
+    });
+    tissueHTML = rows;
+  }
+  const tissueHeaderHTML = `<thead><tr><th>#</th><th>Half-time</th><th>N₂ Load (bar)</th><th>M-value (bar)</th><th>Sat %</th><th>Status</th></tr></thead>`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LSP D-Planner — Dive Plan ${dateStr}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: A4;
+    margin: 10mm 14mm 10mm 14mm;
+  }
+
+  body {
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    color: #111;
+    background: #fff;
+    padding-top: 38px;
+    padding-bottom: 30px;
+  }
+
+  /* ── Page header & footer using fixed positioning ── */
+  .page-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 32px;
+    background: #0055aa;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    z-index: 1000;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .page-header .left  { font-weight: bold; letter-spacing: 1px; font-size: 11px; }
+  .page-header .mid   { color: rgba(255,255,255,0.85); }
+  .page-header .right { color: rgba(255,255,255,0.85); text-align: right; }
+
+  .page-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 24px;
+    border-top: 1px solid #ccd;
+    background: #f8f9ff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 9px;
+    color: #888;
+    z-index: 1000;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  h1 { font-size: 20px; letter-spacing: 3px; color: #003399; margin-bottom: 2px; }
+  h2 { font-size: 12px; color: #555; font-weight: 400; margin-bottom: 16px; }
+  h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #0055aa; margin: 16px 0 8px; border-bottom: 1px solid #cce; padding-bottom: 4px; }
+  .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0055aa; padding-bottom: 12px; margin-bottom: 16px; }
+  .badge { background: #0055aa; color: white; border-radius: 4px; padding: 3px 10px; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: inline-block; }
+  .params { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-bottom: 12px; }
+  .param { background: #f0f4ff; border: 1px solid #cce; border-radius: 5px; padding: 8px 4px; text-align: center; }
+  .param-val { font-size: 14px; font-weight: bold; color: #0055aa; }
+  .param-lbl { font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #777; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { background: #0055aa; color: white; padding: 6px 8px; text-align: left; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+  .safety { background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 8px 12px; margin: 12px 0; font-size: 11px; color: #7a4700; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .page-break { page-break-before: always; }
+
+  @media print {
+    body { padding-top: 38px; padding-bottom: 30px; }
+    .page-header, .page-footer { display: flex !important; }
+    .page-break { page-break-before: always; }
+  }
+  /* Spacer after page break to push below fixed header */
+  .page-spacer { height: 38px; display: block; }
+  .page-title {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #0055aa;
+    background: #e8f0ff;
+    border-left: 5px solid #0055aa;
+    padding: 10px 14px;
+    margin: 0 0 14px 0;
+    border-radius: 0 4px 4px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .page-title span {
+    font-size: 10px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+    color: #555;
+    text-transform: none;
+  }
+  .page-break {
+    page-break-before: always;
+    height: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Fixed header on every page ── -->
+<div class="page-header">
+  <div class="left">🤿 LSP D-PLANNER</div>
+  <div class="mid">${depthVal}m · ${btVal}min · ${bottomGasVal} · ${gfVal} · ${algo}</div>
+  <div class="right">${dateStr} ${timeStr}</div>
+</div>
+
+<!-- ── Fixed footer on every page ── -->
+<div class="page-footer">
+  <span>⚠️ Training &amp; Planning Use Only · Always dive within your certification limits · Never dive alone · @threecats_lsp</span>
+  <span>${dateStr} ${timeStr}</span>
+</div>
+
+<!-- ── PAGE 1: Stats + Dive Profile Table ── -->
+<div class="page-title">Dive Plan Summary <span>${algo} · ${gfVal} · ${dateStr} ${timeStr}</span></div>
+<div class="params">${statsHTML}</div>
+${pdfGasRows ? `<div style="margin:6px 0 12px;font-family:Arial,sans-serif;">${pdfGasRows}</div>` : ''}
+
+${decoRows ? `
+<div class="page-title" style="margin-top:18px;">Dive Profile <span>${depthVal}m · ${btVal}min · ${bottomGasVal} · ${gfVal}</span></div>
+<table>
+  <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>Mix</th><th>PPO2</th><th>CNS%</th></tr></thead>
+  <tbody>${decoRows}</tbody>
+</table>
+${pdfLegend}` : ''}
+
+${profileImgSrc ? `
+<!-- ── PAGE 2: Dive Profile Graph ── -->
+<div class="page-break"></div><div class="page-spacer"></div>
+<div class="page-title">Dive Profile Graph <span>${depthVal}m · ${btVal}min · ${bottomGasVal} · ${gfVal}</span></div>
+<img src="${profileImgSrc}" style="width:100%;border-radius:8px;border:1px solid #ccd;margin-top:8px;">` : ''}
+
+${tissueHTML ? `
+<!-- ── PAGE 3: Tissue Saturation ── -->
+<div class="page-break"></div><div class="page-spacer"></div>
+<div class="page-title">Tissue Saturation <span>Bühlmann ZH-L16C · ${gfVal} · End of dive loading</span></div>
+<table>
+  ${tissueHeaderHTML}
+  <tbody>${tissueHTML}</tbody>
+</table>` : ''}
+
+${gfImgSrc ? `
+<!-- ── PAGE 4: GF Curve ── -->
+<div class="page-break"></div><div class="page-spacer"></div>
+<div class="page-title">Gradient Factor Curve <span>GF Low ${mGF.low}% → GF High ${mGF.high}%</span></div>
+<img src="${gfImgSrc}" style="width:100%;border-radius:8px;border:1px solid #ccd;margin-top:8px;">` : ''}
+
+<script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  } else {
+    alert('Please allow popups to use PDF export.');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS PERSISTENCE - Remember Last Values
+// ═══════════════════════════════════════════════
+
+const appSettings = {
+  // All tracked fields organized by mode
+  DECO_FIELDS: [
+    'decoDepth', 'decoBT', 'decoGas', 'decoCustomO2',
+    'descentRate', 'ascentRate', 'decoStep', 'lastDecoStop',
+    'ppo2High', 'ppo2Mid', 'ppo2Low'
+  ],
+  
+  REC_FIELDS: ['ndlRange', 'ndlUImp', 'ndlUMet'],
+  
+  // Multi-dive fields that might exist (0-9 for each prefix)
+  MULTI_DIVE_PREFIXES: ['mD', 'mBT', 'mSI', 'mGas'],
+  MAX_MULTI_DIVE: 10,
+  
+  // Get all POSSIBLE field IDs (including ones that don't exist yet)
+  getAllPossibleFields: function() {
+    const fields = [...this.DECO_FIELDS, ...this.REC_FIELDS];
+    
+    // Add all POSSIBLE multi-dive field IDs (mD0-mD9, mBT0-mBT9, etc.)
+    for (let i = 0; i < this.MAX_MULTI_DIVE; i++) {
+      this.MULTI_DIVE_PREFIXES.forEach(prefix => {
+        fields.push(prefix + i);
+      });
+    }
+    
+    fields.push('__algo__');
+    return fields;
+  },
+
+  // Get all EXISTING field IDs (only those in DOM)
+  getExistingFields: function() {
+    const fields = [];
+    const possible = this.getAllPossibleFields();
+    
+    possible.forEach(id => {
+      if (id !== '__algo__' && document.getElementById(id)) {
+        fields.push(id);
+      }
+    });
+    
+    fields.push('__algo__');
+    return fields;
+  },
+
+  // Save all current values
+  save: function(verbose = true) {
+    const values = {};
+    const fields = this.getExistingFields();
+    
+    // Always save the current algorithm
+    values['__algo__'] = window.algo || 'padi';
+    
+    fields.forEach(id => {
+      if (id === '__algo__') {
+        return; // Already saved above
+      }
+      
+      const el = document.getElementById(id);
+      if (el) {
+        values[id] = el.value || '';
+      }
+    });
+    
+    try {
+      localStorage.setItem('lspDiveSettings_v3', JSON.stringify(values));
+      if (verbose) {
+        console.log('[LSP] ✅ Settings saved (' + Object.keys(values).length + ' fields) - Algo: ' + values['__algo__']);
+      }
+    } catch(e) {
+      console.warn('[LSP] Save failed:', e.message);
+    }
+  },
+
+  // Load all saved values
+  load: function() {
+    // Clear old storage keys from previous versions
+    try {
+      localStorage.removeItem('lspDiveSettings');     // v1
+      localStorage.removeItem('lspDiveSettings_v2');  // v2
+      localStorage.removeItem('lspDiveDefaults_v2');  // old defaults
+      console.log('[LSP] Cleaned up old storage keys');
+    } catch(e) {
+      console.warn('[LSP] Cleanup warning:', e.message);
+    }
+    
+    try {
+      const json = localStorage.getItem('lspDiveSettings_v3');
+      if (!json) {
+        console.log('[LSP] ℹ️ No saved settings found (v3)');
+        return false;
+      }
+      
+      const values = JSON.parse(json);
+      console.log('[LSP] Loading saved settings... Saved algo: ' + values['__algo__']);
+      
+      // First, switch to the correct algorithm if different
+      if (values['__algo__']) {
+        const savedAlgo = values['__algo__'];
+        const currentAlgo = window.algo || 'padi';
+        if (savedAlgo !== currentAlgo) {
+          console.log('[LSP] Switching from ' + currentAlgo + ' to ' + savedAlgo);
+          setAlgo(savedAlgo);
+          // Wait for DOM to update with new fields
+          setTimeout(() => this._restoreFields(values), 500);
+          return true;
+        }
+      }
+      
+      // If same algo, restore fields immediately
+      this._restoreFields(values);
+      return true;
+    } catch(e) {
+      console.error('[LSP] Load failed:', e.message);
+      return false;
+    }
+  },
+
+  // Helper to restore field values
+  _restoreFields: function(values) {
+    let restored = 0;
+    const allPossible = this.getAllPossibleFields();
+    
+    allPossible.forEach(id => {
+      if (id === '__algo__' || !values.hasOwnProperty(id)) {
+        return; // Skip algorithm and non-existent values
+      }
+      
+      // Wait a bit more for dynamic fields to be created
+      const checkAndRestore = () => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = values[id];
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          restored++;
+        }
+      };
+      
+      // Check immediately
+      checkAndRestore();
+      
+      // Also check after a short delay for dynamically created fields
+      setTimeout(checkAndRestore, 100);
+    });
+    
+    console.log('[LSP] ✅ Settings restored (' + restored + ' fields) - Algo: ' + (values['__algo__'] || 'padi'));
+  },
+
+  // Clear all saved values
+  clear: function() {
+    try {
+      localStorage.removeItem('lspDiveSettings_v3');
+      console.log('[LSP] ✅ Settings cleared');
+    } catch(e) {
+      console.warn('[LSP] Clear failed:', e.message);
+    }
+  }
+};
+
+// Auto-save on any input change
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id) {
+    const fields = appSettings.getExistingFields();
+    if (fields.includes(e.target.id)) {
+      appSettings.save(false);
+    }
+  }
+});
+
+// Auto-save on input (with debounce for performance)
+let saveTimeout;
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id) {
+    const fields = appSettings.getExistingFields();
+    if (fields.includes(e.target.id)) {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => appSettings.save(false), 1000);
+    }
+  }
+});
+
+// Save before leaving page
+window.addEventListener('beforeunload', function() {
+  appSettings.save();
+});
+
+// Load settings when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[LSP] DOMContentLoaded fired');
+  
+  // Load theme preference first
+  loadThemePreference();
+  
+  // Init new Beta 3 features
+  calcCNS();
+  
+  // Try to load immediately
+  appSettings.load();
+  
+  // Try again after elements render
+  setTimeout(() => {
+    console.log('[LSP] Retry load after render');
+    appSettings.load();
+  }, 1000);
+});
+
+// Also try loading on window load as fallback
+window.addEventListener('load', function() {
+  console.log('[LSP] Window load fired');
+  // Try again on window load to catch late-loading elements
+  setTimeout(() => {
+    console.log('[LSP] Final retry load');
+    appSettings.load();
+  }, 500);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+APP_NAME="gradlew"
+APP_BASE_NAME=${0##*/}
+APP_HOME=$( cd "${APP_HOME:-./}" && pwd -P ) || exit
+exec "$APP_HOME/gradlew.bat" "$@"

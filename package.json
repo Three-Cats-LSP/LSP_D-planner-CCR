@@ -1,0 +1,13 @@
+{
+  "name": "dive-planner",
+  "version": "1.0.0",
+  "description": "Professional dive planner with Rec NDL tables and Bühlmann ZH-L16C algorithm",
+  "scripts": {
+    "build:android": "cd android && ./gradlew assembleRelease"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^5.7.0",
+    "@capacitor/cli": "^5.7.0",
+    "@capacitor/core": "^5.7.0"
+  }
+}
