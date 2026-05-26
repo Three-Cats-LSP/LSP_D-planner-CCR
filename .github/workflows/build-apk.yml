@@ -57,10 +57,9 @@ jobs:
       - name: Create APK Folder and Copy APK
         run: |
           mkdir -p APK
-          APK_FILENAME="dive-planner-$(date +%Y%m%d-%H%M%S).apk"
-          cp android/app/build/outputs/apk/release/app-release.apk "APK/$APK_FILENAME"
-          ls -lh "APK/$APK_FILENAME"
-          echo "APK_FILE=$APK_FILENAME" >> $GITHUB_ENV
+          cp android/app/build/outputs/apk/release/app-release.apk "APK/LSP_D-PLANNER.apk"
+          ls -lh "APK/LSP_D-PLANNER.apk"
+          echo "APK_FILE=LSP_D-PLANNER.apk" >> $GITHUB_ENV
       
       - name: Configure Git
         run: |
@@ -69,8 +68,8 @@ jobs:
       
       - name: Commit APK
         run: |
-          git add APK/
-          git commit -m "🤿 Auto-build APK: ${{ env.APK_FILE }}" || echo "Nothing to commit"
+          git add APK/LSP_D-PLANNER.apk
+          git commit -m "🤿 Auto-build: LSP_D-PLANNER.apk updated" || echo "Nothing to commit"
       
       - name: Push to main
         env:

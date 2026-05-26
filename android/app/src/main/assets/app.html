@@ -863,6 +863,75 @@ body.algo-buh .buh-only { display: flex !important; }
   .deco-table.table-view thead tr { display:table-row !important; background:none !important; }
 }
 
+/* ── LSP SLIDER ── */
+.slider-wrap { position:relative; padding-bottom:20px; }
+.lsp-slider {
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px; border-radius:2px; outline:none; cursor:pointer;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--fill,31%), var(--border-hi) var(--fill,31%), var(--border-hi) 100%);
+}
+.lsp-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:22px; height:22px; border-radius:50%;
+  background: var(--accent);
+  border:3px solid var(--card);
+  box-shadow: 0 0 0 2px var(--accent), 0 2px 8px rgba(0,200,255,0.4);
+  cursor:grab; transition:transform 0.15s, box-shadow 0.15s;
+}
+.lsp-slider::-webkit-slider-thumb:active {
+  cursor:grabbing; transform:scale(1.2);
+  box-shadow: 0 0 0 3px var(--accent), 0 4px 16px rgba(0,200,255,0.5);
+}
+.lsp-slider::-moz-range-thumb {
+  width:22px; height:22px; border-radius:50%;
+  background: var(--accent); border:3px solid var(--card);
+  box-shadow: 0 0 0 2px var(--accent); cursor:grab;
+}
+.slider-ticks {
+  display:flex; justify-content:space-between;
+  margin-top:6px; padding:0 2px;
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  color:var(--muted); letter-spacing:0.5px;
+}
+.slider-ticks-abs {
+  position:relative; height:16px; margin-top:6px;
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  color:var(--muted); letter-spacing:0.5px;
+}
+.slider-ticks-abs span {
+  position:absolute; transform:translateX(-50%);
+  white-space:nowrap;
+}
+.slider-ticks-abs span:first-child { transform:translateX(0); }
+.slider-ticks-abs span:last-child  { transform:translateX(-100%); }
+
+/* ── Unit Converter ── */
+.conv-row {
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;
+}
+.conv-field {
+  flex:1; min-width:90px;
+}
+.conv-field label {
+  display:block; font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:5px;
+}
+.conv-field input {
+  width:100%; background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:10px 12px; color:var(--text);
+  font-family:'Bebas Neue',sans-serif; font-size:22px; outline:none;
+  transition:border-color 0.2s; text-align:center;
+}
+.conv-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,200,255,0.08); }
+.conv-arrow {
+  color:var(--accent); font-size:18px; flex-shrink:0; margin-top:18px;
+}
+.conv-ref {
+  display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted);
+  background:var(--card2); padding:8px 12px; border-radius:6px; border:1px solid var(--border);
+}
+
 /* NDL reference table */
 .ndl-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; }
 .ndl-table th { padding:9px 12px; text-align:center; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.06); }
@@ -912,20 +981,20 @@ body.algo-buh .buh-only { display: flex !important; }
       <h1>LSP D-PLANNER · <span class="algo-label" id="algoLabel">Rec</span></h1>
       <p id="algoSubtitle">Recreational Dive Tables · RDP Reference</p>
     </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme" style="margin-left:10px;">
+      <span class="theme-icon" id="themeIcon">🌙</span>
+    </button>
   </div>
   <div class="algo-switcher">
-    <!-- Row 1: Algorithm -->
-    <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span class="algo-label-text">Algorithm:</span>
-        <div class="algo-toggle" style="display: flex; align-items: center; gap: 8px;">
-          <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
-          <button class="algo-btn" id="algoBUH" onclick="setAlgo('buh')">Bühlmann ZH-L16C</button>
-        </div>
+    <!-- Row 1: Algorithm + Tools -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span class="algo-label-text">Mode:</span>
+      <div class="algo-toggle" style="display:flex;align-items:center;gap:4px;">
+        <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
+        <button class="algo-btn" id="algoBUH" onclick="setAlgo('buh')">Bühlmann</button>
+        <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
+        <button class="algo-btn" id="algoTools" onclick="setAlgo('tools')" style="color:var(--muted);">🔧 Tools</button>
       </div>
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme">
-        <span class="theme-icon" id="themeIcon">🌙</span>
-      </button>
     </div>
     
     <!-- Row 2: GF Presets (hidden by default) -->
@@ -943,7 +1012,10 @@ body.algo-buh .buh-only { display: flex !important; }
       <input type="number" id="gfHighInput" min="5" max="100" placeholder="70" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()" maxlength="3">
     </div>
     
-    <div class="header-warn">⚠ Training Use Only</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="header-warn">⚠ Training Use Only</div>
+      <button onclick="toggleReference()" title="Reference & Info" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;transition:all 0.2s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">📖 REF</button>
+    </div>
   </div>
 </header>
 
@@ -954,7 +1026,6 @@ body.algo-buh .buh-only { display: flex !important; }
   <button class="tab-btn" id="tab-multi" onclick="switchTab('multi',this)">Multi Dive</button>
   <button class="tab-btn" id="tab-cns" onclick="switchTab('cns',this)">CNS O₂</button>
   <button class="tab-btn" id="tab-ndlref" onclick="switchTab('ndlref',this)">NDL Tables</button>
-  <button class="tab-btn" id="tab-reference" onclick="switchTab('reference',this)">Reference</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1258,6 +1329,29 @@ body.algo-buh .buh-only { display: flex !important; }
     </div>
   </div>
 
+  <!-- ── Contingency Plans ── -->
+  <div class="card" id="contingencyCard" style="display:none;">
+    <div class="card-title">⚠️ Contingency Plans</div>
+    <div class="info-box">Emergency and extended bottom time scenarios based on your current plan. Always plan for the unexpected.</div>
+
+    <!-- Gas Loss -->
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:10px;">🚨 Gas Loss Scenario</div>
+      <div id="gasLossButtons" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <div id="gasLossResult" style="display:none;"></div>
+    </div>
+
+    <!-- Extended Bottom Time -->
+    <div>
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:10px;">⏱️ Extended Bottom Time</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <button onclick="calcContingencyTime(3)" style="padding:8px 16px;background:rgba(255,183,3,0.1);color:var(--yellow);border:1px solid var(--yellow);border-radius:6px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;">+3 min</button>
+        <button onclick="calcContingencyTime(5)" style="padding:8px 16px;background:rgba(255,183,3,0.1);color:var(--yellow);border:1px solid var(--yellow);border-radius:6px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;">+5 min</button>
+      </div>
+      <div id="contingencyTimeResult" style="display:none;"></div>
+    </div>
+  </div>
+
   <!-- ── GF Curve (inline) ── -->
   <div class="card" id="gfCurveInlineCard" style="display:none;">
     <div class="card-title">GF Gradient Factor Curve</div>
@@ -1394,7 +1488,240 @@ body.algo-buh .buh-only { display: flex !important; }
   </div>
 </div>
 
-<div class="panel" id="reference">
+<!-- ══════════════════════════════════════
+     TOOLS PANEL
+══════════════════════════════════════ -->
+<div class="panel" id="tools">
+
+  <!-- ── Tools Sub-nav ── -->
+  <div class="tabs-nav" id="toolsSubNav" style="margin-bottom:16px;">
+    <button class="tab-btn active" id="tool-mod"       onclick="switchTool('mod',this)">MOD</button>
+    <button class="tab-btn"        id="tool-bestmix"   onclick="switchTool('bestmix',this)">Best Mix</button>
+    <button class="tab-btn"        id="tool-maxdepth"  onclick="switchTool('maxdepth',this)">Max Depth</button>
+    <button class="tab-btn"        id="tool-converter" onclick="switchTool('converter',this)">Unit Converter</button>
+  </div>
+
+  <!-- ── MOD Calculator ── -->
+  <div id="tool-panel-mod">
+  <div class="card">
+    <div class="card-title">MOD — Maximum Operating Depth</div>
+    <div class="info-box">The deepest depth at which a gas can be safely breathed. Standard limits: <strong>1.4 bar</strong> (working), <strong>1.6 bar</strong> (deco).</div>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">O₂ % in mix</label>
+        <span id="modO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">32%</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="modO2" class="lsp-slider" min="1" max="100" value="32" step="1" oninput="updateSliderFill(this);document.getElementById('modO2Display').textContent=this.value+'%';calcMOD()">
+        <div class="slider-ticks-abs">
+          <span style="left:0%">1%</span><span style="left:20.2%">21%</span><span style="left:31.3%">32%</span><span style="left:49.5%">50%</span><span style="left:79.8%">80%</span><span style="left:100%">100%</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Max ppO₂ limit</label>
+        <span id="modPPO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">1.4</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="modPPO2" class="lsp-slider" min="10" max="20" value="14" step="1" oninput="updateSliderFill(this);document.getElementById('modPPO2Display').textContent=(this.value/10).toFixed(1);calcMOD()">
+        <div class="slider-ticks"><span>1.0</span><span>1.2</span><span>1.4</span><span>1.6</span><span>1.8</span><span>2.0</span></div>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
+      <div class="stat"><div class="stat-val" id="modResult" style="color:var(--accent);">—</div><div class="stat-lbl">MOD (metres)</div></div>
+      <div class="stat"><div class="stat-val" id="modResultFt" style="color:var(--muted);">—</div><div class="stat-lbl">MOD (feet)</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Best Mix Calculator ── -->
+  <div id="tool-panel-bestmix" style="display:none;">
+  <div class="card">
+    <div class="card-title">Best Mix — Optimal O₂ for Depth</div>
+    <div class="info-box">Calculates the highest O₂ percentage that keeps ppO₂ at or below the target limit at the planned depth. Maximises O₂ exposure for off-gassing while staying within limits.</div>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Planned Depth</label>
+        <span id="bestMixDepthDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="bestMixDepth" class="lsp-slider" min="1" max="100" value="30" step="1" oninput="updateSliderFill(this);document.getElementById('bestMixDepthDisplay').textContent=this.value+' m';calcBestMix()">
+        <div class="slider-ticks"><span>1m</span><span>20m</span><span>40m</span><span>60m</span><span>80m</span><span>100m</span></div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Max ppO₂ limit</label>
+        <span id="bestMixPPO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">1.4</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="bestMixPPO2" class="lsp-slider" min="10" max="20" value="14" step="1" oninput="updateSliderFill(this);document.getElementById('bestMixPPO2Display').textContent=(this.value/10).toFixed(1);calcBestMix()">
+        <div class="slider-ticks"><span>1.0</span><span>1.2</span><span>1.4</span><span>1.6</span><span>1.8</span><span>2.0</span></div>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:8px;">
+      <div class="stat"><div class="stat-val" id="bestMixResult" style="color:var(--accent);">—</div><div class="stat-lbl">Best O₂ %</div></div>
+      <div class="stat"><div class="stat-val" id="bestMixActualPPO2" style="color:var(--muted);">—</div><div class="stat-lbl">ppO₂ at depth</div></div>
+      <div class="stat"><div class="stat-val" id="bestMixName" style="color:var(--muted);font-size:16px;">—</div><div class="stat-lbl">Gas Name</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Max Depth Calculator ── -->
+  <div id="tool-panel-maxdepth" style="display:none;">
+  <div class="card">
+    <div class="card-title">Max Depth — For a Given Mix</div>
+    <div class="info-box">Calculates the maximum safe depth for a given gas mix at working (1.4 bar) and deco (1.6 bar) ppO₂ limits.</div>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">O₂ % in mix</label>
+        <span id="maxDepthO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">32%</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="maxDepthO2" class="lsp-slider" min="1" max="100" value="32" step="1" oninput="updateSliderFill(this);document.getElementById('maxDepthO2Display').textContent=this.value+'%';calcMaxDepth()">
+        <div class="slider-ticks-abs">
+          <span style="left:0%">1%</span><span style="left:20.2%">21%</span><span style="left:31.3%">32%</span><span style="left:49.5%">50%</span><span style="left:79.8%">80%</span><span style="left:100%">100%</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
+      <div class="stat"><div class="stat-val" id="maxDepth14" style="color:var(--green);">—</div><div class="stat-lbl">Max Depth @ ppO₂ 1.4 (m)</div></div>
+      <div class="stat"><div class="stat-val" id="maxDepth16" style="color:var(--yellow);">—</div><div class="stat-lbl">Max Depth @ ppO₂ 1.6 (m)</div></div>
+      <div class="stat"><div class="stat-val" id="maxDepth14ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.4 (feet)</div></div>
+      <div class="stat"><div class="stat-val" id="maxDepth16ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.6 (feet)</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Unit Converter ── -->
+  <div id="tool-panel-converter" style="display:none;">
+    <div class="card">
+      <div class="card-title">Unit Converter</div>
+
+      <!-- Converter sub-nav -->
+      <div class="tabs-nav" style="margin-bottom:20px;background:var(--card2);">
+        <button class="tab-btn active" id="conv-pressure"    onclick="switchConverter('pressure',this)">Pressure</button>
+        <button class="tab-btn"        id="conv-volume"      onclick="switchConverter('volume',this)">Volume</button>
+        <button class="tab-btn"        id="conv-depth"       onclick="switchConverter('depth',this)">Depth</button>
+        <button class="tab-btn"        id="conv-temperature" onclick="switchConverter('temperature',this)">Temp</button>
+        <button class="tab-btn"        id="conv-weight"      onclick="switchConverter('weight',this)">Weight</button>
+      </div>
+
+      <!-- Pressure: Bar / PSI / MPa -->
+      <div id="conv-panel-pressure">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Pressure — Bar · PSI · MPa</div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Bar</label><input type="number" id="conv-bar" value="1" step="0.1" oninput="convertPressure('bar')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>PSI</label><input type="number" id="conv-psi" value="14.504" step="1" oninput="convertPressure('psi')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>MPa</label><input type="number" id="conv-mpa" value="0.1" step="0.01" oninput="convertPressure('mpa')"></div>
+        </div>
+        <div class="conv-ref">
+          <span>🤿 Tank 200 bar = <strong id="conv-tank-psi">2901 PSI</strong></span>
+          <span>Atmosphere = 1.013 bar</span>
+        </div>
+      </div>
+
+      <!-- Volume: L / ft³ -->
+      <div id="conv-panel-volume" style="display:none;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Volume — Litres · Cubic Feet</div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Litres (L)</label><input type="number" id="conv-litres" value="12" step="0.1" oninput="convertVolume('l')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>Cubic Feet (ft³)</label><input type="number" id="conv-ft3" value="0.424" step="0.01" oninput="convertVolume('ft3')"></div>
+        </div>
+        <div class="conv-ref">
+          <span>12L tank ≈ 0.424 ft³</span>
+          <span>AL80 = 11.1L (77 ft³)</span>
+        </div>
+      </div>
+
+      <!-- Depth: m / ft -->
+      <div id="conv-panel-depth" style="display:none;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Depth — Metres · Feet</div>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+            <span id="conv-depth-m-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);">30 m</span>
+            <span id="conv-depth-ft-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);">98 ft</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="conv-depth-slider" class="lsp-slider" min="1" max="100" value="30" step="1" oninput="updateSliderFill(this);convertDepthSlider(this.value)">
+            <div class="slider-ticks"><span>1m</span><span>20m</span><span>40m</span><span>60m</span><span>80m</span><span>100m</span></div>
+          </div>
+        </div>
+        <div class="conv-row" style="margin-top:8px;">
+          <div class="conv-field"><label>Metres</label><input type="number" id="conv-m" value="30" step="1" oninput="convertDepth('m')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>Feet</label><input type="number" id="conv-ft" value="98.4" step="1" oninput="convertDepth('ft')"></div>
+        </div>
+      </div>
+
+      <!-- Temperature: °C / °F -->
+      <div id="conv-panel-temperature" style="display:none;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Temperature — Celsius · Fahrenheit</div>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+            <span id="conv-temp-c-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);">20°C</span>
+            <span id="conv-temp-f-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);">68°F</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="conv-temp-slider" class="lsp-slider" min="-10" max="40" value="20" step="1" oninput="updateSliderFill(this);convertTempSlider(this.value)">
+            <div class="slider-ticks"><span>-10°C</span><span>0°C</span><span>15°C</span><span>30°C</span><span>40°C</span></div>
+          </div>
+        </div>
+        <div class="conv-row" style="margin-top:8px;">
+          <div class="conv-field"><label>Celsius (°C)</label><input type="number" id="conv-c" value="20" step="0.1" oninput="convertTemp('c')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>Fahrenheit (°F)</label><input type="number" id="conv-f" value="68" step="0.1" oninput="convertTemp('f')"></div>
+        </div>
+        <div class="conv-ref">
+          <span>Tropical 28°C = 82°F</span>
+          <span>Cold 5°C = 41°F</span>
+        </div>
+      </div>
+
+      <!-- Weight: kg / lbs -->
+      <div id="conv-panel-weight" style="display:none;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Weight — Kilograms · Pounds</div>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+            <span id="conv-kg-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);">8 kg</span>
+            <span id="conv-lbs-lbl" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);">17.6 lbs</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="conv-weight-slider" class="lsp-slider" min="1" max="30" value="8" step="0.5" oninput="updateSliderFill(this);convertWeightSlider(this.value)">
+            <div class="slider-ticks"><span>1kg</span><span>8kg</span><span>15kg</span><span>22kg</span><span>30kg</span></div>
+          </div>
+        </div>
+        <div class="conv-row" style="margin-top:8px;">
+          <div class="conv-field"><label>Kilograms (kg)</label><input type="number" id="conv-kg" value="8" step="0.1" oninput="convertWeight('kg')"></div>
+          <div class="conv-arrow">⇄</div>
+          <div class="conv-field"><label>Pounds (lbs)</label><input type="number" id="conv-lbs" value="17.64" step="0.1" oninput="convertWeight('lbs')"></div>
+        </div>
+        <div class="conv-ref">
+          <span>Lead weight 2kg = 4.4 lbs</span>
+          <span>BC 10kg = 22 lbs</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════
+     REFERENCE MODAL OVERLAY
+══════════════════════════════════════ -->
+<div id="referenceModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;background:rgba(0,0,0,0.7);overflow-y:auto;padding:20px;">
+  <div style="max-width:700px;margin:0 auto;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);">📖 Reference</div>
+      <button onclick="toggleReference()" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;">✕ Close</button>
+    </div>
+
   <div class="card">
     <div class="card-title">Algorithm Comparison</div>
     <div class="info-box"><strong>Rec (Recreational Dive Planner):</strong> A conservative lookup table derived from the Bühlmann model and US Navy tables. Fixed depth/time grid — easy to use, no computation. Uses pressure groups (A–Z) to track nitrogen load between dives. Best for recreational divers within 40 m.</div>
@@ -1412,14 +1739,17 @@ body.algo-buh .buh-only { display: flex !important; }
     </div>
 
     <div style="margin-top:24px; padding-top:24px; border-top: 1px solid var(--border); text-align:center;">
-      <div class="card-title">Follow LSP Diving Team</div>
+      <div class="card-title">Follow Three Cats LSP Diving Team</div>
       <p style="color: var(--muted); font-size:13px; margin: 8px 0;">Scan QR code to visit Instagram</p>
       <a href="https://www.instagram.com/threecats_lsp" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-top:12px;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.instagram.com/threecats_lsp" alt="Instagram QR Code" style="width: 140px; height: 140px; border: 3px solid var(--muted); border-radius: 8px; padding: 6px; background: white; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"/>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.instagram.com/threecats_lsp" alt="Instagram QR Code" style="width: 140px; height: 140px; border: 3px solid var(--muted); border-radius: 8px; padding: 6px; background: white;"/>
       </a>
       <p style="color: var(--muted); font-size:12px; margin-top:8px;">@threecats_lsp</p>
     </div>
   </div>
+
+  </div>
+</div>
 
   <div class="card" id="buhRefCard" style="display:none;">
     <div class="card-title">Bühlmann ZH-L16C · 16 Compartments</div>
@@ -1500,34 +1830,52 @@ let lastTissues = null;
 // ═══════════════════════════════════════════════
 function setAlgo(a) {
   algo = a;
-  const isBuh = a === 'buh';
+  const isBuh   = a === 'buh';
+  const isTools = a === 'tools';
+  const isRec   = a === 'padi';
+
   document.body.classList.toggle('algo-buh', isBuh);
-  document.getElementById('algoPADI').classList.toggle('active', !isBuh);
+  document.getElementById('algoPADI').classList.toggle('active', isRec);
   document.getElementById('algoBUH').classList.toggle('active', isBuh);
-  document.getElementById('algoLabel').textContent = isBuh ? 'BÜHLMANN' : 'Rec';
+  document.getElementById('algoTools').classList.toggle('active', isTools);
+  document.getElementById('algoTools').style.color = isTools ? 'var(--accent)' : 'var(--muted)';
+
+  if (isTools) {
+    document.getElementById('algoLabel').textContent    = 'TOOLS';
+    document.getElementById('algoSubtitle').textContent = 'Dive Planning Tools & Calculators';
+    document.getElementById('brandIcon').textContent    = '🔧';
+    // Hide tabs nav entirely, show tools panel
+    document.querySelector('.tabs-nav').style.display = 'none';
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tools').classList.add('active');
+    setTimeout(initTools, 50);
+    return;
+  }
+
+  // Restore tabs nav and reference tab
+  document.querySelector('.tabs-nav').style.display = 'flex';
+
+  document.getElementById('algoLabel').textContent    = isBuh ? 'BÜHLMANN' : 'Rec';
   document.getElementById('algoSubtitle').textContent = isBuh ? 'Bühlmann ZH-L16C · Gradient Factors' : 'Recreational Dive Planner';
-  document.getElementById('brandIcon').textContent = isBuh ? '🫧' : '🤿';
+  document.getElementById('brandIcon').textContent    = isBuh ? '🫧' : '🤿';
   document.getElementById('plannerTitle').textContent = isBuh ? 'Bühlmann Dive Plan' : 'Single Dive Plan';
-  document.getElementById('gasMixField').style.display = isBuh ? 'block' : 'none';
-  document.getElementById('buhRefCard').style.display = isBuh ? 'block' : 'none';
+  document.getElementById('gasMixField').style.display  = isBuh ? 'block' : 'none';
+  document.getElementById('buhRefCard').style.display   = isBuh ? 'block' : 'none';
   document.getElementById('gfPresetsRow').style.display = isBuh ? 'flex' : 'none';
-  document.getElementById('gfCustomRow').style.display = isBuh ? 'flex' : 'none';
-  
-  // Reset result
+  document.getElementById('gfCustomRow').style.display  = isBuh ? 'flex' : 'none';
+
   document.getElementById('plannerResult').style.display = 'none';
-  document.getElementById('multiResult').style.display = 'none';
-  // Ensure active tab is valid for Rec mode
+  document.getElementById('multiResult').style.display   = 'none';
+
   if (!isBuh && document.querySelector('.panel.active')?.id === 'deco') {
     switchTab('planner', document.getElementById('tab-planner'));
   }
-  // Default to Deco Schedule when switching to Bühlmann
   if (isBuh) {
     switchTab('deco', document.getElementById('tab-deco'));
   }
   renderNDLTable();
   buildDiveBlocks();
-  
-  // Save algorithm change
+
   if (typeof appSettings !== 'undefined' && appSettings.save) {
     setTimeout(() => appSettings.save(false), 100);
   }
@@ -1581,6 +1929,11 @@ function loadTableViewPreference() {
       btn.style.borderColor = 'var(--accent)';
     }
   }
+}
+
+function toggleReference() {
+  const modal = document.getElementById('referenceModal');
+  modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
 }
 
 function toggleTheme() {
@@ -1724,7 +2077,8 @@ function switchTab(name, btn) {
     });
   }
   // Trigger tab-specific updates
-  if (name === 'cns') setTimeout(calcCNS, 50);
+  if (name === 'cns')   setTimeout(calcCNS, 50);
+  if (name === 'tools') setTimeout(initTools, 50);
 }
 
 // ═══════════════════════════════════════════════
@@ -2488,6 +2842,11 @@ function runDecoSchedule() {
   document.getElementById('tissueInlineCard').style.display = 'block';
   document.getElementById('tissueTableCard').style.display = 'block';
   document.getElementById('gfCurveInlineCard').style.display = 'block';
+  document.getElementById('contingencyCard').style.display = 'block';
+  buildContingencyButtons();
+  // Reset contingency results
+  document.getElementById('gasLossResult').style.display = 'none';
+  document.getElementById('contingencyTimeResult').style.display = 'none';
   setTimeout(drawDecoProfile, 30);
   setTimeout(drawGFCurve, 60);
   } catch(err) {
@@ -3370,6 +3729,325 @@ function drawDecoProfile() {
     maxDepth: depthVal,
     totalTime: lastT,
   });
+}
+
+// ═══════════════════════════════════════════════
+// TOOLS — MOD / BEST MIX / MAX DEPTH
+// ═══════════════════════════════════════════════
+
+function updateSliderFill(el) {
+  const pct = (el.value - el.min) / (el.max - el.min) * 100;
+  el.style.setProperty('--fill', pct + '%');
+}
+
+function calcMOD() {
+  const o2   = parseFloat(document.getElementById('modO2')?.value) || 0;
+  const ppo2 = (parseFloat(document.getElementById('modPPO2')?.value) || 14) / 10;
+  if (!o2 || o2 <= 0 || o2 > 100) return;
+  const modM  = Math.floor((ppo2 / (o2 / 100) - 1) * 10);
+  const modFt = Math.floor(modM * 3.281);
+  const col = modM < 20 ? 'var(--red)' : modM < 30 ? 'var(--yellow)' : 'var(--accent)';
+  document.getElementById('modResult').textContent  = modM + ' m';
+  document.getElementById('modResult').style.color  = col;
+  document.getElementById('modResultFt').textContent = modFt + ' ft';
+}
+
+function calcBestMix() {
+  const depth = parseFloat(document.getElementById('bestMixDepth')?.value) || 0;
+  const ppo2  = (parseFloat(document.getElementById('bestMixPPO2')?.value) || 14) / 10;
+  if (!depth || depth <= 0) return;
+  const ata   = 1 + depth / 10;
+  const o2raw = (ppo2 / ata) * 100;
+  const o2    = Math.floor(o2raw); // round down for safety
+  const o2clamped = Math.min(100, Math.max(1, o2));
+  const actualPPO2 = ((o2clamped / 100) * ata).toFixed(2);
+  const col = o2clamped > 40 ? 'var(--yellow)' : 'var(--accent)';
+
+  // Gas name
+  let name = 'Custom';
+  if (o2clamped === 21)       name = 'AIR';
+  else if (o2clamped === 32)  name = 'EAN 32';
+  else if (o2clamped === 36)  name = 'EAN 36';
+  else if (o2clamped === 40)  name = 'EAN 40';
+  else if (o2clamped === 50)  name = 'EAN 50';
+  else if (o2clamped === 80)  name = 'EAN 80';
+  else if (o2clamped === 100) name = 'O₂';
+  else if (o2clamped >= 22 && o2clamped <= 40) name = 'EAN ' + o2clamped;
+  else name = o2clamped + '% O₂';
+
+  document.getElementById('bestMixResult').textContent    = o2clamped + '%';
+  document.getElementById('bestMixResult').style.color    = col;
+  document.getElementById('bestMixActualPPO2').textContent = actualPPO2;
+  document.getElementById('bestMixName').textContent       = name;
+}
+
+function calcMaxDepth() {
+  const o2 = parseFloat(document.getElementById('maxDepthO2')?.value) || 0;
+  if (!o2 || o2 <= 0 || o2 > 100) return;
+  const fO2 = o2 / 100;
+  const mod14  = Math.floor((1.4 / fO2 - 1) * 10);
+  const mod16  = Math.floor((1.6 / fO2 - 1) * 10);
+  const col14 = mod14 < 20 ? 'var(--red)' : mod14 < 30 ? 'var(--yellow)' : 'var(--green)';
+  const col16 = mod16 < 20 ? 'var(--red)' : mod16 < 30 ? 'var(--yellow)' : 'var(--yellow)';
+  document.getElementById('maxDepth14').textContent  = mod14 + ' m';
+  document.getElementById('maxDepth14').style.color  = col14;
+  document.getElementById('maxDepth16').textContent  = mod16 + ' m';
+  document.getElementById('maxDepth16').style.color  = col16;
+  document.getElementById('maxDepth14ft').textContent = Math.floor(mod14 * 3.281) + ' ft';
+  document.getElementById('maxDepth16ft').textContent = Math.floor(mod16 * 3.281) + ' ft';
+}
+
+// Init tools on tab open
+function switchTool(name, btn) {
+  ['mod','bestmix','maxdepth','converter'].forEach(t => {
+    document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tool-' + t).classList.toggle('active', t === name);
+  });
+  document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
+  if (name === 'mod')       calcMOD();
+  if (name === 'bestmix')   calcBestMix();
+  if (name === 'maxdepth')  calcMaxDepth();
+  if (name === 'converter') initConverter();
+}
+
+function switchConverter(name, btn) {
+  ['pressure','volume','depth','temperature','weight'].forEach(c => {
+    document.getElementById('conv-panel-' + c).style.display = c === name ? 'block' : 'none';
+    document.getElementById('conv-' + c).classList.toggle('active', c === name);
+  });
+  document.querySelectorAll('#conv-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
+}
+
+function initConverter() {
+  switchConverter('pressure', document.getElementById('conv-pressure'));
+  convertPressure('bar');
+  convertVolume('l');
+  convertDepthSlider(30);
+  convertTempSlider(20);
+  convertWeightSlider(8);
+}
+
+// ── Pressure ──
+function convertPressure(from) {
+  const bar = document.getElementById('conv-bar');
+  const psi = document.getElementById('conv-psi');
+  const mpa = document.getElementById('conv-mpa');
+  let b;
+  if (from === 'bar') b = parseFloat(bar.value) || 0;
+  if (from === 'psi') b = (parseFloat(psi.value) || 0) / 14.5038;
+  if (from === 'mpa') b = (parseFloat(mpa.value) || 0) * 10;
+  if (from !== 'bar') bar.value = +b.toFixed(3);
+  if (from !== 'psi') psi.value = +(b * 14.5038).toFixed(2);
+  if (from !== 'mpa') mpa.value = +(b / 10).toFixed(4);
+  document.getElementById('conv-tank-psi').textContent = Math.round(200 * 14.5038) + ' PSI';
+}
+
+// ── Volume ──
+function convertVolume(from) {
+  const l   = document.getElementById('conv-litres');
+  const ft3 = document.getElementById('conv-ft3');
+  let lv;
+  if (from === 'l')   lv = parseFloat(l.value) || 0;
+  if (from === 'ft3') lv = (parseFloat(ft3.value) || 0) * 28.3168;
+  if (from !== 'l')   l.value   = +lv.toFixed(2);
+  if (from !== 'ft3') ft3.value = +(lv / 28.3168).toFixed(3);
+}
+
+// ── Depth ──
+function convertDepthSlider(v) {
+  const m = parseFloat(v);
+  const ft = m * 3.28084;
+  document.getElementById('conv-depth-m-lbl').textContent  = m + ' m';
+  document.getElementById('conv-depth-ft-lbl').textContent = ft.toFixed(1) + ' ft';
+  document.getElementById('conv-m').value  = m;
+  document.getElementById('conv-ft').value = +ft.toFixed(1);
+}
+function convertDepth(from) {
+  const mEl  = document.getElementById('conv-m');
+  const ftEl = document.getElementById('conv-ft');
+  let m;
+  if (from === 'm')  m = parseFloat(mEl.value) || 0;
+  if (from === 'ft') m = (parseFloat(ftEl.value) || 0) / 3.28084;
+  if (from !== 'm')  mEl.value  = +m.toFixed(1);
+  if (from !== 'ft') ftEl.value = +(m * 3.28084).toFixed(1);
+  document.getElementById('conv-depth-m-lbl').textContent  = m.toFixed(1) + ' m';
+  document.getElementById('conv-depth-ft-lbl').textContent = (m * 3.28084).toFixed(1) + ' ft';
+  const slider = document.getElementById('conv-depth-slider');
+  slider.value = Math.min(100, Math.max(1, m));
+  updateSliderFill(slider);
+}
+
+// ── Temperature ──
+function convertTempSlider(v) {
+  const c = parseFloat(v);
+  const f = c * 9/5 + 32;
+  document.getElementById('conv-temp-c-lbl').textContent = c + '°C';
+  document.getElementById('conv-temp-f-lbl').textContent = f.toFixed(1) + '°F';
+  document.getElementById('conv-c').value = c;
+  document.getElementById('conv-f').value = +f.toFixed(1);
+}
+function convertTemp(from) {
+  const cEl = document.getElementById('conv-c');
+  const fEl = document.getElementById('conv-f');
+  let c;
+  if (from === 'c') c = parseFloat(cEl.value) || 0;
+  if (from === 'f') c = ((parseFloat(fEl.value) || 0) - 32) * 5/9;
+  if (from !== 'c') cEl.value = +c.toFixed(1);
+  if (from !== 'f') fEl.value = +(c * 9/5 + 32).toFixed(1);
+  document.getElementById('conv-temp-c-lbl').textContent = c.toFixed(1) + '°C';
+  document.getElementById('conv-temp-f-lbl').textContent = (c * 9/5 + 32).toFixed(1) + '°F';
+  const slider = document.getElementById('conv-temp-slider');
+  slider.value = Math.min(40, Math.max(-10, c));
+  updateSliderFill(slider);
+}
+
+// ── Weight ──
+function convertWeightSlider(v) {
+  const kg  = parseFloat(v);
+  const lbs = kg * 2.20462;
+  document.getElementById('conv-kg-lbl').textContent  = kg + ' kg';
+  document.getElementById('conv-lbs-lbl').textContent = lbs.toFixed(1) + ' lbs';
+  document.getElementById('conv-kg').value  = kg;
+  document.getElementById('conv-lbs').value = +lbs.toFixed(2);
+}
+function convertWeight(from) {
+  const kEl  = document.getElementById('conv-kg');
+  const lEl  = document.getElementById('conv-lbs');
+  let kg;
+  if (from === 'kg')  kg = parseFloat(kEl.value)  || 0;
+  if (from === 'lbs') kg = (parseFloat(lEl.value) || 0) / 2.20462;
+  if (from !== 'kg')  kEl.value = +kg.toFixed(2);
+  if (from !== 'lbs') lEl.value = +(kg * 2.20462).toFixed(2);
+  document.getElementById('conv-kg-lbl').textContent  = kg.toFixed(1) + ' kg';
+  document.getElementById('conv-lbs-lbl').textContent = (kg * 2.20462).toFixed(1) + ' lbs';
+  const slider = document.getElementById('conv-weight-slider');
+  slider.value = Math.min(30, Math.max(1, kg));
+  updateSliderFill(slider);
+}
+
+function initTools() {
+  document.querySelectorAll('#tools .lsp-slider').forEach(s => updateSliderFill(s));
+  switchTool('mod', document.getElementById('tool-mod'));
+}
+
+// ═══════════════════════════════════════════════
+// CONTINGENCY PLANS
+// ═══════════════════════════════════════════════
+
+function buildContingencyButtons() {
+  const btns = document.getElementById('gasLossButtons');
+  if (!btns) return;
+  btns.innerHTML = '';
+
+  // Gather deco gases from inputs
+  const gases = [];
+  for (let i = 1; i <= 2; i++) {
+    const mix = document.getElementById('dg' + i + 'Mix')?.value;
+    if (mix && mix !== 'none') {
+      const label = document.getElementById('dg' + i + 'Mix')?.selectedOptions[0]?.text || mix;
+      gases.push({ id: i, label: label.split('(')[0].trim() });
+    }
+  }
+  if (gases.length === 0) {
+    btns.innerHTML = '<span style="color:var(--muted);font-size:12px;">No deco gases configured.</span>';
+    return;
+  }
+  gases.forEach(g => {
+    const btn = document.createElement('button');
+    btn.textContent = 'Lose ' + g.label;
+    btn.style.cssText = 'padding:8px 14px;background:rgba(255,71,87,0.1);color:var(--red);border:1px solid var(--red);border-radius:6px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;';
+    btn.onclick = () => calcGasLoss(g.id);
+    btns.appendChild(btn);
+  });
+}
+
+function calcGasLoss(loseGasId) {
+  const resultEl = document.getElementById('gasLossResult');
+  if (!resultEl) return;
+
+  // Re-run deco schedule but disable the lost gas
+  const origVal = document.getElementById('dg' + loseGasId + 'Mix')?.value;
+  if (!origVal) return;
+
+  document.getElementById('dg' + loseGasId + 'Mix').value = 'none';
+
+  // Capture result by temporarily redirecting output
+  const origBody = document.getElementById('decoTableBody').innerHTML;
+  const origSummary = document.getElementById('decoSummary').innerHTML;
+
+  runDecoSchedule();
+
+  // Read new result
+  const newSummary = document.getElementById('decoSummary').innerText;
+  const rows = document.querySelectorAll('#decoTableBody tr[data-phase]');
+  let lastRun = 0;
+  rows.forEach(tr => {
+    const run = parseFloat(tr.querySelectorAll('td')[3]?.textContent) || 0;
+    if (run > lastRun) lastRun = run;
+  });
+
+  const totalDecoTime = [...rows].filter(r => r.dataset.phase === 'deco' || r.dataset.phase === 'safety')
+    .reduce((sum, r) => sum + (parseFloat(r.querySelectorAll('td')[2]?.textContent) || 0), 0);
+
+  // Restore original
+  document.getElementById('dg' + loseGasId + 'Mix').value = origVal;
+  document.getElementById('decoTableBody').innerHTML = origBody;
+  document.getElementById('decoSummary').innerHTML = origSummary;
+
+  // Show result
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = `
+    <div class="alert dang" style="margin:0;">
+      <span>🚨</span>
+      <div>
+        <strong>Without Gas ${loseGasId}:</strong>
+        Total run time ≈ <strong>${lastRun} min</strong> · Deco time ≈ <strong>${Math.round(totalDecoTime)} min</strong>
+        <div style="font-size:11px;margin-top:4px;opacity:0.8;">Ascend on remaining gas only. Monitor ppO₂ closely.</div>
+      </div>
+    </div>`;
+}
+
+function calcContingencyTime(extraMins) {
+  const resultEl = document.getElementById('contingencyTimeResult');
+  if (!resultEl) return;
+
+  const origBT = document.getElementById('decoBT')?.value;
+  if (!origBT) return;
+
+  const newBT = parseFloat(origBT) + extraMins;
+  document.getElementById('decoBT').value = newBT;
+
+  // Capture original state
+  const origBody   = document.getElementById('decoTableBody').innerHTML;
+  const origSummary = document.getElementById('decoSummary').innerHTML;
+
+  runDecoSchedule();
+
+  // Read new totals
+  const rows = document.querySelectorAll('#decoTableBody tr[data-phase]');
+  let lastRun = 0;
+  rows.forEach(tr => {
+    const run = parseFloat(tr.querySelectorAll('td')[3]?.textContent) || 0;
+    if (run > lastRun) lastRun = run;
+  });
+  const totalDecoTime = [...rows].filter(r => r.dataset.phase === 'deco' || r.dataset.phase === 'safety')
+    .reduce((sum, r) => sum + (parseFloat(r.querySelectorAll('td')[2]?.textContent) || 0), 0);
+
+  // Restore
+  document.getElementById('decoBT').value = origBT;
+  document.getElementById('decoTableBody').innerHTML = origBody;
+  document.getElementById('decoSummary').innerHTML   = origSummary;
+
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = `
+    <div class="alert warn" style="margin:0;">
+      <span>⏱️</span>
+      <div>
+        <strong>+${extraMins} min bottom time (${newBT} min total):</strong>
+        Run time ≈ <strong>${lastRun} min</strong> · Deco ≈ <strong>${Math.round(totalDecoTime)} min</strong>
+        <div style="font-size:11px;margin-top:4px;opacity:0.8;">Plan for this scenario — carry extra gas reserve.</div>
+      </div>
+    </div>`;
 }
 
 function calcCNS() {
