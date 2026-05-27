@@ -153,11 +153,20 @@ jobs:
           </resources>
           STRINGS
           
-      - name: Create gradle wrapper files
+      - name: Download and setup Gradle wrapper
         run: |
-          mkdir -p android-app/gradle/wrapper
+          cd android-app
+          mkdir -p gradle/wrapper
           
-          cat > android-app/gradle/wrapper/gradle-wrapper.properties << 'PROPS'
+          # Download Gradle 8.4
+          curl -L -o gradle-8.4-bin.zip https://services.gradle.org/distributions/gradle-8.4-bin.zip
+          unzip -q gradle-8.4-bin.zip
+          
+          # Copy gradle-wrapper-*.jar from extracted Gradle
+          cp gradle-8.4/lib/gradle-wrapper-*.jar gradle/wrapper/ || true
+          
+          # Create gradle-wrapper.properties
+          cat > gradle/wrapper/gradle-wrapper.properties << 'PROPS'
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
@@ -166,18 +175,12 @@ jobs:
           zipStorePath=wrapper/dists
           PROPS
           
-      - name: Create gradlew script
-        run: |
-          cat > android-app/gradlew << 'GRADLEW'
-          #!/bin/sh
+          # Copy gradlew from extracted gradle
+          cp gradle-8.4/bin/gradlew . && chmod +x gradlew
+          cp gradle-8.4/bin/gradlew.bat . || true
           
-          APP_NAME="Gradle"
-          APP_BASE_NAME=`basename "$0"`
-          
-          exec java -XX:+IgnoreUnrecognizedVMOptions -XX:+UseG1GC -XX:+UseStringDeduplication -Xmx1024m -Dorg.gradle.appname="$APP_NAME" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
-          GRADLEW
-          
-          chmod +x android-app/gradlew
+          # Clean up
+          rm -rf gradle-8.4 gradle-8.4-bin.zip
           
       - name: Build APK
         run: |
