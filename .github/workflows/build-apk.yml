@@ -153,40 +153,11 @@ jobs:
           </resources>
           STRINGS
           
-      - name: Download and setup Gradle wrapper
+      - name: Build APK with Gradle
         run: |
           cd android-app
-          mkdir -p gradle/wrapper
-          
-          # Download Gradle 8.4
-          curl -L -o gradle-8.4-bin.zip https://services.gradle.org/distributions/gradle-8.4-bin.zip
-          unzip -q gradle-8.4-bin.zip
-          
-          # Copy gradle-wrapper-*.jar from extracted Gradle
-          cp gradle-8.4/lib/gradle-wrapper-*.jar gradle/wrapper/ || true
-          
-          # Create gradle-wrapper.properties
-          cat > gradle/wrapper/gradle-wrapper.properties << 'PROPS'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
-          networkTimeout=10000
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          PROPS
-          
-          # Copy gradlew from extracted gradle
-          cp gradle-8.4/bin/gradlew . && chmod +x gradlew
-          cp gradle-8.4/bin/gradlew.bat . || true
-          
-          # Clean up
-          rm -rf gradle-8.4 gradle-8.4-bin.zip
-          
-      - name: Build APK
-        run: |
-          cd android-app
-          ./gradlew --version
-          ./gradlew assembleDebug --stacktrace
+          gradle --version
+          gradle assembleDebug --stacktrace
         env:
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
           
