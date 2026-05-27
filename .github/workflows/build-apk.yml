@@ -41,7 +41,7 @@ jobs:
         run: |
           cat > android-app/build.gradle << 'GRADLE'
           plugins {
-              id 'com.android.application' version '8.1.4' apply false
+              id 'com.android.application' version '8.2.2' apply false
           }
           GRADLE
           
@@ -69,7 +69,7 @@ jobs:
         run: |
           cat > android-app/app/build.gradle << 'GRADLE'
           plugins {
-              id 'com.android.application' version '8.1.4'
+              id 'com.android.application' version '8.2.2'
           }
           
           android {
