@@ -153,15 +153,36 @@ jobs:
           </resources>
           STRINGS
           
-      - name: Setup Gradle wrapper
+      - name: Create gradle wrapper files
         run: |
-          cd android-app
-          gradle wrapper --gradle-version 8.4
+          mkdir -p android-app/gradle/wrapper
+          
+          cat > android-app/gradle/wrapper/gradle-wrapper.properties << 'PROPS'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          networkTimeout=10000
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          PROPS
+          
+      - name: Create gradlew script
+        run: |
+          cat > android-app/gradlew << 'GRADLEW'
+          #!/bin/sh
+          
+          APP_NAME="Gradle"
+          APP_BASE_NAME=`basename "$0"`
+          
+          exec java -XX:+IgnoreUnrecognizedVMOptions -XX:+UseG1GC -XX:+UseStringDeduplication -Xmx1024m -Dorg.gradle.appname="$APP_NAME" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+          GRADLEW
+          
+          chmod +x android-app/gradlew
           
       - name: Build APK
         run: |
           cd android-app
-          chmod +x gradlew
+          ./gradlew --version
           ./gradlew assembleDebug --stacktrace
         env:
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
