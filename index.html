@@ -521,6 +521,39 @@ body.algo-tools .algo-switcher > div:last-child .header-warn {
   border: 1px solid rgba(0,200,255,0.18);
 }
 
+/* ── Export / Copy buttons ── */
+.btn-export {
+  padding: 7px 14px;
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-export:hover {
+  background: rgba(0,200,255,0.10);
+}
+.btn-export.primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.btn-export.primary:hover {
+  filter: brightness(1.12);
+}
+.export-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* Bühlmann-only tabs hidden in PADI mode */
 .buh-only { display: none !important; }
 body.algo-buh .buh-only { display: flex !important; }
@@ -616,7 +649,7 @@ body.algo-buh .buh-only { display: flex !important; }
 /* ── FORM ── */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -1151,9 +1184,9 @@ body.algo-buh .buh-only { display: flex !important; }
     <!-- Custom GF (hidden by default) -->
     <div id="gfCustomRow" style="display: none; align-items: center; gap: 8px; flex-shrink:0;">
       <button class="gf-btn" style="background: var(--bg-alt); border: 1px solid var(--border); cursor: default; pointer-events: none;" title="Custom Gradient Factors">Custom GF</button>
-      <input type="number" id="gfLowInput" min="5" max="100" placeholder="30" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()" maxlength="3">
+      <input type="number" id="gfLowInput" min="5" max="100" placeholder="30" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()">
       <span style="color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">/</span>
-      <input type="number" id="gfHighInput" min="5" max="100" placeholder="70" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()" maxlength="3">
+      <input type="number" id="gfHighInput" min="5" max="100" placeholder="70" style="width: 55px; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-align: center; cursor: text;" oninput="setCustomGF()" onchange="setCustomGF()">
     </div>
 
     <!-- Warning + Ref (Right, pushed to edge with margin-left:auto) -->
@@ -1298,7 +1331,10 @@ body.algo-buh .buh-only { display: flex !important; }
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="card-title" style="margin:0;">Results</div>
-        <button onclick="copyDiveProfile('multi')" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;" title="Copy to clipboard">📋 COPY</button>
+        <div class="export-row">
+          <button class="btn-export" onclick="copyDiveProfile('multi')" title="Copy to clipboard">📋 COPY</button>
+          <button class="btn-export primary" onclick="exportTXT('multi')" title="Download .txt">📥 TXT</button>
+        </div>
       </div>
       <div id="multiCards"></div>
       <div id="multiWarnings" style="margin-top:10px;"></div>
@@ -1331,13 +1367,33 @@ body.algo-buh .buh-only { display: flex !important; }
         <label>Bottom Gas O₂ %</label>
         <input type="number" id="decoCustomO2" value="21" min="21" max="40" step="1" oninput="if(window._lastContingency) calcContingency()">
       </div>
-      <div class="field"><label>Descent Rate (m/min)</label><input type="number" id="descentRate" value="22" min="5" max="30" step="1"></div>
-      <div class="field"><label>Ascent Rate (m/min)</label><input type="number" id="ascentRate" value="9" min="3" max="18" step="1"></div>
+      <div class="field"><label>Descent Rate</label>
+        <select id="descentRate">
+          <option value="10">10 m/min</option>
+          <option value="15">15 m/min</option>
+          <option value="18" selected>18 m/min</option>
+          <option value="20">20 m/min</option>
+          <option value="22">22 m/min</option>
+          <option value="25">25 m/min</option>
+          <option value="30">30 m/min</option>
+        </select>
+      </div>
+      <div class="field"><label>Ascent Rate</label>
+        <select id="ascentRate">
+          <option value="3">3 m/min</option>
+          <option value="6">6 m/min</option>
+          <option value="9" selected>9 m/min</option>
+          <option value="10">10 m/min</option>
+          <option value="12">12 m/min</option>
+          <option value="15">15 m/min</option>
+          <option value="18">18 m/min</option>
+        </select>
+      </div>
       <div class="field">
         <label>Deco Step Size</label>
         <select id="decoStep">
           <option value="1">1 m</option>
-          <option value="3" selected>3 m (default)</option>
+          <option value="3" selected>3 m</option>
           <option value="5">5 m</option>
         </select>
       </div>
@@ -1349,36 +1405,44 @@ body.algo-buh .buh-only { display: flex !important; }
           <option value="1">1 m</option>
         </select>
       </div>
-    </div>
-
-    <!-- ppO2 Thresholds by O2 fraction band -->
-    <div style="border:1px solid var(--border-hi);border-radius:8px;padding:14px;margin-top:10px;background:rgba(0,200,255,0.03);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;">ppO₂ THRESHOLDS BY O₂ FRACTION</div>
-      <div class="form-grid" style="margin-bottom:0;">
-        <div class="field">
-          <label>45–100% O₂ (rich mix)</label>
-          <select id="ppo2High">
-            <option value="1.6" selected>1.6 bar</option>
-            <option value="1.5">1.5 bar</option>
-            <option value="1.4">1.4 bar</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>28–44% O₂ (nitrox)</label>
-          <select id="ppo2Mid">
-            <option value="1.6">1.6 bar</option>
-            <option value="1.5" selected>1.5 bar</option>
-            <option value="1.4">1.4 bar</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Up to 28% O₂ (air/lean)</label>
-          <select id="ppo2Low">
-            <option value="1.6">1.6 bar</option>
-            <option value="1.5">1.5 bar</option>
-            <option value="1.4" selected>1.4 bar</option>
-          </select>
-        </div>
+      <div class="field">
+        <label>Stop Time (min)</label>
+        <select id="minStopTime">
+          <option value="1" selected>1:00</option>
+          <option value="0.5">0:30</option>
+          <option value="0.1667">0:10</option>
+          <option value="0.0167">0:01</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>N₂ Narcotic</label>
+        <select id="n2NarcSel" onchange="setNarcosis('n2', this.value==='yes')">
+          <option value="yes" selected>Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>O₂ Narcotic</label>
+        <select id="o2NarcSel" onchange="setNarcosis('o2', this.value==='yes')">
+          <option value="yes" selected>Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Max Bottom ppO₂</label>
+        <select id="ppo2Bottom">
+          <option value="1.6">1.6 bar</option>
+          <option value="1.5">1.5 bar</option>
+          <option value="1.4" selected>1.4 bar</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Max Deco ppO₂</label>
+        <select id="ppo2Deco">
+          <option value="1.6" selected>1.6 bar</option>
+          <option value="1.5">1.5 bar</option>
+          <option value="1.4">1.4 bar</option>
+        </select>
       </div>
     </div>
 
@@ -1442,9 +1506,11 @@ body.algo-buh .buh-only { display: flex !important; }
         <div class="card-title" style="margin:0;">Dive Profile</div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button id="tableViewToggle" onclick="toggleTableView()" style="display:none;padding:8px 12px;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Switch table view">⊞ Cards</button>
-          <button onclick="copyDiveProfile('deco')" style="padding:8px 16px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;" title="Copy to clipboard">📋 COPY</button>
-          <button onclick="exportDecoSchedule()" style="padding:8px 16px;background:var(--accent);color:var(--bg);border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">📥 TXT</button>
-          <button onclick="exportPDF()" style="padding:8px 16px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;">⬇ PDF</button>
+          <div class="export-row">
+            <button class="btn-export" onclick="copyDiveProfile('deco')" title="Copy to clipboard">📋 COPY</button>
+            <button class="btn-export primary" onclick="exportTXT('deco')" title="Download .txt">📥 TXT</button>
+            <button class="btn-export" onclick="exportPDF()" title="Export PDF">⬇ PDF</button>
+          </div>
         </div>
       </div>
       <div id="decoSummary"></div>
@@ -1555,7 +1621,10 @@ body.algo-buh .buh-only { display: flex !important; }
 ══════════════════════════════════════ -->
 <div class="panel" id="cns">
   <div class="card">
-    <div class="card-title">CNS Oxygen Toxicity Tracker</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="card-title" style="margin:0;">CNS Oxygen Toxicity Tracker</div>
+      <button class="btn-export" onclick="copyDiveProfile('cns')" title="Copy to clipboard">📋 COPY</button>
+    </div>
     <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tracks Central Nervous System (CNS) O₂ toxicity based on ppO₂ and exposure time. NOAA limits: keep CNS below 80% per dive, 100% per day.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -1969,6 +2038,60 @@ const WATER_DENSITY = {
 };
 let BAR_PER_METRE = WATER_DENSITY.en13319; // default
 
+// ── Narcosis settings ──
+let narcoticN2 = true;   // N₂ always narcotic by default
+let narcoticO2 = true;   // O₂ narcotic by default (NOAA/IANTD standard)
+
+function setNarcosis(gas, isNarc) {
+  if (gas === 'n2') {
+    narcoticN2 = isNarc;
+    const sel = document.getElementById('n2NarcSel');
+    if (sel) sel.value = isNarc ? 'yes' : 'no';
+  } else {
+    narcoticO2 = isNarc;
+    const sel = document.getElementById('o2NarcSel');
+    if (sel) sel.value = isNarc ? 'yes' : 'no';
+  }
+}
+
+/**
+ * Equivalent Narcotic Depth (END)
+ * END = ((ppNarcotic / ppNarcotic_air_at_surface) - 1) / BAR_PER_METRE  ... simplified:
+ * Standard formula: END = (pNarc / pNarc_air_surface) * 10 - 10  (in metres)
+ * pNarc = total narcotic partial pressure at depth
+ * pNarc_air_surface = narcotic pp of air at surface (reference)
+ *
+ * fNarcN2: N₂ fraction in gas (0–1), used if narcoticN2
+ * fNarcO2: O₂ fraction in gas (0–1), used if narcoticO2
+ * depthM : actual depth
+ * returns END in metres (0 if no narcotic component)
+ */
+function calcEND(depthM, fN2) {
+  const fO2 = 1 - fN2;
+  const pAmb = SURFACE_P + depthM * BAR_PER_METRE;
+
+  // Narcotic partial pressures at depth
+  const pNarcN2 = narcoticN2 ? pAmb * fN2 : 0;
+  const pNarcO2 = narcoticO2 ? pAmb * fO2 : 0;
+  const pNarc   = pNarcN2 + pNarcO2;
+
+  // Reference: narcotic pp of air at surface
+  const fN2air = FN2_AIR;
+  const fO2air = 1 - FN2_AIR;
+  const pNarcAirSurface = (narcoticN2 ? SURFACE_P * fN2air : 0) +
+                           (narcoticO2 ? SURFACE_P * fO2air : 0);
+
+  if (pNarcAirSurface <= 0) return 0; // no narcotic component at all
+
+  // END = depth at which air would produce same narcotic pp
+  // pNarcAirSurface + END * BAR_PER_METRE * (fN2air*(narcoticN2?1:0) + fO2air*(narcoticO2?1:0)) = pNarc
+  const narcoticFracAir = (narcoticN2 ? fN2air : 0) + (narcoticO2 ? fO2air : 0);
+  const end = narcoticFracAir > 0
+    ? (pNarc / narcoticFracAir - SURFACE_P) / BAR_PER_METRE
+    : 0;
+  return Math.max(0, end);
+}
+
 function setWaterDensity(type) {
   BAR_PER_METRE = WATER_DENSITY[type] || WATER_DENSITY.en13319;
   // Update button states
@@ -2195,7 +2318,17 @@ function setCustomGF() {
   const lowInput = document.getElementById('gfLowInput');
   const highInput = document.getElementById('gfHighInput');
   const customButton = document.querySelector('#gfCustomRow .gf-btn');
-  
+
+  // Clamp to max 2 digits (allow 100 as special case)
+  [lowInput, highInput].forEach(inp => {
+    if (!inp) return;
+    const raw = inp.value;
+    if (raw.length > 3) inp.value = raw.slice(0, 3);
+    const n = parseInt(inp.value);
+    if (!isNaN(n) && n > 100) inp.value = '100';
+    else if (!isNaN(n) && raw.length > 2 && n !== 100) inp.value = raw.slice(0, 2);
+  });
+
   const lowVal = lowInput ? lowInput.value : '';
   const highVal = highInput ? highInput.value : '';
   
@@ -2386,6 +2519,44 @@ function getN2Frac(mix) {
 function depthBar(m)   { return SURFACE_P + m * BAR_PER_METRE; }
 function schreiner(p0, pGas, ht, t) { return pGas + (p0-pGas) * Math.exp(-Math.LN2/ht*t); }
 
+/**
+ * Schreiner equation for linearly changing ambient pressure (ascent/descent).
+ * pAmb changes at rate R (bar/min) from p0Amb over time t.
+ * R = rateM * BAR_PER_METRE for descent (+ve), negative for ascent.
+ */
+function schreinerLinear(p0, fN2, ht, t, p0Amb, R) {
+  const k   = Math.LN2 / ht;
+  const piN2 = p0Amb * fN2;          // initial inspired pN2
+  const rN2  = R * fN2;               // rate of change of inspired pN2
+  return piN2 + rN2 * (t - 1/k) - (piN2 - p0 - rN2/k) * Math.exp(-k * t);
+}
+
+/**
+ * Saturate tissues during a linear pressure change (descent or ascent).
+ * fromDepth → toDepth over time t minutes, breathing fN2.
+ */
+function saturateLinear(tissues, fromDepth, toDepth, t, fN2) {
+  if (t <= 0) return tissues;
+  const p0Amb = depthBar(fromDepth);
+  const pEndAmb = depthBar(toDepth);
+  const R = (pEndAmb - p0Amb) / t;  // bar/min (+ve descent, -ve ascent)
+  return tissues.map((p0, i) => schreinerLinear(p0, fN2, ZHL16C[i][0], t, p0Amb, R));
+}
+
+/**
+ * Z-factor (compressibility) for N₂ at diving pressures.
+ * Uses a simplified virial equation fitted to NIST data for N₂ (0–20 bar, 20–37°C).
+ * Z ≈ 1 + B(T)·P  where B ≈ −4.0e-3 bar⁻¹ at ~25°C for N₂.
+ * Effective pN2_real = pN2_ideal / Z(pAmb)
+ * This correction is small (<2% at 6 bar) but included for completeness.
+ */
+function zFactorN2(pBar) {
+  // Second virial coefficient B for N₂ at ~25°C ≈ -4.0e-3 L/mol, converted to bar⁻¹ ≈ +0.00166
+  // Net effect: at high pressure N₂ is slightly less soluble than ideal
+  const B = 0.00166; // bar⁻¹  (positive = slightly supra-ideal at dive pressures)
+  return 1 + B * pBar;
+}
+
 function saturate(tissues, depthM, t, fN2) {
   const pN2 = depthBar(depthM) * fN2;
   return tissues.map((p0,i) => schreiner(p0, pN2, ZHL16C[i][0], t));
@@ -2472,10 +2643,10 @@ function runPlanner() {
     html = `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="card-title" style="margin:0;">Rec Results · ${dDisp} for ${bt} min</div>
-        <button onclick="copyDiveProfile('planner')" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;" title="Copy to clipboard">📋 COPY</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-val ${ndl<999?(btOk?'g':'r'):'g'}">${ndl}</div><div class="stat-lbl">NDL (min)</div></div>
+        <div class="export-row">
+          <button class="btn-export" onclick="copyDiveProfile('planner')" title="Copy to clipboard">📋 COPY</button>
+          <button class="btn-export primary" onclick="exportTXT('planner')" title="Download .txt">📥 TXT</button>
+        </div>
         <div class="stat"><div class="stat-val ${btOk?'g':'r'}">${bt}</div><div class="stat-lbl">Your BT (min)</div></div>
         <div class="stat"><div class="stat-val ${rem===0?'r':rem<10?'o':'g'}">${rem}</div><div class="stat-lbl">Remaining (min)</div></div>
         <div class="stat"><div class="stat-val" style="font-size:22px;"><span class="group-badge">${group}</span></div><div class="stat-lbl">Pressure Group</div></div>
@@ -2510,10 +2681,10 @@ function runPlanner() {
     html = `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="card-title" style="margin:0;">Bühlmann Results · ${dDisp} for ${bt} min · GF ${gfL}/${gfH}</div>
-        <button onclick="copyDiveProfile('planner')" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;letter-spacing:1px;" title="Copy to clipboard">📋 COPY</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-val ${ndl>=500?'g':btOk?'g':'r'}">${ndl>=500?'500+':ndl}</div><div class="stat-lbl">NDL (min)</div></div>
+        <div class="export-row">
+          <button class="btn-export" onclick="copyDiveProfile('planner')" title="Copy to clipboard">📋 COPY</button>
+          <button class="btn-export primary" onclick="exportTXT('planner')" title="Download .txt">📥 TXT</button>
+        </div>
         <div class="stat"><div class="stat-val ${btOk?'g':'r'}">${bt}</div><div class="stat-lbl">Your BT (min)</div></div>
         <div class="stat"><div class="stat-val ${rem===0?'r':rem<10?'o':'g'}">${rem}</div><div class="stat-lbl">Remaining (min)</div></div>
         <div class="stat"><div class="stat-val ${ceil>0?'r':'g'}">${ceil>0?Math.ceil(ceil)+' m':'0 m'}</div><div class="stat-lbl">Deco Ceiling</div></div>
@@ -2698,10 +2869,16 @@ function runDecoSchedule() {
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
   const rate        = Math.max(1, parseInt(document.getElementById('ascentRate').value)  || 9);
   const descentRate = Math.max(1, parseInt(document.getElementById('descentRate').value) || 22);
+  const gfL    = mGF.low  / 100;
   const gfH    = mGF.high / 100;
-  const ppo2High  = parseFloat(document.getElementById('ppo2High').value)  || 1.6; // 45–100% O2
-  const ppo2Mid   = parseFloat(document.getElementById('ppo2Mid').value)   || 1.5; // 28–44%  O2
-  const ppo2Low   = parseFloat(document.getElementById('ppo2Low').value)   || 1.4; // ≤28%    O2
+  const ppo2Bottom = parseFloat(document.getElementById('ppo2Bottom').value) || 1.4; // bottom / lean gas
+  const ppo2Deco   = parseFloat(document.getElementById('ppo2Deco').value)   || 1.6; // rich deco gas (≥45% O2)
+  const minStopT   = parseFloat(document.getElementById('minStopTime').value) || 1;   // minimum stop duration (minutes)
+  const switchPauseT = 1; // gas switch pause fixed at 1 min
+  // Keep backward-compat aliases so getPPO2Limit bands still work
+  const ppo2High = ppo2Deco;    // ≥45% O2 — deco gas
+  const ppo2Mid  = ppo2Bottom;  // 28–44% O2 — nitrox bottom
+  const ppo2Low  = ppo2Bottom;  // ≤28%  O2 — air / lean
   const lastStop    = parseInt(document.getElementById('lastDecoStop').value) || 6;
   const decoStep    = parseInt(document.getElementById('decoStep').value)     || 3;
 
@@ -2775,9 +2952,9 @@ function runDecoSchedule() {
   // Saturate tissues at depth for bottom time
   let tissues = initTissues();
 
-  // Descent phase — saturate tissues as diver descends from surface to depthM
+  // Descent phase — proper linear Schreiner equation (pressure increases linearly)
   const descentTime = depthM / descentRate;
-  tissues = saturate(tissues, depthM / 2, descentTime, bottomFN2); // avg mid-depth for descent
+  tissues = saturateLinear(tissues, 0, depthM, descentTime, bottomFN2);
 
   // Bottom phase
   tissues = saturate(tissues, depthM, bt, bottomFN2);
@@ -2788,26 +2965,61 @@ function runDecoSchedule() {
 
   // ── Stop-based ascent engine ──
   // 1. Candidate stop depths are every 3 m from bottom to lastStop (inclusive).
-  // 2. Travel between stops is instant (no tissue change during travel).
+  // 2. Travel between stops: tissues off-gas at average depth during ascent.
   // 3. Deco is only held at stop depths until ceiling clears.
   // 4. Gas is evaluated at each stop depth — best available gas wins.
 
   // Build list of stop depths from current depth down to lastStop, step decoStep
-  const startStop = Math.ceil(cur / decoStep) * decoStep;
+  // Use floor so startStop never exceeds actual bottom depth
+  const startStop = Math.floor(cur / decoStep) * decoStep;
   const stopDepths = [];
   for (let d = startStop; d >= lastStop; d -= decoStep) {
     stopDepths.push(d);
   }
-  if (stopDepths[stopDepths.length - 1] !== lastStop) stopDepths.push(lastStop);
+  if (stopDepths.length === 0 || stopDepths[stopDepths.length - 1] !== lastStop) stopDepths.push(lastStop);
+
+  let prevEngineGas = bottomMixLabel; // track gas for switch pause
+  let decoZoneEntered = false; // true once first ceiling-forced stop fires
+  // ── GF anchor = ceiling(bottom_tissues, gfL) rounded up to nearest stop depth ──
+  const bottomCeil = ceiling(tissues, gfL);
+  const firstStopDepth = bottomCeil > 0
+    ? Math.max(lastStop, Math.ceil(bottomCeil / decoStep) * decoStep)
+    : 0;
+
+  // firstSwitchDepth — find first deco gas switch depth
+  let firstDecoDepth   = null;
+  let firstSwitchDepth = null;
+  {
+    let simCur = cur;
+    let simPrevGas = bottomMixLabel;
+    for (const sd of stopDepths) {
+      if (simCur > sd) simCur = sd;
+      const gas2 = getActiveGas(simCur, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
+      if (gas2.label !== simPrevGas) { firstSwitchDepth = simCur; break; }
+      simPrevGas = gas2.label;
+    }
+  }
+
+  // minStop zone: deepest of GF anchor or first gas switch
+  const minStopZoneDepth = Math.max(firstStopDepth || 0, firstSwitchDepth || 0) || null;
+
+  // ── GF interpolation: gfL at firstStopDepth → gfH at surface ──
+  function gfAt(depthM) {
+    if (!firstStopDepth || firstStopDepth <= 0) return gfH;
+    if (depthM >= firstStopDepth) return gfL;
+    const gf = gfL + (gfH - gfL) * (firstStopDepth - depthM) / firstStopDepth;
+    return Math.min(gfH, Math.max(gfL, gf));
+  }
 
   for (let si = 0; si < stopDepths.length; si++) {
     const stopDepth = stopDepths[si];
     const nextStop  = si + 1 < stopDepths.length ? stopDepths[si + 1] : 0;
 
-    // Travel from cur to stopDepth (instant — no tissue saturation during travel)
+    // Travel from cur to stopDepth — tissues off-gas with linear Schreiner
     if (cur > stopDepth) {
       const travelGas = getActiveGas(cur, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
       const travelDur = (cur - stopDepth) / rate;
+      tissues = saturateLinear(tissues, cur, stopDepth, travelDur, travelGas.fN2);
       steps.push({
         type: 'ascent', from: cur, to: stopDepth,
         dur: travelDur, gas: travelGas.label,
@@ -2822,39 +3034,71 @@ function runDecoSchedule() {
     const stopFN2  = stopGas.fN2;
     const gasLabel = stopGas.label;
 
-    // Must stop here if ceiling is deeper than the NEXT stop level —
-    // i.e. we cannot yet ascend to the next shallower stop
-    const ceil     = ceiling(tissues, gfH);
-    const mustStop = ceil > nextStop + 0.1;
+    // Gas switch pause — saturate tissues at this depth during the switch
+    if (gasLabel !== prevEngineGas && switchPauseT > 0) {
+      tissues = saturate(tissues, cur, switchPauseT, stopFN2);
+      rt += switchPauseT;
+    }
+    prevEngineGas = gasLabel;
+
+    // Ceiling target: must clear below nextStop before ascending.
+    // For the stop just above lastStop (e.g. 6m when lastStop=3m),
+    // require ceiling to reach surface (0) so the diver can safely ascend past lastStop.
+    const ceilTarget = (nextStop < lastStop) ? 0 : nextStop + 0.1;
+
+    const ceil     = ceiling(tissues, gfAt(cur));
+    const mustStop = ceil > ceilTarget;
 
     if (mustStop) {
-      // Deco stop: hold until ceiling clears enough to proceed to next stop
+      // Record the first depth where ceiling forces a stop
+      if (firstDecoDepth === null) firstDecoDepth = cur;
+      decoZoneEntered = true;
+      // Deco stop: hold until ceiling clears to target (10-second resolution)
+      const step = 1/6; // 10 seconds in minutes
       let stopT = 0;
-      while (ceiling(tissues, gfH) > nextStop + 0.1 && stopT < 180) {
-        tissues = saturate(tissues, cur, 1, stopFN2);
-        stopT++; rt++;
+      while (ceiling(tissues, gfAt(cur)) > ceilTarget && stopT < 360) {
+        tissues = saturate(tissues, cur, step, stopFN2);
+        stopT += step; rt += step;
       }
-      // At 21 m and deeper: record all stops regardless of duration
-      // Shallower than 21 m: only record stop if it lasted more than 1 min
-      const recordStop = stopT > 0 && (cur >= 21 || stopT > 1);
-      if (recordStop) {
-        steps.push({ type: 'deco', depth: cur, dur: stopT, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+      // Apply minimum stop time
+      if (stopT < minStopT) {
+        const extra = minStopT - stopT;
+        tissues = saturate(tissues, cur, extra, stopFN2);
+        stopT += extra; rt += extra;
       }
+      steps.push({ type: 'deco', depth: cur, dur: stopT, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+    } else if (minStopT > 0 && minStopZoneDepth !== null && cur <= minStopZoneDepth && cur !== lastStop) {
+      decoZoneEntered = true;
+      // In deco zone but ceiling already clear: enforce minimum stop, then re-check ceiling
+      const step = 1/6;
+      let stopT = minStopT;
+      tissues = saturate(tissues, cur, stopT, stopFN2);
+      rt += stopT;
+      while (ceiling(tissues, gfAt(cur)) > ceilTarget && stopT < 360) {
+        tissues = saturate(tissues, cur, step, stopFN2);
+        stopT += step; rt += step;
+      }
+      steps.push({ type: 'deco', depth: cur, dur: stopT, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
     } else if (cur === lastStop) {
       // Last stop — always hold (safety or mandatory minimum)
       const isDecoNeeded = steps.some(s => s.type === 'deco');
       const stopType = isDecoNeeded ? 'deco' : 'safety';
       let stopT = 0;
       if (isDecoNeeded) {
-        // Clear any remaining ceiling, minimum 1 min
-        while (ceiling(tissues, gfH) > 0.1 && stopT < 180) {
-          tissues = saturate(tissues, cur, 1, stopFN2);
-          stopT++; rt++;
+        // Clear any remaining ceiling, enforce minimum stop time
+        const step = 1/6;
+        while (ceiling(tissues, gfAt(cur)) > 0.1 && stopT < 180) {
+          tissues = saturate(tissues, cur, step, stopFN2);
+          stopT += step; rt += step;
         }
-        if (stopT === 0) { tissues = saturate(tissues, cur, 1, stopFN2); stopT = 1; rt++; }
+        if (stopT < minStopT) {
+          const extra = minStopT - stopT;
+          tissues = saturate(tissues, cur, extra, stopFN2);
+          stopT += extra; rt += extra;
+        }
       } else {
-        // Safety stop — 3 min
-        stopT = 3;
+        // Safety stop — 3 min (or minStopT if larger)
+        stopT = Math.max(3, minStopT);
         tissues = saturate(tissues, cur, stopT, stopFN2);
         rt += stopT;
       }
@@ -2877,7 +3121,7 @@ function runDecoSchedule() {
   }
 
   const decoStops = collapsed.filter(s => s.type === 'deco');
-  const decoTime  = decoStops.reduce((a, s) => a + s.dur, 0);
+  const decoTime  = Math.round(decoStops.reduce((a, s) => a + s.dur, 0) * 60) / 60;
   const hasDeco   = decoStops.length > 0;
   const gasUsed   = [...new Set(collapsed.map(s => s.gas))];
   // Build gas info row with real values: label @ switch depth — O₂%
@@ -2889,23 +3133,38 @@ function runDecoSchedule() {
     return `<span style="background:rgba(38,208,124,0.1);border:1px solid var(--green);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">Deco: ${dg.label.toUpperCase()} — ${o2pct}% O₂ @ ${depthDisp}</span>`;
   }).join(' ');
 
+  // ── END (Equivalent Narcotic Depth) at bottom depth ──
+  const endM     = calcEND(depthM, bottomFN2);
+  const endDisp  = Math.round(endM);
+  const endColor = endM > 40 ? 'var(--red)' : endM > 30 ? 'var(--orange)' : endM > 20 ? 'var(--yellow)' : 'var(--green)';
+  const narcoStr = `N₂:${narcoticN2?'✓':'✗'} O₂:${narcoticO2?'✓':'✗'}`;
+
+  // Update live END display in the settings card
+  const endLive = document.getElementById('endDisplayLive');
+  if (endLive) {
+    endLive.textContent = `${endDisp} m  (${narcoStr})`;
+    endLive.style.color = endColor;
+  }
+
   document.getElementById('decoSummary').innerHTML = `
     <div class="stats" style="margin-top:0;">
       <div class="stat"><div class="stat-val">${rawD} m</div><div class="stat-lbl">Depth</div></div>
       <div class="stat"><div class="stat-val">${bt} min</div><div class="stat-lbl">Bottom Time</div></div>
       <div class="stat"><div class="stat-val" style="font-size:13px;">${bottomMixLabel}</div><div class="stat-lbl">Bottom Gas</div></div>
-      <div class="stat"><div class="stat-val ${hasDeco?'o':'g'}">${decoTime} min</div><div class="stat-lbl">Deco Time</div></div>
+      <div class="stat"><div class="stat-val ${hasDeco?'o':'g'}">${Math.round(decoTime)} min</div><div class="stat-lbl">Deco Time</div></div>
       <div class="stat"><div class="stat-val">${Math.round(rt)} min</div><div class="stat-lbl">Total Run Time</div></div>
       <div class="stat"><div class="stat-val">${mGF.low}/${mGF.high}</div><div class="stat-lbl">GF Low/High</div></div>
       <div class="stat"><div class="stat-val">${lastStop} m</div><div class="stat-lbl">Last Stop</div></div>
       <div class="stat"><div class="stat-val">${decoStep} m</div><div class="stat-lbl">Step Size</div></div>
+      <div class="stat"><div class="stat-val" style="color:${endColor};font-size:15px;">${endDisp} m</div><div class="stat-lbl">END <span style="font-size:9px;color:var(--muted);">${narcoStr}</span></div></div>
     </div>
     ${decoGases.length > 0 || true ? `<div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       ${bottomGasTag} ${decoGasTags}
     </div>` : ''}
     ${hasDeco
       ? '<div class="alert deco" style="margin-top:10px;"><span>🟣</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
-      : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}`;
+      : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}
+    ${endM > 40 ? '<div class="alert dang" style="margin-top:8px;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.</div></div>' : endM > 30 ? '<div class="alert warn" style="margin-top:8px;"><span>⚡</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent.</div></div>' : ''}`;
 
   const tbody = document.getElementById('decoTableBody');
   const descentTimeMin = Math.round((depthM / descentRate) * 10) / 10;
@@ -2927,14 +3186,50 @@ function runDecoSchedule() {
     return pct.toFixed(1)+'%';
   }
 
+  // ── OTU per segment (NOAA formula) ──
+  function segOTU(ppo2, dur) {
+    if (ppo2 <= 0.5) return 0;
+    return dur * Math.pow((ppo2 - 0.5) / 0.5, 0.833);
+  }
+  // ── CNS raw fraction per segment ──
+  function segCNSfrac(ppo2, dur) {
+    if (ppo2 <= 0.5) return 0;
+    const limits = {6:720,7:570,8:450,9:360,10:300,11:240,12:210,13:180,14:150,15:120,16:45};
+    const lo = Math.floor(ppo2*10), hi = lo+1;
+    const vLo = limits[lo]||0, vHi = limits[hi]||0;
+    const lim = vLo + (vHi-vLo)*(ppo2*10-lo);
+    return lim > 0 ? dur / lim : 1;
+  }
+  // ── mm'ss" formatter ──
+  function toMMSS(minutes) {
+    const totalSec = Math.round(minutes * 60);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}'${String(s).padStart(2,'0')}"`;
+  }
+
+  // Accumulators for footer
+  let totalCNSfrac = 0;
+  let totalOTU     = 0;
+
+  // ── mm:ss formatter for table cells ──
+  function fmtMM(minutes) {
+    const totalSec = Math.round(minutes * 60);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
+
   // ── DESCENT ROW ──
   rowRT += descentTimeMin;
   const descentPPO2 = ((rawD/2 * BAR_PER_METRE + SURFACE_P) * (1 - bottomFN2)).toFixed(2);
+  totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), descentTimeMin);
+  totalOTU     += segOTU(parseFloat(descentPPO2), descentTimeMin);
   tbody.innerHTML += `<tr class="asc-row" data-phase="descent">
     <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
     <td data-label="Depth" style="color:#ff8080;">0 → ${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
-    <td data-label="Stop" style="color:#ff8080;">${descentTimeMin} min</td>
-    <td data-label="Run" style="color:#ff8080;">${Math.round(rowRT)} min</td>
+    <td data-label="Stop" style="color:#ff8080;"></td>
+    <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
     <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
     <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
     <td data-label="CNS%" style="color:var(--muted);">${rowCNS(parseFloat(descentPPO2), descentTimeMin)}</td>
@@ -2944,11 +3239,13 @@ function runDecoSchedule() {
   rowRT += bt;
   const btPPO2 = ((rawD * BAR_PER_METRE + SURFACE_P) * (1 - bottomFN2)).toFixed(2);
   const btCNS  = rowCNS(parseFloat(btPPO2), bt);
+  totalCNSfrac += segCNSfrac(parseFloat(btPPO2), bt);
+  totalOTU     += segOTU(parseFloat(btPPO2), bt);
   tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">
     <td>🔵</td>
     <td data-label="Depth" style="color:var(--accent);">${dU?rawD+' m':mToFt(rawD)+' ft'}</td>
-    <td data-label="Stop" style="color:var(--accent);">${bt} min</td>
-    <td data-label="Run" style="color:var(--accent);">${Math.round(rowRT)} min</td>
+    <td data-label="Stop" style="color:var(--accent);">${fmtMM(bt)}</td>
+    <td data-label="Run" style="color:var(--accent);">${fmtMM(rowRT)}</td>
     <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
     <td data-label="PPO2" style="color:var(--muted);">${btPPO2}</td>
     <td data-label="CNS%" style="color:var(--muted);">${btCNS}</td>
@@ -2960,7 +3257,7 @@ function runDecoSchedule() {
     const pO2Color = pO2Val > gasLimit ? 'color:var(--red);font-weight:700;' : pO2Val > gasLimit * 0.97 ? 'color:var(--orange);' : 'color:var(--muted);';
     const stepDur  = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
     rowRT += stepDur;
-    const rtDisp = Math.round(rowRT) + ' min';
+    const rtDisp = fmtMM(rowRT);
 
     // ── GAS SWITCH ROW ──
     if (s.gas !== prevGas && s.gas !== bottomMixLabel) {
@@ -2990,11 +3287,13 @@ function runDecoSchedule() {
     // ── DECO STOP ROW ──
     if (s.type === 'deco') {
       const cnsPct = rowCNS(pO2Val, stepDur);
+      totalCNSfrac += segCNSfrac(pO2Val, stepDur);
+      totalOTU     += segOTU(pO2Val, stepDur);
       const cnsColor = parseFloat(cnsPct) > 80 ? 'color:var(--red);font-weight:700;' : parseFloat(cnsPct) > 40 ? 'color:var(--yellow);' : 'color:var(--muted);';
       tbody.innerHTML += `<tr class="deco-row" data-phase="deco">
         <td>🔴</td>
         <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
-        <td data-label="Stop" style="color:var(--red);">${s.dur} min</td>
+        <td data-label="Stop" style="color:var(--red);">${fmtMM(stepDur)}</td>
         <td data-label="Run">${rtDisp}</td>
         <td data-label="Mix" style="color:var(--red);">${s.gas.toUpperCase()}</td>
         <td data-label="PPO2" style="${pO2Color}">${s.pO2}</td>
@@ -3003,10 +3302,12 @@ function runDecoSchedule() {
     // ── SAFETY STOP ROW ──
     } else if (s.type === 'safety') {
       const cnsPct = rowCNS(pO2Val, stepDur);
+      totalCNSfrac += segCNSfrac(pO2Val, stepDur);
+      totalOTU     += segOTU(pO2Val, stepDur);
       tbody.innerHTML += `<tr class="safe-row" data-phase="safety">
         <td style="font-size:16px;">🟢</td>
         <td data-label="Depth">${dU ? s.depth+' m' : mToFt(s.depth)+' ft'}</td>
-        <td data-label="Stop" style="color:var(--green);">${stepDur} min</td>
+        <td data-label="Stop" style="color:var(--green);">${fmtMM(stepDur)}</td>
         <td data-label="Run">${rtDisp}</td>
         <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
         <td data-label="PPO2" style="color:var(--muted);">${s.pO2||'—'}</td>
@@ -3015,10 +3316,12 @@ function runDecoSchedule() {
     // ── ASCENT ROW ──
     } else {
       const cnsPct = rowCNS(pO2Val, stepDur);
+      totalCNSfrac += segCNSfrac(pO2Val, stepDur);
+      totalOTU     += segOTU(pO2Val, stepDur);
       tbody.innerHTML += `<tr class="asc-row" data-phase="ascent">
         <td><span style="font-size:18px;color:#80e0a0;">↑</span></td>
         <td data-label="Depth" style="color:#80e0a0;">${dU ? s.from+' m' : mToFt(s.from)+' ft'} → ${dU ? s.to+' m' : mToFt(s.to)+' ft'}</td>
-        <td data-label="Stop" style="color:#80e0a0;">${typeof s.dur === 'number' ? s.dur.toFixed(1) : s.dur} min</td>
+        <td data-label="Stop" style="color:#80e0a0;"></td>
         <td data-label="Run" style="color:#80e0a0;">${rtDisp}</td>
         <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
         <td data-label="PPO2" style="${pO2Color}">${s.pO2}</td>
@@ -3032,6 +3335,19 @@ function runDecoSchedule() {
     lastTissues = tissues;
     updateTissueViz(tissues, mGF.high);
   }
+
+  // ── TOTALS FOOTER ROW ──
+  const totalCNSpct  = (totalCNSfrac * 100).toFixed(1);
+  const totalOTUval  = Math.round(totalOTU);
+  const totalRunMMSS = toMMSS(rowRT);
+  const decoTimeMMSS = toMMSS(decoTime);
+  const cnsFootColor = totalCNSfrac >= 1 ? 'var(--red)' : totalCNSfrac >= 0.8 ? 'var(--orange)' : totalCNSfrac >= 0.5 ? 'var(--yellow)' : 'var(--green)';
+  const otuFootColor = totalOTUval >= 300 ? 'var(--red)' : totalOTUval >= 200 ? 'var(--orange)' : totalOTUval >= 100 ? 'var(--yellow)' : 'var(--green)';
+  tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
+    <td colspan="7" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
+      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;">${totalOTUval}</span>
+    </td>
+  </tr>`;
 
   document.getElementById('decoResult').style.display = 'block';
   if (!_contingencyRunning) {
@@ -3428,131 +3744,8 @@ self.addEventListener('fetch', e => {
     document.body.appendChild(banner);
   }
 
-  window.exportDecoSchedule = function() {
-    try {
-      // Get all the dive parameters
-      const depthVal = document.getElementById('decoDepth').value;
-      const btVal = document.getElementById('decoBT').value;
-      const bottomGasVal = document.getElementById('decoGas').value;
-      const ascentRateVal = document.getElementById('ascentRate').value;
-      const descentRateVal = document.getElementById('descentRate').value;
-      const gfVal = `${mGF.low}/${mGF.high}`;
-      const lastStopVal = document.getElementById('lastDecoStop').value;
-      const decoStepVal = document.getElementById('decoStep').value;
-      
-      // Get summary stats — strip all emoji
-      const summaryText = document.getElementById('decoSummary').innerText
-        .replace(/[🟣🔵🔴🟢⇄↓↑⚠️🤿]/g, '').trim();
-      
-      // Get table rows
-      const tableBody = document.getElementById('decoTableBody');
-      const rows = tableBody.querySelectorAll('tr');
-      
-      let exportText = 'DECOMPRESSION SCHEDULE\n\n';
-      
-      // Add dive parameters
-      exportText += 'DIVE PARAMETERS\n';
-      exportText += `Depth: ${depthVal} m\n`;
-      exportText += `Bottom Time: ${btVal} min\n`;
-      exportText += `Bottom Gas: ${bottomGasVal}\n`;
-      exportText += `Descent Rate: ${descentRateVal} m/min\n`;
-      exportText += `Ascent Rate: ${ascentRateVal} m/min\n`;
-      exportText += `GF Low/High: ${gfVal}\n`;
-      exportText += `Last Stop: ${lastStopVal} m\n`;
-      exportText += `Step Size: ${decoStepVal} m\n\n`;
-
-      // Gas mix info
-      const gasTags = Array.from(document.querySelectorAll('#decoSummary span[style*="border-radius"]'));
-      if (gasTags.length) {
-        exportText += 'GAS MIXES\n';
-        gasTags.forEach(t => {
-          exportText += t.innerText.trim().replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2') + '\n';
-        });
-        exportText += '\n';
-      }
-      
-      // Add summary info
-      exportText += 'DIVE SUMMARY\n';
-      exportText += summaryText.replace(/Deco Stops|Deco Time|Descent|Bottom Time|Total Run Time|ppO₂ Limits|Last Stop|Step Size/g, '\n$&').trim()
-        .replace(/ppO₂/g, 'ppO2').replace(/O₂/g, 'O2') + '\n\n';
-      
-      // Add ascent table
-      exportText += 'ASCENT SCHEDULE\n';
-      exportText += 'Phase       Depth           Stop      Run       Mix              PPO2    CNS%\n';
-
-      const phaseLabel = {
-        'descent': 'Descent',
-        'bottom':  'Bottom',
-        'ascent':  'Ascent',
-        'deco':    'Deco',
-        'safety':  'Safety',
-        'switch':  'Gas Switch',
-      };
-
-      rows.forEach(row => {
-        const phase = row.dataset.phase || '';
-        const cells = row.querySelectorAll('td');
-        if (!cells.length) return;
-
-        // Gas switch row — single colspan cell
-        if (phase === 'switch') {
-          const txt = Array.from(cells).map(c => c.innerText.trim()).join(' ')
-            .replace(/[🔵🔴🟢⇄↓↑]/g, '').replace(/ppO₂/g, 'ppO2').replace(/O₂/g, 'O2').trim();
-          exportText += `Gas Switch    ${txt}\n`;
-          return;
-        }
-
-        const label = (phaseLabel[phase] || phase).padEnd(11);
-        const cellTexts = Array.from(cells).map(c =>
-          c.innerText.trim()
-            .replace(/[🔵🔴🟢⇄↓↑]/g, '')   // remove all icons
-            .replace(/ppO₂/g, 'ppO2')         // fix subscripts
-            .replace(/O₂/g, 'O2')
-            .trim()
-        );
-
-        // cols: 0=icon(skip), 1=depth, 2=stop, 3=run, 4=mix, 5=ppo2, 6=cns
-        const depth = (cellTexts[1] || '').padEnd(15);
-        const stop  = (cellTexts[2] || '').padEnd(10);
-        const run   = (cellTexts[3] || '').padEnd(10);
-        const mix   = (cellTexts[4] || '').padEnd(16);
-        const ppo2  = (cellTexts[5] || '').padEnd(8);
-        const cns   = (cellTexts[6] || '');
-        exportText += `${label}${depth}${stop}${run}${mix}${ppo2}${cns}\n`;
-      });
-      
-      exportText += '\nIMPORTANT REMINDERS\n';
-      exportText += '• Do NOT skip mandatory decompression stops\n';
-      exportText += '• Check ppO2 before each gas switch\n';
-      exportText += '• Never exceed your certification depth\n';
-      exportText += '• Plan conservatively - never dive the tables exactly\n';
-      exportText += '• Carry 3+ min of reserve gas\n';
-      exportText += '• Use your dive computer for backup planning\n';
-      exportText += '• Stop immediately if you feel unwell\n\n';
-      exportText += 'Training & Planning Use Only\n';
-      
-      // Add timestamp at end
-      const now = new Date();
-      exportText += `Generated by LSP D-PLANNER: ${now.toLocaleString()}\n`;
-      
-      // Create blob and download
-      const blob = new Blob([exportText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const dateStr = now.toISOString().split('T')[0];
-      link.download = `dive-plan-${dateStr}_Standard_Plan.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      // Show success notification (same as copy)
-      showExportToast();
-    } catch(err) {
-      alert('❌ Export failed: ' + err.message);
-    }
-  };
+  // Redirected to unified exportTXT — kept for backward compat
+  window.exportDecoSchedule = function() { exportTXT('deco'); };
 
   window.installPWA = async function() {
     if (!deferredPrompt) return;
@@ -4127,194 +4320,395 @@ function initTools() {
 // COPY DIVE PROFILE TO CLIPBOARD
 // ═══════════════════════════════════════════════
 
-function copyDiveProfile(mode) {
-  let text = '';
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  const density = {'fresh':'Fresh','en13319':'EN13319','salt':'Salt'}[localStorage.getItem('waterDensity')||'en13319'];
+// ═══════════════════════════════════════════════════════
+//  UNIFIED EXPORT SYSTEM — v5.7.0
+//  buildExportText(mode) → clean plain text, messenger-friendly
+//  copyDiveProfile(mode) → clipboard
+//  exportTXT(mode)       → .txt file download
+// ═══════════════════════════════════════════════════════
 
-  if (mode === 'deco') {
-    const depth   = document.getElementById('decoDepth')?.value || '—';
-    const bt      = document.getElementById('decoBT')?.value    || '—';
-    const gfLow   = mGF.low || '—';
-    const gfHigh  = mGF.high || '—';
-    const gas     = document.getElementById('decoGas')?.selectedOptions[0]?.text || '—';
+function buildExportText(mode) {
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const densityMap = { fresh:'Fresh', en13319:'EN13319', salt:'Salt' };
+  const density = densityMap[localStorage.getItem('waterDensity') || 'en13319'];
+  const unitsPref = localStorage.getItem('units') || 'metric';
+  const depthUnit = unitsPref === 'imperial' ? 'ft' : 'm';
+  const du = depthUnit; // shorthand — used without space: `${val}${du}`
 
-    text += `DECOMPRESSION SCHEDULE\n`;
-    text += `Depth: ${depth}m  BT: ${bt}min  GF: ${gfLow}/${gfHigh}\n`;
-    text += `Gas: ${gas}  Water: ${density}\n\n`;
+  // ── helper: clean DOM text (strip emoji, fix subscripts) ──
+  const clean = t => t
+    .replace(/[🔵🔴🟢🟣⇄↓↑⚠️🤿✓⚡]/g, '')
+    .replace(/ppO₂/g, 'ppO2').replace(/O₂/g, 'O2')
+    .replace(/(\d)\s+(m|ft)\b/g, '$1$2')
+    .replace(/\s*→\s*/g, '→')
+    .replace(/\s+/g, ' ').trim();
 
-    const rows = document.querySelectorAll('#decoTableBody tr[data-phase]');
-    text += 'Phase       Depth           Stop      Run       Mix              PPO2    CNS%\n';
-    
-    const phaseLabel = {
-      'descent': 'Descent',
-      'bottom':  'Bottom',
-      'ascent':  'Ascent',
-      'deco':    'Deco',
-      'safety':  'Safety',
-      'switch':  'Gas Switch',
-    };
-    
-    rows.forEach(tr => {
-      const ph = tr.dataset.phase;
-      const tds = tr.querySelectorAll('td');
-      if (ph === 'switch') {
-        const info = Array.from(tds).map(c=>c.textContent.trim()).join(' ').replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim();
-        text += `Gas Switch    ${info}\n`; return;
+  // ── helper: horizontal rule ──
+  const hr = '─'.repeat(40);
+
+  let lines = [];
+
+  // ────────────────────────────────────────
+  if (mode === 'planner') {
+    const depth   = document.getElementById('depth')?.value  || '—';
+    const bt      = document.getElementById('bt')?.value     || '—';
+    const algo    = document.body.classList.contains('algo-buh') ? 'Bühlmann ZH-L16C' : 'PADI Rec Tables';
+    const isRec   = !document.body.classList.contains('algo-buh');
+    const gfStr   = !isRec ? `GF ${mGF?.low ?? '—'}/${mGF?.high ?? '—'}` : '';
+    const gasEl   = document.getElementById('gas');
+    const gasStr  = gasEl?.options[gasEl?.selectedIndex]?.text || '';
+    const o2pct   = document.getElementById('customO2')?.value;
+
+    lines.push('🤿 LSP D-PLANNER — DIVE PLAN');
+    lines.push(hr);
+    lines.push(`Algorithm : ${algo}${gfStr ? '  ' + gfStr : ''}`);
+    lines.push(`Depth     : ${depth}${du}`);
+    lines.push(`Bottom T. : ${bt} min`);
+    if (gasStr)  lines.push(`Gas       : ${gasStr}`);
+    lines.push(`Water     : ${density}`);
+    lines.push('');
+
+    // Pull results from rendered stats
+    const statsEl = document.getElementById('plannerResult');
+    if (statsEl) {
+      const stats = statsEl.querySelectorAll('.stat');
+      if (stats.length) {
+        lines.push('📊 RESULTS');
+        lines.push(hr);
+        stats.forEach(s => {
+          const val = clean(s.querySelector('.stat-val')?.textContent || '');
+          const lbl = clean(s.querySelector('.stat-lbl')?.textContent || '');
+          if (val && lbl) lines.push(`${lbl.padEnd(20)}: ${val}`);
+        });
+        lines.push('');
       }
-      const cells = Array.from(tds).map(c=>c.textContent.trim().replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim());
-      const label = (phaseLabel[ph]||ph).padEnd(11);
-      const depth = (cells[1]||'').padEnd(15);
-      const stop  = (cells[2]||'').padEnd(10);
-      const run   = (cells[3]||'').padEnd(10);
-      const mix   = (cells[4]||'').padEnd(16);
-      const ppo2  = (cells[5]||'').padEnd(8);
-      const cns   = cells[6]||'';
-      text += `${label}${depth}${stop}${run}${mix}${ppo2}${cns}\n`;
-    });
-
-  } else if (mode === 'planner') {
-    const depth = document.getElementById('depth')?.value  || '—';
-    const bt    = document.getElementById('bt')?.value     || '—';
-    const el    = document.getElementById('plannerResult');
-    const stats = el?.querySelectorAll('.stat');
-
-    text += `DIVE PLAN\n`;
-    text += `Depth: ${depth}m  BT: ${bt}min  Water: ${density}\n\n`;
-
-    if (stats) {
-      stats.forEach(s => {
-        const val = s.querySelector('.stat-val')?.textContent?.trim() || '';
-        const lbl = s.querySelector('.stat-lbl')?.textContent?.trim() || '';
-        if (val && lbl) text += `${lbl}: ${val}\n`;
-      });
+      // Alerts
+      const alerts = statsEl.querySelectorAll('.alert');
+      if (alerts.length) {
+        lines.push('⚠ STATUS');
+        lines.push(hr);
+        alerts.forEach(a => lines.push('• ' + clean(a.textContent)));
+        lines.push('');
+      }
     }
-    // Add any alerts
-    el?.querySelectorAll('.alert').forEach(a => {
-      text += '\n⚠ ' + a.textContent.trim().replace(/\s+/g,' ') + '\n';
+
+  // ────────────────────────────────────────
+  } else if (mode === 'deco') {
+    const depth       = document.getElementById('decoDepth')?.value || '—';
+    const bt          = document.getElementById('decoBT')?.value    || '—';
+    const gfLow       = mGF?.low  ?? '—';
+    const gfHigh      = mGF?.high ?? '—';
+    const gasEl       = document.getElementById('decoGas');
+    const gas         = gasEl?.options[gasEl?.selectedIndex]?.text || '—';
+    const ascentRate  = document.getElementById('ascentRate')?.value  || '—';
+    const descentRate = document.getElementById('descentRate')?.value || '—';
+    const lastStop    = document.getElementById('lastDecoStop')?.value || '—';
+    const decoStep    = document.getElementById('decoStep')?.value    || '—';
+
+    // ── helper: shorten mix names for table ──
+    const shortMix = m => {
+      const s = (m||'').trim();
+      if (!s || /air/i.test(s) || s.includes('21%')) return 'AIR';
+      if (s.includes('100%') || /^100/i.test(s) || s === '100% O2' || s === '100% O₂') return '100%';
+      // EAN 50 → 50%, EAN50 → 50%, 50% → 50%
+      const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/);
+      if (ean) return ean[1] + '%';
+      const pct = s.match(/(\d+)%/);
+      if (pct) return pct[1] + '%';
+      return s;
+    };
+
+    // ── Read deco results from rendered DOM ──
+    const summaryEl = document.getElementById('decoSummary');
+    const decoTimeStat  = summaryEl?.querySelector('.stat-lbl')
+      ? Array.from(summaryEl.querySelectorAll('.stat')).find(s => clean(s.querySelector('.stat-lbl')?.textContent||'').includes('Deco Time'))
+      : null;
+    const runTimeStat   = summaryEl
+      ? Array.from(summaryEl.querySelectorAll('.stat')).find(s => clean(s.querySelector('.stat-lbl')?.textContent||'').includes('Run Time'))
+      : null;
+    const decoTimeVal   = clean(decoTimeStat?.querySelector('.stat-val')?.textContent || '—');
+    const runTimeVal    = clean(runTimeStat?.querySelector('.stat-val')?.textContent  || '—');
+
+    // Gas switch depths from rendered GSw rows
+    const gswRows = Array.from(document.querySelectorAll('#decoTableBody tr[data-phase="switch"]'));
+    const gswInfos = gswRows.map(tr => {
+      const txt = clean(tr.querySelector('td[colspan]')?.textContent || '');
+      // e.g. "EAN 50 @ 21m · ppO2 1.5"  or  "100% O2 @ 6m · ppO2 1.6"
+      const depM = txt.match(/@\s*([\d.]+)m/i);
+      const gasM = txt.match(/^([^@]+)@/);
+      return {
+        gas:   shortMix((gasM?.[1] || '').trim()),
+        depth: depM ? depM[1] + du : '—',
+        raw:   txt
+      };
     });
 
+    lines.push('DECOMPRESSION SCHEDULE');
+    lines.push(hr);
+    lines.push(`Depth       : ${depth}${du}    BT: ${bt} min    GF: ${gfLow}/${gfHigh}`);
+    lines.push(`Bottom Gas  : ${shortMix(gas)}    Water: ${density}`);
+    lines.push(`Descent     : ${descentRate}${du}/min    Ascent: ${ascentRate}${du}/min`);
+    lines.push(`Last Stop   : ${lastStop}${du}    Step: ${decoStep}${du}`);
+    gswInfos.forEach((g, i) => lines.push(`Deco Gas ${i+1}  : ${g.gas}  (switch @ ${g.depth})`));
+    lines.push(`Deco Time   : ${decoTimeVal}    Run Time: ${runTimeVal}`);
+    lines.push('');
+
+    // Ascent schedule table
+    const rows = document.querySelectorAll('#decoTableBody tr[data-phase]');
+    if (rows.length) {
+      const shr = '─'.repeat(32);
+      lines.push('ASCENT SCHEDULE');
+      lines.push(shr);
+      lines.push('Phase Depth  Stop   Run    Mix   PPO2  CNS%');
+      lines.push(shr);
+      const phaseLabel = { descent:'Des', bottom:'Lvl', ascent:'Asc', deco:'Stp', safety:'Stp', switch:'GSw', totals:'TOT' };
+      rows.forEach(tr => {
+        const ph  = tr.dataset.phase;
+        if (ph === 'totals') return; // handled below
+        const tds = tr.querySelectorAll('td');
+        if (ph === 'switch') {
+          const info = clean(Array.from(tds).map(c=>c.textContent).join(' '));
+          lines.push(`GSw  ${info}`);
+          return;
+        }
+        const c   = Array.from(tds).map(td => clean(td.textContent));
+        const lbl = (phaseLabel[ph] || ph).padEnd(5);
+
+        // Depth: for ascent/descent show only destination (last depth in "Xm→Ym" = Ym)
+        let depRaw = c[1] || '';
+        if (ph === 'ascent' || ph === 'descent') {
+          const arrowMatch = depRaw.match(/→(.+)$/);
+          if (arrowMatch) depRaw = arrowMatch[1].trim();
+        }
+        const dep  = depRaw.padEnd(6);
+
+        const stpRaw = c[2] || '';
+        const stp  = (/^\d+:\d+$/.test(stpRaw) ? stpRaw : '').padEnd(7);
+        const run  = (c[3] || '').padEnd(7);
+        const mix  = shortMix(c[4]).padEnd(5);
+        const ppo2 = (c[5] || '').padEnd(6);
+        const cns  = c[6] || '';
+        lines.push(`${lbl} ${dep}${stp}${run}${mix} ${ppo2}${cns}`);
+      });
+
+      // Totals row — read from the single-cell totals tr
+      const totRow = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
+      if (totRow) {
+        const t = totRow.textContent.replace(/\s+/g, ' ').trim();
+        // Values are between known labels — capture up to next label or end
+        const runM  = t.match(/Run time:\s*([\d':"]+)/i);
+        const decoM = t.match(/Deco time:\s*([\d':"]+)/i);
+        const cnsM  = t.match(/CNS:\s*([\d.]+%)/i);
+        const otuM  = t.match(/OTU:\s*(\d+)/i);
+        const runV  = runM?.[1]  || '—';
+        const decoV = decoM?.[1] || '—';
+        const cnsV  = cnsM?.[1]  || '—';
+        const otuV  = otuM?.[1]  || '—';
+        lines.push(shr);
+        lines.push(`Run Time:${runV} Deco:${decoV} CNS%:${cnsV} OTU:${otuV}`);
+      }
+      lines.push('');
+    }
+
+    lines.push('⚠ SAFETY REMINDERS');
+    lines.push('• Do NOT skip mandatory deco stops');
+    lines.push('• Check ppO2 before each gas switch');
+    lines.push('• Plan conservatively — never dive tables exactly');
+    lines.push('• Carry 3+ min of reserve gas');
+    lines.push('• Use your dive computer for backup');
+    lines.push('');
+
+  // ────────────────────────────────────────
   } else if (mode === 'contingency') {
     const c = window._lastContingency;
-    if (!c) return;
+    if (!c) return null;
     const depth = document.getElementById('decoDepth')?.value || '—';
     const bt    = document.getElementById('decoBT')?.value    || '—';
 
-    text += `CONTINGENCY PLAN\n`;
-    text += `Scenario: ${c.label}\n`;
-    text += `Depth: ${depth}m  BT: ${bt}min  Water: ${density}\n`;
-    text += `Run Time: ${c.lastRun} min  Deco: ${c.decoTime} min\n`;
-    text += `Note: ${c.msg}\n\n`;
+    lines.push('⚠ LSP D-PLANNER — CONTINGENCY PLAN');
+    lines.push(hr);
+    lines.push(`Scenario    : ${c.label}`);
+    lines.push(`Depth       : ${depth}${du}`);
+    lines.push(`Bottom Time : ${bt} min`);
+    lines.push(`Run Time    : ${c.lastRun} min`);
+    lines.push(`Deco Time   : ${c.decoTime} min`);
+    lines.push(`Water       : ${density}`);
+    if (c.msg) lines.push(`Note        : ${c.msg}`);
+    lines.push('');
 
     const rows = document.querySelectorAll('#contingencyResult .deco-table tbody tr');
-    text += 'Phase       Depth           Stop      Run       Mix              PPO2    CNS%\n';
-    
-    const phaseLabel = { descent:'Descent', bottom:'Bottom', ascent:'Ascent', deco:'Deco', safety:'Safety', switch:'Gas Switch' };
-    
-    rows.forEach(tr => {
-      const ph = tr.dataset.phase;
-      const tds = tr.querySelectorAll('td');
-      if (ph === 'switch') {
-        const info = Array.from(tds).map(c=>c.textContent.trim()).join(' ').replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim();
-        text += `Gas Switch    ${info}\n`; return;
-      }
-      const cells = Array.from(tds).map(c=>c.textContent.trim().replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim());
-      const label = (phaseLabel[ph]||ph).padEnd(11);
-      const depth = (cells[1]||'').padEnd(15);
-      const stop  = (cells[2]||'').padEnd(10);
-      const run   = (cells[3]||'').padEnd(10);
-      const mix   = (cells[4]||'').padEnd(16);
-      const ppo2  = (cells[5]||'').padEnd(8);
-      const cns   = cells[6]||'';
-      text += `${label}${depth}${stop}${run}${mix}${ppo2}${cns}\n`;
-    });
+    if (rows.length) {
+      lines.push('📋 CONTINGENCY ASCENT SCHEDULE');
+      lines.push(hr);
+      lines.push('Phase  Depth      Stop   Run    Mix              PPO2   CNS%');
+      lines.push('─'.repeat(65));
+      const phaseLabel = { descent:'Des', bottom:'Lvl', ascent:'Asc', deco:'Stp', safety:'Stp', switch:'GSw' };
+      rows.forEach(tr => {
+        const ph  = tr.dataset.phase;
+        const tds = tr.querySelectorAll('td');
+        if (ph === 'switch') {
+          const info = clean(Array.from(tds).map(c=>c.textContent).join(' '));
+          lines.push(`GSw   ${info}`);
+          return;
+        }
+        const c2   = Array.from(tds).map(td => clean(td.textContent));
+        const lbl  = (phaseLabel[ph]||ph).padEnd(6);
+        const dep  = (c2[1]||'').padEnd(10);
+        const stpRaw = c2[2]||'';
+        const stp  = (/^\d+:\d+$/.test(stpRaw) ? stpRaw : '').padEnd(7);
+        const run  = (c2[3]||'').padEnd(7);
+        const mix  = (c2[4]||'').padEnd(16);
+        const ppo2 = (c2[5]||'').padEnd(7);
+        const cns  = c2[6]||'';
+        lines.push(`${lbl}${dep}${stp}${run}${mix}${ppo2}${cns}`);
+      });
+      lines.push('');
+    }
 
+  // ────────────────────────────────────────
   } else if (mode === 'multi') {
-    text += `MULTI DIVE PLAN\n`;
-    text += `Water: ${density}\n\n`;
+    lines.push('🤿 LSP D-PLANNER — MULTI DIVE DAY PLAN');
+    lines.push(hr);
+    lines.push(`Water : ${density}`);
+    lines.push('');
 
-    document.querySelectorAll('#multiCards .card, #multiCards [class*="card"]').forEach((card, i) => {
-      const title = card.querySelector('.card-title, h3, b')?.textContent?.trim() || `Dive ${i+1}`;
-      text += `${title}\n`;
+    // Pull each dive result card
+    const cards = document.querySelectorAll('#multiCards > div');
+    let diveNum = 1;
+    cards.forEach(card => {
+      const title = clean(card.querySelector('.card-title, h3, b, [class*="title"]')?.textContent || `DIVE ${diveNum}`);
+      lines.push(`🔵 ${title.toUpperCase()}`);
+      lines.push('─'.repeat(30));
       card.querySelectorAll('.stat').forEach(s => {
-        const val = s.querySelector('.stat-val')?.textContent?.trim() || '';
-        const lbl = s.querySelector('.stat-lbl')?.textContent?.trim() || '';
-        if (val && lbl) text += `  ${lbl}: ${val}\n`;
+        const val = clean(s.querySelector('.stat-val')?.textContent || '');
+        const lbl = clean(s.querySelector('.stat-lbl')?.textContent || '');
+        if (val && lbl) lines.push(`  ${lbl.padEnd(22)}: ${val}`);
       });
       card.querySelectorAll('.alert').forEach(a => {
-        text += '  ⚠ ' + a.textContent.trim().replace(/\s+/g,' ') + '\n';
+        lines.push('  ⚠ ' + clean(a.textContent));
       });
-      text += '\n';
+      lines.push('');
+      diveNum++;
     });
+
+    // Warnings block
+    const warns = document.getElementById('multiWarnings');
+    if (warns?.textContent?.trim()) {
+      lines.push('⚠ WARNINGS');
+      lines.push(hr);
+      lines.push(clean(warns.textContent));
+      lines.push('');
+    }
+
+  // ────────────────────────────────────────
+  } else if (mode === 'cns') {
+    const depth    = document.getElementById('cnsDepth')?.value || '—';
+    const bt       = document.getElementById('cnsBT')?.value    || '—';
+    const o2       = document.getElementById('cnsO2')?.value    || '—';
+    const dives    = document.getElementById('cnsDives')?.value || '—';
+    const ppo2     = document.getElementById('cnsPPO2')?.textContent    || '—';
+    const single   = document.getElementById('cnsSinglePct')?.textContent || '—';
+    const daily    = document.getElementById('cnsDailyPct')?.textContent  || '—';
+    const otu      = document.getElementById('cnsOTU')?.textContent      || '—';
+    const statusEl = document.getElementById('cnsStatusText');
+    const status   = statusEl ? clean(statusEl.textContent) : '';
+
+    lines.push('⚡ LSP D-PLANNER — CNS O2 TRACKER');
+    lines.push(hr);
+    lines.push(`Depth         : ${depth}m`);
+    lines.push(`Bottom Time   : ${bt} min`);
+    lines.push(`Gas O2%       : ${o2}%`);
+    lines.push(`Dives today   : ${dives}`);
+    lines.push('');
+    lines.push('📊 RESULTS');
+    lines.push(hr);
+    lines.push(`ppO2          : ${ppo2} bar`);
+    lines.push(`CNS% single   : ${single}`);
+    lines.push(`CNS% daily    : ${daily}`);
+    lines.push(`OTU           : ${otu}`);
+    if (status) {
+      lines.push('');
+      lines.push(`Status        : ${status}`);
+    }
+    lines.push('');
+    lines.push('Limits (NOAA): CNS < 80% per dive, < 100% per day');
+    lines.push('');
   }
 
-  text += `\nTraining & Planning Use Only\n`;
-  text += `Generated by LSP D-PLANNER: ${dateStr} ${timeStr}`;
+  // ── Footer (all modes) ──
+  lines.push(hr);
+  lines.push('Training & Planning Use Only');
+  lines.push(`Generated by LSP D-PLANNER  ${dateStr} ${timeStr}`);
+  lines.push('https://three-cats-lsp.github.io/LSP_D-planner/');
 
-  // Copy to clipboard
+  return lines.join('\n');
+}
+
+// ── Copy to clipboard ──
+function copyDiveProfile(mode) {
+  const text = buildExportText(mode);
+  if (!text) return;
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(text)
       .then(() => showCopyToast())
-      .catch(err => {
-        console.warn('Clipboard API failed, using fallback:', err);
-        copyFallback(text);
-      });
+      .catch(() => copyFallback(text));
   } else {
     copyFallback(text);
   }
 }
 
+// ── Download .txt file ──
+function exportTXT(mode) {
+  const text = buildExportText(mode);
+  if (!text) return;
+  const now      = new Date();
+  const dateStr  = now.toISOString().split('T')[0];
+  const modeTag  = { planner:'Dive_Plan', deco:'Deco_Schedule', contingency:'Contingency', multi:'Multi_Dive', cns:'CNS_O2' }[mode] || mode;
+  const blob     = new Blob([text], { type: 'text/plain' });
+  const a        = document.createElement('a');
+  a.href         = URL.createObjectURL(blob);
+  a.download     = `LSP-DPlan_${dateStr}_${modeTag}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showExportToast();
+}
+
+// ── Clipboard fallback (execCommand) ──
 function copyFallback(text) {
   try {
     const ta = document.createElement('textarea');
     ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    ta.style.top = '-9999px';
-    ta.style.opacity = '0';
-    ta.style.width = '1px';
-    ta.style.height = '1px';
-    ta.style.padding = '0';
-    ta.style.border = 'none';
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;padding:0;border:none;';
     document.body.appendChild(ta);
     ta.focus();
     ta.select();
-    const success = document.execCommand('copy');
+    const ok = document.execCommand('copy');
     document.body.removeChild(ta);
-    if (success) {
-      showCopyToast();
-    } else {
-      console.error('Copy command failed');
-    }
-  } catch (err) {
-    console.error('Copy fallback error:', err);
+    if (ok) showCopyToast();
+  } catch(e) {
+    console.error('Copy fallback error:', e);
   }
 }
 
-function showCopyToast() {
-  let toast = document.getElementById('copyToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'copyToast';
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:10px 22px;border-radius:20px;font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;letter-spacing:1px;z-index:9999;transition:opacity 0.4s;pointer-events:none;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = '📋 Copied to clipboard!';
-  toast.style.opacity = '1';
-  setTimeout(() => { toast.style.opacity = '0'; }, 2200);
-}
 
-function showExportToast() {
-  let toast = document.getElementById('exportToast');
+
+
+
+function showCopyToast()   { showToast('📋 Copied!', 'copy'); }
+function showExportToast() { showToast('📥 Saved!',  'export'); }
+function showToast(msg, id) {
+  let toast = document.getElementById('toast-' + id);
   if (!toast) {
     toast = document.createElement('div');
-    toast.id = 'exportToast';
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:10px 22px;border-radius:20px;font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;letter-spacing:1px;z-index:9999;transition:opacity 0.4s;pointer-events:none;';
+    toast.id = 'toast-' + id;
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:10px 22px;border-radius:20px;font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:700;letter-spacing:1px;z-index:9999;transition:opacity 0.4s;pointer-events:none;';
     document.body.appendChild(toast);
   }
-  toast.textContent = '📥 File exported!';
+  toast.textContent = msg;
   toast.style.opacity = '1';
   setTimeout(() => { toast.style.opacity = '0'; }, 2200);
 }
@@ -4488,72 +4882,20 @@ function calcContingency() {
       </table>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-      <button onclick="copyDiveProfile('contingency')" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.5px;">📋 COPY</button>
-      <button onclick="exportContingencyTXT()" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.5px;">📥 TXT</button>
-      <button onclick="exportContingencyPDF()" style="padding:7px 14px;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.5px;">⬇ PDF</button>
+      <div class="export-row">
+        <button class="btn-export" onclick="copyDiveProfile('contingency')" title="Copy to clipboard">📋 COPY</button>
+        <button class="btn-export primary" onclick="exportTXT('contingency')" title="Download .txt">📥 TXT</button>
+        <button class="btn-export" onclick="exportContingencyPDF()" title="Export PDF">⬇ PDF</button>
+      </div>
     </div>`;
 
   // Store for export
   window._lastContingency = { label, lastRun, decoTime, newRows, severity, icon, msg };
 }
-function exportContingencyTXT() {
-  const c = window._lastContingency;
-  if (!c) return;
+// Redirected to unified exportTXT — kept for backward compat
+function exportContingencyTXT() { exportTXT('contingency'); }
 
-  const rows = document.querySelectorAll('#contingencyResult .deco-table tbody tr');
-  let txt = 'CONTINGENCY PLAN\n';
-  txt += `Scenario: ${c.label}\n`;
-  txt += `Run Time: ${c.lastRun} min\n`;
-  txt += `Deco Time: ${c.decoTime} min\n`;
-  txt += `Note: ${c.msg}\n\n`;
-  txt += 'CONTINGENCY DIVE PROFILE\n';
-  txt += 'Phase       Depth           Stop      Run       Mix              PPO2    CNS%\n';
 
-  const phaseLabel = { descent:'Descent', bottom:'Bottom', ascent:'Ascent', deco:'Deco', safety:'Safety', switch:'Gas Switch' };
-  rows.forEach(tr => {
-    const phase = tr.dataset.phase || '';
-    const tds = tr.querySelectorAll('td');
-    if (phase === 'switch') {
-      const txt2 = Array.from(tds).map(c=>c.textContent.trim()).join(' ').replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim();
-      txt += `Gas Switch    ${txt2}\n`; return;
-    }
-    const label = (phaseLabel[phase]||phase).padEnd(11);
-    const cells = Array.from(tds).map(c=>c.textContent.trim().replace(/[🔵🔴🟢⇄↓↑]/g,'').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').trim());
-    txt += `${label}${(cells[1]||'').padEnd(15)}${(cells[2]||'').padEnd(10)}${(cells[3]||'').padEnd(10)}${(cells[4]||'').padEnd(16)}${(cells[5]||'').padEnd(8)}${cells[6]||''}\n`;
-  });
-
-  txt += `\nTraining & Planning Use Only\n`;
-  txt += `Generated by LSP D-PLANNER: ${new Date().toLocaleString()}\n`;
-
-  const blob = new Blob([txt], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  
-  // Build filename based on scenario type
-  let scenarioName = '';
-  if (contGasLose === 'both') {
-    scenarioName = 'Lost_Both_Gases';
-  } else if (contGasLose !== 'none') {
-    // Find the gas name that was lost
-    const gasId = contGasLose;
-    const gasEl = document.getElementById('dg' + gasId + 'Mix');
-    const gasLabel = gasEl?.selectedOptions[0]?.text?.replace(/\(.*?\)/g,'').trim() || ('Gas_' + gasId);
-    scenarioName = 'Lost_' + gasLabel.replace(/[^a-zA-Z0-9%]/g,'_');
-  }
-  if (contExtraBT > 0) {
-    if (scenarioName) scenarioName += '_';
-    scenarioName += 'Extra_' + contExtraBT + '_min_BT';
-  }
-  if (!scenarioName) {
-    scenarioName = 'Standard_Plan';
-  }
-  
-  a.download = `dive-plan-${dateStr}_${scenarioName}.txt`;
-  a.click();
-  showExportToast();
-}
 
 function exportContingencyPDF() {
   const c = window._lastContingency;
@@ -4920,6 +5262,14 @@ function exportPDF() {
       decoRows += `<tr><td style="padding:6px 8px;color:#0055aa;">⇄</td><td colspan="6" style="color:#0055aa;font-weight:700;font-size:11px;padding:6px 10px;background:#f0f4ff;">${txt}</td></tr>`;
       return;
     }
+    if (tr.dataset.phase === 'totals') {
+      const totTd = tr.querySelector('td');
+      if (totTd) {
+        const t = totTd.textContent.replace(/\s+/g, ' ').trim();
+        decoRows += `<tr style="background:#f0f4ff;border-top:2px solid #aac;"><td colspan="7" style="padding:7px 10px;font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;">${t}</td></tr>`;
+      }
+      return;
+    }
     const phase = tr.dataset.phase;
     const tds   = Array.from(tr.querySelectorAll('td'));
     // Read all cells as text EXCEPT first (icon) — build icon from phase
@@ -5163,7 +5513,7 @@ ${pdfGasRows ? `<div style="margin:6px 0 12px;font-family:Arial,sans-serif;">${p
 
 ${decoRows ? `
 <div class="page-title" style="margin-top:18px;">Dive Profile <span>${depthVal}m · ${btVal}min · ${bottomGasVal} · ${gfVal}</span></div>
-<table>
+<table style="font-size:10px;">
   <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>Mix</th><th>PPO2</th><th>CNS%</th></tr></thead>
   <tbody>${decoRows}</tbody>
 </table>
@@ -5235,7 +5585,7 @@ var appSettings = {
   DECO_FIELDS: [
     'decoDepth', 'decoBT', 'decoGas', 'decoCustomO2',
     'descentRate', 'ascentRate', 'decoStep', 'lastDecoStop',
-    'ppo2High', 'ppo2Mid', 'ppo2Low'
+    'minStopTime', 'ppo2Bottom', 'ppo2Deco'
   ],
   
   REC_FIELDS: ['ndlRange', 'ndlUImp', 'ndlUMet'],
