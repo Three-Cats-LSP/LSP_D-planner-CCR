@@ -1,8 +1,8 @@
-name: Quality Checks
+name: Checks
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -11,28 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Validate HTML
+
+      - name: HTML sanity check
         run: |
-          if ! grep -q "<!DOCTYPE html>" index.html; then
-            echo "Error: Missing DOCTYPE"
-            exit 1
-          fi
-          echo "✓ HTML is valid"
-          
-      - name: Check File Size
+          grep -q "<!DOCTYPE html>" index.html || (echo "Missing DOCTYPE" && exit 1)
+          grep -q "Bühlmann" index.html        || (echo "Missing algorithm content" && exit 1)
+          grep -q "buildExportText" index.html || (echo "Missing export function" && exit 1)
+          echo "✓ HTML content checks passed"
+
+      - name: File size check
         run: |
           SIZE=$(wc -c < index.html)
-          echo "File size: $SIZE bytes"
-          if [ $SIZE -gt 300000 ]; then
-            echo "⚠ Warning: File exceeds 300KB"
-          fi
-          
-      - name: Validate JSON files
-        run: |
-          for file in package.json manifest.json; do
-            if [ -f "$file" ]; then
-              python3 -m json.tool "$file" > /dev/null && echo "✓ $file is valid JSON" || echo "✗ $file has invalid JSON"
-            fi
-          done
+          LINES=$(wc -l < index.html)
+          echo "Size: $SIZE bytes, Lines: $LINES"
+          [ $SIZE -gt 10000 ] || (echo "File too small" && exit 1)
+          echo "✓ Size OK"
 
+      - name: JSON validation
+        run: |
+          python3 -m json.tool package.json > /dev/null && echo "✓ package.json"
+          python3 -m json.tool manifest.json > /dev/null && echo "✓ manifest.json"
+
+      - name: SHA256
+        run: |
+          sha256sum index.html

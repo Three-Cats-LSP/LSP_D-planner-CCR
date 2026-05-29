@@ -84,7 +84,7 @@ jobs:
                   minSdk 21
                   targetSdk 35
                   versionCode 1
-                  versionName '5.6.3'
+                  versionName '5.8.0'
               }
 
               buildTypes {
@@ -209,7 +209,7 @@ jobs:
         with:
           files: APK/LSP_D-Planner.apk
           body: |
-            LSP D-PLANNER v5.6.3
+            LSP D-PLANNER v5.8.0
             Professional Dive Planning Tool for Android
             Install: Download APK → Enable Unknown Sources → Install
             Training & Planning Use Only - Always use a certified dive computer.
