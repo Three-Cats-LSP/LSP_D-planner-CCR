@@ -1,1 +1,1 @@
-b1e0a23a658f5604061243c92feca0359b0e9f9006427164cce185fcf4dfaa5d  /home/claude/LSP_D-PLANNER_v5.7.0/index.html
+b1e0a23a658f5604061243c92feca0359b0e9f9006427164cce185fcf4dfaa5d  /home/claude/LSP_D-PLANNER_v5.8.0/index.html

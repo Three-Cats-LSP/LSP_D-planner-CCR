@@ -2,6 +2,19 @@
 
 All notable changes to LSP D-PLANNER will be documented in this file.
 
+## [5.8.0] - TBD
+
+### Added
+- TBD
+
+### Changed
+- TBD
+
+### Fixed
+- TBD
+
+---
+
 ## [5.7.0] - 2026-05-30
 
 ### Algorithm — Critical Fixes (from studying ApexDeco & DiveProMe source code)

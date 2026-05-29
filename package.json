@@ -1,6 +1,6 @@
 {
   "name": "lsp-d-planner",
-  "version": "5.7.0-beta",
+  "version": "5.8.0",
   "description": "Professional dive planning tool with PADI REC calculations and emergency scenario planning",
   "main": "index.html",
   "repository": {

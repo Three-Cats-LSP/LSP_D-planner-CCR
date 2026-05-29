@@ -1173,6 +1173,15 @@ body.algo-buh .buh-only { display: flex !important; }
       </div>
     </div>
     
+    <!-- Units (global — applies to all modes) -->
+    <div id="unitsRow" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <span class="algo-label-text" style="white-space:nowrap;">Units:</span>
+      <div class="algo-toggle" style="display:flex;align-items:center;gap:2px;">
+        <button class="algo-btn" id="uImp" onclick="setUnits('imperial')" title="Imperial (ft)">ft</button>
+        <button class="algo-btn active" id="uMet" onclick="setUnits('metric')" title="Metric (m)">m</button>
+      </div>
+    </div>
+
     <!-- GF Presets (hidden by default) -->
     <div id="gfPresetsRow" style="display: none; align-items: center; gap: 8px; flex-shrink:0;">
       <span class="algo-label-text" style="white-space:nowrap;">GF:</span>
@@ -1215,12 +1224,6 @@ body.algo-buh .buh-only { display: flex !important; }
 
     <!-- Controls row -->
     <div class="ctrl-row">
-      <span class="ctrl-label">Units:</span>
-      <div class="seg">
-        <button class="seg-btn" onclick="setUnits('imperial')" id="uImp">ft</button>
-        <button class="seg-btn active" onclick="setUnits('metric')" id="uMet">m</button>
-      </div>
-
       <!-- Safety stop -->
       <span class="ctrl-label" style="margin-left:6px;">Safety Stop:</span>
       <div class="seg">
@@ -1272,11 +1275,6 @@ body.algo-buh .buh-only { display: flex !important; }
   <div class="card">
     <div class="card-title">No-Decompression Limits</div>
     <div class="ctrl-row">
-      <span class="ctrl-label">Units:</span>
-      <div class="seg">
-        <button class="seg-btn" onclick="setNDLUnits('imperial')" id="ndlUImp">ft</button>
-        <button class="seg-btn active" onclick="setNDLUnits('metric')" id="ndlUMet">m</button>
-      </div>
       <div class="field" style="min-width:180px; margin-bottom:0;">
         <select id="ndlRange" onchange="renderNDLTable()" style="padding:7px 10px; font-size:12px;">
           <option value="shallow">10–12 m (35–40 ft)</option>
@@ -1309,15 +1307,19 @@ body.algo-buh .buh-only { display: flex !important; }
      MULTI DIVE TAB
 ══════════════════════════════════════ -->
 <div class="panel" id="multi">
+
+  <!-- Sub-nav: Plan Mode vs Solver Mode -->
+  <div class="tabs-nav" id="multiSubNav" style="margin-bottom:16px;">
+    <button class="tab-btn active" id="multiTab-plan"   onclick="switchMultiMode('plan',this)">📋 Day Plan</button>
+    <button class="tab-btn"        id="multiTab-solver" onclick="switchMultiMode('solver',this)">🔧 Solver</button>
+  </div>
+
+  <!-- ── DAY PLAN MODE ── -->
+  <div id="multiPanel-plan">
   <div class="card">
     <div class="card-title">Daily Dive Plan</div>
     <div class="ctrl-row">
-      <span class="ctrl-label">Units:</span>
-      <div class="seg">
-        <button class="seg-btn" onclick="setMultiUnits('imperial')" id="mUImp">ft</button>
-        <button class="seg-btn active" onclick="setMultiUnits('metric')" id="mUMet">m</button>
-      </div>
-      <span class="ctrl-label" style="margin-left:4px;">Dives:</span>
+      <span class="ctrl-label" style="margin-left:0;">Dives:</span>
       <div class="seg">
         <button class="seg-btn active" onclick="setDiveCount(2)" id="dc2">2</button>
         <button class="seg-btn" onclick="setDiveCount(3)" id="dc3">3</button>
@@ -1340,6 +1342,87 @@ body.algo-buh .buh-only { display: flex !important; }
       <div id="multiWarnings" style="margin-top:10px;"></div>
     </div>
   </div>
+  </div>
+
+  <!-- ── SOLVER MODE ── -->
+  <div id="multiPanel-solver" style="display:none;">
+  <div class="card">
+    <div class="card-title">Dive Solver</div>
+    <div class="info-box">Move the sliders to explore trade-offs. Fix the variables you <em>know</em>, and the solver tells you what's possible for the rest. <strong>Drag Surface Interval down</strong> to see how Bottom Time must decrease to stay safe.</div>
+
+    <!-- Depth -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 1 Depth</label>
+        <span id="slv-d1-disp" style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);line-height:1;">30 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="slv-d1" class="lsp-slider" min="5" max="42" value="30" step="1"
+          oninput="updateSliderFill(this);runSolver()">
+        <div class="slider-ticks"><span>5m</span><span>12m</span><span>20m</span><span>30m</span><span>40m</span></div>
+      </div>
+    </div>
+
+    <!-- BT1 -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 1 Bottom Time</label>
+        <span id="slv-bt1-disp" style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);line-height:1;">30 min</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="slv-bt1" class="lsp-slider" min="5" max="60" value="30" step="1"
+          oninput="updateSliderFill(this);runSolver()">
+        <div class="slider-ticks"><span>5</span><span>15</span><span>25</span><span>40</span><span>60</span></div>
+      </div>
+    </div>
+
+    <!-- SI -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Surface Interval</label>
+        <span id="slv-si-disp" style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);line-height:1;">60 min</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="slv-si" class="lsp-slider" min="10" max="240" value="60" step="5"
+          oninput="updateSliderFill(this);runSolver()">
+        <div class="slider-ticks"><span>10</span><span>30</span><span>60</span><span>120</span><span>180</span><span>240</span></div>
+      </div>
+    </div>
+
+    <!-- D2 depth -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 2 Depth</label>
+        <span id="slv-d2-disp" style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);line-height:1;">20 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="slv-d2" class="lsp-slider" min="5" max="42" value="20" step="1"
+          oninput="updateSliderFill(this);runSolver()">
+        <div class="slider-ticks"><span>5m</span><span>12m</span><span>20m</span><span>30m</span><span>40m</span></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="solverResult" class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:16px;">
+      <div class="stat"><div class="stat-val" id="slv-maxbt2" style="color:var(--accent);">—</div><div class="stat-lbl">Max BT Dive 2</div></div>
+      <div class="stat"><div class="stat-val" id="slv-minsi"  style="color:var(--accent);">—</div><div class="stat-lbl">Min Surface Interval</div></div>
+      <div class="stat"><div class="stat-val" id="slv-pg1"    style="color:var(--muted);">—</div><div class="stat-lbl">Pressure Group after D1</div></div>
+      <div class="stat"><div class="stat-val" id="slv-pg2"    style="color:var(--muted);">—</div><div class="stat-lbl">Pressure Group after SI</div></div>
+    </div>
+    <div id="solverAdvice" class="info-box" style="margin-top:12px;"></div>
+    <div id="solverBtBar" style="margin-top:16px;display:none;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Dive 2 BT budget — drag SI to adjust</div>
+      <div style="background:var(--bg-alt);border-radius:6px;height:18px;overflow:hidden;">
+        <div id="solverBtFill" style="height:100%;background:var(--accent);border-radius:6px;transition:width 0.3s;width:50%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:10px;color:var(--muted);">0 min</span>
+        <span id="solverBtMax" style="font-size:10px;color:var(--accent);font-weight:700;"></span>
+      </div>
+    </div>
+  </div>
+  </div>
+
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1737,6 +1820,7 @@ body.algo-buh .buh-only { display: flex !important; }
     <button class="tab-btn active" id="tool-mod"       onclick="switchTool('mod',this)">MOD</button>
     <button class="tab-btn"        id="tool-bestmix"   onclick="switchTool('bestmix',this)">Best Mix</button>
     <button class="tab-btn"        id="tool-maxdepth"  onclick="switchTool('maxdepth',this)">Max Depth</button>
+    <button class="tab-btn"        id="tool-avgdepth"  onclick="switchTool('avgdepth',this)">Avg Depth</button>
     <button class="tab-btn"        id="tool-converter" onclick="switchTool('converter',this)">Unit Converter</button>
   </div>
 
@@ -1829,6 +1913,60 @@ body.algo-buh .buh-only { display: flex !important; }
       <div class="stat"><div class="stat-val" id="maxDepth16" style="color:var(--yellow);">—</div><div class="stat-lbl">Max Depth @ ppO₂ 1.6 (m)</div></div>
       <div class="stat"><div class="stat-val" id="maxDepth14ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.4 (feet)</div></div>
       <div class="stat"><div class="stat-val" id="maxDepth16ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.6 (feet)</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ── Average Depth Converter ── -->
+  <div id="tool-panel-avgdepth" style="display:none;">
+  <div class="card">
+    <div class="card-title">Average Depth — Planning Converter</div>
+    <div class="info-box">
+      <strong>Can you use average depth to plan a dive?</strong> Yes — with caveats.
+      RDP tables assume a square profile (max depth the whole dive), so average depth gives you <em>more</em> credit than you actually used — safer for planning a single dive.
+      However for <strong>repetitive dives</strong>, fast compartments are driven by your <em>actual maximum depth</em>, not the average — so using average depth to calculate surface intervals can be <strong>unconservative</strong>.
+      This tool converts your log-book average depth to a recommended planning depth that balances both effects.
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Max Depth</label>
+        <span id="avgMaxDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="avgMaxSlider" class="lsp-slider" min="5" max="60" value="30" step="1"
+          oninput="updateSliderFill(this);calcAvgDepth()">
+        <div class="slider-ticks"><span>5m</span><span>15m</span><span>25m</span><span>40m</span><span>50m</span><span>60m</span></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Average Depth (from your log)</label>
+        <span id="avgAvgDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">18 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="avgAvgSlider" class="lsp-slider" min="3" max="55" value="18" step="1"
+          oninput="updateSliderFill(this);calcAvgDepth()">
+        <div class="slider-ticks"><span>3m</span><span>10m</span><span>20m</span><span>35m</span><span>45m</span><span>55m</span></div>
+      </div>
+    </div>
+
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;" id="avgDepthStats">
+      <div class="stat"><div class="stat-val" id="avgPlanDepth" style="color:var(--accent);">—</div><div class="stat-lbl">Recommended Planning Depth</div></div>
+      <div class="stat"><div class="stat-val" id="avgRatio" style="color:var(--muted);">—</div><div class="stat-lbl">Avg / Max ratio</div></div>
+      <div class="stat"><div class="stat-val" id="avgPlanDepthFt" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">Planning Depth (ft)</div></div>
+      <div class="stat"><div class="stat-val" id="avgConservatism" style="font-size:14px;">—</div><div class="stat-lbl">Profile Classification</div></div>
+    </div>
+
+    <div id="avgDepthAdvice" class="info-box" style="margin-top:16px;border-left:3px solid var(--accent);"></div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Why not just use max depth?</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        Using max depth for every dive is conservative but over-penalises multi-level dives — e.g. a 40m dive that spent 3 min at depth and the rest at 15m. The RDP penalises you as if you spent the full dive at 40m, which can make surface intervals seem unnecessarily long.<br><br>
+        The <strong>planning depth formula: avg + 75% × (max − avg)</strong> is a widely used approximation. It acknowledges the brief time at max depth while not ignoring it. Always validate against your dive computer's actual tissue loading.
+      </div>
     </div>
   </div>
   </div>
@@ -2427,31 +2565,42 @@ function depthDisp(m, u) { return u === 'metric' ? `${m} m` : `${mToFt(m)} ft`; 
 
 function setUnits(u) {
   const prev = units; units = u;
+  // Header buttons
   document.getElementById('uImp').classList.toggle('active', u==='imperial');
   document.getElementById('uMet').classList.toggle('active', u==='metric');
+  // Also sync any legacy per-tab unit buttons if still present
+  ['ndlUImp','ndlUMet','mUImp','mUMet'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isImp = id.includes('Imp');
+    el.classList.toggle('active', u==='imperial' ? isImp : !isImp);
+  });
+  // Depth inputs
   const inp = document.getElementById('depth');
-  const v = parseFloat(inp.value)||0;
-  if (u==='metric' && prev==='imperial') { inp.value = parseFloat(ftToM(v)); inp.max=100; }
-  if (u==='imperial' && prev==='metric') { inp.value = mToFt(v); inp.max=330; }
-  document.getElementById('depthLbl').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
-  document.getElementById('decoDepthLbl').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
+  if (inp) {
+    const v = parseFloat(inp.value)||0;
+    if (u==='metric' && prev==='imperial') { inp.value = parseFloat(ftToM(v)); inp.max=100; }
+    if (u==='imperial' && prev==='metric') { inp.value = mToFt(v); inp.max=330; }
+  }
+  // Labels
+  const du = u==='metric' ? 'm' : 'ft';
+  const setTxt = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
+  setTxt('depthLbl',      `Depth (${du})`);
+  setTxt('decoDepthLbl',  `Depth (${du})`);
+  setTxt('ndlDepthHdr',   `Depth (${du})`);
+  // Safety stop depth buttons — 3m=10ft, 6m=20ft
+  setTxt('sd3', u==='metric' ? '3 m'  : '10 ft');
+  setTxt('sd6', u==='metric' ? '6 m'  : '20 ft');
+  // NDL units sync
+  ndlUnits = u; renderNDLTable?.();
+  // Multi units sync
+  multiUnits = u; buildDiveBlocks?.();
+  // Re-run planner if a result is showing
+  if (document.getElementById('plannerResult')?.innerHTML) calculateDive?.();
 }
 
-function setNDLUnits(u) {
-  ndlUnits = u;
-  document.getElementById('ndlUImp').classList.toggle('active', u==='imperial');
-  document.getElementById('ndlUMet').classList.toggle('active', u==='metric');
-  document.getElementById('ndlDepthHdr').textContent = u==='metric' ? 'Depth (m)' : 'Depth (ft)';
-  document.getElementById('ndlNDLHdr').textContent = 'NDL (min)';
-  renderNDLTable();
-}
-
-function setMultiUnits(u) {
-  multiUnits = u;
-  document.getElementById('mUImp').classList.toggle('active', u==='imperial');
-  document.getElementById('mUMet').classList.toggle('active', u==='metric');
-  buildDiveBlocks();
-}
+function setNDLUnits(u)   { setUnits(u); }
+function setMultiUnits(u) { setUnits(u); }
 
 // ═══════════════════════════════════════════════
 // SAFETY STOP CONTROLS
@@ -3449,6 +3598,116 @@ function setDiveCount(n) {
   buildDiveBlocks();
 }
 
+function switchMultiMode(mode, btn) {
+  ['plan','solver'].forEach(m => {
+    document.getElementById('multiPanel-' + m).style.display = m === mode ? 'block' : 'none';
+    document.getElementById('multiTab-' + m).classList.toggle('active', m === mode);
+  });
+  if (mode === 'solver') {
+    document.querySelectorAll('#multiPanel-solver .lsp-slider').forEach(s => updateSliderFill(s));
+    runSolver();
+  }
+}
+
+function runSolver() {
+  const isM  = units === 'metric';
+  const conv = isM ? 1 : 3.28084;
+  const du   = isM ? 'm' : 'ft';
+
+  const d1m  = parseFloat(document.getElementById('slv-d1').value)  || 30;
+  const bt1  = parseFloat(document.getElementById('slv-bt1').value) || 30;
+  const siMin= parseFloat(document.getElementById('slv-si').value)  || 60;
+  const d2m  = parseFloat(document.getElementById('slv-d2').value)  || 20;
+
+  // Update displays
+  document.getElementById('slv-d1-disp').textContent  = Math.round(d1m  * conv) + ' ' + du;
+  document.getElementById('slv-bt1-disp').textContent = bt1  + ' min';
+  document.getElementById('slv-si-disp').textContent  = siMin + ' min';
+  document.getElementById('slv-d2-disp').textContent  = Math.round(d2m  * conv) + ' ' + du;
+
+  // Use PADI RDP pressure groups (simplified table lookup)
+  // Pressure group after dive 1
+  const pg1 = rdpPressureGroup(d1m, bt1);
+  // Residual nitrogen after surface interval
+  const pgAfterSI = rdpAfterSI(pg1, siMin);
+  // Residual nitrogen time for dive 2
+  const rnt2 = rdpRNT(pgAfterSI, d2m);
+  // NDL at dive 2 depth
+  const ndl2 = buhNDL(d2m, 0.79, mGF.low/100, mGF.high/100);
+  // Max BT for dive 2 = NDL - RNT (adjusted NDL)
+  const maxBT2 = Math.max(0, ndl2 - rnt2);
+  // Min SI: find the shortest SI where adjusted NDL at d2 gives at least 10 min BT
+  let minSI = siMin;
+  for (let si = 10; si <= 240; si += 5) {
+    const pg = rdpAfterSI(pg1, si);
+    const rnt = rdpRNT(pg, d2m);
+    if (ndl2 - rnt >= 10) { minSI = si; break; }
+  }
+
+  document.getElementById('slv-pg1').textContent   = pg1    || '—';
+  document.getElementById('slv-pg2').textContent   = pgAfterSI || '—';
+  document.getElementById('slv-maxbt2').textContent = maxBT2 > 0 ? maxBT2 + ' min' : 'No NDL';
+  document.getElementById('slv-minsi').textContent  = minSI  + ' min';
+
+  // BT bar
+  const barEl = document.getElementById('solverBtBar');
+  if (maxBT2 > 0) {
+    barEl.style.display = 'block';
+    const pct = Math.min(100, (Math.min(bt1, maxBT2) / ndl2) * 100);
+    document.getElementById('solverBtFill').style.width = pct + '%';
+    document.getElementById('solverBtFill').style.background =
+      pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--yellow)' : 'var(--accent)';
+    document.getElementById('solverBtMax').textContent = 'Max: ' + maxBT2 + ' min';
+  } else {
+    barEl.style.display = 'none';
+  }
+
+  // Advice
+  let advice = '';
+  if (!pg1) {
+    advice = '⚠ Dive 1 combination exceeds RDP limits — reduce depth or bottom time.';
+  } else if (maxBT2 <= 0) {
+    advice = `⚠ No bottom time available for Dive 2 at ${Math.round(d2m*conv)}${du} with only ${siMin} min SI after a ${pg1} group dive. Increase SI to at least <strong>${minSI} min</strong>.`;
+  } else if (siMin < minSI) {
+    advice = `⚠ Surface interval too short. Minimum SI for 10 min BT on Dive 2 is <strong>${minSI} min</strong>.`;
+  } else {
+    advice = `✅ Dive 2 max bottom time: <strong>${maxBT2} min</strong> at ${Math.round(d2m*conv)}${du}. Residual nitrogen time: ${rnt2} min. NDL at that depth: ${ndl2} min.`;
+  }
+  document.getElementById('solverAdvice').innerHTML = advice;
+}
+
+// ── RDP helper tables (simplified) ──
+function rdpPressureGroup(depthM, bt) {
+  // Simplified NDL table for pressure group estimation
+  // Returns letter A-Z or null if exceeds limits
+  const ndl = buhNDL(depthM, 0.79, 0.40, 0.85); // conservative NDL
+  if (bt > ndl) return null;
+  // Estimate pressure group proportional to NDL usage
+  const pct = bt / ndl;
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const idx = Math.min(25, Math.floor(pct * 20));
+  return letters[idx];
+}
+function rdpAfterSI(pg, siMin) {
+  if (!pg) return 'A';
+  // Simplified: pressure group decreases over SI
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const startIdx = letters.indexOf(pg);
+  const dropPerHour = 4; // approximate: lose ~4 letter-groups per hour
+  const dropped = Math.floor((siMin / 60) * dropPerHour);
+  const newIdx = Math.max(0, startIdx - dropped);
+  return letters[newIdx];
+}
+function rdpRNT(pg, depthM) {
+  if (!pg || pg === 'A') return 0;
+  // Approximate RNT: higher pressure group and shallower depth = more RNT
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const pgIdx = letters.indexOf(pg); // 0-25
+  // RNT scales with group and inversely with depth (shallower dives have longer RNTs)
+  const depthFactor = Math.max(0.3, 1 - (depthM - 10) / 50);
+  return Math.round(pgIdx * depthFactor * 2.5);
+}
+
 function runMulti() {
   try {
   const isM = multiUnits === 'metric';
@@ -4213,7 +4472,7 @@ function calcMaxDepth() {
 
 // Init tools on tab open
 function switchTool(name, btn) {
-  ['mod','bestmix','maxdepth','converter'].forEach(t => {
+  ['mod','bestmix','maxdepth','avgdepth','converter'].forEach(t => {
     document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
@@ -4221,7 +4480,53 @@ function switchTool(name, btn) {
   if (name === 'mod')       calcMOD();
   if (name === 'bestmix')   calcBestMix();
   if (name === 'maxdepth')  calcMaxDepth();
+  if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'converter') initConverter();
+}
+
+function calcAvgDepth() {
+  const maxM  = parseFloat(document.getElementById('avgMaxSlider').value) || 30;
+  const avgM  = Math.min(parseFloat(document.getElementById('avgAvgSlider').value) || 18, maxM);
+  const du    = units === 'metric' ? 'm' : 'ft';
+  const conv  = units === 'metric' ? 1 : 3.28084;
+
+  // Clamp avg slider to max
+  const avgSlider = document.getElementById('avgAvgSlider');
+  if (parseFloat(avgSlider.value) > maxM) { avgSlider.value = maxM; }
+  avgSlider.max = maxM;
+
+  // Planning depth = avg + 75% × (max − avg)
+  // Rationale: brief time at max depth, most of dive at avg. 75% weighting
+  // towards max is conservative enough for repetitive dive planning.
+  const planM  = avgM + 0.75 * (maxM - avgM);
+  const ratio  = avgM / maxM;
+
+  document.getElementById('avgMaxDisplay').textContent  = Math.round(maxM * conv) + ' ' + du;
+  document.getElementById('avgAvgDisplay').textContent  = Math.round(avgM * conv) + ' ' + du;
+  document.getElementById('avgPlanDepth').textContent   = Math.round(planM * conv) + ' ' + du;
+  document.getElementById('avgPlanDepthFt').textContent = units === 'metric'
+    ? Math.round(planM * 3.28084) + ' ft'
+    : Math.round(planM / 3.28084) + ' m';
+  document.getElementById('avgRatio').textContent       = (ratio * 100).toFixed(0) + '%';
+
+  // Profile classification
+  let cls, clsColor, advice;
+  if (ratio >= 0.85) {
+    cls = 'Square / Flat'; clsColor = 'var(--red)';
+    advice = '<strong>Near-square profile.</strong> Average ≈ max depth — you spent most of the dive at depth. Using max depth for planning is appropriate and conservative. Repetitive dive surface intervals should be calculated on max depth.';
+  } else if (ratio >= 0.65) {
+    cls = 'Typical Multi-level'; clsColor = 'var(--yellow)';
+    advice = '<strong>Typical multi-level profile.</strong> The recommended planning depth gives a reasonable balance. For surface intervals, use <strong>' + Math.round(maxM * conv) + ' ' + du + '</strong> (max depth) — fast compartments offgas based on the deepest part of the dive, not the average.';
+  } else if (ratio >= 0.45) {
+    cls = 'Deep Excursion'; clsColor = 'var(--accent)';
+    advice = '<strong>Deep excursion profile</strong> — brief time at depth, long shallow portion. Planning depth of <strong>' + Math.round(planM * conv) + ' ' + du + '</strong> is appropriate for single dive planning. However surface intervals must still be based on max depth <strong>' + Math.round(maxM * conv) + ' ' + du + '</strong> for safety.';
+  } else {
+    cls = 'Spike Dive'; clsColor = 'var(--green)';
+    advice = '<strong>Spike dive</strong> — very brief time at max depth, most dive much shallower. Your average depth is a good planning approximation for the overall gas loading. Still use max depth for repetitive dive surface interval calculations.';
+  }
+  document.getElementById('avgConservatism').textContent  = cls;
+  document.getElementById('avgConservatism').style.color  = clsColor;
+  document.getElementById('avgDepthAdvice').innerHTML     = advice;
 }
 
 function switchConverter(name, btn) {
