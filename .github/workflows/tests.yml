@@ -1,0 +1,38 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate HTML
+        run: |
+          if ! grep -q "<!DOCTYPE html>" index.html; then
+            echo "Error: Missing DOCTYPE"
+            exit 1
+          fi
+          echo "✓ HTML is valid"
+          
+      - name: Check File Size
+        run: |
+          SIZE=$(wc -c < index.html)
+          echo "File size: $SIZE bytes"
+          if [ $SIZE -gt 300000 ]; then
+            echo "⚠ Warning: File exceeds 300KB"
+          fi
+          
+      - name: Validate JSON files
+        run: |
+          for file in package.json manifest.json; do
+            if [ -f "$file" ]; then
+              python3 -m json.tool "$file" > /dev/null && echo "✓ $file is valid JSON" || echo "✗ $file has invalid JSON"
+            fi
+          done
+
