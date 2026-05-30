@@ -1,0 +1,92 @@
+LSP D-PLANNER — Training & Planning Use Only
+
+DISCLAIMER
+
+This software is provided for educational and recreational dive planning 
+purposes ONLY. It is NOT approved for commercial use without separate licensing.
+
+IMPORTANT SAFETY WARNING
+
+DO NOT use this tool as your primary dive computer or sole source of dive 
+planning information. Always use an actual dive computer while diving.
+
+USAGE RESTRICTIONS
+
+This software may only be used for:
+- Training and educational purposes
+- Recreational dive planning
+- Personal dive scenario analysis
+- Backup reference planning
+
+This software MUST NOT be used for:
+- Commercial diving operations
+- Professional guiding services
+- Safety-critical applications
+- Any use where lives depend on accurate calculations
+
+LIMITATIONS OF LIABILITY
+
+The authors and distributors of this software are not responsible for:
+- Any injuries or deaths resulting from its use
+- Inaccurate calculations
+- Software errors or bugs
+- Misuse of the tool
+- Failure to use proper dive equipment
+
+USER RESPONSIBILITY
+
+By using this software, you agree that:
+1. You are trained and certified for the dives you plan
+2. You understand dive safety and decompression theory
+3. You will use proper dive computers and equipment
+4. You will never dive alone
+5. You will follow your certification level limits
+6. You will not exceed 40 meters depth (PADI recreational limit)
+7. You will plan conservatively with safety margins
+8. You will abort any dive if you feel unwell
+
+DECOMPRESSION TABLES
+
+The algorithms included are based on:
+- PADI recreational dive tables
+- Bühlmann ZH-L16C decompression model
+
+These are approximations and should only be used for planning purposes.
+
+CONTINGENCY PLANNING
+
+Emergency scenarios are for training and planning only. Actual emergency 
+response depends on immediate circumstances, buddy communication, and 
+current dive conditions.
+
+NO WARRANTY
+
+This software is provided "as is" without warranty of any kind, express or 
+implied, including but not limited to the warranties of merchantability, 
+fitness for a particular purpose, and non-infringement.
+
+OPEN SOURCE
+
+This software is provided with full source code visible. You are encouraged 
+to review and audit the code for accuracy and safety.
+
+ACKNOWLEDGMENT
+
+By downloading and using this software, you acknowledge that:
+1. You have read and understand this disclaimer
+2. You accept full responsibility for your dive planning decisions
+3. You understand the risks of diving
+4. You will follow all safety procedures
+5. You will use professional dive computers
+
+---
+
+Training & Planning Use Only
+Never Dive Alone
+Always Use a Dive Computer
+Plan Conservatively
+
+For questions or concerns about safety, please consult with a certified 
+dive master or instructor.
+
+Generated: May 28, 2026
