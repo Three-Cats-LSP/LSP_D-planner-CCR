@@ -1,0 +1,216 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Create Android project structure
+        run: |
+          mkdir -p android-app/app/src/main/java/com/example/lspdplanner
+          mkdir -p android-app/app/src/main/res/layout
+          mkdir -p android-app/app/src/main/res/values
+          mkdir -p android-app/app/src/main/assets
+          cp index.html android-app/app/src/main/assets/
+
+      - name: Create gradle.properties
+        run: |
+          cat > android-app/gradle.properties << 'PROPS'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m
+          PROPS
+
+      - name: Create settings.gradle
+        run: |
+          cat > android-app/settings.gradle << 'SETTINGS'
+          pluginManagement {
+              repositories {
+                  gradlePluginPortal()
+                  google()
+                  mavenCentral()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          include ':app'
+          SETTINGS
+
+      - name: Create root build.gradle
+        run: |
+          cat > android-app/build.gradle << 'GRADLE'
+          plugins {
+              id 'com.android.application' version '8.6.1' apply false
+          }
+          GRADLE
+
+      - name: Create app/build.gradle
+        run: |
+          cat > android-app/app/build.gradle << 'GRADLE'
+          plugins {
+              id 'com.android.application' version '8.6.1'
+          }
+
+          android {
+              compileSdk 35
+              namespace 'com.example.lspdplanner'
+
+              defaultConfig {
+                  applicationId 'com.example.lspdplanner'
+                  minSdk 21
+                  targetSdk 35
+                  versionCode 1
+                  versionName '5.8.0'
+              }
+
+              buildTypes {
+                  release { minifyEnabled false }
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          configurations.all {
+              resolutionStrategy {
+                  force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.0'
+              }
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.7.0'
+          }
+          GRADLE
+
+      - name: Create AndroidManifest.xml
+        run: |
+          cat > android-app/app/src/main/AndroidManifest.xml << 'MANIFEST'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application android:label="@string/app_name">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          MANIFEST
+
+      - name: Create MainActivity.java
+        run: |
+          cat > android-app/app/src/main/java/com/example/lspdplanner/MainActivity.java << 'JAVA'
+          package com.example.lspdplanner;
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import androidx.appcompat.app.AppCompatActivity;
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+                  WebView web = findViewById(R.id.webview);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  web.loadUrl("file:///android_asset/index.html");
+              }
+          }
+          JAVA
+
+      - name: Create layout and resources
+        run: |
+          cat > android-app/app/src/main/res/layout/activity_main.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+              <WebView android:id="@+id/webview"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent" />
+          </FrameLayout>
+          XML
+
+          cat > android-app/app/src/main/res/values/strings.xml << 'STRINGS'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">LSP D-PLANNER</string>
+          </resources>
+          STRINGS
+
+      - name: Build APK
+        run: |
+          cd android-app
+          gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Show APK output location
+        run: |
+          echo "=== Searching for APK files ==="
+          find . -name "*.apk" -type f
+          echo "=== Build output directory ==="
+          ls -lah android-app/app/build/outputs/apk/debug/ || echo "debug dir not found"
+
+      - name: Copy APK to APK folder
+        run: |
+          mkdir -p APK
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk APK/LSP_D-Planner.apk
+          echo "✅ APK copied!"
+          ls -lah APK/
+
+      - name: Commit APK to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add APK/LSP_D-Planner.apk
+          git commit -m "Build: Update LSP_D-Planner.apk [skip ci]" || echo "Nothing to commit"
+          git push || echo "Push failed - APK available in artifacts"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LSP_D-Planner
+          path: APK/LSP_D-Planner.apk
+          retention-days: 90
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: APK/LSP_D-Planner.apk
+          body: |
+            LSP D-PLANNER v5.8.0
+            Professional Dive Planning Tool for Android
+            Install: Download APK → Enable Unknown Sources → Install
+            Training & Planning Use Only - Always use a certified dive computer.
+
