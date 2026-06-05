@@ -1,0 +1,41 @@
+name: Rollback to Milestone
+
+on:
+  workflow_dispatch:
+    inputs:
+      milestone_tag:
+        description: 'Tag to roll back to (e.g. v5.8.0)'
+        required: true
+        default: 'v5.8.0'
+      confirm:
+        description: 'Type CONFIRM to proceed'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'CONFIRM'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rollback to milestone
+        run: |
+          echo "🔄 Rolling back to ${{ github.event.inputs.milestone_tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Restore the workflow file from the milestone tag
+          git checkout ${{ github.event.inputs.milestone_tag }} -- .github/workflows/build-apk.yml
+          
+          # Commit the rollback
+          git add .github/workflows/build-apk.yml
+          git commit -m "Rollback: Restored build-apk.yml from ${{ github.event.inputs.milestone_tag }}"
+          git push
+          
+          echo "✅ Rollback complete!"
+          echo "Trigger 'Build Android APK' workflow to rebuild APK."
+
