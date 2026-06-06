@@ -43,28 +43,23 @@
 <details><summary>▸ Debug log</summary><div id="dbg">waiting…</div></details>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════
-//  LSP D-Planner Test Runner
+// ─────────────────────────────────────────────────────────────────────────
+//  LSP D-Planner Test Runner  v5
 //
-//  Key insight from debug output:
-//    const VPMEngine = { const ZHL16C_N2 = [...] ... }
-//  This means the RHS is NOT an object literal — it's a block body
-//  assigned to a const. The actual pattern is likely:
-//    const VPMEngine = (function(){ ... return { calculate, MODELS }; })()
-//  OR the engine is declared as a plain block-scoped const that contains
-//  an IIFE or class-like structure.
-//
-//  Strategy: extract from "const VPMEngine" to end of statement, then
-//  rewrite as: const VPMEngine = (extracted RHS); return VPMEngine;
-//  wrapped in a function with all required outer constants pre-declared.
-// ═══════════════════════════════════════════════════════════════════════════
+//  From debug output we now know exactly:
+//    - VPMEngine is an arrow IIFE: const VPMEngine = (() => { ... })()
+//    - MODELS = ["VPMA","VPMB","VPMBE","VPMB_GFS","VPMBFBO"]  (string keys)
+//    - MODEL_NAMES also exposed
+//    - SURFACEP / BARPERMETRE are in a DIFFERENT script block
+//    - Engine block starts at char 212678, is 74,595 chars
+// ─────────────────────────────────────────────────────────────────────────
 
-const dbgEl  = document.getElementById('dbg');
-const smsg   = document.getElementById('smsg');
-const tb     = document.getElementById('tb');
-let logs=[], P=0,F=0,SK=0,idx=0;
-function log(...a){ logs.push(a.join(' ')); dbgEl.textContent=logs.join('\n'); }
-function sec(l){ const t=document.createElement('tr');t.className='sh';t.innerHTML=`<td colspan="4">${l}</td>`;tb.appendChild(t); }
+const dbgEl=document.getElementById('dbg');
+const smsg =document.getElementById('smsg');
+const tb   =document.getElementById('tb');
+let logs=[],P=0,F=0,SK=0,idx=0;
+function log(...a){logs.push(a.join(' '));dbgEl.textContent=logs.join('\n');}
+function sec(l){const t=document.createElement('tr');t.className='sh';t.innerHTML=`<td colspan="4">${l}</td>`;tb.appendChild(t);}
 function assert(name,cond,detail='',group=''){
   idx++;
   const st=cond===null?'SKIP':cond?'PASS':'FAIL';
@@ -75,215 +70,158 @@ function assert(name,cond,detail='',group=''){
 }
 function near(a,b,t){return typeof a==='number'&&Math.abs(a-b)<=t;}
 
-// ── Balanced-brace extractor ──────────────────────────────────────────────
-function extractBalanced(src, startPos, openCh, closeCh){
-  let depth=0, i=startPos, inStr=false, strCh='', inLineComment=false, inBlockComment=false;
+function extractBalanced(src,pos,open,close){
+  let depth=0,i=pos,inStr=false,strCh='',inLC=false,inBC=false;
   while(i<src.length){
-    // Handle comments
-    if(inBlockComment){ if(src[i]==='*'&&src[i+1]==='/'){ inBlockComment=false; i+=2; continue; } i++; continue; }
-    if(inLineComment){  if(src[i]==='\n') inLineComment=false; i++; continue; }
-    if(!inStr){
-      if(src[i]==='/'&&src[i+1]==='*'){ inBlockComment=true; i+=2; continue; }
-      if(src[i]==='/'&&src[i+1]==='/'){ inLineComment=true;  i+=2; continue; }
-    }
+    if(inBC){if(src[i]==='*'&&src[i+1]==='/')inBC=false,i+=2;else i++;continue;}
+    if(inLC){if(src[i]==='\n')inLC=false;i++;continue;}
     const ch=src[i];
-    if(inStr){
-      if(ch==='\\'){i+=2;continue;}
-      if(ch===strCh){inStr=false;}
-    } else {
+    if(inStr){if(ch==='\\'){i+=2;continue;}if(ch===strCh)inStr=false;}
+    else{
+      if(ch==='/'&&src[i+1]==='*'){inBC=true;i+=2;continue;}
+      if(ch==='/'&&src[i+1]==='/'){inLC=true;i+=2;continue;}
       if(ch==='"'||ch==="'"||ch==='`'){inStr=true;strCh=ch;}
-      else if(ch===openCh){depth++;if(depth===1&&openCh==='{'){const start=i;}} // track
-      else if(ch===closeCh){depth--;if(depth===0)return i;}
+      else if(ch===open){depth++;}
+      else if(ch===close){depth--;if(depth===0)return i;}
     }
     i++;
   }
   return -1;
 }
 
-// ── Extract the full "const VPMEngine = ...;" statement ──────────────────
-function extractVPMEngineStatement(src){
-  // Find last occurrence
-  let pos=-1, search=0;
-  while(true){
-    const f=src.indexOf('const VPMEngine',search);
-    if(f===-1)break; pos=f; search=f+1;
-  }
-  if(pos===-1){log('ERROR: const VPMEngine not found'); return null;}
-  log(`Found const VPMEngine at ${pos}`);
-
-  // Find the '=' sign
-  const eqPos=src.indexOf('=',pos+15);
-  if(eqPos===-1){log('ERROR: no = after VPMEngine'); return null;}
-
-  // Skip whitespace after =
-  let rhs=eqPos+1;
-  while(rhs<src.length&&(src[rhs]===' '||src[rhs]==='\n'||src[rhs]==='\r'||src[rhs]==='\t'))rhs++;
-
-  const startCh=src[rhs];
-  log(`RHS starts with: "${startCh}" at ${rhs}`);
-  log(`RHS preview: ${src.substring(rhs,rhs+80).replace(/\n/g,'↵')}`);
-
-  let endPos;
-  if(startCh==='{'){
-    // Object literal OR block — find matching }
-    endPos=extractBalanced(src,rhs,'{','}');
-  } else if(startCh==='('){
-    // IIFE: (function(){...})()
-    endPos=extractBalanced(src,rhs,'(',')');
-    // Might have trailing ()
-    if(endPos!==-1&&src[endPos+1]==='('){
-      const end2=extractBalanced(src,endPos+1,'(',')');
-      if(end2!==-1) endPos=end2;
-    }
-  } else {
-    // Might be a function call or identifier — find semicolon or newline
-    endPos=src.indexOf(';',rhs);
-    if(endPos===-1) endPos=src.indexOf('\n',rhs);
-  }
-
-  if(endPos===-1){log('ERROR: could not find end of VPMEngine statement'); return null;}
-
-  const statement=src.substring(pos, endPos+1);
-  log(`VPMEngine statement: ${statement.length.toLocaleString()} chars`);
-  log(`Statement preview: ${statement.substring(0,120).replace(/\n/g,'↵')}`);
-  return {statement, statementStart:pos, statementEnd:endPos};
-}
-
-// ── Extract all scalar constants BEFORE the engine statement ────────────
-function extractConstants(src, beforeIdx){
-  const sub=src.substring(0,beforeIdx+80000); // a bit past to catch nearby consts
-  const names=[
-    'SURFACEP','BARPERMETRE','SLPSWM','SLPFWM','SLPSWF','SLPFWF',
-    'NC','GAMMA','GAMMAC','INITIALRADIUSN2','INITIALRADIUSHe',
-    'REGENTIME','WATERVAPORPRESSURE','CONSTANTPRESSUREOTHERGASES',
-    'CRITVOLUMELAMBDAFSWMIN'
-  ];
-  const consts={};
-  for(const name of names){
-    // Find last declaration before our engine
-    const re=new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*([^;\\n]+)`,'g');
-    let m,last=null;
-    while((m=re.exec(sub))!==null) last=m[1].trim();
-    if(last){
-      try{
-        const val=(new Function(`return (${last})`))();
-        consts[name]=val;
-        log(`  ${name} = ${val}`);
-      }catch(e){log(`  ${name} raw="${last}" (eval failed: ${e.message})`);}
-    }
-  }
-  return consts;
-}
-
-// ── Main loader ───────────────────────────────────────────────────────────
 async function loadEngine(){
   log('Fetching index.html…');
   let src;
-  try{
-    const res=await fetch('./index.html');
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    src=await res.text();
-  }catch(e){log('fetch failed: '+e.message);return null;}
-  log(`Fetched: ${src.length.toLocaleString()} chars\n`);
+  try{const res=await fetch('./index.html');if(!res.ok)throw new Error(`HTTP ${res.status}`);src=await res.text();}
+  catch(e){log('fetch failed: '+e.message);return null;}
+  log(`Fetched: ${src.length.toLocaleString()} chars`);
 
-  log('=== Extracting VPMEngine statement ===');
-  const extracted=extractVPMEngineStatement(src);
-  if(!extracted) return null;
+  // ── 1. Extract VPMEngine IIFE ───────────────────────────────────────────
+  let vePos=-1,s=0;
+  while(true){const f=src.indexOf('const VPMEngine',s);if(f===-1)break;vePos=f;s=f+1;}
+  if(vePos===-1){log('ERROR: const VPMEngine not found');return null;}
+  log(`const VPMEngine at ${vePos}`);
+  const eqPos=src.indexOf('=',vePos+15);
+  let rhs=eqPos+1;
+  while(rhs<src.length&&' \n\r\t'.includes(src[rhs]))rhs++;
+  log(`RHS char: "${src[rhs]}"`);
 
-  log('\n=== Extracting constants ===');
-  const consts=extractConstants(src, extracted.statementStart);
+  // The RHS is (() => { ... })() — arrow IIFE
+  // Find the outer () wrapper end, then the trailing ()
+  let rhsEnd=extractBalanced(src,rhs,'(',')');
+  if(rhsEnd===-1){log('ERROR: unmatched parens');return null;}
+  // Check for trailing () invocation
+  let after=rhsEnd+1;
+  while(after<src.length&&' \n\r\t'.includes(src[after]))after++;
+  if(src[after]==='('){
+    const end2=extractBalanced(src,after,'(',')');
+    if(end2!==-1)rhsEnd=end2;
+  }
+  const engineRHS=src.substring(rhs,rhsEnd+1);
+  log(`Engine RHS: ${engineRHS.length.toLocaleString()} chars`);
 
-  // Build the runner script:
-  // Declare all found constants at top level, then the engine statement,
-  // then export everything.
-  const constCode=Object.entries(consts)
-    .map(([k,v])=>`var ${k} = ${JSON.stringify(v)};`)
-    .join('\n');
+  // ── 2. Extract SURFACEP & BARPERMETRE from ALL script blocks ───────────
+  log('\nScanning all script blocks for constants…');
+  let SP=null,BPM=null;
 
-  // The engine statement is: "const VPMEngine = <rhs>"
-  // We rewrite it so the result is accessible
-  const engineCode=extracted.statement
-    .replace(/^const\s+VPMEngine\s*=/,'var __ENGINE =')
-    .replace(/;?\s*$/,';');
+  // First try: grep raw source with regex (works regardless of scope)
+  const spM =src.match(/const\s+SURFACEP\s*=\s*([\d.]+)/);
+  const bpmM=src.match(/const\s+BARPERMETRE\s*=\s*([\d.]+)/);
+  const slpM=src.match(/const\s+SLPSWM\s*=\s*([\d.]+)/);
+  if(spM) { SP =parseFloat(spM[1]);  log(`  regex SURFACEP=${SP}`); }
+  if(bpmM){ BPM=parseFloat(bpmM[1]); log(`  regex BARPERMETRE=${BPM}`); }
+  if(!BPM&&slpM){ BPM=1/parseFloat(slpM[1]); log(`  derived BARPERMETRE from SLPSWM=${slpM[1]} → ${BPM}`); }
 
+  // If not found as standalone const, try expressions like: 1/10.078
+  if(!SP){
+    // Common pattern: SURFACEP = 1.01325 or 1.013 or 101.325/100
+    const m2=src.match(/SURFACEP\s*=\s*([0-9./]+)/);
+    if(m2){try{SP=(new Function(`return ${m2[1]}`))()} catch(e){}}
+    if(SP) log(`  expr SURFACEP=${SP}`);
+  }
+
+  // ── 3. Extract any constants the engine references ──────────────────────
+  // From debug: only NC and GAMMA were found. Let's also grab SLPSWM etc.
+  const constNames=['NC','GAMMA','GAMMAC','INITIALRADIUSN2','INITIALRADIUSHe',
+    'REGENTIME','WATERVAPORPRESSURE','CONSTANTPRESSUREOTHERGASES',
+    'CRITVOLUMELAMBDAFSWMIN','SLPSWM','SLPFWM'];
+  let constCode='';
+  for(const n of constNames){
+    const re=new RegExp(`(?:const|var|let)\\s+${n}\\s*=\\s*([^;\\n]+)`,'g');
+    let m,last=null;
+    while((m=re.exec(src))!==null)last=m[1].trim();
+    if(last){
+      try{
+        const val=(new Function(`return (${last})`))();
+        constCode+=`var ${n}=${JSON.stringify(val)};\n`;
+        log(`  ${n}=${val}`);
+      }catch(e){log(`  ${n} raw="${last}" (skip: ${e.message})`)}
+    }
+  }
+
+  // ── 4. Build and eval ───────────────────────────────────────────────────
   const script=`(function(){
   "use strict";
   ${constCode}
-  ${engineCode}
-  return {
-    engine: typeof __ENGINE !== 'undefined' ? __ENGINE : null,
-    SURFACEP:    typeof SURFACEP    !== 'undefined' ? SURFACEP    : null,
-    BARPERMETRE: typeof BARPERMETRE !== 'undefined' ? BARPERMETRE : null,
-  };
+  var __E = ${engineRHS};
+  return __E;
 })()`;
 
-  log(`\nRunner script: ${script.length.toLocaleString()} chars`);
-  log('--- script preview (chars 0-400) ---');
-  log(script.substring(0,400));
-  log('--- end preview ---\n');
+  log(`\nScript: ${script.length.toLocaleString()} chars`);
+  log('Preview:\n'+script.substring(0,300));
 
-  let result;
-  try{
-    result=(new Function('return '+script))();
-  }catch(e){
-    log(`eval FAILED: ${e.message}`);
-    // Try to find the failing line
-    const lines=script.split('\n');
-    log(`Script lines: ${lines.length}`);
-    // Show lines around typical problem areas
-    for(let i=0;i<Math.min(lines.length,30);i++) log(`  L${i+1}: ${lines[i].substring(0,120)}`);
+  let engine;
+  try{engine=(new Function('return '+script))();}
+  catch(e){
+    log(`\neval FAILED: ${e.message}`);
     return null;
   }
 
   log(`\neval OK`);
-  log(`engine type: ${typeof result?.engine}`);
-  log(`engine keys: ${result?.engine?Object.keys(result.engine).slice(0,10).join(', '):'n/a'}`);
-  log(`engine.calculate: ${typeof result?.engine?.calculate}`);
-  log(`engine.MODELS: ${JSON.stringify(result?.engine?.MODELS)}`);
-  log(`SURFACEP: ${result?.SURFACEP}`);
-  log(`BARPERMETRE: ${result?.BARPERMETRE}`);
+  log(`engine.calculate: ${typeof engine?.calculate}`);
+  log(`engine.MODELS: ${JSON.stringify(engine?.MODELS)}`);
+  log(`engine.MODEL_NAMES: ${JSON.stringify(engine?.MODEL_NAMES)}`);
+  log(`SURFACEP: ${SP}, BARPERMETRE: ${BPM}`);
 
-  const engine=result?.engine;
   if(!engine||typeof engine.calculate!=='function'){
-    log('ERROR: engine.calculate not a function');
-    if(engine) log('Available keys: '+Object.keys(engine).join(', '));
+    log('engine.calculate not a function — keys: '+Object.keys(engine||{}).join(', '));
     return null;
   }
 
-  // Probe models
-  log('\n=== Probing model values ===');
-  const mv=Object.values(engine.MODELS||{});
-  log(`MODELS: ${JSON.stringify(engine.MODELS)}`);
-  function probe(m){
-    try{
-      const r=engine.calculate(
-        [{depth:40,time:25,o2:21,he:0}],
-        [{o2:50,he:0}],
-        {metric:true,waterType:0,descentRate:22,ascentRate:9,decoAscentRate:9,
-         surfaceAscentRate:9,stepSize:3,lastStop:3,minStopTime:1,
-         ppO2Bottom:1.4,ppO2Deco:1.6,ppO2Low:1.4,ppO2Mid:1.5,ppO2High:1.6,
-         o2MaxDepth:6,conservatism:0,gfHi:85,gfs:85},m);
-      return r.totalRuntime||9999;
-    }catch(e){log(`  probe(${JSON.stringify(m)}) error: ${e.message}`);return 9999;}
-  }
-  const probed=mv.map(m=>({m,rt:probe(m)}));
-  probed.forEach(p=>log(`  ${JSON.stringify(p.m)} → rt=${p.rt}`));
-  const working=probed.filter(p=>p.rt<9999).sort((a,b)=>a.rt-b.rt);
-  const VPMB   =working[0]?.m;
-  const VPMBE  =working[1]?.m??VPMB;
-  const VPMBGFS=working[2]?.m??VPMBE;
-  log(`VPMB=${JSON.stringify(VPMB)} VPMBE=${JSON.stringify(VPMBE)} VPMBGFS=${JSON.stringify(VPMBGFS)}`);
+  // ── 5. Resolve named model identifiers ─────────────────────────────────
+  // MODELS = ["VPMA","VPMB","VPMBE","VPMB_GFS","VPMBFBO"]
+  // Use the string names directly — no probing needed.
+  const M=engine.MODELS||[];
+  const MN=engine.MODEL_NAMES||{};
+  log(`\nMODELS array: ${JSON.stringify(M)}`);
 
-  return{engine,
-    SP: result.SURFACEP??consts.SURFACEP??null,
-    BPM:result.BARPERMETRE??consts.BARPERMETRE??null,
-    VPMB,VPMBE,VPMBGFS,mCount:mv.length};
+  // Find by name pattern
+  function findModel(...candidates){
+    for(const c of candidates){
+      if(M.includes(c))return c;
+      // also check MODEL_NAMES values
+      const byName=Object.entries(MN).find(([k,v])=>v===c||k===c);
+      if(byName)return byName[0];
+    }
+    return M[0]??null; // fallback to first
+  }
+
+  const VPMB   =findModel('VPMB');
+  const VPMBE  =findModel('VPMBE','VPMB_E');
+  const VPMBGFS=findModel('VPMB_GFS','VPMBGFS','VPMB_GF');
+  const VPMA   =findModel('VPMA');
+  const VPMBFBO=findModel('VPMBFBO','VPMB_FBO');
+
+  log(`Resolved: VPMA=${VPMA} VPMB=${VPMB} VPMBE=${VPMBE} VPMBGFS=${VPMBGFS} VPMBFBO=${VPMBFBO}`);
+
+  return{engine,SP,BPM,VPMB,VPMBE,VPMBGFS,VPMA,VPMBFBO,
+         models:M,mCount:M.length};
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────
 function runTests(R){
   const E=R?.engine??null,SP=R?.SP??null,BPM=R?.BPM??null;
-  const VPMB=R?.VPMB,VPMBE=R?.VPMBE,VPMBGFS=R?.VPMBGFS,mCount=R?.mCount??0;
+  const VPMB=R?.VPMB,VPMBE=R?.VPMBE,VPMBGFS=R?.VPMBGFS,VPMA=R?.VPMA,VPMBFBO=R?.VPMBFBO;
+  const models=R?.models??[],mCount=R?.mCount??0;
 
   function calc(depth,bt,model,extra={}){
     if(!E)return{error:'no engine'};
@@ -299,75 +237,102 @@ function runTests(R){
   function deco(r){return(r.stops||[]).reduce((a,s)=>a+s.time,0);}
   function hasStops(r){return(r.stops||[]).some(s=>s.time>0);}
 
+  // ── 1. Engine ────────────────────────────────────────────────────────────
   sec('1 · Engine');
-  assert('VPMEngine loaded',          E!=null,                           `type=${typeof E}`,'fetch+extract');
-  assert('VPMEngine.calculate is fn', typeof E?.calculate==='function',  `typeof=${typeof E?.calculate}`,'');
-  assert('VPMEngine.MODELS defined',  mCount>0,                          `${mCount} model(s)`,'');
-  assert('VPMB model identified',     VPMB!=null,                        `id=${JSON.stringify(VPMB)}`,'model probe');
-  assert('VPMBGFS model identified',  VPMBGFS!=null,                     `id=${JSON.stringify(VPMBGFS)}`,'model probe');
+  assert('VPMEngine loaded',           E!=null,                          `type=${typeof E}`,'fetch + extract');
+  assert('VPMEngine.calculate is fn',  typeof E?.calculate==='function', `typeof=${typeof E?.calculate}`,'');
+  assert('MODELS array has entries',   mCount>0,                         `[${models.join(', ')}]`,'VPMEngine.MODELS');
+  assert('"VPMB" in MODELS',           models.includes('VPMB'),          `models=${JSON.stringify(models)}`,'');
+  assert('"VPMB_GFS" in MODELS',       models.includes('VPMB_GFS'),      `models=${JSON.stringify(models)}`,'');
 
+  // ── 2. Physical constants ─────────────────────────────────────────────
   sec('2 · Physical constants');
-  assert('SURFACEP ≈ 1.013 bar',        near(SP,1.013,0.01),    SP!=null?`got ${SP}`:'not found','');
-  assert('BARPERMETRE ≈ 0.0993 bar/m',  near(BPM,0.0993,0.005), BPM!=null?`got ${BPM}`:'not found','');
+  assert('SURFACEP ≈ 1.013 bar',        near(SP,1.013,0.01),    SP!=null?`got ${SP}`:'not found in source','sea level');
+  assert('BARPERMETRE ≈ 0.0993 bar/m',  near(BPM,0.0993,0.005), BPM!=null?`got ${BPM}`:'not found','1/SLPSWM');
 
   if(!E||typeof E.calculate!=='function'){
     assert('(remaining tests skipped)',null,'no engine','');finalize();return;
   }
 
-  sec('3 · No-deco boundary');
+  // ── 3. No-deco boundary ───────────────────────────────────────────────
+  sec('3 · No-deco boundary (VPM-B)');
   const r20=calc(20,20,VPMB);
-  assert('20m/20min → 0 stops',!r20.error&&!hasStops(r20),r20.error||`rt=${r20.totalRuntime?.toFixed(1)}min`,'NDL');
+  assert('20m/20min → 0 deco stops', !r20.error&&!hasStops(r20),
+    r20.error||`rt=${r20.totalRuntime?.toFixed(1)}min`,'NDL');
   const r15=calc(15,60,VPMB);
-  assert('15m/60min → 0 stops',!r15.error&&!hasStops(r15),r15.error||`rt=${r15.totalRuntime?.toFixed(1)}min`,'NDL');
+  assert('15m/60min → 0 deco stops', !r15.error&&!hasStops(r15),
+    r15.error||`rt=${r15.totalRuntime?.toFixed(1)}min`,'NDL edge');
 
-  sec('4 · Deco dive correctness');
+  // ── 4. Deco dives ────────────────────────────────────────────────────
+  sec('4 · Deco dive correctness (VPM-B)');
   const r40=calc(40,25,VPMB);
-  assert('40m/25min → deco required',    !r40.error&&hasStops(r40),  r40.error||`deco=${deco(r40).toFixed(0)}min rt=${r40.totalRuntime?.toFixed(1)}min`,'VPM-B');
-  assert('40m/25min runtime 35–90min',   !r40.error&&r40.totalRuntime>35&&r40.totalRuntime<90,r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,'sanity');
+  assert('40m/25min → deco required',   !r40.error&&hasStops(r40),
+    r40.error||`deco=${deco(r40).toFixed(0)}min, rt=${r40.totalRuntime?.toFixed(1)}min`,'VPM-B');
+  assert('40m/25min runtime 35–90min',  !r40.error&&r40.totalRuntime>35&&r40.totalRuntime<90,
+    r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,'sanity');
   const r50=calc(50,30,VPMB);
-  assert('50m/30min → deco required',    !r50.error&&hasStops(r50),  r50.error||`deco=${deco(r50).toFixed(0)}min`,'VPM-B');
-  assert('50m deeper → more deco',       !r40.error&&!r50.error&&deco(r50)>=deco(r40),`40m=${deco(r40).toFixed(0)} 50m=${deco(r50).toFixed(0)}min`,'monotonicity');
+  assert('50m/30min → deco required',   !r50.error&&hasStops(r50),
+    r50.error||`deco=${deco(r50).toFixed(0)}min`,'VPM-B');
+  assert('50m → more deco than 40m',    !r40.error&&!r50.error&&deco(r50)>=deco(r40),
+    `40m=${deco(r40).toFixed(0)} 50m=${deco(r50).toFixed(0)}min`,'depth monotonicity');
 
-  sec('5 · Multi-model (45m/30min)');
-  const rb=calc(45,30,VPMB),rbe=calc(45,30,VPMBE),rbgfs=calc(45,30,VPMBGFS);
-  assert('all 3 models compute',  !rb.error&&!rbe.error&&!rbgfs.error,[rb,rbe,rbgfs].map(r=>r.error||'ok').join(' | '),'');
-  assert('all runtime > 0',       !rb.error&&(rb.totalRuntime||0)>0&&(rbe.totalRuntime||0)>0&&(rbgfs.totalRuntime||0)>0,
-    `B=${rb.totalRuntime?.toFixed(1)} BE=${rbe.totalRuntime?.toFixed(1)} BGFS=${rbgfs.totalRuntime?.toFixed(1)}`,'');
+  // ── 5. All 5 models ──────────────────────────────────────────────────
+  sec('5 · All models (45m/30min)');
+  const rA=calc(45,30,VPMA),rB=calc(45,30,VPMB),rBE=calc(45,30,VPMBE),
+        rBG=calc(45,30,VPMBGFS),rBF=calc(45,30,VPMBFBO);
+  assert('VPMA computes',    !rA.error&&(rA.totalRuntime||0)>0,  rA.error||`rt=${rA.totalRuntime?.toFixed(1)}min`,'');
+  assert('VPMB computes',    !rB.error&&(rB.totalRuntime||0)>0,  rB.error||`rt=${rB.totalRuntime?.toFixed(1)}min`,'');
+  assert('VPMBE computes',   !rBE.error&&(rBE.totalRuntime||0)>0,rBE.error||`rt=${rBE.totalRuntime?.toFixed(1)}min`,'');
+  assert('VPMB_GFS computes',!rBG.error&&(rBG.totalRuntime||0)>0,rBG.error||`rt=${rBG.totalRuntime?.toFixed(1)}min`,'');
+  assert('VPMBFBO computes', !rBF.error&&(rBF.totalRuntime||0)>0,rBF.error||`rt=${rBF.totalRuntime?.toFixed(1)}min`,'');
+  // VPMB_GFS uses gradient factors → generally longer than VPMB
+  assert('VPMB_GFS runtime ≥ VPMB', !rB.error&&!rBG.error&&(rBG.totalRuntime||0)>=(rB.totalRuntime||0),
+    `VPMB=${rB.totalRuntime?.toFixed(1)}, VPMB_GFS=${rBG.totalRuntime?.toFixed(1)}`,'ordering');
 
-  sec('6 · Monotonicity');
-  const r30d=calc(30,30,VPMB),r60d=calc(60,30,VPMB);
-  assert('60m deco ≥ 30m',  !r30d.error&&!r60d.error&&deco(r60d)>=deco(r30d),`30m=${deco(r30d).toFixed(0)} 60m=${deco(r60d).toFixed(0)}min`,'depth');
+  // ── 6. Monotonicity ──────────────────────────────────────────────────
+  sec('6 · Deco time monotonicity (VPM-B)');
+  const r30=calc(30,30,VPMB),r60=calc(60,30,VPMB);
+  assert('60m deco ≥ 30m deco',      !r30.error&&!r60.error&&deco(r60)>=deco(r30),
+    `30m=${deco(r30).toFixed(0)} 60m=${deco(r60).toFixed(0)}min`,'depth');
   const r40a=calc(40,20,VPMB),r40b=calc(40,40,VPMB);
-  assert('40min BT deco ≥ 20min BT',!r40a.error&&!r40b.error&&deco(r40b)>=deco(r40a),`20min=${deco(r40a).toFixed(0)} 40min=${deco(r40b).toFixed(0)}min`,'BT');
+  assert('40min BT deco ≥ 20min BT', !r40a.error&&!r40b.error&&deco(r40b)>=deco(r40a),
+    `20min=${deco(r40a).toFixed(0)} 40min=${deco(r40b).toFixed(0)}min`,'BT');
 
-  sec('7 · Conservatism');
+  // ── 7. Conservatism ──────────────────────────────────────────────────
+  sec('7 · Conservatism (VPM-B, 40m/25min)');
   const rc0=calc(40,25,VPMB,{conservatism:0}),rc3=calc(40,25,VPMB,{conservatism:3});
-  assert('C3 deco ≥ C0 deco',    !rc0.error&&!rc3.error&&deco(rc3)>=deco(rc0),`C0=${deco(rc0).toFixed(0)} C3=${deco(rc3).toFixed(0)}min`,'');
-  assert('C3 runtime ≥ C0',      !rc0.error&&!rc3.error&&(rc3.totalRuntime||0)>=(rc0.totalRuntime||0),`C0=${rc0.totalRuntime?.toFixed(1)} C3=${rc3.totalRuntime?.toFixed(1)}min`,'');
+  assert('C3 deco ≥ C0 deco',     !rc0.error&&!rc3.error&&deco(rc3)>=deco(rc0),
+    `C0=${deco(rc0).toFixed(0)} C3=${deco(rc3).toFixed(0)}min`,'');
+  assert('C3 runtime ≥ C0 runtime',!rc0.error&&!rc3.error&&(rc3.totalRuntime||0)>=(rc0.totalRuntime||0),
+    `C0=${rc0.totalRuntime?.toFixed(1)} C3=${rc3.totalRuntime?.toFixed(1)}min`,'');
 
-  sec('8 · Result shape');
+  // ── 8. Result shape ───────────────────────────────────────────────────
+  sec('8 · Result shape (40m/25min, VPM-B)');
   const rs=calc(40,25,VPMB);
-  assert('error===null',        !rs.error&&rs.error===null,            `error=${rs.error}`,'');
-  assert('plan is array',       !rs.error&&Array.isArray(rs.plan),     `len=${rs.plan?.length}`,'');
-  assert('stops is array',      !rs.error&&Array.isArray(rs.stops),    `len=${rs.stops?.length}`,'');
-  assert('totalRuntime number', !rs.error&&typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`,'');
+  assert('error===null',         !rs.error&&rs.error===null,               `error=${rs.error}`,'');
+  assert('plan is array',        !rs.error&&Array.isArray(rs.plan),        `len=${rs.plan?.length}`,'');
+  assert('stops is array',       !rs.error&&Array.isArray(rs.stops),       `len=${rs.stops?.length}`,'');
+  assert('totalRuntime number',  !rs.error&&typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`,'');
   const ty=!rs.error?[...new Set(rs.plan?.map(s=>s.type))]:[];
-  assert('plan: descent',       ty.includes('descent'),`[${ty}]`,'');
-  assert('plan: bottom',        ty.includes('bottom'),'','');
-  assert('plan: stop',          ty.includes('stop'),'','');
+  assert('plan: descent seg',    ty.includes('descent'),`segs=[${ty}]`,'');
+  assert('plan: bottom seg',     ty.includes('bottom'),'','');
+  assert('plan: stop seg',       ty.includes('stop'),'','');
 
-  sec('9 · O₂ tracking');
+  // ── 9. O₂ tracking ───────────────────────────────────────────────────
+  sec('9 · O₂ tracking — CNS & OTU (40m/25min)');
   const ro=calc(40,25,VPMB);
-  assert('totalCNS finite',  !ro.error&&Number.isFinite(ro.totalCNS),`CNS=${ro.totalCNS?.toFixed(1)}%`,'');
-  assert('totalOTU finite',  !ro.error&&Number.isFinite(ro.totalOTU),`OTU=${ro.totalOTU}`,'');
-  assert('CNS 0–200%',       !ro.error&&ro.totalCNS>=0&&ro.totalCNS<200,`${ro.totalCNS?.toFixed(1)}%`,'');
-  assert('OTU > 0',          !ro.error&&(ro.totalOTU||0)>0,`OTU=${ro.totalOTU}`,'');
+  assert('totalCNS is finite',  !ro.error&&Number.isFinite(ro.totalCNS),   `CNS=${ro.totalCNS?.toFixed(1)}%`,'');
+  assert('totalOTU is finite',  !ro.error&&Number.isFinite(ro.totalOTU),   `OTU=${ro.totalOTU}`,'');
+  assert('CNS in 0–200%',       !ro.error&&ro.totalCNS>=0&&ro.totalCNS<200,`${ro.totalCNS?.toFixed(1)}%`,'');
+  assert('OTU > 0',             !ro.error&&(ro.totalOTU||0)>0,             `OTU=${ro.totalOTU}`,'');
 
-  sec('10 · Water density');
+  // ── 10. Water density ─────────────────────────────────────────────────
+  sec('10 · Water density (40m/25min, VPM-B)');
   const rS=calc(40,25,VPMB,{waterType:0}),rF=calc(40,25,VPMB,{waterType:1});
-  assert('salt computes',  !rS.error&&(rS.totalRuntime||0)>0,rS.error||`rt=${rS.totalRuntime?.toFixed(1)}min`,'');
-  assert('fresh computes', !rF.error&&(rF.totalRuntime||0)>0,rF.error||`rt=${rF.totalRuntime?.toFixed(1)}min`,'');
-  assert('fresh ≥ salt',   !rS.error&&!rF.error&&(rF.totalRuntime||0)>=(rS.totalRuntime||0),`salt=${rS.totalRuntime?.toFixed(1)} fresh=${rF.totalRuntime?.toFixed(1)}min`,'density');
+  assert('salt water computes',  !rS.error&&(rS.totalRuntime||0)>0, rS.error||`rt=${rS.totalRuntime?.toFixed(1)}min`,'waterType:0');
+  assert('fresh water computes', !rF.error&&(rF.totalRuntime||0)>0, rF.error||`rt=${rF.totalRuntime?.toFixed(1)}min`,'waterType:1');
+  assert('fresh ≥ salt runtime', !rS.error&&!rF.error&&(rF.totalRuntime||0)>=(rS.totalRuntime||0),
+    `salt=${rS.totalRuntime?.toFixed(1)} fresh=${rF.totalRuntime?.toFixed(1)}min`,'density');
 
   finalize();
 }
