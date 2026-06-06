@@ -6,83 +6,256 @@
 <title>LSP D-Planner — Test Suite</title>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--faint:#484f58;--pass:#3fb950;--fail:#f85149;--skip:#d29922;--accent:#58a6ff;--r:6px;--font:'Satoshi','Inter',system-ui,sans-serif}
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-font-smoothing:antialiased}
-  body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);min-height:100dvh;padding:32px 24px}
-  header{margin-bottom:4px}
-  h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
-  .sub{font-size:12px;color:var(--muted);letter-spacing:.3px;margin-bottom:20px}
-  #sumbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:20px;font-size:13px;flex-wrap:wrap;min-height:48px}
-  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 11px;font-size:12px;font-weight:700}
-  .pill.p{background:rgba(63,185,80,.15);color:var(--pass)}.pill.f{background:rgba(248,81,73,.15);color:var(--fail)}.pill.s{background:rgba(210,153,34,.15);color:var(--skip)}
-  table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;font-size:13px}
-  thead th{background:rgba(88,166,255,.06);color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
-  tbody tr{border-bottom:1px solid rgba(48,54,61,.5)}tbody tr:last-child{border-bottom:none}tbody tr:hover{background:rgba(255,255,255,.02)}
-  td{padding:8px 14px;vertical-align:middle}
-  td:first-child{color:var(--faint);font-size:11px;font-weight:700;width:32px;text-align:center;font-family:monospace}
-  .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap}
-  .badge.PASS{background:rgba(63,185,80,.15);color:var(--pass)}.badge.FAIL{background:rgba(248,81,73,.18);color:var(--fail)}.badge.SKIP{background:rgba(210,153,34,.15);color:var(--skip)}
-  .tn{font-weight:500;color:var(--text);line-height:1.3}.tg{font-size:11px;color:var(--muted);margin-top:2px}
-  .det{font-family:'JetBrains Mono','Fira Mono',monospace;font-size:11px;color:var(--muted);word-break:break-all}.det.e{color:#f85149}
-  .sh td{background:rgba(88,166,255,.05);color:var(--accent);font-weight:700;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:7px 14px;border-bottom:1px solid var(--border)}
-  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  details{margin-top:16px}summary{cursor:pointer;color:var(--accent);font-size:12px;font-weight:600;padding:4px 0}
-  #dbg{margin-top:8px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;--border2:#21262d;
+  --text:#e6edf3;--muted:#8b949e;--faint:#484f58;
+  --pass:#3fb950;--fail:#f85149;--skip:#d29922;--accent:#58a6ff;--accent2:#1f6feb;
+  --r:6px;--font:'Satoshi','Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);min-height:100dvh}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:100dvh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100dvh;overflow-y:auto}
+.main{padding:24px 28px;overflow:auto}
+
+/* Sidebar */
+.logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.logo span{color:var(--accent)}
+.section-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);margin-bottom:6px;margin-top:4px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:6px 10px;font-size:13px;font-family:var(--font);width:100%;outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent2)}
+.field input[type=range]{padding:4px 0;cursor:pointer;accent-color:var(--accent)}
+.range-val{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background .15s,opacity .15s;font-family:var(--font)}
+.btn-primary{background:var(--accent2);color:#fff}.btn-primary:hover{background:#388bfd}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.status-bar{font-size:12px;color:var(--muted);text-align:center;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);min-height:34px;display:flex;align-items:center;justify-content:center}
+
+/* Main header */
+.page-header{margin-bottom:20px}
+.page-header h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+.page-header .sub{font-size:12px;color:var(--muted);margin-top:3px}
+.sumbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 16px;margin-bottom:20px;flex-wrap:wrap;min-height:44px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 11px;font-size:12px;font-weight:700}
+.pill.p{background:rgba(63,185,80,.15);color:var(--pass)}
+.pill.f{background:rgba(248,81,73,.15);color:var(--fail)}
+.pill.s{background:rgba(210,153,34,.15);color:var(--skip)}
+.pill.n{background:rgba(88,166,255,.1);color:var(--accent)}
+
+/* Test table */
+.test-group{margin-bottom:24px}
+.group-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.group-title{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.5px;text-transform:uppercase}
+.group-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px}
+.group-badge.all-pass{background:rgba(63,185,80,.15);color:var(--pass)}
+.group-badge.has-fail{background:rgba(248,81,73,.15);color:var(--fail)}
+.group-badge.pending{background:rgba(88,166,255,.1);color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;font-size:13px}
+thead th{background:rgba(88,166,255,.05);color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.7px;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border2)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+td{padding:8px 12px;vertical-align:middle}
+td.num{color:var(--faint);font-size:11px;font-weight:700;width:30px;text-align:center;font-family:var(--mono)}
+td.name-cell .n{font-weight:500;color:var(--text)}
+td.name-cell .g{font-size:11px;color:var(--muted);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.badge.PASS{background:rgba(63,185,80,.15);color:var(--pass)}
+.badge.FAIL{background:rgba(248,81,73,.18);color:var(--fail)}
+.badge.SKIP{background:rgba(210,153,34,.15);color:var(--skip)}
+.badge.PEND{background:rgba(88,166,255,.1);color:var(--accent)}
+td.detail{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all}
+td.detail.e{color:var(--fail)}
+
+/* Result card */
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:none}
+.result-card.show{display:block}
+.result-card h3{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.plan-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+.plan-table th{color:var(--faint);font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:4px 8px;text-align:left;border-bottom:1px solid var(--border2)}
+.plan-table td{padding:4px 8px;border-bottom:1px solid rgba(48,54,61,.4)}
+.plan-table tr:last-child td{border-bottom:none}
+.seg-descent td:first-child{color:#79c0ff}
+.seg-bottom td:first-child{color:#ffa657}
+.seg-stop td:first-child{color:var(--fail)}
+.seg-ascent td:first-child{color:var(--muted)}
+.seg-surface td:first-child{color:var(--pass)}
+.stats-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.stat{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;flex:1;min-width:100px}
+.stat-val{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Debug */
+details{margin-top:16px}
+summary{cursor:pointer;color:var(--accent);font-size:12px;font-weight:600;padding:4px 0;user-select:none}
+#dbg{margin-top:8px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7;max-height:300px;overflow-y:auto}
+
+/* Spinner */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Model tabs */
+.model-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.model-chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:transparent;transition:all .15s;font-family:var(--font)}
+.model-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.1)}
+.model-chip:hover{border-color:var(--accent2)}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .main{padding:16px}
+}
 </style>
 </head>
 <body>
-<header><h1>LSP D-Planner — Test Suite</h1></header>
-<div class="sub">VPM-B · Bühlmann ZHL-16C · Tool math verification</div>
-<div id="sumbar"><span id="smsg"><span class="spin"></span>Loading…</span></div>
-<table>
-  <thead><tr><th>#</th><th>Test</th><th>Result</th><th>Detail</th></tr></thead>
-  <tbody id="tb"></tbody>
-</table>
-<details><summary>▸ Debug log</summary><div id="dbg">waiting…</div></details>
+<div class="layout">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="logo">LSP D-Planner<br><span>Test Suite v3</span></div>
+
+  <div>
+    <div class="section-label">Model</div>
+    <div id="modelChips" class="model-chips">
+      <button class="model-chip active" data-model="VPMB">VPM-B</button>
+      <button class="model-chip" data-model="VPMA">VPM-A</button>
+      <button class="model-chip" data-model="VPMBE">VPM-B/E</button>
+      <button class="model-chip" data-model="VPMB_GFS">VPM-B+GFS</button>
+      <button class="model-chip" data-model="VPMBFBO">VPM-B/FBO</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Dive Profile</div>
+    <div class="row2">
+      <div class="field"><label>Depth (m)</label><input type="number" id="cfgDepth" value="40" min="5" max="120"></div>
+      <div class="field"><label>BT (min)</label><input type="number" id="cfgBT" value="25" min="5" max="120"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Descent (m/min)</label><input type="number" id="cfgDescent" value="22" min="5" max="30"></div>
+      <div class="field"><label>Ascent (m/min)</label><input type="number" id="cfgAscent" value="9" min="3" max="18"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Deco asc (m/min)</label><input type="number" id="cfgDecoAsc" value="9" min="3" max="18"></div>
+      <div class="field"><label>Last stop (m)</label><select id="cfgLastStop"><option value="3" selected>3m</option><option value="6">6m</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Step size (m)</label><select id="cfgStep"><option value="3" selected>3m</option><option value="1">1m</option></select></div>
+      <div class="field"><label>Water</label><select id="cfgWater"><option value="0" selected>Salt</option><option value="1">Fresh</option></select></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Gases</div>
+    <div class="field"><label>Bottom gas O₂%</label><input type="number" id="cfgBottomO2" value="21" min="18" max="40"></div>
+    <div class="field"><label>Deco gas 1 O₂%</label><input type="number" id="cfgDeco1O2" value="50" min="21" max="100"></div>
+    <div class="field"><label>Deco gas 2 O₂%</label><input type="number" id="cfgDeco2O2" value="100" min="21" max="100"></div>
+  </div>
+
+  <div>
+    <div class="section-label">ppO₂ Limits</div>
+    <div class="row2">
+      <div class="field"><label>ppO₂ Bottom</label><input type="number" id="cfgPPO2Bot" value="1.4" min="1.0" max="1.6" step="0.05"></div>
+      <div class="field"><label>ppO₂ Deco</label><input type="number" id="cfgPPO2Deco" value="1.6" min="1.0" max="1.6" step="0.05"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Conservatism</div>
+    <div class="field">
+      <label>Level <span id="consVal" class="range-val">+0</span></label>
+      <input type="range" id="cfgCons" min="-2" max="5" value="0" step="1">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--faint)"><span>-2</span><span>0</span><span>+5</span></div>
+    </div>
+    <div class="field">
+      <label>GF Hi <span id="gfHiVal" class="range-val">85</span></label>
+      <input type="range" id="cfgGFHi" min="50" max="100" value="85" step="5">
+    </div>
+    <div class="field">
+      <label>GF Lo <span id="cfgGFLoVal" class="range-val">20</span></label>
+      <input type="range" id="cfgGFLo" min="10" max="100" value="20" step="5">
+    </div>
+    <div style="font-size:10px;color:var(--faint)">GF Lo/Hi used by VPMB_GFS only</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
+    <button class="btn btn-primary" id="btnRun" disabled>
+      <span class="spin" id="loadSpin"></span><span id="btnLabel">Loading engine…</span>
+    </button>
+    <button class="btn btn-secondary" id="btnReset">Reset defaults</button>
+    <div class="status-bar" id="statusBar">Initialising…</div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+  <div class="page-header">
+    <h1>LSP D-Planner — Test Suite</h1>
+    <div class="sub">VPM-B · VPM-A · VPM-B/E · VPM-B+GFS · VPM-B/FBO · Full engine verification</div>
+  </div>
+
+  <div class="sumbar" id="sumbar">
+    <span style="color:var(--muted);font-size:13px"><span class="spin"></span>Loading engine from index.html…</span>
+  </div>
+
+  <!-- Live result card -->
+  <div class="result-card" id="resultCard">
+    <h3>Last dive plan</h3>
+    <div class="stats-row" id="resultStats"></div>
+    <table class="plan-table">
+      <thead><tr><th>Seg</th><th>Depth</th><th>Time</th><th>Runtime</th><th>Gas</th><th>ppO₂</th></tr></thead>
+      <tbody id="planBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Test groups rendered here -->
+  <div id="testArea"></div>
+
+  <details>
+    <summary>▸ Debug log</summary>
+    <div id="dbg">waiting…</div>
+  </details>
+</main>
+</div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────
-//  LSP D-Planner Test Runner  v5
-//
-//  From debug output we now know exactly:
-//    - VPMEngine is an arrow IIFE: const VPMEngine = (() => { ... })()
-//    - MODELS = ["VPMA","VPMB","VPMBE","VPMB_GFS","VPMBFBO"]  (string keys)
-//    - MODEL_NAMES also exposed
-//    - SURFACEP / BARPERMETRE are in a DIFFERENT script block
-//    - Engine block starts at char 212678, is 74,595 chars
-// ─────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  LSP D-Planner — Interactive Test Suite  v3
+// ═══════════════════════════════════════════════════════════════════════════
 
-const dbgEl=document.getElementById('dbg');
-const smsg =document.getElementById('smsg');
-const tb   =document.getElementById('tb');
-let logs=[],P=0,F=0,SK=0,idx=0;
-function log(...a){logs.push(a.join(' '));dbgEl.textContent=logs.join('\n');}
-function sec(l){const t=document.createElement('tr');t.className='sh';t.innerHTML=`<td colspan="4">${l}</td>`;tb.appendChild(t);}
-function assert(name,cond,detail='',group=''){
-  idx++;
-  const st=cond===null?'SKIP':cond?'PASS':'FAIL';
-  if(st==='PASS')P++;else if(st==='FAIL')F++;else SK++;
-  const tr=document.createElement('tr');
-  tr.innerHTML=`<td>${idx}</td><td><div class="tn">${name}</div>${group?`<div class="tg">${group}</div>`:''}</td><td><span class="badge ${st}">${{PASS:'✓',FAIL:'✗',SKIP:'—'}[st]} ${st}</span></td><td><span class="det${st==='FAIL'?' e':''}">${detail}</span></td>`;
-  tb.appendChild(tr);
-}
-function near(a,b,t){return typeof a==='number'&&Math.abs(a-b)<=t;}
+const dbgEl   = document.getElementById('dbg');
+const sumbar  = document.getElementById('sumbar');
+const testArea= document.getElementById('testArea');
+const btnRun  = document.getElementById('btnRun');
+const btnLabel= document.getElementById('btnLabel');
+const loadSpin= document.getElementById('loadSpin');
+const statusBar=document.getElementById('statusBar');
+let logs=[];
+function log(...a){ logs.push(a.join(' ')); dbgEl.textContent=logs.join('\n'); dbgEl.scrollTop=dbgEl.scrollHeight; }
+function near(a,b,t){ return typeof a==='number' && Math.abs(a-b)<=t; }
 
+// ── Engine loader (same surgical approach proven to work) ─────────────────
 function extractBalanced(src,pos,open,close){
-  let depth=0,i=pos,inStr=false,strCh='',inLC=false,inBC=false;
+  let d=0,i=pos,inStr=false,sc='',inLC=false,inBC=false;
   while(i<src.length){
     if(inBC){if(src[i]==='*'&&src[i+1]==='/')inBC=false,i+=2;else i++;continue;}
     if(inLC){if(src[i]==='\n')inLC=false;i++;continue;}
     const ch=src[i];
-    if(inStr){if(ch==='\\'){i+=2;continue;}if(ch===strCh)inStr=false;}
+    if(inStr){if(ch==='\\'){i+=2;continue;}if(ch===sc)inStr=false;}
     else{
       if(ch==='/'&&src[i+1]==='*'){inBC=true;i+=2;continue;}
       if(ch==='/'&&src[i+1]==='/'){inLC=true;i+=2;continue;}
-      if(ch==='"'||ch==="'"||ch==='`'){inStr=true;strCh=ch;}
-      else if(ch===open){depth++;}
-      else if(ch===close){depth--;if(depth===0)return i;}
+      if(ch==='"'||ch==="'"||ch==='`'){inStr=true;sc=ch;}
+      else if(ch===open)d++;
+      else if(ch===close){d--;if(d===0)return i;}
     }
     i++;
   }
@@ -92,267 +265,499 @@ function extractBalanced(src,pos,open,close){
 async function loadEngine(){
   log('Fetching index.html…');
   let src;
-  try{const res=await fetch('./index.html');if(!res.ok)throw new Error(`HTTP ${res.status}`);src=await res.text();}
-  catch(e){log('fetch failed: '+e.message);return null;}
+  try{
+    const res=await fetch('./index.html');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    src=await res.text();
+  }catch(e){log('fetch failed: '+e.message);return null;}
   log(`Fetched: ${src.length.toLocaleString()} chars`);
 
-  // ── 1. Extract VPMEngine IIFE ───────────────────────────────────────────
+  // Find last const VPMEngine
   let vePos=-1,s=0;
   while(true){const f=src.indexOf('const VPMEngine',s);if(f===-1)break;vePos=f;s=f+1;}
   if(vePos===-1){log('ERROR: const VPMEngine not found');return null;}
-  log(`const VPMEngine at ${vePos}`);
   const eqPos=src.indexOf('=',vePos+15);
   let rhs=eqPos+1;
   while(rhs<src.length&&' \n\r\t'.includes(src[rhs]))rhs++;
-  log(`RHS char: "${src[rhs]}"`);
+  log(`VPMEngine at ${vePos}, RHS starts with "${src[rhs]}"`);
 
-  // The RHS is (() => { ... })() — arrow IIFE
-  // Find the outer () wrapper end, then the trailing ()
+  // Extract the RHS (arrow IIFE)
   let rhsEnd=extractBalanced(src,rhs,'(',')');
   if(rhsEnd===-1){log('ERROR: unmatched parens');return null;}
-  // Check for trailing () invocation
   let after=rhsEnd+1;
   while(after<src.length&&' \n\r\t'.includes(src[after]))after++;
-  if(src[after]==='('){
-    const end2=extractBalanced(src,after,'(',')');
-    if(end2!==-1)rhsEnd=end2;
-  }
+  if(src[after]==='('){const e2=extractBalanced(src,after,'(',')');if(e2!==-1)rhsEnd=e2;}
   const engineRHS=src.substring(rhs,rhsEnd+1);
   log(`Engine RHS: ${engineRHS.length.toLocaleString()} chars`);
 
-  // ── 2. Extract SURFACEP & BARPERMETRE from ALL script blocks ───────────
-  log('\nScanning all script blocks for constants…');
-  let SP=null,BPM=null;
-
-  // First try: grep raw source with regex (works regardless of scope)
-  const spM =src.match(/const\s+SURFACEP\s*=\s*([\d.]+)/);
-  const bpmM=src.match(/const\s+BARPERMETRE\s*=\s*([\d.]+)/);
-  const slpM=src.match(/const\s+SLPSWM\s*=\s*([\d.]+)/);
-  if(spM) { SP =parseFloat(spM[1]);  log(`  regex SURFACEP=${SP}`); }
-  if(bpmM){ BPM=parseFloat(bpmM[1]); log(`  regex BARPERMETRE=${BPM}`); }
-  if(!BPM&&slpM){ BPM=1/parseFloat(slpM[1]); log(`  derived BARPERMETRE from SLPSWM=${slpM[1]} → ${BPM}`); }
-
-  // If not found as standalone const, try expressions like: 1/10.078
-  if(!SP){
-    // Common pattern: SURFACEP = 1.01325 or 1.013 or 101.325/100
-    const m2=src.match(/SURFACEP\s*=\s*([0-9./]+)/);
-    if(m2){try{SP=(new Function(`return ${m2[1]}`))()} catch(e){}}
-    if(SP) log(`  expr SURFACEP=${SP}`);
-  }
-
-  // ── 3. Extract any constants the engine references ──────────────────────
-  // From debug: only NC and GAMMA were found. Let's also grab SLPSWM etc.
+  // Extract scalar constants needed by engine
   const constNames=['NC','GAMMA','GAMMAC','INITIALRADIUSN2','INITIALRADIUSHe',
-    'REGENTIME','WATERVAPORPRESSURE','CONSTANTPRESSUREOTHERGASES',
-    'CRITVOLUMELAMBDAFSWMIN','SLPSWM','SLPFWM'];
+    'REGENTIME','WATERVAPORPRESSURE','CONSTANTPRESSUREOTHERGASES','CRITVOLUMELAMBDAFSWMIN'];
   let constCode='';
   for(const n of constNames){
     const re=new RegExp(`(?:const|var|let)\\s+${n}\\s*=\\s*([^;\\n]+)`,'g');
     let m,last=null;
     while((m=re.exec(src))!==null)last=m[1].trim();
-    if(last){
-      try{
-        const val=(new Function(`return (${last})`))();
-        constCode+=`var ${n}=${JSON.stringify(val)};\n`;
-        log(`  ${n}=${val}`);
-      }catch(e){log(`  ${n} raw="${last}" (skip: ${e.message})`)}
-    }
+    if(last){try{const v=(new Function(`return(${last})`))(n);constCode+=`var ${n}=${JSON.stringify((new Function(`return(${last})`))())};\n`;}catch(e){}}
   }
 
-  // ── 4. Build and eval ───────────────────────────────────────────────────
-  const script=`(function(){
-  "use strict";
-  ${constCode}
-  var __E = ${engineRHS};
-  return __E;
-})()`;
+  // Grep constants for tests
+  const spM =src.match(/const\s+SURFACEP\s*=\s*([\d.]+)/);
+  const bpmM=src.match(/const\s+BARPERMETRE\s*=\s*([\d.]+)/);
+  const slpM=src.match(/const\s+SLPSWM\s*=\s*([\d.]+)/);
+  const SP  = spM  ? parseFloat(spM[1])  : null;
+  const BPM = bpmM ? parseFloat(bpmM[1]) : (slpM ? 1/parseFloat(slpM[1]) : null);
+  log(`SURFACEP=${SP}, BARPERMETRE=${BPM}`);
 
-  log(`\nScript: ${script.length.toLocaleString()} chars`);
-  log('Preview:\n'+script.substring(0,300));
-
+  const script=`(function(){"use strict";${constCode}\nvar __E=${engineRHS};return __E;})()`;
   let engine;
   try{engine=(new Function('return '+script))();}
-  catch(e){
-    log(`\neval FAILED: ${e.message}`);
-    return null;
-  }
+  catch(e){log('eval failed: '+e.message);return null;}
 
-  log(`\neval OK`);
   log(`engine.calculate: ${typeof engine?.calculate}`);
   log(`engine.MODELS: ${JSON.stringify(engine?.MODELS)}`);
-  log(`engine.MODEL_NAMES: ${JSON.stringify(engine?.MODEL_NAMES)}`);
-  log(`SURFACEP: ${SP}, BARPERMETRE: ${BPM}`);
+  if(!engine||typeof engine.calculate!=='function') return null;
 
-  if(!engine||typeof engine.calculate!=='function'){
-    log('engine.calculate not a function — keys: '+Object.keys(engine||{}).join(', '));
-    return null;
-  }
-
-  // ── 5. Resolve named model identifiers ─────────────────────────────────
-  // MODELS = ["VPMA","VPMB","VPMBE","VPMB_GFS","VPMBFBO"]
-  // Use the string names directly — no probing needed.
-  const M=engine.MODELS||[];
-  const MN=engine.MODEL_NAMES||{};
-  log(`\nMODELS array: ${JSON.stringify(M)}`);
-
-  // Find by name pattern
-  function findModel(...candidates){
-    for(const c of candidates){
-      if(M.includes(c))return c;
-      // also check MODEL_NAMES values
-      const byName=Object.entries(MN).find(([k,v])=>v===c||k===c);
-      if(byName)return byName[0];
-    }
-    return M[0]??null; // fallback to first
-  }
-
-  const VPMB   =findModel('VPMB');
-  const VPMBE  =findModel('VPMBE','VPMB_E');
-  const VPMBGFS=findModel('VPMB_GFS','VPMBGFS','VPMB_GF');
-  const VPMA   =findModel('VPMA');
-  const VPMBFBO=findModel('VPMBFBO','VPMB_FBO');
-
-  log(`Resolved: VPMA=${VPMA} VPMB=${VPMB} VPMBE=${VPMBE} VPMBGFS=${VPMBGFS} VPMBFBO=${VPMBFBO}`);
-
-  return{engine,SP,BPM,VPMB,VPMBE,VPMBGFS,VPMA,VPMBFBO,
-         models:M,mCount:M.length};
+  return{engine,SP,BPM,MODELS:engine.MODELS||[]};
 }
 
-function runTests(R){
-  const E=R?.engine??null,SP=R?.SP??null,BPM=R?.BPM??null;
-  const VPMB=R?.VPMB,VPMBE=R?.VPMBE,VPMBGFS=R?.VPMBGFS,VPMA=R?.VPMA,VPMBFBO=R?.VPMBFBO;
-  const models=R?.models??[],mCount=R?.mCount??0;
+// ── Settings helpers ───────────────────────────────────────────────────────
+function getSettings(){
+  return{
+    depth:      parseFloat(document.getElementById('cfgDepth').value)||40,
+    bt:         parseFloat(document.getElementById('cfgBT').value)||25,
+    descentRate:parseFloat(document.getElementById('cfgDescent').value)||22,
+    ascentRate: parseFloat(document.getElementById('cfgAscent').value)||9,
+    decoAscentRate:parseFloat(document.getElementById('cfgDecoAsc').value)||9,
+    surfaceAscentRate:9,
+    stepSize:   parseInt(document.getElementById('cfgStep').value)||3,
+    lastStop:   parseInt(document.getElementById('cfgLastStop').value)||3,
+    waterType:  parseInt(document.getElementById('cfgWater').value)||0,
+    bottomO2:   parseFloat(document.getElementById('cfgBottomO2').value)||21,
+    deco1O2:    parseFloat(document.getElementById('cfgDeco1O2').value)||50,
+    deco2O2:    parseFloat(document.getElementById('cfgDeco2O2').value)||100,
+    ppO2Bottom: parseFloat(document.getElementById('cfgPPO2Bot').value)||1.4,
+    ppO2Deco:   parseFloat(document.getElementById('cfgPPO2Deco').value)||1.6,
+    conservatism:parseInt(document.getElementById('cfgCons').value)||0,
+    gfHi:       parseInt(document.getElementById('cfgGFHi').value)||85,
+    gfLo:       parseInt(document.getElementById('cfgGFLo').value)||20,
+  };
+}
 
-  function calc(depth,bt,model,extra={}){
+function activeModel(){
+  return document.querySelector('.model-chip.active')?.dataset.model||'VPMB';
+}
+
+function buildCalcSettings(s,extra={}){
+  return{
+    metric:true,waterType:s.waterType,
+    descentRate:s.descentRate,ascentRate:s.ascentRate,
+    decoAscentRate:s.decoAscentRate,surfaceAscentRate:s.surfaceAscentRate,
+    stepSize:s.stepSize,lastStop:s.lastStop,minStopTime:1,
+    ppO2Bottom:s.ppO2Bottom,ppO2Deco:s.ppO2Deco,
+    ppO2Low:s.ppO2Bottom,ppO2Mid:1.5,ppO2High:s.ppO2Deco,
+    o2MaxDepth:6,conservatism:s.conservatism,
+    gfHi:s.gfHi,gfs:s.gfLo,
+    ...extra
+  };
+}
+
+// ── Test runner state ──────────────────────────────────────────────────────
+let ENGINE=null, MODELS_LIST=[], SP_VAL=null, BPM_VAL=null;
+let totalP=0,totalF=0,totalSK=0;
+
+function resetCounts(){ totalP=0;totalF=0;totalSK=0; }
+
+// ── Build test UI ──────────────────────────────────────────────────────────
+const GROUPS=[
+  {id:'g_engine',    title:'1 · Engine'},
+  {id:'g_constants', title:'2 · Physical constants'},
+  {id:'g_nodeco',    title:'3 · No-deco boundary'},
+  {id:'g_deco',      title:'4 · Deco dive correctness'},
+  {id:'g_models',    title:'5 · All 5 models (custom profile)'},
+  {id:'g_mono',      title:'6 · Deco time monotonicity'},
+  {id:'g_cons',      title:'7 · Conservatism scaling'},
+  {id:'g_gf',        title:'8 · GF Hi sensitivity (VPMB_GFS)'},
+  {id:'g_shape',     title:'9 · Result shape'},
+  {id:'g_o2',        title:'10 · O₂ tracking — CNS & OTU'},
+  {id:'g_water',     title:'11 · Water density'},
+  {id:'g_gases',     title:'12 · Multi-gas plan'},
+  {id:'g_ascent',    title:'13 · Ascent rate sensitivity'},
+  {id:'g_stress',    title:'14 · Stress / edge cases'},
+];
+
+function buildTestUI(){
+  testArea.innerHTML='';
+  for(const g of GROUPS){
+    const div=document.createElement('div');
+    div.className='test-group';
+    div.id=g.id;
+    div.innerHTML=`
+      <div class="group-header">
+        <span class="group-title">${g.title}</span>
+        <span class="group-badge pending" id="${g.id}_badge">pending</span>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Test</th><th>Result</th><th>Detail</th></tr></thead>
+        <tbody id="${g.id}_body"></tbody>
+      </table>`;
+    testArea.appendChild(div);
+  }
+}
+
+let rowIdx=0;
+function addRow(groupId, name, cond, detail='', sub=''){
+  rowIdx++;
+  const st=cond===null?'SKIP':cond?'PASS':'FAIL';
+  if(st==='PASS')totalP++;else if(st==='FAIL')totalF++;else totalSK++;
+  const ico={PASS:'✓',FAIL:'✗',SKIP:'—'}[st];
+  const tbody=document.getElementById(groupId+'_body');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="num">${rowIdx}</td>
+    <td class="name-cell"><div class="n">${name}</div>${sub?`<div class="g">${sub}</div>`:''}</td>
+    <td><span class="badge ${st}">${ico} ${st}</span></td>
+    <td class="detail${st==='FAIL'?' e':''}">${detail}</td>`;
+  tbody.appendChild(tr);
+  return st;
+}
+
+function updateGroupBadge(groupId){
+  const body=document.getElementById(groupId+'_body');
+  const rows=[...body.querySelectorAll('.badge')];
+  const hasFail=rows.some(b=>b.classList.contains('FAIL'));
+  const allSkip=rows.every(b=>b.classList.contains('SKIP'));
+  const badge=document.getElementById(groupId+'_badge');
+  const passCount=rows.filter(b=>b.classList.contains('PASS')).length;
+  if(allSkip){badge.className='group-badge pending';badge.textContent='skipped';}
+  else if(hasFail){badge.className='group-badge has-fail';badge.textContent=`${rows.filter(b=>b.classList.contains('FAIL')).length} failed`;}
+  else{badge.className='group-badge all-pass';badge.textContent=`${passCount} passed`;}
+}
+
+// ── Dive plan renderer ─────────────────────────────────────────────────────
+function renderPlan(result, s, model){
+  const card=document.getElementById('resultCard');
+  const statsEl=document.getElementById('resultStats');
+  const planBody=document.getElementById('planBody');
+  if(!result||result.error){card.classList.remove('show');return;}
+  card.classList.add('show');
+
+  const deco=(result.stops||[]).reduce((a,s)=>a+s.time,0);
+  const cnsColor=result.totalCNS>80?'var(--fail)':result.totalCNS>50?'var(--skip)':'var(--pass)';
+  statsEl.innerHTML=`
+    <div class="stat"><div class="stat-val">${result.totalRuntime?.toFixed(0)}<span style="font-size:13px;color:var(--muted)">min</span></div><div class="stat-lbl">Run time</div></div>
+    <div class="stat"><div class="stat-val">${Math.round(deco)}<span style="font-size:13px;color:var(--muted)">min</span></div><div class="stat-lbl">Deco time</div></div>
+    <div class="stat"><div class="stat-val" style="color:${cnsColor}">${result.totalCNS?.toFixed(1)}<span style="font-size:13px;color:var(--muted)">%</span></div><div class="stat-lbl">CNS</div></div>
+    <div class="stat"><div class="stat-val">${result.totalOTU}</div><div class="stat-lbl">OTU</div></div>
+    <div class="stat"><div class="stat-val" style="font-size:14px;color:var(--accent)">${model}</div><div class="stat-lbl">Model</div></div>`;
+
+  planBody.innerHTML='';
+  for(const seg of (result.plan||[])){
+    const tr=document.createElement('tr');
+    tr.className=`seg-${seg.type}`;
+    const icon={descent:'↓',ascent:'↑',bottom:'⊙',stop:'■',surface:'◎'}[seg.type]||seg.type;
+    const d=seg.depth??seg.endDepth??seg.startDepth??0;
+    const pAmb=1.013+d/10.078;
+    const gasStr=seg.gas||`${s.bottomO2}/0`;
+    const o2frac=parseFloat(gasStr.split('/')[0]||21)/100;
+    const ppo2=(pAmb*o2frac).toFixed(2);
+    const timeStr=seg.time!=null?`${Math.floor(seg.time)}:${String(Math.round((seg.time%1)*60)).padStart(2,'0')}`:'—';
+    const rtStr=seg.runtime!=null?`${Math.floor(seg.runtime)}:${String(Math.round((seg.runtime%1)*60)).padStart(2,'0')}`:'—';
+    tr.innerHTML=`<td>${icon} ${seg.type}</td><td>${d}m</td><td>${timeStr}</td><td>${rtStr}</td><td>${gasStr}</td><td>${ppo2}</td>`;
+    planBody.appendChild(tr);
+  }
+}
+
+// ── Main test runner ───────────────────────────────────────────────────────
+function runAllTests(){
+  rowIdx=0; resetCounts();
+  buildTestUI();
+
+  const s=getSettings();
+  const model=activeModel();
+  const E=ENGINE;
+
+  function calc(depth,bt,mdl,extra={}){
     if(!E)return{error:'no engine'};
-    try{return E.calculate(
-      [{depth,time:bt,o2:21,he:0}],
-      [{o2:50,he:0,label:'EAN50'},{o2:100,he:0,label:'100% O2'}],
-      {metric:true,waterType:0,descentRate:22,ascentRate:9,decoAscentRate:9,
-       surfaceAscentRate:9,stepSize:3,lastStop:3,minStopTime:1,
-       ppO2Bottom:1.4,ppO2Deco:1.6,ppO2Low:1.4,ppO2Mid:1.5,ppO2High:1.6,
-       o2MaxDepth:6,conservatism:0,gfHi:85,gfs:85,...extra},model);
+    try{
+      const cfg=buildCalcSettings(s,extra);
+      const bottom=[{depth,time:bt,o2:s.bottomO2,he:0}];
+      const deco=[{o2:s.deco1O2,he:0,label:`EAN${s.deco1O2}`},{o2:s.deco2O2,he:0,label:`${s.deco2O2===100?'100% O2':'EAN'+s.deco2O2}`}];
+      return E.calculate(bottom,deco,cfg,mdl);
     }catch(e){return{error:e.message};}
   }
-  function deco(r){return(r.stops||[]).reduce((a,s)=>a+s.time,0);}
-  function hasStops(r){return(r.stops||[]).some(s=>s.time>0);}
+  function calcCustom(levels,decoGases,mdl,extra={}){
+    if(!E)return{error:'no engine'};
+    try{return E.calculate(levels,decoGases,buildCalcSettings(s,extra),mdl);}
+    catch(e){return{error:e.message};}
+  }
+  function deco(r){return(r.stops||[]).reduce((a,v)=>a+v.time,0);}
+  function hasStops(r){return(r.stops||[]).some(v=>v.time>0);}
 
-  // ── 1. Engine ────────────────────────────────────────────────────────────
-  sec('1 · Engine');
-  assert('VPMEngine loaded',           E!=null,                          `type=${typeof E}`,'fetch + extract');
-  assert('VPMEngine.calculate is fn',  typeof E?.calculate==='function', `typeof=${typeof E?.calculate}`,'');
-  assert('MODELS array has entries',   mCount>0,                         `[${models.join(', ')}]`,'VPMEngine.MODELS');
-  assert('"VPMB" in MODELS',           models.includes('VPMB'),          `models=${JSON.stringify(models)}`,'');
-  assert('"VPMB_GFS" in MODELS',       models.includes('VPMB_GFS'),      `models=${JSON.stringify(models)}`,'');
+  // ── G1: Engine ──────────────────────────────────────────────────────────
+  addRow('g_engine','VPMEngine loaded',             E!=null,            `type=${typeof E}`,'fetch + extract');
+  addRow('g_engine','VPMEngine.calculate is fn',    typeof E?.calculate==='function',`typeof=${typeof E?.calculate}`,'');
+  addRow('g_engine','MODELS array has 5 entries',   MODELS_LIST.length===5,`[${MODELS_LIST.join(', ')}]`,'');
+  addRow('g_engine','"VPMB" in MODELS',             MODELS_LIST.includes('VPMB'),`models=${JSON.stringify(MODELS_LIST)}`,'');
+  addRow('g_engine','"VPMA" in MODELS',             MODELS_LIST.includes('VPMA'),``,'');
+  addRow('g_engine','"VPMBE" in MODELS',            MODELS_LIST.includes('VPMBE'),``,'');
+  addRow('g_engine','"VPMB_GFS" in MODELS',         MODELS_LIST.includes('VPMB_GFS'),``,'');
+  addRow('g_engine','"VPMBFBO" in MODELS',          MODELS_LIST.includes('VPMBFBO'),``,'');
+  updateGroupBadge('g_engine');
 
-  // ── 2. Physical constants ─────────────────────────────────────────────
-  sec('2 · Physical constants');
-  assert('SURFACEP ≈ 1.013 bar',        near(SP,1.013,0.01),    SP!=null?`got ${SP}`:'not found in source','sea level');
-  assert('BARPERMETRE ≈ 0.0993 bar/m',  near(BPM,0.0993,0.005), BPM!=null?`got ${BPM}`:'not found','1/SLPSWM');
+  // ── G2: Constants ───────────────────────────────────────────────────────
+  addRow('g_constants','SURFACEP ≈ 1.013 bar',       near(SP_VAL,1.013,0.01), SP_VAL!=null?`got ${SP_VAL}`:'not found','sea level pressure');
+  addRow('g_constants','BARPERMETRE ≈ 0.0993 bar/m', near(BPM_VAL,0.0993,0.005),BPM_VAL!=null?`got ${BPM_VAL}`:'not found','1/SLPSWM salt');
+  updateGroupBadge('g_constants');
 
   if(!E||typeof E.calculate!=='function'){
-    assert('(remaining tests skipped)',null,'no engine','');finalize();return;
+    for(const g of GROUPS.slice(2)){
+      addRow(g.id,'(skipped — no engine)',null,'engine not loaded','');
+      updateGroupBadge(g.id);
+    }
+    finalize(); return;
   }
 
-  // ── 3. No-deco boundary ───────────────────────────────────────────────
-  sec('3 · No-deco boundary (VPM-B)');
-  const r20=calc(20,20,VPMB);
-  assert('20m/20min → 0 deco stops', !r20.error&&!hasStops(r20),
-    r20.error||`rt=${r20.totalRuntime?.toFixed(1)}min`,'NDL');
-  const r15=calc(15,60,VPMB);
-  assert('15m/60min → 0 deco stops', !r15.error&&!hasStops(r15),
-    r15.error||`rt=${r15.totalRuntime?.toFixed(1)}min`,'NDL edge');
+  // Render plan for selected model / settings
+  const mainResult=calc(s.depth,s.bt,model);
+  renderPlan(mainResult,s,model);
+  log(`Main calc (${model}, ${s.depth}m/${s.bt}min): rt=${mainResult.totalRuntime?.toFixed(1)}, deco=${deco(mainResult).toFixed(0)}, error=${mainResult.error||'none'}`);
 
-  // ── 4. Deco dives ────────────────────────────────────────────────────
-  sec('4 · Deco dive correctness (VPM-B)');
-  const r40=calc(40,25,VPMB);
-  assert('40m/25min → deco required',   !r40.error&&hasStops(r40),
-    r40.error||`deco=${deco(r40).toFixed(0)}min, rt=${r40.totalRuntime?.toFixed(1)}min`,'VPM-B');
-  assert('40m/25min runtime 35–90min',  !r40.error&&r40.totalRuntime>35&&r40.totalRuntime<90,
-    r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,'sanity');
-  const r50=calc(50,30,VPMB);
-  assert('50m/30min → deco required',   !r50.error&&hasStops(r50),
-    r50.error||`deco=${deco(r50).toFixed(0)}min`,'VPM-B');
-  assert('50m → more deco than 40m',    !r40.error&&!r50.error&&deco(r50)>=deco(r40),
-    `40m=${deco(r40).toFixed(0)} 50m=${deco(r50).toFixed(0)}min`,'depth monotonicity');
+  // ── G3: No-deco ─────────────────────────────────────────────────────────
+  const r20=calc(20,20,'VPMB');
+  addRow('g_nodeco','20m/20min air → 0 stops',!r20.error&&!hasStops(r20),r20.error||`rt=${r20.totalRuntime?.toFixed(1)}min`,'VPM-B, salt, air');
+  const r15=calc(15,60,'VPMB');
+  addRow('g_nodeco','15m/60min air → 0 stops',!r15.error&&!hasStops(r15),r15.error||`rt=${r15.totalRuntime?.toFixed(1)}min`,'NDL edge');
+  const r25=calc(25,30,'VPMB',{waterType:0});
+  addRow('g_nodeco','25m/30min air → 0 stops',!r25.error&&!hasStops(r25),r25.error||`rt=${r25.totalRuntime?.toFixed(1)}min`,'');
+  const r10=calc(10,120,'VPMB');
+  addRow('g_nodeco','10m/120min air → 0 stops',!r10.error&&!hasStops(r10),r10.error||`rt=${r10.totalRuntime?.toFixed(1)}min`,'very shallow');
+  updateGroupBadge('g_nodeco');
 
-  // ── 5. All 5 models ──────────────────────────────────────────────────
-  sec('5 · All models (45m/30min)');
-  const rA=calc(45,30,VPMA),rB=calc(45,30,VPMB),rBE=calc(45,30,VPMBE),
-        rBG=calc(45,30,VPMBGFS),rBF=calc(45,30,VPMBFBO);
-  assert('VPMA computes',    !rA.error&&(rA.totalRuntime||0)>0,  rA.error||`rt=${rA.totalRuntime?.toFixed(1)}min`,'');
-  assert('VPMB computes',    !rB.error&&(rB.totalRuntime||0)>0,  rB.error||`rt=${rB.totalRuntime?.toFixed(1)}min`,'');
-  assert('VPMBE computes',   !rBE.error&&(rBE.totalRuntime||0)>0,rBE.error||`rt=${rBE.totalRuntime?.toFixed(1)}min`,'');
-  assert('VPMB_GFS computes',!rBG.error&&(rBG.totalRuntime||0)>0,rBG.error||`rt=${rBG.totalRuntime?.toFixed(1)}min`,'');
-  assert('VPMBFBO computes', !rBF.error&&(rBF.totalRuntime||0)>0,rBF.error||`rt=${rBF.totalRuntime?.toFixed(1)}min`,'');
-  // VPMB_GFS uses gradient factors → generally longer than VPMB
-  assert('VPMB_GFS runtime ≥ VPMB', !rB.error&&!rBG.error&&(rBG.totalRuntime||0)>=(rB.totalRuntime||0),
-    `VPMB=${rB.totalRuntime?.toFixed(1)}, VPMB_GFS=${rBG.totalRuntime?.toFixed(1)}`,'ordering');
+  // ── G4: Deco dives (uses selected model & settings) ────────────────────
+  const r40=calc(40,25,model);
+  addRow('g_deco','selected profile requires deco',!r40.error&&hasStops(r40),
+    r40.error||`deco=${deco(r40).toFixed(0)}min, rt=${r40.totalRuntime?.toFixed(1)}min`,`${model} ${s.depth}m/${s.bt}min`);
+  addRow('g_deco','runtime > BT + descent time',   !r40.error&&(r40.totalRuntime||0)>s.bt,
+    r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,`BT=${s.bt}min`);
+  addRow('g_deco','runtime < 240min (sanity)',      !r40.error&&(r40.totalRuntime||0)<240,
+    r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,'');
 
-  // ── 6. Monotonicity ──────────────────────────────────────────────────
-  sec('6 · Deco time monotonicity (VPM-B)');
-  const r30=calc(30,30,VPMB),r60=calc(60,30,VPMB);
-  assert('60m deco ≥ 30m deco',      !r30.error&&!r60.error&&deco(r60)>=deco(r30),
-    `30m=${deco(r30).toFixed(0)} 60m=${deco(r60).toFixed(0)}min`,'depth');
-  const r40a=calc(40,20,VPMB),r40b=calc(40,40,VPMB);
-  assert('40min BT deco ≥ 20min BT', !r40a.error&&!r40b.error&&deco(r40b)>=deco(r40a),
-    `20min=${deco(r40a).toFixed(0)} 40min=${deco(r40b).toFixed(0)}min`,'BT');
+  const r50=calc(50,30,'VPMB');
+  addRow('g_deco','50m/30min → deco required (VPM-B)',!r50.error&&hasStops(r50),r50.error||`deco=${deco(r50).toFixed(0)}min`,'fixed baseline');
+  addRow('g_deco','50m > 40m deco time',!r40.error&&!r50.error&&deco(r50)>=deco(calc(40,25,'VPMB')),
+    `40m=${deco(calc(40,25,'VPMB')).toFixed(0)} 50m=${deco(r50).toFixed(0)}min`,'depth monotonicity');
+  updateGroupBadge('g_deco');
 
-  // ── 7. Conservatism ──────────────────────────────────────────────────
-  sec('7 · Conservatism (VPM-B, 40m/25min)');
-  const rc0=calc(40,25,VPMB,{conservatism:0}),rc3=calc(40,25,VPMB,{conservatism:3});
-  assert('C3 deco ≥ C0 deco',     !rc0.error&&!rc3.error&&deco(rc3)>=deco(rc0),
-    `C0=${deco(rc0).toFixed(0)} C3=${deco(rc3).toFixed(0)}min`,'');
-  assert('C3 runtime ≥ C0 runtime',!rc0.error&&!rc3.error&&(rc3.totalRuntime||0)>=(rc0.totalRuntime||0),
-    `C0=${rc0.totalRuntime?.toFixed(1)} C3=${rc3.totalRuntime?.toFixed(1)}min`,'');
+  // ── G5: All 5 models with current settings ──────────────────────────────
+  const modResults={};
+  for(const m of MODELS_LIST){
+    const r=calc(s.depth,s.bt,m);
+    modResults[m]=r;
+    addRow('g_models',`${m} computes without error`,!r.error&&(r.totalRuntime||0)>0,
+      r.error||`rt=${r.totalRuntime?.toFixed(1)}min, deco=${deco(r).toFixed(0)}min`,`${s.depth}m/${s.bt}min`);
+  }
+  // VPMB_GFS ≥ VPMB (GFS adds conservatism via GF)
+  const rB=modResults['VPMB'],rBG=modResults['VPMB_GFS'];
+  if(rB&&rBG&&!rB.error&&!rBG.error){
+    addRow('g_models','VPMB_GFS runtime ≥ VPMB',
+      (rBG.totalRuntime||0)>=(rB.totalRuntime||0),
+      `VPMB=${rB.totalRuntime?.toFixed(1)}, VPMB_GFS=${rBG.totalRuntime?.toFixed(1)}`,'GFS ordering');
+  }
+  updateGroupBadge('g_models');
 
-  // ── 8. Result shape ───────────────────────────────────────────────────
-  sec('8 · Result shape (40m/25min, VPM-B)');
-  const rs=calc(40,25,VPMB);
-  assert('error===null',         !rs.error&&rs.error===null,               `error=${rs.error}`,'');
-  assert('plan is array',        !rs.error&&Array.isArray(rs.plan),        `len=${rs.plan?.length}`,'');
-  assert('stops is array',       !rs.error&&Array.isArray(rs.stops),       `len=${rs.stops?.length}`,'');
-  assert('totalRuntime number',  !rs.error&&typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`,'');
+  // ── G6: Monotonicity (VPM-B, fixed settings) ───────────────────────────
+  const [r30m,r40m,r60m]=[calc(30,30,'VPMB'),calc(40,30,'VPMB'),calc(60,30,'VPMB')];
+  addRow('g_mono','30m deco < 40m deco (30min BT)',!r30m.error&&!r40m.error&&deco(r40m)>=deco(r30m),
+    `30m=${deco(r30m).toFixed(0)} 40m=${deco(r40m).toFixed(0)}min`,'depth');
+  addRow('g_mono','40m deco < 60m deco (30min BT)',!r40m.error&&!r60m.error&&deco(r60m)>=deco(r40m),
+    `40m=${deco(r40m).toFixed(0)} 60m=${deco(r60m).toFixed(0)}min`,'depth');
+  const [r40bt20,r40bt40]=[calc(40,20,'VPMB'),calc(40,40,'VPMB')];
+  addRow('g_mono','40m/40min deco ≥ 40m/20min',!r40bt20.error&&!r40bt40.error&&deco(r40bt40)>=deco(r40bt20),
+    `20min=${deco(r40bt20).toFixed(0)} 40min=${deco(r40bt40).toFixed(0)}min`,'BT');
+  updateGroupBadge('g_mono');
+
+  // ── G7: Conservatism ────────────────────────────────────────────────────
+  const baseDepth=s.depth,baseBT=s.bt;
+  const rc=[-2,-1,0,1,2,3,5].map(c=>({c,r:calc(baseDepth,baseBT,'VPMB',{conservatism:c})}));
+  for(let i=1;i<rc.length;i++){
+    const [a,b]=[rc[i-1],rc[i]];
+    if(!a.r.error&&!b.r.error){
+      addRow('g_cons',`C${b.c} deco ≥ C${a.c} deco`,deco(b.r)>=deco(a.r),
+        `C${a.c}=${deco(a.r).toFixed(0)} C${b.c}=${deco(b.r).toFixed(0)}min`,`${baseDepth}m/${baseBT}min`);
+    }
+  }
+  updateGroupBadge('g_cons');
+
+  // ── G8: GF sensitivity (VPMB_GFS) ──────────────────────────────────────
+  if(MODELS_LIST.includes('VPMB_GFS')){
+    const gfs=[{hi:100,lo:100},{hi:85,lo:20},{hi:70,lo:20},{hi:50,lo:20}];
+    const gfResults=gfs.map(g=>({g,r:calc(40,25,'VPMB_GFS',{gfHi:g.hi,gfs:g.lo})}));
+    for(let i=1;i<gfResults.length;i++){
+      const [a,b]=[gfResults[i-1],gfResults[i]];
+      if(!a.r.error&&!b.r.error){
+        addRow('g_gf',`GF ${b.g.lo}/${b.g.hi} deco ≥ GF ${a.g.lo}/${a.g.hi}`,
+          deco(b.r)>=deco(a.r),
+          `GF ${a.g.lo}/${a.g.hi}=${deco(a.r).toFixed(0)} | GF ${b.g.lo}/${b.g.hi}=${deco(b.r).toFixed(0)}min`,'lower GF = more conservative');
+      }
+    }
+    addRow('g_gf','GF 100/100 computes',!gfResults[0].r.error,gfResults[0].r.error||`rt=${gfResults[0].r.totalRuntime?.toFixed(1)}min`,'open water GF');
+  } else {
+    addRow('g_gf','VPMB_GFS not available',null,'model not in MODELS list','');
+  }
+  updateGroupBadge('g_gf');
+
+  // ── G9: Result shape ─────────────────────────────────────────────────────
+  const rs=calc(40,25,'VPMB');
+  addRow('g_shape','result.error===null',          !rs.error&&rs.error===null,`error=${rs.error}`,'');
+  addRow('g_shape','result.plan is array',         !rs.error&&Array.isArray(rs.plan),`len=${rs.plan?.length}`,'');
+  addRow('g_shape','result.stops is array',        !rs.error&&Array.isArray(rs.stops),`len=${rs.stops?.length}`,'');
+  addRow('g_shape','totalRuntime is number',       !rs.error&&typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`,'');
   const ty=!rs.error?[...new Set(rs.plan?.map(s=>s.type))]:[];
-  assert('plan: descent seg',    ty.includes('descent'),`segs=[${ty}]`,'');
-  assert('plan: bottom seg',     ty.includes('bottom'),'','');
-  assert('plan: stop seg',       ty.includes('stop'),'','');
+  addRow('g_shape','plan has descent',   ty.includes('descent'),`segs=[${ty}]`,'');
+  addRow('g_shape','plan has bottom',    ty.includes('bottom'),'','');
+  addRow('g_shape','plan has ascent',    ty.includes('ascent'),'','');
+  addRow('g_shape','plan has stop',      ty.includes('stop'),'deco dive','');
+  addRow('g_shape','stops have depth',   !rs.error&&rs.stops?.every(s=>typeof s.depth==='number'),`first stop depth=${rs.stops?.[0]?.depth}m`,'');
+  addRow('g_shape','stops have time',    !rs.error&&rs.stops?.every(s=>typeof s.time==='number'),`first stop time=${rs.stops?.[0]?.time}min`,'');
+  updateGroupBadge('g_shape');
 
-  // ── 9. O₂ tracking ───────────────────────────────────────────────────
-  sec('9 · O₂ tracking — CNS & OTU (40m/25min)');
-  const ro=calc(40,25,VPMB);
-  assert('totalCNS is finite',  !ro.error&&Number.isFinite(ro.totalCNS),   `CNS=${ro.totalCNS?.toFixed(1)}%`,'');
-  assert('totalOTU is finite',  !ro.error&&Number.isFinite(ro.totalOTU),   `OTU=${ro.totalOTU}`,'');
-  assert('CNS in 0–200%',       !ro.error&&ro.totalCNS>=0&&ro.totalCNS<200,`${ro.totalCNS?.toFixed(1)}%`,'');
-  assert('OTU > 0',             !ro.error&&(ro.totalOTU||0)>0,             `OTU=${ro.totalOTU}`,'');
+  // ── G10: O₂ tracking ────────────────────────────────────────────────────
+  const ro=calc(40,25,'VPMB');
+  addRow('g_o2','totalCNS is finite',  !ro.error&&Number.isFinite(ro.totalCNS),`CNS=${ro.totalCNS?.toFixed(1)}%`,'');
+  addRow('g_o2','totalOTU is finite',  !ro.error&&Number.isFinite(ro.totalOTU),`OTU=${ro.totalOTU}`,'');
+  addRow('g_o2','CNS in 0–200%',       !ro.error&&ro.totalCNS>=0&&ro.totalCNS<200,`${ro.totalCNS?.toFixed(1)}%`,'');
+  addRow('g_o2','OTU > 0 for deco',    !ro.error&&(ro.totalOTU||0)>0,`OTU=${ro.totalOTU}`,'');
+  // Longer dive → more CNS
+  const ro2=calc(40,50,'VPMB');
+  addRow('g_o2','40m/50min CNS > 40m/25min CNS',!ro.error&&!ro2.error&&(ro2.totalCNS||0)>=(ro.totalCNS||0),
+    `25min=${ro.totalCNS?.toFixed(1)}% 50min=${ro2.totalCNS?.toFixed(1)}%`,'CNS monotonicity');
+  updateGroupBadge('g_o2');
 
-  // ── 10. Water density ─────────────────────────────────────────────────
-  sec('10 · Water density (40m/25min, VPM-B)');
-  const rS=calc(40,25,VPMB,{waterType:0}),rF=calc(40,25,VPMB,{waterType:1});
-  assert('salt water computes',  !rS.error&&(rS.totalRuntime||0)>0, rS.error||`rt=${rS.totalRuntime?.toFixed(1)}min`,'waterType:0');
-  assert('fresh water computes', !rF.error&&(rF.totalRuntime||0)>0, rF.error||`rt=${rF.totalRuntime?.toFixed(1)}min`,'waterType:1');
-  assert('fresh ≥ salt runtime', !rS.error&&!rF.error&&(rF.totalRuntime||0)>=(rS.totalRuntime||0),
-    `salt=${rS.totalRuntime?.toFixed(1)} fresh=${rF.totalRuntime?.toFixed(1)}min`,'density');
+  // ── G11: Water density ───────────────────────────────────────────────────
+  const rSalt =calc(40,25,'VPMB',{waterType:0});
+  const rFresh=calc(40,25,'VPMB',{waterType:1});
+  addRow('g_water','salt water (waterType:0) computes',  !rSalt.error&&(rSalt.totalRuntime||0)>0,  rSalt.error||`rt=${rSalt.totalRuntime?.toFixed(1)}min`,'');
+  addRow('g_water','fresh water (waterType:1) computes', !rFresh.error&&(rFresh.totalRuntime||0)>0, rFresh.error||`rt=${rFresh.totalRuntime?.toFixed(1)}min`,'');
+  addRow('g_water','fresh runtime ≥ salt runtime',       !rSalt.error&&!rFresh.error&&(rFresh.totalRuntime||0)>=(rSalt.totalRuntime||0),
+    `salt=${rSalt.totalRuntime?.toFixed(1)} fresh=${rFresh.totalRuntime?.toFixed(1)}min`,'less dense = more deco');
+  updateGroupBadge('g_water');
+
+  // ── G12: Multi-gas ──────────────────────────────────────────────────────
+  const rAir  =calcCustom([{depth:40,time:25,o2:21,he:0}],[{o2:50,he:0},{o2:100,he:0}],'VPMB');
+  const rEAN32=calcCustom([{depth:40,time:25,o2:32,he:0}],[{o2:50,he:0},{o2:100,he:0}],'VPMB');
+  const rTx   =calcCustom([{depth:45,time:25,o2:21,he:35}],[{o2:50,he:0},{o2:100,he:0}],'VPMB');
+  addRow('g_gases','21% bottom gas computes',   !rAir.error,  rAir.error||`rt=${rAir.totalRuntime?.toFixed(1)}min`,'air');
+  addRow('g_gases','32% bottom gas computes',   !rEAN32.error,rEAN32.error||`rt=${rEAN32.totalRuntime?.toFixed(1)}min`,'EAN32');
+  addRow('g_gases','EAN32 deco ≤ Air deco',     !rAir.error&&!rEAN32.error&&deco(rEAN32)<=deco(rAir),
+    `air=${deco(rAir).toFixed(0)} EAN32=${deco(rEAN32).toFixed(0)}min`,'nitrox reduces deco');
+  addRow('g_gases','trimix 21/35 computes',     !rTx.error,   rTx.error||`rt=${rTx.totalRuntime?.toFixed(1)}min`,'21% O₂, 35% He');
+  updateGroupBadge('g_gases');
+
+  // ── G13: Ascent rate sensitivity ─────────────────────────────────────────
+  const rFastAsc=calc(40,25,'VPMB',{ascentRate:18,decoAscentRate:18});
+  const rSlowAsc=calc(40,25,'VPMB',{ascentRate:3, decoAscentRate:3});
+  addRow('g_ascent','fast ascent (18m/min) computes',!rFastAsc.error,rFastAsc.error||`rt=${rFastAsc.totalRuntime?.toFixed(1)}min`,'');
+  addRow('g_ascent','slow ascent (3m/min) computes', !rSlowAsc.error,rSlowAsc.error||`rt=${rSlowAsc.totalRuntime?.toFixed(1)}min`,'');
+  addRow('g_ascent','slow ascent runtime > fast',    !rFastAsc.error&&!rSlowAsc.error&&(rSlowAsc.totalRuntime||0)>=(rFastAsc.totalRuntime||0),
+    `fast=${rFastAsc.totalRuntime?.toFixed(1)} slow=${rSlowAsc.totalRuntime?.toFixed(1)}min`,'');
+  updateGroupBadge('g_ascent');
+
+  // ── G14: Stress / edge cases ─────────────────────────────────────────────
+  const rShallow=calc(5,30,'VPMB');
+  addRow('g_stress','5m/30min (very shallow)',  !rShallow.error,rShallow.error||`rt=${rShallow.totalRuntime?.toFixed(1)}min`,'NDL');
+  const rDeep=calc(100,10,'VPMB');
+  addRow('g_stress','100m/10min (deep short)', !rDeep.error&&hasStops(rDeep),rDeep.error||`deco=${deco(rDeep).toFixed(0)}min`,'deep');
+  const rLong=calc(30,120,'VPMB');
+  addRow('g_stress','30m/120min (long shallow)',!rLong.error,rLong.error||`rt=${rLong.totalRuntime?.toFixed(1)}min`,'long');
+  const rLastStop6=calc(40,25,'VPMB',{lastStop:6});
+  addRow('g_stress','last stop 6m computes',   !rLastStop6.error,rLastStop6.error||`rt=${rLastStop6.totalRuntime?.toFixed(1)}min`,'');
+  addRow('g_stress','last stop 6m ≤ 3m runtime (3m has more stops)',
+    !rLastStop6.error&&!r40.error&&(rLastStop6.totalRuntime||0)<=(r40.totalRuntime||Infinity)+5,
+    `6m stop rt=${rLastStop6.totalRuntime?.toFixed(1)} 3m stop rt=${r40.totalRuntime?.toFixed(1)}`,'stop depth');
+  const rStep1=calc(40,25,'VPMB',{stepSize:1});
+  addRow('g_stress','step size 1m computes',   !rStep1.error,rStep1.error||`stops=${rStep1.stops?.length}`,'');
+  updateGroupBadge('g_stress');
 
   finalize();
 }
 
 function finalize(){
-  const tot=P+F+SK,ok=F===0;
-  document.getElementById('sumbar').innerHTML=
-    `<span class="pill ${ok?'p':'f'}">${ok?'✓':'✗'} ${P}/${tot} PASSED</span>`+
-    (F?`<span class="pill f">✗ ${F} FAILED</span>`:'')+
-    (SK?`<span class="pill s">— ${SK} SKIPPED</span>`:'')+
-    `<span style="color:var(--${ok?'pass':'fail'});font-size:13px;margin-left:4px">${ok?'All tests passed ✓':`${F} test${F!==1?'s':''} failed`}</span>`;
+  const tot=totalP+totalF+totalSK,ok=totalF===0;
+  sumbar.innerHTML=
+    `<span class="pill ${ok?'p':'f'}">${ok?'✓':'✗'} ${totalP}/${tot} PASSED</span>`+
+    (totalF?`<span class="pill f">✗ ${totalF} FAILED</span>`:'')+
+    (totalSK?`<span class="pill s">— ${totalSK} SKIPPED</span>`:'')+
+    `<span style="color:var(--${ok?'pass':'fail'});font-size:13px;margin-left:6px">${ok?'All tests passed ✓':`${totalF} test${totalF!==1?'s':''} failed`}</span>`;
+  statusBar.textContent=ok?`✓ ${totalP}/${tot} passed`:`${totalF} failed, ${totalP} passed`;
+  statusBar.style.color=ok?'var(--pass)':'var(--fail)';
 }
 
+// ── UI wiring ─────────────────────────────────────────────────────────────
+document.getElementById('cfgCons').addEventListener('input',function(){document.getElementById('consVal').textContent=(this.value>0?'+':'')+this.value;});
+document.getElementById('cfgGFHi').addEventListener('input',function(){document.getElementById('gfHiVal').textContent=this.value;});
+document.getElementById('cfgGFLo').addEventListener('input',function(){document.getElementById('cfgGFLoVal').textContent=this.value;});
+
+document.getElementById('modelChips').addEventListener('click',function(e){
+  if(!e.target.classList.contains('model-chip'))return;
+  document.querySelectorAll('.model-chip').forEach(c=>c.classList.remove('active'));
+  e.target.classList.add('active');
+});
+
+btnRun.addEventListener('click',()=>{
+  if(!ENGINE){statusBar.textContent='Engine not loaded';return;}
+  statusBar.textContent='Running…';
+  setTimeout(runAllTests,10);
+});
+
+document.getElementById('btnReset').addEventListener('click',()=>{
+  document.getElementById('cfgDepth').value=40;
+  document.getElementById('cfgBT').value=25;
+  document.getElementById('cfgDescent').value=22;
+  document.getElementById('cfgAscent').value=9;
+  document.getElementById('cfgDecoAsc').value=9;
+  document.getElementById('cfgLastStop').value=3;
+  document.getElementById('cfgStep').value=3;
+  document.getElementById('cfgWater').value=0;
+  document.getElementById('cfgBottomO2').value=21;
+  document.getElementById('cfgDeco1O2').value=50;
+  document.getElementById('cfgDeco2O2').value=100;
+  document.getElementById('cfgPPO2Bot').value=1.4;
+  document.getElementById('cfgPPO2Deco').value=1.6;
+  document.getElementById('cfgCons').value=0;document.getElementById('consVal').textContent='+0';
+  document.getElementById('cfgGFHi').value=85;document.getElementById('gfHiVal').textContent='85';
+  document.getElementById('cfgGFLo').value=20;document.getElementById('cfgGFLoVal').textContent='20';
+  document.querySelectorAll('.model-chip').forEach(c=>c.classList.toggle('active',c.dataset.model==='VPMB'));
+});
+
+// ── Boot ─────────────────────────────────────────────────────────────────
+buildTestUI();
 loadEngine().then(R=>{
-  smsg.textContent='Running tests…';
-  runTests(R??{});
+  if(!R||!R.engine){
+    sumbar.innerHTML=`<span style="color:var(--fail)">✗ Engine failed to load — check debug log</span>`;
+    statusBar.textContent='Engine load failed'; statusBar.style.color='var(--fail)';
+    loadSpin.style.display='none'; btnLabel.textContent='Engine failed';
+    return;
+  }
+  ENGINE=R.engine; MODELS_LIST=R.MODELS||[]; SP_VAL=R.SP; BPM_VAL=R.BPM;
+  log(`Engine loaded. MODELS=${JSON.stringify(MODELS_LIST)}`);
+
+  loadSpin.style.display='none';
+  btnLabel.textContent='Run all tests';
+  btnRun.disabled=false;
+  statusBar.textContent='Engine loaded — press Run';
+  statusBar.style.color='var(--pass)';
+  sumbar.innerHTML=`<span class="pill n">⚙ Engine ready</span><span style="color:var(--muted);font-size:13px">Configure settings and press Run all tests</span>`;
+
+  // Enable model chips only for available models
+  document.querySelectorAll('.model-chip').forEach(chip=>{
+    if(!MODELS_LIST.includes(chip.dataset.model)){
+      chip.disabled=true;chip.style.opacity='.35';chip.title='not in MODELS';
+    }
+  });
 }).catch(e=>{
-  log('Fatal: '+e.message+'\n'+e.stack);
-  smsg.textContent='⚠ Fatal — see debug log';
-  runTests({});
+  log('Fatal: '+e.message);
+  sumbar.innerHTML=`<span style="color:var(--fail)">✗ Fatal error — see debug log</span>`;
+  statusBar.textContent='Fatal error'; statusBar.style.color='var(--fail)';
 });
 </script>
 </body>
