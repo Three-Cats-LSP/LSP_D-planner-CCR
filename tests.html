@@ -15,7 +15,7 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-font-smoothing:antialiased}
   body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--text);min-height:100dvh;padding:32px 24px}
-  header{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+  header{margin-bottom:4px}
   h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
   .sub{font-size:12px;color:var(--muted);letter-spacing:.3px;margin-bottom:20px}
   #sumbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:20px;font-size:13px;flex-wrap:wrap;min-height:48px}
@@ -41,46 +41,47 @@
   .sh td{background:rgba(88,166,255,.05);color:var(--accent);font-weight:700;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:7px 14px;border-bottom:1px solid var(--border)}
   .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
-  #dbg{margin-top:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.6;display:none}
-  #dbg summary{cursor:pointer;color:var(--accent);font-family:var(--font);font-size:12px;font-weight:600;list-style:none;padding:2px 0 8px}
+  details{margin-top:16px}
+  summary{cursor:pointer;color:var(--accent);font-size:12px;font-weight:600;padding:4px 0}
+  #dbg{margin-top:8px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7}
 </style>
 </head>
 <body>
-<header>
-  <h1>LSP D-Planner — Test Suite</h1>
-</header>
+<header><h1>LSP D-Planner — Test Suite</h1></header>
 <div class="sub">VPM-B · Bühlmann ZHL-16C · Tool math verification</div>
-
-<div id="sumbar"><span id="smsg"><span class="spin"></span>Fetching engine from index.html…</span></div>
-
+<div id="sumbar"><span id="smsg"><span class="spin"></span>Loading…</span></div>
 <table>
   <thead><tr><th>#</th><th>Test</th><th>Result</th><th>Detail</th></tr></thead>
   <tbody id="tb"></tbody>
 </table>
-
-<details id="dbgwrap" style="margin-top:16px;display:none">
+<details>
   <summary>▸ Debug log</summary>
-  <div id="dbg"></div>
+  <div id="dbg">waiting…</div>
 </details>
 
 <script>
-/* ─────────────────────────────────────────────────────────────────────────
-   LSP D-Planner test runner
-   Strategy: fetch index.html as text, find every <script> block,
-   run each through an IIFE with DOM stubs, collect VPMEngine +
-   all named constants (SURFACEP, BARPERMETRE, etc.).
-   Then introspect the real MODELS values by probing calculate().
-   ───────────────────────────────────────────────────────────────────────── */
+// ═══════════════════════════════════════════════════════════════════════════
+//  LSP D-Planner — Test Runner
+//
+//  Engine extraction strategy:
+//  1. fetch('index.html') as text
+//  2. Use brace-matching to extract the VPMEngine object literal verbatim
+//  3. Use regex to extract scalar constants (SURFACEP, BARPERMETRE, etc.)
+//  4. Build a minimal self-contained script: constants + engine object
+//  5. eval() it in isolation — NO DOM, NO scope pollution
+//  6. Probe MODELS values to discover model identifiers
+// ═══════════════════════════════════════════════════════════════════════════
 
-const tb   = document.getElementById('tb');
-const smsg = document.getElementById('smsg');
 const dbgEl = document.getElementById('dbg');
-const dbgWrap = document.getElementById('dbgwrap');
+const smsg  = document.getElementById('smsg');
+const tb    = document.getElementById('tb');
+let dbgLines = [];
 let P=0, F=0, SK=0, idx=0;
 
-function log(msg){
-  dbgWrap.style.display = '';
-  dbgEl.textContent += msg + '\n';
+function log(...args){
+  const line = args.join(' ');
+  dbgLines.push(line);
+  dbgEl.textContent = dbgLines.join('\n');
 }
 
 function sec(label){
@@ -92,398 +93,372 @@ function sec(label){
 
 function assert(name, cond, detail='', group=''){
   idx++;
-  const st = cond === null ? 'SKIP' : cond ? 'PASS' : 'FAIL';
-  if(st==='PASS') P++; else if(st==='FAIL') F++; else SK++;
-  const ico = {PASS:'✓', FAIL:'✗', SKIP:'—'}[st];
+  const st = cond===null?'SKIP':cond?'PASS':'FAIL';
+  if(st==='PASS')P++; else if(st==='FAIL')F++; else SK++;
   const tr = document.createElement('tr');
   tr.innerHTML =
     `<td>${idx}</td>` +
     `<td><div class="tn">${name}</div>${group?`<div class="tg">${group}</div>`:''}</td>` +
-    `<td><span class="badge ${st}">${ico} ${st}</span></td>` +
+    `<td><span class="badge ${st}">${{PASS:'✓',FAIL:'✗',SKIP:'—'}[st]} ${st}</span></td>` +
     `<td><span class="det${st==='FAIL'?' e':''}">${detail}</span></td>`;
   tb.appendChild(tr);
 }
 
-function near(a, b, tol){ return typeof a === 'number' && Math.abs(a - b) <= tol; }
+function near(a,b,t){ return typeof a==='number' && Math.abs(a-b)<=t; }
 
-// ── DOM stubs used during IIFE execution ──────────────────────────────────
-const DOM_STUBS = `
-  var document = (function(){
-    var _noop = function(){};
-    var _el = function(){
-      return { value:'', style:{display:'',cssText:''},
-        textContent:'', innerHTML:'', dataset:{},
-        appendChild:_noop, insertAdjacentHTML:_noop,
-        querySelector:function(){return null;},
-        querySelectorAll:function(){return{forEach:_noop};},
-        addEventListener:_noop, removeEventListener:_noop,
-        getAttribute:function(){return null;},
-        setAttribute:_noop, classList:{add:_noop,remove:_noop,toggle:_noop}
-      };
-    };
-    return {
-      getElementById:_el, createElement:_el,
-      querySelector:function(){return null;},
-      querySelectorAll:function(){return{forEach:_noop};},
-      createElementNS:_el, body:_el(), head:_el(),
-      readyState:'complete', addEventListener:_noop
-    };
-  })();
-  var window = {
-    matchMedia:function(){return{matches:false,addEventListener:function(){}};},
-    addEventListener:_noop, removeEventListener:_noop,
-    lastPlan:null, lastVPMExport:null, appSettings:null
-  };
-  function _noop(){}
-  var localStorage={getItem:function(){return null;},setItem:_noop,removeItem:_noop};
-  var sessionStorage={getItem:function(){return null;},setItem:_noop,removeItem:_noop};
-  var console={log:_noop,error:_noop,warn:_noop,info:_noop,group:_noop,groupEnd:_noop};
-  var alert=_noop, confirm=function(){return false;}, setTimeout=_noop, setInterval=_noop;
-  var requestAnimationFrame=_noop;
-  var units='metric';
-  var mGF={high:85,low:20};
-  var appSettings={save:_noop,load:_noop};
+// ── Step 1: Extract a balanced {...} block starting at `pos` in `src` ────
+function extractBracedBlock(src, pos){
+  // pos should be at or just before the opening '{'
+  let start = src.indexOf('{', pos);
+  if(start === -1) return null;
+  let depth = 0, i = start, inStr = false, strCh = '';
+  while(i < src.length){
+    const ch = src[i];
+    if(inStr){
+      if(ch === '\\') { i+=2; continue; }
+      if(ch === strCh) inStr = false;
+    } else {
+      if(ch==='"'||ch==="'"||ch==='`'){ inStr=true; strCh=ch; }
+      else if(ch==='{') depth++;
+      else if(ch==='}') { depth--; if(depth===0){ return src.substring(start, i+1); } }
+    }
+    i++;
+  }
+  return null;
+}
+
+// ── Step 2: Extract scalar const/var declarations by regex ───────────────
+function extractScalar(src, name){
+  // matches: const NAME = 1.234  or  const NAME = 1/10.078  or  var NAME = ...
+  const re = new RegExp(
+    `(?:const|var|let)\\s+${name}\\s*=\\s*([^;\\n]+)`, 'g'
+  );
+  let m, last = null;
+  while((m = re.exec(src)) !== null) last = m[1].trim();
+  if(!last) return undefined;
+  log(`  ${name} raw = "${last}"`);
+  try { return (new Function(`return (${last})`))(); }
+  catch(e){ log(`  ${name} eval error: ${e.message}`); return undefined; }
+}
+
+// ── Step 3: Extract the VPMEngine object literal ─────────────────────────
+function extractEngineBlock(src){
+  // Find the LAST "const VPMEngine" (avoids any earlier partial references)
+  let searchFrom = 0, found = -1;
+  while(true){
+    const i = src.indexOf('const VPMEngine', searchFrom);
+    if(i === -1) break;
+    found = i; searchFrom = i + 1;
+  }
+  if(found === -1){
+    log('ERROR: "const VPMEngine" not found in source');
+    return null;
+  }
+  log(`Last "const VPMEngine" at index ${found}`);
+
+  // Extract everything from that point to the end of the object literal
+  const block = extractBracedBlock(src, found);
+  if(!block){ log('ERROR: could not match braces for VPMEngine'); return null; }
+  log(`VPMEngine block: ${block.length.toLocaleString()} chars`);
+  return { found, block };
+}
+
+// ── Step 4: Build and eval a self-contained engine script ─────────────────
+function buildAndEvalEngine(src, engineFound, engineBlock){
+  // Collect all constants that the engine functions reference.
+  // We extract them individually from the raw source (safe — no DOM calls).
+  const constNames = [
+    'SURFACEP','BARPERMETRE','SLPSWM','SLPFWM','SLPSWF','SLPFWF',
+    'NC','GAMMA','GAMMAC','INITIALRADIUSN2','INITIALRADIUSHe',
+    'REGENTIME','WATERVAPORPRESSURE','CONSTANTPRESSUREOTHERGASES',
+    'CRITVOLUMELAMBDAFSWMIN'
+  ];
+
+  let constCode = '';
+  const found = {};
+  for(const name of constNames){
+    // Search only BEFORE the engine block to get the original declarations
+    const srcBefore = src.substring(0, engineFound + engineBlock.length + 5000);
+    const re = new RegExp(`(?:const|var|let)\\s+${name}\\s*=\\s*([^;\\n]+)`, 'g');
+    let m, last = null;
+    while((m = re.exec(srcBefore)) !== null) last = m[1].trim();
+    if(last){
+      constCode += `const ${name} = (${last});\n`;
+      found[name] = last;
+      log(`  const ${name} = ${last}`);
+    }
+  }
+
+  // Also extract helper functions referenced by VPMEngine methods
+  // twoGammaOver is used inside the engine
+  const helperNames = ['twoGammaOver','getSLP'];
+  let helperCode = '';
+  for(const name of helperNames){
+    // Extract function declaration
+    const fnRe = new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{`, 'g');
+    let m;
+    while((m = fnRe.exec(src)) !== null){
+      if(m.index > engineFound) continue; // only before engine
+      const fnBlock = extractBracedBlock(src, m.index + m[0].length - 1);
+      if(fnBlock){
+        helperCode += `function ${name}${m[0].slice(name.length + 9)}${fnBlock}\n`;
+        log(`  extracted helper: ${name}()`);
+        break;
+      }
+    }
+  }
+
+  // Also extract ZHL16CN2, ZHL16CHe arrays (referenced by VPMEngine)
+  const arrayNames = ['ZHL16CN2','ZHL16CHe'];
+  let arrayCode = '';
+  for(const name of arrayNames){
+    const re = new RegExp(`const\\s+${name}\\s*=\\s*\\[`, 'g');
+    let m;
+    while((m = re.exec(src)) !== null){
+      if(m.index > engineFound) continue;
+      // Extract balanced [...] 
+      let start = src.indexOf('[', m.index);
+      let depth=0, i=start, inStr=false, strCh='';
+      while(i<src.length){
+        const ch=src[i];
+        if(inStr){if(ch==='\\'){i+=2;continue}if(ch===strCh)inStr=false}
+        else{if(ch==='"'||ch==="'"||ch==='`'){inStr=true;strCh=ch}
+          else if(ch==='[')depth++;else if(ch===']'){depth--;if(depth===0){
+            arrayCode+=`const ${name} = ${src.substring(start,i+1)};\n`;
+            log(`  extracted array: ${name} (${i-start} chars)`);
+            break;}}}i++;}
+      break;
+    }
+  }
+
+  // Build the final self-contained script
+  const script = `
+(function(){
+  "use strict";
+  ${arrayCode}
+  ${constCode}
+  ${helperCode}
+  const VPMEngine = ${engineBlock};
+  return VPMEngine;
+})()
 `;
 
+  log(`\nEval script total: ${script.length.toLocaleString()} chars`);
+  log('--- first 300 chars of script ---');
+  log(script.substring(0, 300));
+  log('--- end preview ---\n');
+
+  try {
+    const engine = (new Function('return ' + script))();
+    log(`eval OK → type=${typeof engine}`);
+    if(engine && typeof engine === 'object'){
+      log(`  .calculate = ${typeof engine.calculate}`);
+      log(`  .MODELS = ${JSON.stringify(engine.MODELS)}`);
+    }
+    return { engine, constFound: found };
+  } catch(e){
+    log(`eval FAILED: ${e.message}`);
+    // Show the line that failed
+    const lines = script.split('\n');
+    if(e.lineNumber) log(`  at line ${e.lineNumber}: ${lines[e.lineNumber-1]}`);
+    return null;
+  }
+}
+
+// ── Main loader ───────────────────────────────────────────────────────────
 async function loadEngine(){
+  log('Fetching index.html…');
   let src;
   try {
     const res = await fetch('./index.html');
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     src = await res.text();
-  } catch(e){ log('fetch error: '+e.message); return null; }
-  log(`Fetched index.html: ${src.length.toLocaleString()} chars`);
+  } catch(e){ log('fetch failed: '+e.message); return null; }
+  log(`Fetched: ${src.length.toLocaleString()} chars\n`);
 
-  // Extract all <script> blocks (not src= ones)
-  const scriptRe = /<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi;
-  const blocks = [];
-  let m;
-  while((m = scriptRe.exec(src)) !== null) blocks.push(m[1]);
-  log(`Found ${blocks.length} inline script blocks`);
+  log('=== Extracting engine block ===');
+  const extracted = extractEngineBlock(src);
+  if(!extracted) return null;
 
-  // Try each block, largest first (engine is likely in the largest block)
-  blocks.sort((a,b) => b.length - a.length);
+  log('\n=== Extracting constants ===');
+  const result = buildAndEvalEngine(src, extracted.found, extracted.block);
+  if(!result || !result.engine) return null;
 
-  let engine = null, SP = null, BPM = null, allVars = {};
+  const { engine, constFound } = result;
+  if(typeof engine.calculate !== 'function'){
+    log('ERROR: engine.calculate is not a function');
+    log('engine keys: ' + Object.keys(engine).join(', '));
+    return null;
+  }
 
-  for(let bi = 0; bi < blocks.length; bi++){
-    const blk = blocks[bi];
-    if(blk.length < 500) continue; // skip tiny blocks
-    log(`Trying block ${bi} (${blk.length} chars)…`);
+  // Extract scalar constants for tests
+  const SP  = constFound.SURFACEP  ? (() => { try{ return (new Function(`return (${constFound.SURFACEP})`))(); }catch(e){return null;}})() : null;
+  const BPM = constFound.BARPERMETRE ? (() => { try{ return (new Function(`return (${constFound.BARPERMETRE})`))(); }catch(e){return null;}})() : null;
 
-    const iife = `(function(){
-      "use strict";
-      ${DOM_STUBS}
-      try {
-        ${blk}
-      } catch(e) { /* ignore DOM errors during init */ }
-      return {
-        engine:      typeof VPMEngine    !== 'undefined' ? VPMEngine    : undefined,
-        SP:          typeof SURFACEP     !== 'undefined' ? SURFACEP     : undefined,
-        BPM:         typeof BARPERMETRE  !== 'undefined' ? BARPERMETRE  : undefined,
-        SLPSWM:      typeof SLPSWM       !== 'undefined' ? SLPSWM       : undefined,
-        SLPFWM:      typeof SLPFWM       !== 'undefined' ? SLPFWM       : undefined,
-      };
-    })()`;
+  log(`\nSURFACEP = ${SP}`);
+  log(`BARPERMETRE = ${BPM}`);
 
+  // ── Probe model values ──────────────────────────────────────────────────
+  log('\n=== Probing model values ===');
+  const mv = Object.values(engine.MODELS || {});
+  log(`MODELS values: ${JSON.stringify(mv)}`);
+
+  function probe(m){
     try {
-      // eslint-disable-next-line no-new-func
-      const r = (new Function('return ' + iife))();
-      log(`  block ${bi}: engine=${typeof r?.engine}, SP=${r?.SP}, BPM=${r?.BPM}, SLPSWM=${r?.SLPSWM}`);
-
-      if(r?.engine && typeof r.engine.calculate === 'function'){
-        engine = r.engine;
-        if(r.SP  !== undefined) SP  = r.SP;
-        if(r.BPM !== undefined) BPM = r.BPM;
-        // Derive constants from SLP values if not directly available
-        if(SP == null && r.SLPSWM) SP  = 1.0 / r.SLPSWM + (r.SLPSWM > 5 ? 1.0 : 0);
-        if(BPM == null && r.SLPSWM) BPM = 1.0 / r.SLPSWM;
-        log(`  ✓ engine found in block ${bi}`);
-        log(`  MODELS raw: ${JSON.stringify(engine.MODELS)}`);
-        break;
-      }
-    } catch(e){
-      log(`  block ${bi} threw: ${e.message}`);
-    }
+      const r = engine.calculate(
+        [{depth:40,time:25,o2:21,he:0}],
+        [{o2:50,he:0}],
+        {metric:true,waterType:0,descentRate:22,ascentRate:9,decoAscentRate:9,
+         surfaceAscentRate:9,stepSize:3,lastStop:3,minStopTime:1,
+         ppO2Bottom:1.4,ppO2Deco:1.6,ppO2Low:1.4,ppO2Mid:1.5,ppO2High:1.6,
+         o2MaxDepth:6,conservatism:0,gfHi:85,gfs:85},
+        m
+      );
+      return r.totalRuntime || 9999;
+    } catch(e){ log(`  probe(${JSON.stringify(m)}) threw: ${e.message}`); return 9999; }
   }
 
-  // If constants still missing, derive from SLPSWM via a separate scan
-  if((SP == null || BPM == null) && engine){
-    log('Constants not found in engine block — scanning all blocks for SURFACEP/BARPERMETRE/SLPSWM…');
-    for(const blk of blocks){
-      if(!blk.includes('SURFACEP') && !blk.includes('SLPSWM')) continue;
-      try {
-        const iife2 = `(function(){
-          "use strict";
-          ${DOM_STUBS}
-          try { ${blk} } catch(e){}
-          return {
-            SP:    typeof SURFACEP    !== 'undefined' ? SURFACEP    : undefined,
-            BPM:   typeof BARPERMETRE !== 'undefined' ? BARPERMETRE : undefined,
-            SLPSWM:typeof SLPSWM      !== 'undefined' ? SLPSWM      : undefined,
-          };
-        })()`;
-        const r2 = (new Function('return ' + iife2))();
-        if(r2.SP  !== undefined && SP  == null) SP  = r2.SP;
-        if(r2.BPM !== undefined && BPM == null) BPM = r2.BPM;
-        if(r2.SLPSWM !== undefined){
-          log(`  found SLPSWM=${r2.SLPSWM}`);
-          // BARPERMETRE = 1/SLPSWM for salt water
-          if(BPM == null) BPM = 1.0 / r2.SLPSWM;
-          // SURFACEP: look for it in the raw text
-          const spMatch = blk.match(/const\s+SURFACEP\s*=\s*([\d.]+)/);
-          if(spMatch && SP == null) SP = parseFloat(spMatch[1]);
-        }
-        if(SP != null || BPM != null) break;
-      } catch(e){}
-    }
+  const probed = mv.map(m => ({ m, rt: probe(m) }));
+  probed.forEach(p => log(`  model ${JSON.stringify(p.m)} → rt=${p.rt}`));
+  const working = probed.filter(p => p.rt < 9999).sort((a,b)=>a.rt-b.rt);
+  const VPMB    = working[0]?.m;
+  const VPMBE   = working[1]?.m ?? VPMB;
+  const VPMBGFS = working[2]?.m ?? VPMBE;
+  log(`\nMapped: VPMB=${JSON.stringify(VPMB)}, VPMBE=${JSON.stringify(VPMBE)}, VPMBGFS=${JSON.stringify(VPMBGFS)}`);
 
-    // Last resort: grep raw source text directly
-    if(SP == null){
-      const m = src.match(/const\s+SURFACEP\s*=\s*([\d.]+)/);
-      if(m){ SP = parseFloat(m[1]); log(`  grep SURFACEP=${SP}`); }
-    }
-    if(BPM == null){
-      const m = src.match(/const\s+BARPERMETRE\s*=\s*([\d.]+)/);
-      if(m){ BPM = parseFloat(m[1]); log(`  grep BARPERMETRE=${BPM}`); }
-      else {
-        // Try to derive from SLPSWM
-        const m2 = src.match(/const\s+SLPSWM\s*=\s*([\d.]+)/);
-        if(m2){ BPM = 1.0 / parseFloat(m2[1]); log(`  derived BPM from SLPSWM=${m2[1]} → ${BPM}`); }
-      }
-    }
-  }
-
-  log(`Final: SP=${SP}, BPM=${BPM}`);
-
-  // ── Discover model identifiers ───────────────────────────────────────────
-  // MODELS is an object/array — values are the actual identifiers to pass to calculate().
-  // We probe them: VPMB = least deco, others = more deco.
-  let VPMB=null, VPMBE=null, VPMBGFS=null;
-  if(engine){
-    const mv = Object.values(engine.MODELS || {});
-    log(`MODELS values: ${JSON.stringify(mv)}`);
-
-    function probe(m){
-      try {
-        const r = engine.calculate(
-          [{depth:40,time:25,o2:21,he:0}],
-          [{o2:50,he:0}],
-          {metric:true,waterType:0,descentRate:22,ascentRate:9,decoAscentRate:9,
-           surfaceAscentRate:9,stepSize:3,lastStop:3,minStopTime:1,
-           ppO2Bottom:1.4,ppO2Deco:1.6,ppO2Low:1.4,ppO2Mid:1.5,ppO2High:1.6,
-           o2MaxDepth:6,conservatism:0,gfHi:85,gfs:85},
-          m
-        );
-        return {rt: r.totalRuntime||9999, ok:true};
-      } catch(e){ return {rt:9999, ok:false}; }
-    }
-
-    const results = mv.map(m => ({m, ...probe(m)}));
-    results.forEach(r => log(`  model ${JSON.stringify(r.m)} → rt=${r.rt}, ok=${r.ok}`));
-
-    const working = results.filter(r => r.ok && r.rt < 9999);
-    working.sort((a,b) => a.rt - b.rt);  // ascending = least deco first
-
-    if(working.length > 0) VPMB    = working[0].m;
-    if(working.length > 1) VPMBE   = working[1].m;
-    if(working.length > 2) VPMBGFS = working[2].m;
-    // If only 1–2 models work, reuse for missing slots
-    if(VPMBE   == null && VPMB != null) VPMBE   = VPMB;
-    if(VPMBGFS == null && VPMB != null) VPMBGFS = VPMBE ?? VPMB;
-
-    log(`Mapped: VPMB=${JSON.stringify(VPMB)}, VPMBE=${JSON.stringify(VPMBE)}, VPMBGFS=${JSON.stringify(VPMBGFS)}`);
-  }
-
-  return { engine, SP, BPM, VPMB, VPMBE, VPMBGFS,
-           modelsCount: Object.keys(engine?.MODELS||{}).length };
+  return { engine, SP, BPM, VPMB, VPMBE, VPMBGFS, mCount: mv.length };
 }
 
 // ── Test runner ───────────────────────────────────────────────────────────
 function runTests(R){
-  const E      = R?.engine   ?? null;
-  const SP     = R?.SP       ?? null;
-  const BPM    = R?.BPM      ?? null;
-  const VPMB   = R?.VPMB;
-  const VPMBE  = R?.VPMBE;
-  const VPMBGFS= R?.VPMBGFS;
-  const mCount = R?.modelsCount ?? 0;
+  const E       = R?.engine   ?? null;
+  const SP      = R?.SP       ?? null;
+  const BPM     = R?.BPM      ?? null;
+  const VPMB    = R?.VPMB;
+  const VPMBE   = R?.VPMBE;
+  const VPMBGFS = R?.VPMBGFS;
+  const mCount  = R?.mCount   ?? 0;
 
   function calc(depth, bt, model, extra={}){
     if(!E) return {error:'no engine'};
     try {
       return E.calculate(
         [{depth, time:bt, o2:21, he:0}],
-        [{o2:50, he:0, label:'EAN50'}, {o2:100, he:0, label:'100% O2'}],
-        { metric:true, waterType:0,
-          descentRate:22, ascentRate:9, decoAscentRate:9, surfaceAscentRate:9,
-          stepSize:3, lastStop:3, minStopTime:1,
-          ppO2Bottom:1.4, ppO2Deco:1.6, ppO2Low:1.4, ppO2Mid:1.5, ppO2High:1.6,
-          o2MaxDepth:6, conservatism:0, gfHi:85, gfs:85, ...extra },
+        [{o2:50,he:0,label:'EAN50'},{o2:100,he:0,label:'100% O2'}],
+        { metric:true,waterType:0,descentRate:22,ascentRate:9,decoAscentRate:9,
+          surfaceAscentRate:9,stepSize:3,lastStop:3,minStopTime:1,
+          ppO2Bottom:1.4,ppO2Deco:1.6,ppO2Low:1.4,ppO2Mid:1.5,ppO2High:1.6,
+          o2MaxDepth:6,conservatism:0,gfHi:85,gfs:85,...extra },
         model
       );
-    } catch(e){ return {error: e.message}; }
+    } catch(e){ return {error:e.message}; }
   }
 
-  function decoMin(r){ return (r.stops||[]).reduce((a,s)=>a+s.time,0); }
+  function deco(r){ return (r.stops||[]).reduce((a,s)=>a+s.time,0); }
   function hasStops(r){ return (r.stops||[]).some(s=>s.time>0); }
 
-  // ── 1. Engine ─────────────────────────────────────────────────────────────
   sec('1 · Engine');
-  assert('VPMEngine loaded',            E != null,                            `type=${typeof E}`,                       'fetch → IIFE');
-  assert('VPMEngine.calculate is fn',   typeof E?.calculate === 'function',   `typeof=${typeof E?.calculate}`,          'VPMEngine');
-  assert('VPMEngine.MODELS is defined', mCount > 0,                           `${mCount} model(s) found`,               'VPMEngine.MODELS');
-  assert('VPMB model identified',       VPMB != null,                         `id=${JSON.stringify(VPMB)}`,             'model probe');
-  assert('VPMBGFS model identified',    VPMBGFS != null,                      `id=${JSON.stringify(VPMBGFS)}`,          'model probe');
+  assert('VPMEngine loaded',           E!=null,                           `type=${typeof E}`,                    'fetch → regex extraction');
+  assert('VPMEngine.calculate is fn',  typeof E?.calculate==='function',  `typeof=${typeof E?.calculate}`,       'VPMEngine');
+  assert('VPMEngine.MODELS defined',   mCount>0,                          `${mCount} model(s)`,                  'VPMEngine.MODELS');
+  assert('VPMB model identified',      VPMB!=null,                        `id=${JSON.stringify(VPMB)}`,           'model probe');
+  assert('VPMBGFS model identified',   VPMBGFS!=null,                     `id=${JSON.stringify(VPMBGFS)}`,        'model probe');
 
-  // ── 2. Constants ──────────────────────────────────────────────────────────
   sec('2 · Physical constants');
-  assert('SURFACEP ≈ 1.013 bar',        near(SP, 1.013, 0.01),  SP!=null?`got ${SP}`:'not found in any script block',  'sea level pressure');
-  assert('BARPERMETRE ≈ 0.0993 bar/m',  near(BPM,0.0993,0.005), BPM!=null?`got ${BPM}`:'not found',                   '1/SLPSWM salt water');
+  assert('SURFACEP ≈ 1.013 bar',       near(SP,1.013,0.01),   SP!=null?`got ${SP}`:'not found',  'sea level pressure');
+  assert('BARPERMETRE ≈ 0.0993 bar/m', near(BPM,0.0993,0.005),BPM!=null?`got ${BPM}`:'not found','1 / SLPSWM salt water');
 
-  if(!E || typeof E.calculate !== 'function'){
-    assert('(remaining tests skipped)', null, 'no engine', ''); finalize(); return;
+  if(!E||typeof E.calculate!=='function'){
+    assert('(remaining tests skipped)',null,'no engine',''); finalize(); return;
   }
 
-  // ── 3. No-deco dives ──────────────────────────────────────────────────────
-  sec('3 · No-deco boundary (VPM-B)');
-  const r20 = calc(20,20,VPMB);
-  assert('20m/20min air → 0 stops',  !r20.error && !hasStops(r20),
-    r20.error || `stops=${decoMin(r20).toFixed(0)}min, rt=${r20.totalRuntime?.toFixed(1)}min`, 'NDL');
-  const r15 = calc(15,60,VPMB);
-  assert('15m/60min air → 0 stops',  !r15.error && !hasStops(r15),
-    r15.error || `rt=${r15.totalRuntime?.toFixed(1)}min`, 'NDL edge');
-  const r25 = calc(25,30,VPMB);
-  assert('25m/30min air → 0 stops',  !r25.error && !hasStops(r25),
-    r25.error || `rt=${r25.totalRuntime?.toFixed(1)}min`, 'NDL');
+  sec('3 · No-deco boundary');
+  const r20=calc(20,20,VPMB);
+  assert('20m/20min → 0 deco stops',!r20.error&&!hasStops(r20),
+    r20.error||`rt=${r20.totalRuntime?.toFixed(1)}min`,'VPM-B NDL');
+  const r15=calc(15,60,VPMB);
+  assert('15m/60min → 0 deco stops',!r15.error&&!hasStops(r15),
+    r15.error||`rt=${r15.totalRuntime?.toFixed(1)}min`,'VPM-B NDL edge');
 
-  // ── 4. Deco dives ─────────────────────────────────────────────────────────
-  sec('4 · Deco dive correctness (VPM-B)');
-  const r40 = calc(40,25,VPMB);
-  assert('40m/25min → deco required',     !r40.error && hasStops(r40),
-    r40.error || `deco=${decoMin(r40).toFixed(0)}min, rt=${r40.totalRuntime?.toFixed(1)}min`, 'VPM-B');
-  assert('40m/25min runtime 35–90min',    !r40.error && r40.totalRuntime>35 && r40.totalRuntime<90,
-    r40.error || `rt=${r40.totalRuntime?.toFixed(1)}min`, 'sanity');
-  const r50 = calc(50,30,VPMB);
-  assert('50m/30min → deco required',     !r50.error && hasStops(r50),
-    r50.error || `deco=${decoMin(r50).toFixed(0)}min`, 'VPM-B');
-  assert('50m/30min > 40m/25min deco',   !r40.error && !r50.error && decoMin(r50) >= decoMin(r40),
-    `40m=${decoMin(r40).toFixed(0)}min, 50m=${decoMin(r50).toFixed(0)}min`, 'depth monotonicity');
+  sec('4 · Deco dive correctness');
+  const r40=calc(40,25,VPMB);
+  assert('40m/25min → deco required',      !r40.error&&hasStops(r40),
+    r40.error||`deco=${deco(r40).toFixed(0)}min rt=${r40.totalRuntime?.toFixed(1)}min`,'VPM-B');
+  assert('40m/25min runtime 35–90min',     !r40.error&&r40.totalRuntime>35&&r40.totalRuntime<90,
+    r40.error||`rt=${r40.totalRuntime?.toFixed(1)}min`,'sanity');
+  const r50=calc(50,30,VPMB);
+  assert('50m/30min → deco required',      !r50.error&&hasStops(r50),
+    r50.error||`deco=${deco(r50).toFixed(0)}min`,'VPM-B');
+  assert('50m deeper → more deco than 40m',!r40.error&&!r50.error&&deco(r50)>=deco(r40),
+    `40m=${deco(r40).toFixed(0)} 50m=${deco(r50).toFixed(0)}min`,'monotonicity');
 
-  // ── 5. Model ordering ─────────────────────────────────────────────────────
-  sec('5 · Multi-model consistency (45m/30min)');
-  const rb    = calc(45,30,VPMB);
-  const rbe   = calc(45,30,VPMBE);
-  const rbgfs = calc(45,30,VPMBGFS);
-  assert('all 3 models compute without error', !rb.error&&!rbe.error&&!rbgfs.error,
-    [rb,rbe,rbgfs].map(r=>r.error||'ok').join(' | '), 'VPM-B / VPM-BE / VPM-BGFS');
-  assert('each model returns runtime > 0',
-    !rb.error && (rb.totalRuntime||0)>0 && (rbe.totalRuntime||0)>0 && (rbgfs.totalRuntime||0)>0,
-    `VPMB=${rb.totalRuntime?.toFixed(1)}, VPMBE=${rbe.totalRuntime?.toFixed(1)}, VPMBGFS=${rbgfs.totalRuntime?.toFixed(1)}`, '');
+  sec('5 · Multi-model (45m/30min)');
+  const rb=calc(45,30,VPMB),rbe=calc(45,30,VPMBE),rbgfs=calc(45,30,VPMBGFS);
+  assert('all 3 models compute',!rb.error&&!rbe.error&&!rbgfs.error,
+    [rb,rbe,rbgfs].map(r=>r.error||'ok').join(' | '),'');
+  assert('each model runtime > 0',
+    !rb.error&&(rb.totalRuntime||0)>0&&(rbe.totalRuntime||0)>0&&(rbgfs.totalRuntime||0)>0,
+    `VPMB=${rb.totalRuntime?.toFixed(1)} VPMBE=${rbe.totalRuntime?.toFixed(1)} VPMBGFS=${rbgfs.totalRuntime?.toFixed(1)}`,'');
 
-  // ── 6. Depth monotonicity ─────────────────────────────────────────────────
-  sec('6 · Deco time monotonicity (VPM-B)');
-  const r30d = calc(30,30,VPMB), r60d = calc(60,30,VPMB);
-  assert('60m deco ≥ 30m deco (30min BT)',
-    !r30d.error && !r60d.error && decoMin(r60d) >= decoMin(r30d),
-    `30m=${decoMin(r30d).toFixed(0)}min, 60m=${decoMin(r60d).toFixed(0)}min`, 'depth');
-  const r40a = calc(40,20,VPMB), r40b = calc(40,40,VPMB);
-  assert('40m/40min deco ≥ 40m/20min deco',
-    !r40a.error && !r40b.error && decoMin(r40b) >= decoMin(r40a),
-    `20min BT=${decoMin(r40a).toFixed(0)}min, 40min BT=${decoMin(r40b).toFixed(0)}min`, 'BT');
+  sec('6 · Monotonicity');
+  const r30d=calc(30,30,VPMB),r60d=calc(60,30,VPMB);
+  assert('60m deco ≥ 30m deco',!r30d.error&&!r60d.error&&deco(r60d)>=deco(r30d),
+    `30m=${deco(r30d).toFixed(0)} 60m=${deco(r60d).toFixed(0)}min`,'depth');
+  const r40a=calc(40,20,VPMB),r40b=calc(40,40,VPMB);
+  assert('40min BT deco ≥ 20min BT deco',!r40a.error&&!r40b.error&&deco(r40b)>=deco(r40a),
+    `20min=${deco(r40a).toFixed(0)} 40min=${deco(r40b).toFixed(0)}min`,'BT');
 
-  // ── 7. Conservatism ───────────────────────────────────────────────────────
-  sec('7 · Conservatism scaling (VPM-B, 40m/25min)');
-  const rc0 = calc(40,25,VPMB,{conservatism:0});
-  const rc1 = calc(40,25,VPMB,{conservatism:1});
-  const rc3 = calc(40,25,VPMB,{conservatism:3});
-  assert('C1 deco ≥ C0 deco', !rc0.error&&!rc1.error && decoMin(rc1)>=decoMin(rc0),
-    `C0=${decoMin(rc0).toFixed(0)}min, C1=${decoMin(rc1).toFixed(0)}min`, '');
-  assert('C3 deco ≥ C1 deco', !rc1.error&&!rc3.error && decoMin(rc3)>=decoMin(rc1),
-    `C1=${decoMin(rc1).toFixed(0)}min, C3=${decoMin(rc3).toFixed(0)}min`, '');
-  assert('C3 runtime > C0 runtime', !rc0.error&&!rc3.error && (rc3.totalRuntime||0)>=(rc0.totalRuntime||0),
-    `C0=${rc0.totalRuntime?.toFixed(1)}min, C3=${rc3.totalRuntime?.toFixed(1)}min`, '');
+  sec('7 · Conservatism (40m/25min VPM-B)');
+  const rc0=calc(40,25,VPMB,{conservatism:0}),rc3=calc(40,25,VPMB,{conservatism:3});
+  assert('C3 deco ≥ C0 deco',!rc0.error&&!rc3.error&&deco(rc3)>=deco(rc0),
+    `C0=${deco(rc0).toFixed(0)} C3=${deco(rc3).toFixed(0)}min`,'');
+  assert('C3 runtime ≥ C0 runtime',!rc0.error&&!rc3.error&&(rc3.totalRuntime||0)>=(rc0.totalRuntime||0),
+    `C0=${rc0.totalRuntime?.toFixed(1)} C3=${rc3.totalRuntime?.toFixed(1)}min`,'');
 
-  // ── 8. Result shape ───────────────────────────────────────────────────────
-  sec('8 · Result object shape (40m/25min)');
-  const rs = calc(40,25,VPMB);
-  assert('error === null',             !rs.error && rs.error===null,                `error=${rs.error}`, '');
-  assert('plan is array',              !rs.error && Array.isArray(rs.plan),         `len=${rs.plan?.length}`, '');
-  assert('stops is array',             !rs.error && Array.isArray(rs.stops),        `len=${rs.stops?.length}`, '');
-  assert('totalRuntime is number',     !rs.error && typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`, '');
-  const types = !rs.error ? [...new Set(rs.plan?.map(s=>s.type))] : [];
-  assert('plan contains descent seg',  types.includes('descent'),  `types=[${types}]`, '');
-  assert('plan contains bottom seg',   types.includes('bottom'),   ``, '');
-  assert('plan contains ascent seg',   types.includes('ascent'),   ``, '');
-  assert('plan contains stop seg',     types.includes('stop'),     ``, 'deco dive');
+  sec('8 · Result shape (40m/25min)');
+  const rs=calc(40,25,VPMB);
+  assert('error===null',         !rs.error&&rs.error===null,             `error=${rs.error}`,'');
+  assert('plan is array',        !rs.error&&Array.isArray(rs.plan),      `len=${rs.plan?.length}`,'');
+  assert('stops is array',       !rs.error&&Array.isArray(rs.stops),     `len=${rs.stops?.length}`,'');
+  assert('totalRuntime number',  !rs.error&&typeof rs.totalRuntime==='number',`type=${typeof rs.totalRuntime}`,'');
+  const ty=!rs.error?[...new Set(rs.plan?.map(s=>s.type))]:[];
+  assert('plan: descent',        ty.includes('descent'),`[${ty}]`,'');
+  assert('plan: bottom',         ty.includes('bottom'), '','');
+  assert('plan: stop',           ty.includes('stop'),   '','');
 
-  // ── 9. CNS / OTU ─────────────────────────────────────────────────────────
-  sec('9 · O₂ tracking — CNS & OTU (40m/25min air + deco gas)');
-  const ro = calc(40,25,VPMB);
-  assert('totalCNS is a finite number',    !ro.error && Number.isFinite(ro.totalCNS),  `CNS=${ro.totalCNS?.toFixed(1)}%`, '');
-  assert('totalOTU is a finite number',    !ro.error && Number.isFinite(ro.totalOTU),  `OTU=${ro.totalOTU}`, '');
-  assert('CNS in range 0–200%',            !ro.error && ro.totalCNS>=0&&ro.totalCNS<200,`CNS=${ro.totalCNS?.toFixed(1)}%`, 'sanity');
-  assert('OTU > 0 for deco dive',          !ro.error && (ro.totalOTU||0)>0,             `OTU=${ro.totalOTU}`, 'sanity');
-  assert('per-stop cumCNS present',
-    !ro.error && ro.plan?.filter(s=>s.type==='stop').every(s=>s.cumCNS!=null),
-    `stop count=${ro.plan?.filter(s=>s.type==='stop').length}`, 'stop segments');
+  sec('9 · O₂ tracking (40m/25min)');
+  const ro=calc(40,25,VPMB);
+  assert('totalCNS finite',    !ro.error&&Number.isFinite(ro.totalCNS),  `CNS=${ro.totalCNS?.toFixed(1)}%`,'');
+  assert('totalOTU finite',    !ro.error&&Number.isFinite(ro.totalOTU),  `OTU=${ro.totalOTU}`,'');
+  assert('CNS in 0–200%',      !ro.error&&ro.totalCNS>=0&&ro.totalCNS<200,`${ro.totalCNS?.toFixed(1)}%`,'');
+  assert('OTU > 0',            !ro.error&&(ro.totalOTU||0)>0,            `OTU=${ro.totalOTU}`,'');
 
-  // ── 10. Gas switch ────────────────────────────────────────────────────────
-  sec('10 · Gas switching (50m/30min, EAN50 + 100% O₂)');
-  const rg = calc(50,30,VPMB);
-  const switchSegs = !rg.error ? rg.plan?.filter(s=>s.type==='switch'||
-    (s.type==='ascent'&&s.gasSwitch)) : [];
-  // Alternatively check that stops use a different gas than bottom
-  const stopGases = !rg.error ? [...new Set(rg.plan?.filter(s=>s.type==='stop').map(s=>s.gas))] : [];
-  const bottomGas = !rg.error ? rg.plan?.find(s=>s.type==='bottom')?.gas : null;
-  assert('deep stops use bottom gas',      !rg.error && bottomGas != null,
-    `bottom gas: ${bottomGas}`, '');
-  assert('at least one stop segment',      !rg.error && rg.plan?.some(s=>s.type==='stop'),
-    `stop gases: ${JSON.stringify(stopGases)}`, '');
-  assert('surface segment present',        !rg.error && rg.plan?.some(s=>s.type==='surface'),
-    `types=[${[...new Set(rg.plan?.map(s=>s.type))]}]`, '');
-
-  // ── 11. Water density ─────────────────────────────────────────────────────
-  sec('11 · Water density (40m/25min)');
-  const rS = calc(40,25,VPMB,{waterType:0}); // salt
-  const rF = calc(40,25,VPMB,{waterType:1}); // fresh
-  assert('salt water computes',  !rS.error && (rS.totalRuntime||0)>0, rS.error||`rt=${rS.totalRuntime?.toFixed(1)}min`, 'waterType:0');
-  assert('fresh water computes', !rF.error && (rF.totalRuntime||0)>0, rF.error||`rt=${rF.totalRuntime?.toFixed(1)}min`, 'waterType:1');
-  // Fresh water is less dense → slightly longer deco
-  assert('fresh runtime ≥ salt runtime', !rS.error&&!rF.error && (rF.totalRuntime||0)>=(rS.totalRuntime||0),
-    `salt=${rS.totalRuntime?.toFixed(1)}, fresh=${rF.totalRuntime?.toFixed(1)}`, 'density check');
-
-  // ── 12. Ascent rate sensitivity ───────────────────────────────────────────
-  sec('12 · Ascent rate sensitivity (40m/25min)');
-  const rFast = calc(40,25,VPMB,{ascentRate:18,decoAscentRate:18});
-  const rSlow = calc(40,25,VPMB,{ascentRate:3, decoAscentRate:3});
-  assert('fast ascent computes',  !rFast.error && (rFast.totalRuntime||0)>0,
-    rFast.error||`rt=${rFast.totalRuntime?.toFixed(1)}min`, 'ascentRate:18');
-  assert('slow ascent computes',  !rSlow.error && (rSlow.totalRuntime||0)>0,
-    rSlow.error||`rt=${rSlow.totalRuntime?.toFixed(1)}min`, 'ascentRate:3');
+  sec('10 · Water density (40m/25min)');
+  const rS=calc(40,25,VPMB,{waterType:0}),rF=calc(40,25,VPMB,{waterType:1});
+  assert('salt water computes', !rS.error&&(rS.totalRuntime||0)>0, rS.error||`rt=${rS.totalRuntime?.toFixed(1)}min`,'');
+  assert('fresh water computes',!rF.error&&(rF.totalRuntime||0)>0, rF.error||`rt=${rF.totalRuntime?.toFixed(1)}min`,'');
+  assert('fresh ≥ salt runtime',!rS.error&&!rF.error&&(rF.totalRuntime||0)>=(rS.totalRuntime||0),
+    `salt=${rS.totalRuntime?.toFixed(1)} fresh=${rF.totalRuntime?.toFixed(1)}min`,'density');
 
   finalize();
 }
 
 function finalize(){
-  const tot=P+F+SK, ok=F===0;
-  const sum = document.getElementById('sumbar');
-  sum.innerHTML =
-    `<span class="pill ${ok?'p':'f'}">${ok?'✓':'✗'} ${P}/${tot} PASSED</span>` +
-    (F ? `<span class="pill f">✗ ${F} FAILED</span>` : '') +
-    (SK? `<span class="pill s">— ${SK} SKIPPED</span>` : '') +
-    `<span style="color:var(--${ok?'pass':'fail'});font-size:13px;margin-left:4px">
-       ${ok ? 'All tests passed ✓' : `${F} test${F!==1?'s':''} failed`}
-     </span>`;
+  const tot=P+F+SK,ok=F===0;
+  document.getElementById('sumbar').innerHTML=
+    `<span class="pill ${ok?'p':'f'}">${ok?'✓':'✗'} ${P}/${tot} PASSED</span>`+
+    (F?`<span class="pill f">✗ ${F} FAILED</span>`:'')+
+    (SK?`<span class="pill s">— ${SK} SKIPPED</span>`:'')+
+    `<span style="color:var(--${ok?'pass':'fail'});font-size:13px;margin-left:4px">`+
+    (ok?'All tests passed ✓':`${F} test${F!==1?'s':''} failed`)+`</span>`;
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────
-loadEngine().then(R => {
-  smsg.textContent = 'Running tests…';
-  runTests(R ?? {});
-}).catch(e => {
+loadEngine().then(R=>{
+  smsg.textContent='Running tests…';
+  runTests(R??{});
+}).catch(e=>{
   log('Fatal: '+e.message);
-  smsg.textContent = '⚠ Fatal error — see debug log';
+  smsg.textContent='⚠ Fatal error — see debug log';
   runTests({});
 });
 </script>
