@@ -712,6 +712,21 @@ body.algo-buh .buh-only { display: flex !important; }
   padding-right: 28px;
   cursor: pointer;
 }
+/* Uniform field control height */
+.field input,
+.field select,
+.field > div {
+  min-height: 38px;
+  box-sizing: border-box;
+}
+.field > div {
+  display: flex;
+  align-items: stretch;
+}
+.field > div button {
+  min-height: 38px;
+  box-sizing: border-box;
+}
 
 /* ── BUTTON ── */
 .btn-calc {
@@ -1566,7 +1581,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
             <div class="field">
         <label>Altitude <span title="Surface pressure is corrected for altitude. Affects all tissue loading, NDL, and ceiling calculations." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="altitudeSelect" onchange="updateAltitude(this.value)" style="padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer">
-          <option value="0" selected>Sea level (0 m)</option>
+          <option value="0" selected>Sea level</option>
           <option value="300">300 m</option>
           <option value="600">600 m</option>
           <option value="1000">1000 m</option>
@@ -1582,10 +1597,10 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <span style="font-size:11px;color:var(--muted)">m ASL</span>
       </div>
       <div class="field">
-        <label>Acclimatized <span title="Whether the diver is acclimatized to altitude.&#10;Yes — tissues start at N2 equilibrium for altitude surface pressure (long stay).&#10;No (fresh arrival) — tissues start at sea-level saturation (flew in same day)." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
-        <select id="acclimatizedSelect" style="padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer">
-          <option value="yes" selected>Yes (acclimatized)</option>
-          <option value="no">No (fresh arrival)</option>
+        <label>Acclimatized <span title="Yes — tissues start at N₂ equilibrium for altitude surface pressure (long stay at altitude).&#10;No — tissues start at sea-level saturation (flew in same day / fresh arrival)." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:help" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;opacity:0.55" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <select id="acclimatizedSelect">
+          <option value="yes" selected>Yes</option>
+          <option value="no">No</option>
         </select>
       </div>
 <div class="field">
@@ -17139,6 +17154,20 @@ function altitudeToSLP(altM) {
 
 function getSLP() {
   return window.altitudeSLP || 1.013;
+}
+
+function setAcclimatized(val) {
+  const yBtn = document.getElementById('acclimatizedYes');
+  const nBtn = document.getElementById('acclimatizedNo');
+  yBtn.style.background  = val  ? 'rgba(0,200,255,0.15)' : 'transparent';
+  yBtn.style.borderColor = val  ? 'var(--accent)' : 'var(--border)';
+  yBtn.style.color       = val  ? 'var(--accent)' : 'var(--muted)';
+  nBtn.style.background  = !val ? 'rgba(0,200,255,0.15)' : 'transparent';
+  nBtn.style.borderColor = !val ? 'var(--accent)' : 'var(--border)';
+  nBtn.style.color       = !val ? 'var(--accent)' : 'var(--muted)';
+  const sel = document.getElementById('acclimatizedSelect');
+  if (sel) sel.value = val ? 'yes' : 'no';
+  if (typeof runDeco === 'function') runDeco();
 }
 
 function updateAltitude(val) {
