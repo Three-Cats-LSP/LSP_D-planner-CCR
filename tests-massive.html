@@ -1307,66 +1307,71 @@ const TIER3_GROUPS = [
         return `found #${sel.id}`;
       }],
       ['Altitude 1000m: altSurfaceP < sea level', 'SCN', function(){
-        const d = getDoc();
-        const seaP = WIN.altSurfaceP;
-        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
-        assert(sel, 'Altitude selector not found');
-        sel.value = '1000';
-        sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        const p1000 = WIN.altSurfaceP;
-        // Reset
-        sel.value = '0';
-        sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        assert(p1000 < seaP + 0.001, `1000m pressure ${p1000} not < sea level ${seaP}`);
+        // setAlt(v) sets select.value then calls setAltitude() inside the iframe
+        assert(typeof WIN.altToPressure === 'function', 'altToPressure not found');
+        assert(typeof WIN.setAltitude  === 'function', 'setAltitude not found');
+        function setAlt(v) {
+          const sel = WIN.document.getElementById('altitudeSelect');
+          if (sel) sel.value = v;
+          WIN.setAltitude();
+        }
+        const seaP = WIN.altToPressure(0);
+        setAlt('1000'); const p1000 = WIN.altSurfaceP;
+        setAlt('0');    // reset
+        assert(p1000 < seaP, `1000m pressure ${p1000} not < sea level ${seaP.toFixed(4)}`);
         return `sea=${seaP.toFixed(4)} | 1000m=${p1000.toFixed(4)} ✓`;
       }],
       ['Altitude 2000m: altSurfaceP < 1000m', 'SCN', function(){
-        const d = getDoc();
-        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
-        assert(sel,'no altitude sel');
-        sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        const p1000 = WIN.altSurfaceP;
-        sel.value = '2000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        const p2000 = WIN.altSurfaceP;
-        sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        assert(typeof WIN.setAltitude === 'function', 'setAltitude not found');
+        function setAlt(v) {
+          const sel = WIN.document.getElementById('altitudeSelect');
+          if (sel) sel.value = v;
+          WIN.setAltitude();
+        }
+        setAlt('1000'); const p1000 = WIN.altSurfaceP;
+        setAlt('2000'); const p2000 = WIN.altSurfaceP;
+        setAlt('0');
         assert(p2000 < p1000, `2000m pressure ${p2000} ≥ 1000m ${p1000}`);
         return `1000m=${p1000.toFixed(4)} | 2000m=${p2000.toFixed(4)} ✓`;
       }],
       ['Altitude in engine: 1000m gives more deco than sea level', 'SCN', function(){
-        const d = getDoc();
-        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
-        assert(sel,'no altitude sel');
-        sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        WIN.runDecoSchedule();
-        const p0 = WIN.altSurfaceP;
-        sel.value = '2000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        WIN.runDecoSchedule();
-        const p2000 = WIN.altSurfaceP;
-        sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        assert(p2000 < p0, 'altSurfaceP did not change at altitude');
+        assert(typeof WIN.setAltitude === 'function', 'setAltitude not found');
+        function setAlt(v) {
+          const sel = WIN.document.getElementById('altitudeSelect');
+          if (sel) sel.value = v;
+          WIN.setAltitude();
+        }
+        setAlt('0');    const p0    = WIN.altSurfaceP;
+        setAlt('2000'); const p2000 = WIN.altSurfaceP;
+        setAlt('0');    // reset
+        assert(p2000 < p0, `altSurfaceP did not drop at 2000m (sea=${p0.toFixed(4)} | 2000m=${p2000.toFixed(4)})`);
         return `Sea P=${p0.toFixed(4)} | 2000m P=${p2000.toFixed(4)} — pressure changed ✓`;
       }],
       ['Altitude localStorage persists (lspAltitude)', 'SCN', function(){
-        const d = getDoc();
-        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
-        if (!sel) return 'no altitude selector — skip';
-        sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        function setAlt(v) {
+          const sel = WIN.document.getElementById('altitudeSelect');
+          if (sel) sel.value = v;
+          WIN.setAltitude();
+        }
+        setAlt('1000');
         const stored = WIN.localStorage.getItem('lspAltitude');
-        sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        setAlt('0');
         if (stored == null) return 'lspAltitude not in localStorage — may use different key (warn)';
         assert(/1000/.test(stored), `Stored altitude unexpected: ${stored}`);
         return `stored="${stored}" ✓`;
       }],
       ['Altitude stat chip appears when altitude > 0', 'SCN', function(){
-        const d = getDoc();
-        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
-        if (!sel) return 'no altitude selector — skip';
-        sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        function setAlt(v) {
+          const sel = WIN.document.getElementById('altitudeSelect');
+          if (sel) sel.value = v;
+          WIN.setAltitude();
+        }
+        setAlt('1000');
         WIN.runDecoSchedule();
-        const html = (d.getElementById('decoResult') || {innerHTML:''}).innerHTML +
-                     (d.querySelector('.stats-bar, #statsRow, [id*="stats"]') || {innerHTML:''}).innerHTML;
+        const d = WIN.document;
+        const html = (d.getElementById('decoSummary') || {innerHTML:''}).innerHTML;
         const found = /alt|1000.*m|elev/i.test(html);
-        sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        setAlt('0');
         if (!found) return 'altitude chip text not detected in output (warn)';
         return 'altitude chip visible in output ✓';
       }],
