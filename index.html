@@ -1376,6 +1376,12 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <option value="3000">3000 m</option>
         <option value="custom">Custom…</option>
       </select>
+      <div id="altitudeCustomRowRec" style="display:none;align-items:center;gap:4px;">
+        <input type="number" id="altitudeCustomInputRec" value="0" min="0" max="5000" step="50"
+          style="width:62px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;"
+          oninput="applyCustomAltitudeRec()" onchange="applyCustomAltitudeRec()">
+        <span class="algo-label-text" style="white-space:nowrap;">m</span>
+      </div>
     </div>
     <!-- Warning -->
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;">
@@ -2839,17 +2845,35 @@ function applyCustomAltitude() {
 }
 
 function syncAltitudeFromRec(val) {
-  // Mirror REC altitude selection to TEC dropdown
+  // Show/hide rec custom input row
+  const recCustomRow = document.getElementById('altitudeCustomRowRec');
+  if (recCustomRow) recCustomRow.style.display = val === 'custom' ? 'flex' : 'none';
+  if (val === 'custom') {
+    // Focus input and wait for user to type — don't call setAltitude yet
+    const inp = document.getElementById('altitudeCustomInputRec');
+    if (inp) setTimeout(() => inp.focus(), 50);
+    return;
+  }
+  // Mirror to TEC dropdown
   const tecSel = document.getElementById('altitudeSelect');
   if (tecSel) {
-    const matchOpt = Array.from(tecSel.options).find(o => o.value === val);
-    if (matchOpt) {
-      tecSel.value = val;
-      document.getElementById('altitudeCustomRow').style.display = 'none';
-    } else {
-      tecSel.value = 'custom';
-    }
+    tecSel.value = val;
+    const tecCustomRow = document.getElementById('altitudeCustomRow');
+    if (tecCustomRow) tecCustomRow.style.display = 'none';
   }
+  setAltitude();
+}
+
+function applyCustomAltitudeRec() {
+  const inp    = document.getElementById('altitudeCustomInputRec');
+  const altVal = Math.max(0, Math.min(5000, parseFloat(inp?.value) || 0));
+  // Mirror to TEC custom input + select
+  const tecSel = document.getElementById('altitudeSelect');
+  const tecInp = document.getElementById('altitudeCustomInput');
+  const tecRow = document.getElementById('altitudeCustomRow');
+  if (tecSel) tecSel.value = 'custom';
+  if (tecInp) tecInp.value = altVal;
+  if (tecRow) tecRow.style.display = 'flex';
   setAltitude();
 }
 
@@ -2874,13 +2898,19 @@ function loadAltitudeFromStorage() {
     }
     const acclSel = document.getElementById('acclimatizedSelect');
     if (acclSel) acclSel.value = altAcclimatized ? 'yes' : 'no';
-    ['altitudeSelectRec'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        const matchOpt = Array.from(el.options).find(o => parseFloat(o.value) === altitudeM);
-        el.value = matchOpt ? String(altitudeM) : 'custom';
+    const recSel = document.getElementById('altitudeSelectRec');
+    if (recSel) {
+      const matchOptRec = Array.from(recSel.options).find(o => parseFloat(o.value) === altitudeM);
+      recSel.value = matchOptRec ? String(altitudeM) : 'custom';
+      const recCustomRow = document.getElementById('altitudeCustomRowRec');
+      const recCustomInp = document.getElementById('altitudeCustomInputRec');
+      if (!matchOptRec) {
+        if (recCustomRow) recCustomRow.style.display = 'flex';
+        if (recCustomInp) recCustomInp.value = altitudeM;
+      } else {
+        if (recCustomRow) recCustomRow.style.display = 'none';
       }
-    });
+    }
     // Update badge
     const badge = document.getElementById('altitudePressureDisplay');
     if (badge && altitudeM > 0) badge.textContent = altSurfaceP.toFixed(3) + ' bar';
@@ -4029,6 +4059,8 @@ function resetToDefaults() {
   const acclSel = document.getElementById('acclimatizedSelect');
   if (acclSel) acclSel.value = 'yes';
   ['altitudeSelectRec'].forEach(id => { const el=document.getElementById(id); if(el) el.value='0'; });
+  const altCustomRowRec = document.getElementById('altitudeCustomRowRec');
+  if (altCustomRowRec) altCustomRowRec.style.display = 'none';
   altitudeM = 0; altSurfaceP = SEA_LEVEL_P; altAcclimatized = true;
   try { localStorage.removeItem('lspAltitude'); localStorage.removeItem('lspAcclimatized'); } catch(e) {}
   const badge = document.getElementById('altitudePressureDisplay'); if(badge) badge.textContent='';
