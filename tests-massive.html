@@ -228,10 +228,14 @@ iframe { display: none; }
     <aside class="sidebar">
       <div class="card">
         <h2>Coverage</h2>
-        <div class="metric-row"><span>Tier 1 — Engine</span><span>300+ plans</span></div>
+        <div class="metric-row"><span>Tier 1 — Engine</span><span>350+ plans</span></div>
         <div class="metric-row"><span>Bühlmann ZH-L16C</span><span>100 profiles</span></div>
         <div class="metric-row"><span>VPM-B</span><span>100 profiles</span></div>
         <div class="metric-row"><span>VPM-B/GFS</span><span>100 profiles</span></div>
+        <div class="metric-row"><span>Conservatism C0–C5</span><span>13 checks</span></div>
+        <div class="metric-row"><span>Trimix profiles</span><span>TMX21/35, 18/45, 10/70</span></div>
+        <div class="metric-row"><span>First stop depths</span><span>VPM-B vs ZHL</span></div>
+        <div class="metric-row"><span>Cross-model ordering</span><span>Maiken invariants</span></div>
         <div class="metric-row"><span>Tier 2 — UI/DOM</span><span>live DOM checks</span></div>
         <div class="metric-row"><span>Tier 3 — Scenarios</span><span>special cases</span></div>
       </div>
@@ -249,6 +253,10 @@ iframe { display: none; }
         <div class="metric-row"><span>Edge cases</span><span>5m → 80m, 1min → 180min</span></div>
         <div class="metric-row"><span>Determinism</span><span>no state leakage</span></div>
         <div class="metric-row"><span>Plan integrity</span><span>segment ordering</span></div>
+        <div class="metric-row"><span>Conservatism sweep</span><span>C0–C5 monotone</span></div>
+        <div class="metric-row"><span>Trimix helium</span><span>all 3 models</span></div>
+        <div class="metric-row"><span>First stop</span><span>VPM-B bubble ceiling</span></div>
+        <div class="metric-row"><span>TAT ordering</span><span>Maiken cross-model</span></div>
       </div>
       <div class="card">
         <h2>Run Metrics</h2>
@@ -264,7 +272,7 @@ iframe { display: none; }
       <div class="results-wrap" id="results"></div>
       <div class="footer-note">
         Place this file beside <code>index.html</code> on the same static host. Runs all three tiers automatically on load.
-        Tier 1 = direct engine calls (no DOM). Tier 2 = live DOM integration via iframe. Tier 3 = special dive scenarios.
+        Tier 1 = direct engine calls (no DOM) · Bühlmann · VPM-B · Conservatism · Trimix · First Stop · Cross-model ordering. Tier 2 = live DOM integration via iframe. Tier 3 = special dive scenarios.
       </div>
     </main>
   </div>
@@ -918,6 +926,288 @@ const TIER1_GROUPS = [
       ['Two-level: 50m→30m (VPM-B)', 'VPMB', function(){
         const r = calc(mlv([{depth:50,time:15},{depth:30,time:10}]), EAN50, S(), 'VPMB');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+    ]
+  },
+
+  // ── Group T1-L: VPM-B Conservatism Sweep C0–C5 ───────────────────────────
+  {
+    tier: 1, name: 'T1-L · VPM-B — Conservatism Sweep C0–C5',
+    desc: 'Validates monotone ordering C0≤C1≤C2≤C3≤C4≤C5 at 40m and 60m; VPMB_GFS cap ordering.',
+    tests: [
+      ['VPM-B C0 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:0}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C0`;
+      }],
+      ['VPM-B C1 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:1}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C1`;
+      }],
+      ['VPM-B C2 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:2}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C2`;
+      }],
+      ['VPM-B C3 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:3}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C3`;
+      }],
+      ['VPM-B C4 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:4}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C4`;
+      }],
+      ['VPM-B C5 runs at 40m/25min', 'VPMB', function(){
+        const r = calc(lv(40,25), EAN50, S({vpmC:5}), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)} C5`;
+      }],
+      ['C0 ≤ C1 ≤ C2 monotone at 40m (Maiken)', 'VPMB', function(){
+        const r0 = calc(lv(40,25), EAN50, S({vpmC:0}), 'VPMB').totalRuntime;
+        const r1 = calc(lv(40,25), EAN50, S({vpmC:1}), 'VPMB').totalRuntime;
+        const r2 = calc(lv(40,25), EAN50, S({vpmC:2}), 'VPMB').totalRuntime;
+        assertCond(r0 <= r1 && r1 <= r2, `C0=${pr(r0)} C1=${pr(r1)} C2=${pr(r2)} — not monotone`);
+        return `C0=${pr(r0)} ≤ C1=${pr(r1)} ≤ C2=${pr(r2)} ✓`;
+      }],
+      ['C2 ≤ C3 ≤ C4 monotone at 40m (Maiken)', 'VPMB', function(){
+        const r2 = calc(lv(40,25), EAN50, S({vpmC:2}), 'VPMB').totalRuntime;
+        const r3 = calc(lv(40,25), EAN50, S({vpmC:3}), 'VPMB').totalRuntime;
+        const r4 = calc(lv(40,25), EAN50, S({vpmC:4}), 'VPMB').totalRuntime;
+        assertCond(r2 <= r3 && r3 <= r4, `C2=${pr(r2)} C3=${pr(r3)} C4=${pr(r4)} — not monotone`);
+        return `C2=${pr(r2)} ≤ C3=${pr(r3)} ≤ C4=${pr(r4)} ✓`;
+      }],
+      ['C4 ≤ C5 monotone at 40m', 'VPMB', function(){
+        const r4 = calc(lv(40,25), EAN50, S({vpmC:4}), 'VPMB').totalRuntime;
+        const r5 = calc(lv(40,25), EAN50, S({vpmC:5}), 'VPMB').totalRuntime;
+        assertCond(r4 <= r5, `C4=${pr(r4)} C5=${pr(r5)} — not monotone`);
+        return `C4=${pr(r4)} ≤ C5=${pr(r5)} ✓`;
+      }],
+      ['C0 ≤ C2 ≤ C4 monotone at 60m/20min', 'VPMB', function(){
+        const r0 = calc(lv(60,20), EAN50_O2, S({vpmC:0}), 'VPMB').totalRuntime;
+        const r2 = calc(lv(60,20), EAN50_O2, S({vpmC:2}), 'VPMB').totalRuntime;
+        const r4 = calc(lv(60,20), EAN50_O2, S({vpmC:4}), 'VPMB').totalRuntime;
+        assertCond(r0 <= r2 && r2 <= r4, `C0=${pr(r0)} C2=${pr(r2)} C4=${pr(r4)} — not monotone`);
+        return `C0=${pr(r0)} ≤ C2=${pr(r2)} ≤ C4=${pr(r4)} ✓`;
+      }],
+      ['VPMB_GFS C0 ≤ C2 monotone at 40m', 'VPMB_GFS', function(){
+        const r0 = calc(lv(40,25), EAN50, S({vpmC:0}), 'VPMB_GFS').totalRuntime;
+        const r2 = calc(lv(40,25), EAN50, S({vpmC:2}), 'VPMB_GFS').totalRuntime;
+        assertCond(r0 <= r2, `VPMB_GFS C0=${pr(r0)} C2=${pr(r2)} — not monotone`);
+        return `VPMB_GFS C0=${pr(r0)} ≤ C2=${pr(r2)} ✓`;
+      }],
+      ['VPMB_GFS: GFS85 ≤ GFS70 ≤ GFS60 ordering at 40m', 'VPMB_GFS', function(){
+        const r85 = calc(lv(40,25), EAN50, S({gfLow:20,gfHigh:85}), 'VPMB_GFS').totalRuntime;
+        const r70 = calc(lv(40,25), EAN50, S({gfLow:20,gfHigh:70}), 'VPMB_GFS').totalRuntime;
+        const r60 = calc(lv(40,25), EAN50, S({gfLow:20,gfHigh:60}), 'VPMB_GFS').totalRuntime;
+        assertCond(r85 <= r70 && r70 <= r60, `GFS85=${pr(r85)} GFS70=${pr(r70)} GFS60=${pr(r60)}`);
+        return `GFS85=${pr(r85)} ≤ GFS70=${pr(r70)} ≤ GFS60=${pr(r60)} ✓`;
+      }],
+      ['GFS ≥ pure VPMB at 40m C0 (GFS cap adds time)', 'VPMB_GFS', function(){
+        const rv = calc(lv(40,25), EAN50, S({vpmC:0}), 'VPMB').totalRuntime;
+        const rg = calc(lv(40,25), EAN50, S({vpmC:0}), 'VPMB_GFS').totalRuntime;
+        assertCond(rg >= rv, `GFS=${pr(rg)} < VPMB=${pr(rv)} — GFS should add time`);
+        return `VPMB=${pr(rv)} GFS=${pr(rg)} (GFS≥VPMB ✓)`;
+      }],
+      ['GFS ≥ pure VPMB at 60m C2', 'VPMB_GFS', function(){
+        const rv = calc(lv(60,20), EAN50_O2, S({vpmC:2}), 'VPMB').totalRuntime;
+        const rg = calc(lv(60,20), EAN50_O2, S({vpmC:2}), 'VPMB_GFS').totalRuntime;
+        assertCond(rg >= rv, `GFS=${pr(rg)} < VPMB=${pr(rv)} — GFS should add time`);
+        return `VPMB=${pr(rv)} GFS=${pr(rg)} (GFS≥VPMB ✓)`;
+      }],
+    ]
+  },
+
+  // ── Group T1-M: Trimix Profiles — All Models ─────────────────────────────
+  {
+    tier: 1, name: 'T1-M · Trimix Profiles — All Models',
+    desc: 'TMX21/35, TMX18/45, TMX10/70 profiles across ZHL, VPM-B, VPM-B/GFS. Based on Maiken cross-model data.',
+    tests: [
+      ['TMX21/35 50m/30min — ZHL completes', 'ZHLC_GF', function(){
+        const tmx = [g(21,35)]; const r = calc(lv(50,30), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX21/35 50m/30min — VPM-B completes', 'VPMB', function(){
+        const tmx = [g(21,35)]; const r = calc(lv(50,30), [...tmx,...EAN50_O2], S(), 'VPMB');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX21/35 50m/30min — VPM-B/GFS completes', 'VPMB_GFS', function(){
+        const tmx = [g(21,35)]; const r = calc(lv(50,30), [...tmx,...EAN50_O2], S(), 'VPMB_GFS');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX18/45 60m/25min — ZHL completes', 'ZHLC_GF', function(){
+        const tmx = [g(18,45)]; const r = calc(lv(60,25), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX18/45 60m/25min — VPM-B completes', 'VPMB', function(){
+        const tmx = [g(18,45)]; const r = calc(lv(60,25), [...tmx,...EAN50_O2], S(), 'VPMB');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX18/45 60m/25min — VPM-B/GFS completes', 'VPMB_GFS', function(){
+        const tmx = [g(18,45)]; const r = calc(lv(60,25), [...tmx,...EAN50_O2], S(), 'VPMB_GFS');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX21/35 60m/20min: ZHL ≤ air+10min (Maiken)', 'ZHLC_GF', function(){
+        const tmx = [g(21,35)]; const rAir = calc(lv(60,20), EAN50_O2, S(), 'ZHLC_GF').totalRuntime;
+        const rTmx = calc(lv(60,20), [...tmx,...EAN50_O2], S(), 'ZHLC_GF').totalRuntime;
+        assertCond(rTmx <= rAir + 10, `TMX=${pr(rTmx)} air=${pr(rAir)} diff=${pr(rTmx-rAir)}min`);
+        return `Air=${pr(rAir)} TMX=${pr(rTmx)} diff=${pr(rTmx-rAir)}min ✓`;
+      }],
+      ['TMX21/35 60m/20min: VPM-B ≤ air+10min (Maiken)', 'VPMB', function(){
+        const tmx = [g(21,35)]; const rAir = calc(lv(60,20), EAN50_O2, S(), 'VPMB').totalRuntime;
+        const rTmx = calc(lv(60,20), [...tmx,...EAN50_O2], S(), 'VPMB').totalRuntime;
+        assertCond(rTmx <= rAir + 10, `TMX=${pr(rTmx)} air=${pr(rAir)} diff=${pr(rTmx-rAir)}min`);
+        return `Air=${pr(rAir)} TMX=${pr(rTmx)} diff=${pr(rTmx-rAir)}min ✓`;
+      }],
+      ['TMX10/70 90m/15min — ZHL no crash', 'ZHLC_GF', function(){
+        const tmx = [g(10,70)]; const r = calc(lv(90,15), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        assertShape(r); return `Deep TMX RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX10/70 90m/15min — VPM-B no crash', 'VPMB', function(){
+        const tmx = [g(10,70)]; const r = calc(lv(90,15), [...tmx,...EAN50_O2], S(), 'VPMB');
+        assertShape(r); return `Deep TMX RT=${pr(r.totalRuntime)}`;
+      }],
+      ['Helitrox35/25 50m/25min — ZHL completes', 'ZHLC_GF', function(){
+        const tmx = [g(35,25)]; const r = calc(lv(50,25), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['Helitrox35/25 50m/25min — VPM-B completes', 'VPMB', function(){
+        const tmx = [g(35,25)]; const r = calc(lv(50,25), [...tmx,...EAN50_O2], S(), 'VPMB');
+        assertShape(r); return `RT=${pr(r.totalRuntime)}`;
+      }],
+      ['TMX CNS finite — ZHL at 60m/25min', 'ZHLC_GF', function(){
+        const tmx = [g(18,45)]; const r = calc(lv(60,25), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        assertShape(r); assertCond(Number.isFinite(r.cns), `CNS not finite: ${r.cns}`);
+        return `CNS=${pr(r.cns)}% OTU=${pr(r.otu)}`;
+      }],
+      ['TMX OTU finite — VPM-B at 60m/25min', 'VPMB', function(){
+        const tmx = [g(18,45)]; const r = calc(lv(60,25), [...tmx,...EAN50_O2], S(), 'VPMB');
+        assertShape(r); assertCond(Number.isFinite(r.otu), `OTU not finite: ${r.otu}`);
+        return `CNS=${pr(r.cns)}% OTU=${pr(r.otu)}`;
+      }],
+    ]
+  },
+
+  // ── Group T1-N: VPM-B First Stop & Bubble Ceiling ────────────────────────
+  {
+    tier: 1, name: 'T1-N · VPM-B First Stop & Bubble Ceiling',
+    desc: 'VPM-B first stops should be deeper than Bühlmann (bubble model credit). Stop depth ordering invariants.',
+    tests: [
+      ['VPM-B first stop ≥ Bühlmann at 40m/25min', 'VPMB', function(){
+        const rv = calc(lv(40,25), EAN50, S(), 'VPMB');
+        const rz = calc(lv(40,25), EAN50, S(), 'ZHLC_GF');
+        assertShape(rv); assertShape(rz);
+        const fv = rv.stops && rv.stops.length ? rv.stops[0].depth : 0;
+        const fz = rz.stops && rz.stops.length ? rz.stops[0].depth : 0;
+        assertCond(fv >= fz, `VPM first stop ${fv}m < ZHL ${fz}m`);
+        return `VPM-B=${fv}m ≥ ZHL=${fz}m ✓`;
+      }],
+      ['VPM-B first stop ≥ Bühlmann at 60m/20min', 'VPMB', function(){
+        const rv = calc(lv(60,20), EAN50_O2, S(), 'VPMB');
+        const rz = calc(lv(60,20), EAN50_O2, S(), 'ZHLC_GF');
+        assertShape(rv); assertShape(rz);
+        const fv = rv.stops && rv.stops.length ? rv.stops[0].depth : 0;
+        const fz = rz.stops && rz.stops.length ? rz.stops[0].depth : 0;
+        assertCond(fv >= fz, `VPM first stop ${fv}m < ZHL ${fz}m`);
+        return `VPM-B=${fv}m ≥ ZHL=${fz}m ✓`;
+      }],
+      ['60m first stop ≥ 40m first stop — VPM-B (deeper dive → deeper stop)', 'VPMB', function(){
+        const r40 = calc(lv(40,25), EAN50, S(), 'VPMB');
+        const r60 = calc(lv(60,20), EAN50_O2, S(), 'VPMB');
+        assertShape(r40); assertShape(r60);
+        const f40 = r40.stops && r40.stops.length ? r40.stops[0].depth : 0;
+        const f60 = r60.stops && r60.stops.length ? r60.stops[0].depth : 0;
+        assertCond(f60 >= f40, `60m first stop ${f60}m < 40m first stop ${f40}m`);
+        return `40m→${f40}m 60m→${f60}m ✓`;
+      }],
+      ['60m first stop ≥ 40m first stop — ZHL', 'ZHLC_GF', function(){
+        const r40 = calc(lv(40,25), EAN50, S(), 'ZHLC_GF');
+        const r60 = calc(lv(60,20), EAN50_O2, S(), 'ZHLC_GF');
+        assertShape(r40); assertShape(r60);
+        const f40 = r40.stops && r40.stops.length ? r40.stops[0].depth : 0;
+        const f60 = r60.stops && r60.stops.length ? r60.stops[0].depth : 0;
+        assertCond(f60 >= f40, `60m first stop ${f60}m < 40m first stop ${f40}m`);
+        return `40m→${f40}m 60m→${f60}m ✓`;
+      }],
+      ['VPM-B C4 first stop ≥ C0 first stop at 60m (more conservatism → deeper)', 'VPMB', function(){
+        const r0 = calc(lv(60,20), EAN50_O2, S({vpmC:0}), 'VPMB');
+        const r4 = calc(lv(60,20), EAN50_O2, S({vpmC:4}), 'VPMB');
+        assertShape(r0); assertShape(r4);
+        const f0 = r0.stops && r0.stops.length ? r0.stops[0].depth : 0;
+        const f4 = r4.stops && r4.stops.length ? r4.stops[0].depth : 0;
+        assertCond(f4 >= f0, `C4 first stop ${f4}m < C0 first stop ${f0}m`);
+        return `C0=${f0}m C4=${f4}m ✓`;
+      }],
+      ['Stop depths non-increasing — ZHL at 50m/30min', 'ZHLC_GF', function(){
+        const r = calc(lv(50,30), EAN50_O2, S(), 'ZHLC_GF'); assertShape(r);
+        if (!r.stops || r.stops.length < 2) return 'single/no stop — skip';
+        for (let i = 1; i < r.stops.length; i++) {
+          assertCond(r.stops[i].depth <= r.stops[i-1].depth,
+            `Stop ${i}: ${r.stops[i].depth}m > stop ${i-1}: ${r.stops[i-1].depth}m`);
+        }
+        return `${r.stops.length} stops non-increasing ✓`;
+      }],
+      ['Stop depths non-increasing — VPM-B at 50m/30min', 'VPMB', function(){
+        const r = calc(lv(50,30), EAN50_O2, S(), 'VPMB'); assertShape(r);
+        if (!r.stops || r.stops.length < 2) return 'single/no stop — skip';
+        for (let i = 1; i < r.stops.length; i++) {
+          assertCond(r.stops[i].depth <= r.stops[i-1].depth,
+            `Stop ${i}: ${r.stops[i].depth}m > stop ${i-1}: ${r.stops[i-1].depth}m`);
+        }
+        return `${r.stops.length} stops non-increasing ✓`;
+      }],
+      ['Stop depths non-increasing — VPM-B/GFS at 50m/30min', 'VPMB_GFS', function(){
+        const r = calc(lv(50,30), EAN50_O2, S(), 'VPMB_GFS'); assertShape(r);
+        if (!r.stops || r.stops.length < 2) return 'single/no stop — skip';
+        for (let i = 1; i < r.stops.length; i++) {
+          assertCond(r.stops[i].depth <= r.stops[i-1].depth,
+            `Stop ${i}: ${r.stops[i].depth}m > stop ${i-1}: ${r.stops[i-1].depth}m`);
+        }
+        return `${r.stops.length} stops non-increasing ✓`;
+      }],
+    ]
+  },
+
+  // ── Group T1-O: Cross-Model TAT Ordering (Maiken) ─────────────────────────
+  {
+    tier: 1, name: 'T1-O · Cross-Model TAT Ordering (Maiken)',
+    desc: 'Validates cross-model runtime ordering from Maiken studies: VPM-B short shallow, GF long.',
+    tests: [
+      ['40m/25min: ZHL vs VPM-B spread ≤ 60min (same order of magnitude)', 'VPMB', function(){
+        const rv = calc(lv(40,25), EAN50, S(), 'VPMB').totalRuntime;
+        const rz = calc(lv(40,25), EAN50, S(), 'ZHLC_GF').totalRuntime;
+        const spread = Math.abs(rv - rz);
+        assertCond(spread <= 60, `Spread ${pr(spread)}min > 60min — models diverging`);
+        return `ZHL=${pr(rz)} VPM=${pr(rv)} spread=${pr(spread)}min ✓`;
+      }],
+      ['50m/25min: VPM-B(C4) vs GF30/85 spread ≤ 60min (Maiken)', 'VPMB', function(){
+        const rv = calc(lv(50,25), EAN50_O2, S({vpmC:4}), 'VPMB').totalRuntime;
+        const rz = calc(lv(50,25), EAN50_O2, S({gfLow:30,gfHigh:85}), 'ZHLC_GF').totalRuntime;
+        const spread = Math.abs(rv - rz);
+        assertCond(spread <= 60, `Spread ${pr(spread)}min > 60min`);
+        return `GF30/85=${pr(rz)} VPM-B(C4)=${pr(rv)} spread=${pr(spread)}min ✓`;
+      }],
+      ['All 3 models give RT > 30min for 40m deco dive (sanity)', 'VPMB', function(){
+        const rv = calc(lv(40,25), EAN50, S(), 'VPMB').totalRuntime;
+        const rz = calc(lv(40,25), EAN50, S(), 'ZHLC_GF').totalRuntime;
+        const rg = calc(lv(40,25), EAN50, S(), 'VPMB_GFS').totalRuntime;
+        assertCond(rv > 30 && rz > 30 && rg > 30, `Some model ≤30min: VPM=${pr(rv)} ZHL=${pr(rz)} GFS=${pr(rg)}`);
+        return `VPM=${pr(rv)} ZHL=${pr(rz)} GFS=${pr(rg)} all >30min ✓`;
+      }],
+      ['GFS ≥ VPMB at 40m — VPMB_GFS monoTest', 'VPMB_GFS', function(){
+        const rv = calc(lv(40,25), EAN50, S(), 'VPMB').totalRuntime;
+        const rg = calc(lv(40,25), EAN50, S(), 'VPMB_GFS').totalRuntime;
+        assertCond(rg >= rv, `GFS=${pr(rg)} < VPMB=${pr(rv)}`);
+        return `VPMB=${pr(rv)} GFS=${pr(rg)} (GFS≥VPMB ✓)`;
+      }],
+      ['GFS ≥ VPMB at 60m — VPMB_GFS monoTest', 'VPMB_GFS', function(){
+        const rv = calc(lv(60,20), EAN50_O2, S(), 'VPMB').totalRuntime;
+        const rg = calc(lv(60,20), EAN50_O2, S(), 'VPMB_GFS').totalRuntime;
+        assertCond(rg >= rv, `GFS=${pr(rg)} < VPMB=${pr(rv)}`);
+        return `VPMB=${pr(rv)} GFS=${pr(rg)} (GFS≥VPMB ✓)`;
+      }],
+      ['90m/15min TMX10/70: all 3 models complete', 'ZHLC_GF', function(){
+        const tmx = [g(10,70)];
+        const rz = calc(lv(90,15), [...tmx,...EAN50_O2], S(), 'ZHLC_GF');
+        const rv = calc(lv(90,15), [...tmx,...EAN50_O2], S(), 'VPMB');
+        const rg = calc(lv(90,15), [...tmx,...EAN50_O2], S(), 'VPMB_GFS');
+        assertShape(rz); assertShape(rv); assertShape(rg);
+        return `ZHL=${pr(rz.totalRuntime)} VPM=${pr(rv.totalRuntime)} GFS=${pr(rg.totalRuntime)}`;
+      }],
+      ['60m/20min VPM-B(C2) runtime informational', 'VPMB', function(){
+        const rv = calc(lv(60,20), EAN50_O2, S({vpmC:2}), 'VPMB').totalRuntime;
+        const rz = calc(lv(60,20), EAN50_O2, S({gfLow:30,gfHigh:70}), 'ZHLC_GF').totalRuntime;
+        return `VPM-B(C2)=${pr(rv)} GF30/70=${pr(rz)} (informational)`;
       }],
     ]
   },

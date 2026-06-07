@@ -454,6 +454,94 @@ var GROUPS = [
     ]
   },
 
+
+  {
+    name: 'VPM-B Physical Invariants',
+    tests: [
+      // GFS always ≥ VPM-B (GF cap adds time at shallow stops)
+      ['VPMB_GFS RT ≥ VPMB for 40m/25min', function() {
+        var a = E.calculate(makeLevel(40,25), NODECO, makeSettings(), 'VPMB');
+        var b = E.calculate(makeLevel(40,25), NODECO, makeSettings(), 'VPMB_GFS');
+        assert(!a.error && !b.error, 'Engine error');
+        assert(b.totalRuntime + 0.5 >= a.totalRuntime,
+          'VPMB_GFS RT ' + b.totalRuntime.toFixed(1) + ' < VPMB RT ' + a.totalRuntime.toFixed(1));
+        return 'VPMB→' + a.totalRuntime.toFixed(1) + '  GFS→' + b.totalRuntime.toFixed(1);
+      }],
+      // Conservatism monotonicity: C2 ≥ C0
+      ['VPM-B C2 RT ≥ C0 RT (40m/25min)', function() {
+        var r0 = E.calculate(makeLevel(40,25), NODECO, makeSettings({conservatism:0}), 'VPMB');
+        var r2 = E.calculate(makeLevel(40,25), NODECO, makeSettings({conservatism:2}), 'VPMB');
+        assert(!r0.error && !r2.error, 'Engine error');
+        assert(r2.totalRuntime + 0.5 >= r0.totalRuntime,
+          'C2 RT ' + r2.totalRuntime.toFixed(1) + ' < C0 RT ' + r0.totalRuntime.toFixed(1));
+        return 'C0→' + r0.totalRuntime.toFixed(1) + '  C2→' + r2.totalRuntime.toFixed(1);
+      }],
+      // Conservatism monotonicity: C4 ≥ C2
+      ['VPM-B C4 RT ≥ C2 RT (45m/25min)', function() {
+        var r2 = E.calculate(makeLevel(45,25), NODECO, makeSettings({conservatism:2}), 'VPMB');
+        var r4 = E.calculate(makeLevel(45,25), NODECO, makeSettings({conservatism:4}), 'VPMB');
+        assert(!r2.error && !r4.error, 'Engine error');
+        assert(r4.totalRuntime + 0.5 >= r2.totalRuntime,
+          'C4 RT ' + r4.totalRuntime.toFixed(1) + ' < C2 RT ' + r2.totalRuntime.toFixed(1));
+        return 'C2→' + r2.totalRuntime.toFixed(1) + '  C4→' + r4.totalRuntime.toFixed(1);
+      }],
+      // He-rich trimix: VPM-B shorter than air at same depth (VPM credits deep stops; He fast off-gas)
+      ['VPM-B: TMX 21/35 gives ≤ air RT at 60m/20min', function() {
+        var air = E.calculate(makeLevel(60,20,21,0), NODECO, makeSettings(), 'VPMB');
+        var tmx = E.calculate(makeLevel(60,20,21,35), NODECO, makeSettings(), 'VPMB');
+        assert(!air.error && !tmx.error, 'Engine error');
+        // He off-gasses faster (shorter half-times) so trimix should produce ≤ or similar runtime
+        assert(tmx.totalRuntime <= air.totalRuntime + 5,
+          'TMX RT ' + tmx.totalRuntime.toFixed(1) + ' much longer than air RT ' + air.totalRuntime.toFixed(1));
+        return 'Air→' + air.totalRuntime.toFixed(1) + '  TMX21/35→' + tmx.totalRuntime.toFixed(1);
+      }],
+      // Deeper first stop for deeper dive (VPM-B places stops based on bubble mechanics)
+      ['VPM-B: 60m dive first stop deeper than 40m dive first stop', function() {
+        var r40 = E.calculate(makeLevel(40,25), NODECO, makeSettings(), 'VPMB');
+        var r60 = E.calculate(makeLevel(60,20), NODECO, makeSettings(), 'VPMB');
+        assert(!r40.error && !r60.error, 'Engine error');
+        var stops40 = (r40.stops || []).filter(function(s){ return s.time > 0; });
+        var stops60 = (r60.stops || []).filter(function(s){ return s.time > 0; });
+        if (stops40.length === 0 || stops60.length === 0) return 'insufficient stops to compare';
+        var first40 = Math.max.apply(null, stops40.map(function(s){ return s.depth; }));
+        var first60 = Math.max.apply(null, stops60.map(function(s){ return s.depth; }));
+        assert(first60 >= first40,
+          '60m first stop ' + first60 + 'm not deeper than 40m first stop ' + first40 + 'm');
+        return '40m first stop=' + first40 + 'm  60m first stop=' + first60 + 'm';
+      }],
+    ]
+  },
+
+  {
+    name: 'Constants & Physical Sanity',
+    tests: [
+      // Water vapour pressure at 37°C ≈ 0.0627 bar (used in alveolar pO2 correction)
+      ['altSurfaceP sea level ≈ 1.013 bar (within 0.01)', function() {
+        assert(approx(SURF, 1.013, 0.01), 'Got ' + SURF);
+        return SURF.toFixed(4) + ' bar';
+      }],
+      // BAR_PER_METRE consistent with salt water 1025 kg/m³
+      ['BAR_PER_METRE in physic salt range (0.0993–0.1007)', function() {
+        assert(BAR != null && BAR >= 0.0993 && BAR <= 0.1007,
+          'Got ' + BAR + ' — expected ~0.100 for salt 1025 kg/m³');
+        return BAR.toFixed(5) + ' bar/m';
+      }],
+      // 10m salt water depth ≈ 1.0 bar absolute pressure increase
+      ['10m salt water pressure ≈ 1.0 bar (±0.015)', function() {
+        var p10 = BAR * 10;
+        assert(approx(p10, 1.0, 0.015), '10m pressure = ' + p10.toFixed(4) + ' bar');
+        return '10m = ' + p10.toFixed(4) + ' bar';
+      }],
+      // Engine handles conservatism 0 through 5 without error
+      ['VPM-B conservatism 5 runs without error', function() {
+        var r = E.calculate(makeLevel(40,25), NODECO, makeSettings({conservatism:5}), 'VPMB');
+        assert(!r.error, r.error || 'Engine error');
+        assert(r.totalRuntime > 25);
+        return 'C5 RT=' + r.totalRuntime.toFixed(1) + ' min';
+      }],
+    ]
+  },
+
 ];
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────

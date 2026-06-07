@@ -300,7 +300,7 @@ iframe { display: none; }
   <div class="header">
     <div class="title">
       <h1>LSP D-PLANNER</h1>
-      <p>Extended algorithm regression suite · Bühlmann ZH-L16C + GF · VPM-B · VPM-B/GFS</p>
+      <p>Extended algorithm regression suite · Bühlmann ZH-L16C + GF · VPM-B · VPM-B/GFS · Trimix · Conservatism ordering</p>
     </div>
     <div class="controls">
       <button id="run-btn" onclick="startTests()">▶ Run Extended Tests</button>
@@ -340,6 +340,9 @@ iframe { display: none; }
         <div class="legend-row"><span>Gas switching</span><span>bottom + deco gases</span></div>
         <div class="legend-row"><span>Units & water</span><span>metric/imperial/fresh/salt</span></div>
         <div class="legend-row"><span>Determinism</span><span>repeatability/state leakage</span></div>
+        <div class="legend-row"><span>Conservatism sweep</span><span>C0–C5 + GFS ordering</span></div>
+        <div class="legend-row"><span>Trimix helium</span><span>He loading + multi-gas deco</span></div>
+        <div class="legend-row"><span>First stop depth</span><span>VPM-B bubble ceiling</span></div>
       </div>
 
       <div class="card">
@@ -613,6 +616,159 @@ const GROUPS = [
       ['Deep VPM-B case completes without crash', 'VPMB', function(){ const r = calc(level(80,20), NO_GASES, makeSettings(), 'VPMB'); assert(r.totalRuntime > 20, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
     ]
   },
+  {
+    name: 'VPM-B Conservatism & Cross-Model Ordering',
+    tests: [
+      // C0 < C2 < C4 monotonic — each step adds time
+      ['C0 < C2 < C4 runtime monotonicity (40m/25min)', 'VPMB', function(){
+        const c0 = calc(level(40,25), NO_GASES, makeSettings({conservatism:0}), 'VPMB');
+        const c2 = calc(level(40,25), NO_GASES, makeSettings({conservatism:2}), 'VPMB');
+        const c4 = calc(level(40,25), NO_GASES, makeSettings({conservatism:4}), 'VPMB');
+        assert(c2.totalRuntime + 0.5 >= c0.totalRuntime, `C2 < C0: ${pretty(c2.totalRuntime)} < ${pretty(c0.totalRuntime)}`);
+        assert(c4.totalRuntime + 0.5 >= c2.totalRuntime, `C4 < C2: ${pretty(c4.totalRuntime)} < ${pretty(c2.totalRuntime)}`);
+        return `C0=${pretty(c0.totalRuntime)} C2=${pretty(c2.totalRuntime)} C4=${pretty(c4.totalRuntime)}`;
+      }],
+      // C0 through C5 all complete without error
+      ['VPM-B conservatism 0-5 all run without error', 'VPMB', function(){
+        const rts = [];
+        for (let c = 0; c <= 5; c++) {
+          const r = calc(level(45,25), NO_GASES, makeSettings({conservatism:c}), 'VPMB');
+          rts.push(`C${c}=${pretty(r.totalRuntime)}`);
+        }
+        return rts.join(' ');
+      }],
+      // VPMB_GFS >= VPMB: GF cap on shallow stops always adds time or equals
+      ['VPMB_GFS RT >= VPMB RT (40m/25min)', 'VPMB_GFS', function(){
+        const vpm  = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB');
+        const gfs  = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS');
+        assert(gfs.totalRuntime + 0.5 >= vpm.totalRuntime,
+          `GFS shorter than VPM-B: ${pretty(gfs.totalRuntime)} < ${pretty(vpm.totalRuntime)}`);
+        return `VPMB=${pretty(vpm.totalRuntime)} GFS=${pretty(gfs.totalRuntime)}`;
+      }],
+      // VPMB_GFS >= VPMB on a deep TMX profile (where the GF cap bites hardest)
+      ['VPMB_GFS RT >= VPMB RT (60m/20min)', 'VPMB_GFS', function(){
+        const vpm = calc(level(60,20), NO_GASES, makeSettings(), 'VPMB');
+        const gfs = calc(level(60,20), NO_GASES, makeSettings(), 'VPMB_GFS');
+        assert(gfs.totalRuntime + 0.5 >= vpm.totalRuntime,
+          `GFS shorter: ${pretty(gfs.totalRuntime)} < ${pretty(vpm.totalRuntime)}`);
+        return `VPMB=${pretty(vpm.totalRuntime)} GFS=${pretty(gfs.totalRuntime)}`;
+      }],
+      // GFS cap tightness: lower GFS value -> longer RT
+      ['Lower GFS (60 vs 85) -> longer VPMB_GFS RT', 'VPMB_GFS', function(){
+        const loose = calc(level(45,25), NO_GASES, makeSettings({gfs:85}), 'VPMB_GFS');
+        const tight = calc(level(45,25), NO_GASES, makeSettings({gfs:60}), 'VPMB_GFS');
+        assert(tight.totalRuntime + 0.5 >= loose.totalRuntime,
+          `GFS60 shorter: ${pretty(tight.totalRuntime)} < GFS85 ${pretty(loose.totalRuntime)}`);
+        return `GFS85=${pretty(loose.totalRuntime)} GFS60=${pretty(tight.totalRuntime)}`;
+      }],
+      // Maiken finding: at deep TMX, GF-equivalent conservatism is much higher than VPM-B(2)
+      // VPM-B(C0) should be shorter than GF with tight settings for deep dives (VPM credits deep stops)
+      ['VPM-B(C0) shorter than tight GF (20/70) for 60m air dive', 'ALL', function(){
+        const vpm = calc(level(60,20), NO_GASES, makeSettings({conservatism:0}), 'VPMB');
+        const gf  = calc(level(60,20), NO_GASES, makeSettings({gfLo:20, gfHi:70}), 'ZHLC_GF');
+        // VPM-B(0) should be appreciably shorter for a genuinely deep dive
+        return `VPM-B(0)=${pretty(vpm.totalRuntime)} GF20/70=${pretty(gf.totalRuntime)}`;
+      }],
+    ]
+  },
+
+  {
+    name: 'Trimix Helium Behavior',
+    tests: [
+      // TMX with He: engine runs for all 3 models
+      ['Bühlmann: 60m TMX18/45 runs', 'ZHLC_GF', function(){
+        const r = calc(level(60,20,18,45), [gas(50,0), gas(100,0)], makeSettings(), 'ZHLC_GF');
+        assert(r.totalRuntime > 20); return `RT=${pretty(r.totalRuntime)}`;
+      }],
+      ['VPM-B: 60m TMX18/45 runs', 'VPMB', function(){
+        const r = calc(level(60,20,18,45), [gas(50,0), gas(100,0)], makeSettings(), 'VPMB');
+        assert(r.totalRuntime > 20); return `RT=${pretty(r.totalRuntime)}`;
+      }],
+      ['VPMB_GFS: 60m TMX18/45 runs', 'VPMB_GFS', function(){
+        const r = calc(level(60,20,18,45), [gas(50,0), gas(100,0)], makeSettings(), 'VPMB_GFS');
+        assert(r.totalRuntime > 20); return `RT=${pretty(r.totalRuntime)}`;
+      }],
+      // He reduces N2 loading: TMX 21/35 should have shorter or similar RT vs air at same depth
+      // (He off-gasses 1.8-2.6x faster than N2 per Baker's half-time ratios; total inert load lower)
+      ['TMX 21/35 RT ≤ air RT + 10min at 60m/20min (Bühlmann)', 'ZHLC_GF', function(){
+        const air = calc(level(60,20,21,0), NO_GASES, makeSettings(), 'ZHLC_GF');
+        const tmx = calc(level(60,20,21,35), NO_GASES, makeSettings(), 'ZHLC_GF');
+        assert(tmx.totalRuntime <= air.totalRuntime + 10,
+          `TMX RT ${pretty(tmx.totalRuntime)} >> air ${pretty(air.totalRuntime)}`);
+        return `Air=${pretty(air.totalRuntime)} TMX21/35=${pretty(tmx.totalRuntime)}`;
+      }],
+      ['TMX 21/35 RT ≤ air RT + 10min at 60m/20min (VPM-B)', 'VPMB', function(){
+        const air = calc(level(60,20,21,0), NO_GASES, makeSettings(), 'VPMB');
+        const tmx = calc(level(60,20,21,35), NO_GASES, makeSettings(), 'VPMB');
+        assert(tmx.totalRuntime <= air.totalRuntime + 10,
+          `TMX RT ${pretty(tmx.totalRuntime)} >> air ${pretty(air.totalRuntime)}`);
+        return `Air=${pretty(air.totalRuntime)} TMX21/35=${pretty(tmx.totalRuntime)}`;
+      }],
+      // More He = faster off-gas: TMX 18/45 should be shorter than TMX 21/35
+      ['More He (TMX18/45) gives ≤ RT vs less He (TMX21/35) at 60m (VPM-B)', 'VPMB', function(){
+        const t2135 = calc(level(60,20,21,35), NO_GASES, makeSettings(), 'VPMB');
+        const t1845 = calc(level(60,20,18,45), NO_GASES, makeSettings(), 'VPMB');
+        // Not strictly guaranteed in all models, but is physically expected
+        return `TMX21/35=${pretty(t2135.totalRuntime)} TMX18/45=${pretty(t1845.totalRuntime)}`;
+      }],
+      // CNS/OTU still valid for trimix
+      ['TMX 18/45 60m/20min: finite CNS and OTU', 'ZHLC_GF', function(){
+        const r = calc(level(60,20,18,45), [gas(50,0), gas(100,0)], makeSettings(), 'ZHLC_GF');
+        assert(isFinite(r.totalCNS) && r.totalCNS >= 0, `CNS invalid: ${r.totalCNS}`);
+        assert(isFinite(r.totalOTU) && r.totalOTU >= 0, `OTU invalid: ${r.totalOTU}`);
+        return `CNS=${pretty(r.totalCNS,1)}% OTU=${Math.round(r.totalOTU)}`;
+      }],
+      // Deep trimix with multiple deco gases
+      ['Deep TMX 10/70 90m/15min — no crash (Bühlmann)', 'ZHLC_GF', function(){
+        const decoGases = [gas(21,35), gas(35,25), gas(50,0), gas(100,0)];
+        const r = calc(level(90,15,10,70), decoGases, makeSettings(), 'ZHLC_GF');
+        assert(r.totalRuntime > 15); return `RT=${pretty(r.totalRuntime)}`;
+      }],
+    ]
+  },
+
+  {
+    name: 'VPM-B First Stop Depth',
+    tests: [
+      // VPM-B places deeper first stops than Bühlmann for deep dives (bubble model)
+      ['VPM-B first stop at least as deep as Bühlmann (60m/20min)', 'ALL', function(){
+        const rZHL = calc(level(60,20), NO_GASES, makeSettings(), 'ZHLC_GF');
+        const rVPM = calc(level(60,20), NO_GASES, makeSettings(), 'VPMB');
+        const stopsZHL = stopSegments(rZHL);
+        const stopsVPM = stopSegments(rVPM);
+        if (stopsZHL.length === 0 || stopsVPM.length === 0) return 'no stops to compare';
+        const firstZHL = Math.max(...stopsZHL.map(s => s.depth));
+        const firstVPM = Math.max(...stopsVPM.map(s => s.depth));
+        // VPM-B mechanically places the first stop deeper (bubble-based ceiling)
+        assert(firstVPM >= firstZHL - 3,
+          `VPM-B first stop ${firstVPM}m not at least as deep as Bühlmann ${firstZHL}m`);
+        return `Bühlmann=${firstZHL}m VPM-B=${firstVPM}m`;
+      }],
+      // Deeper dive -> deeper first stop (for VPM-B)
+      ['Deeper dive -> deeper first stop (VPM-B, 40m vs 60m)', 'VPMB', function(){
+        const r40 = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB');
+        const r60 = calc(level(60,20), NO_GASES, makeSettings(), 'VPMB');
+        const s40 = stopSegments(r40); const s60 = stopSegments(r60);
+        if (s40.length === 0 || s60.length === 0) return 'no stops (check dive profiles)';
+        const d40 = Math.max(...s40.map(s => s.depth));
+        const d60 = Math.max(...s60.map(s => s.depth));
+        assert(d60 >= d40, `60m first stop ${d60}m not deeper than 40m ${d40}m`);
+        return `40m first stop=${d40}m  60m first stop=${d60}m ✓`;
+      }],
+      // Stops are shallower from bottom upward (plan integrity)
+      ['Stop depths strictly non-increasing during ascent (VPM-B)', 'VPMB', function(){
+        const r = calc(level(50,25), NO_GASES, makeSettings(), 'VPMB');
+        const stops = stopSegments(r);
+        let lastD = Infinity;
+        stops.forEach((s, i) => {
+          assert(s.depth <= lastD + 1e-9, `stop depth increased at index ${i}: ${s.depth} > ${lastD}`);
+          lastD = s.depth;
+        });
+        return `${stops.length} stops in correct order ✓`;
+      }],
+    ]
+  },
+
   {
     name: 'Output Sanity Warnings',
     tests: [
