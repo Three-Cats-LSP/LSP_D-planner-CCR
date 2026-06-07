@@ -1009,10 +1009,56 @@ const TIER2_GROUPS = [
       }],
       ['GF low/high inputs exist', 'UI', function(){
         const d = getDoc();
-        const lo = d.getElementById('gfLow') || d.getElementById('gflo') || d.getElementById('gfLo') || d.querySelector('input[id*="gfL"]');
-        const hi = d.getElementById('gfHigh') || d.getElementById('gfhi') || d.getElementById('gfHi') || d.querySelector('input[id*="gfH"]');
-        assert(lo, 'GF Low input not found'); assert(hi, 'GF High input not found');
-        return `lo=#${lo.id} hi=#${hi.id}`;
+        // GF fields are <select> elements since v2.5 (changed from <input type=number>)
+        const lo = d.getElementById('gfLowInput') || d.getElementById('gfLow') || d.getElementById('gflo') || d.querySelector('#gfLowInput, select[id*="gfL"], input[id*="gfL"]');
+        const hi = d.getElementById('gfHighInput') || d.getElementById('gfHigh') || d.getElementById('gfhi') || d.querySelector('#gfHighInput, select[id*="gfH"], input[id*="gfH"]');
+        assert(lo, 'GF Low element not found'); assert(hi, 'GF High element not found');
+        return `lo=#${lo.id} (${lo.tagName}) hi=#${hi.id} (${hi.tagName})`;
+      }],
+      ['Altitude select (Tec) exists', 'UI', function(){
+        const d = getDoc();
+        const el = d.getElementById('altitudeSelect');
+        assert(el, '#altitudeSelect not found');
+        return `found, value=${el.value}`;
+      }],
+      ['Altitude select (Rec) exists', 'UI', function(){
+        const d = getDoc();
+        const el = d.getElementById('altitudeSelectRec');
+        assert(el, '#altitudeSelectRec not found');
+        return `found, value=${el.value}`;
+      }],
+      ['Rec custom altitude row exists', 'UI', function(){
+        const d = getDoc();
+        const el = d.getElementById('altitudeCustomRowRec');
+        assert(el, '#altitudeCustomRowRec not found');
+        return 'found ✓';
+      }],
+      ['#tipModal exists in DOM', 'UI', function(){
+        const d = getDoc();
+        const el = d.getElementById('tipModal');
+        assert(el, '#tipModal not found');
+        return 'found ✓';
+      }],
+      ['showTip / closeTip functions exist', 'UI', function(){
+        assert(typeof WIN.showTip === 'function', 'showTip not found');
+        assert(typeof WIN.closeTip === 'function', 'closeTip not found');
+        return 'showTip + closeTip ✓';
+      }],
+      ['tipModal opens and closes via showTip/closeTip', 'UI', function(){
+        const d = getDoc();
+        const modal = d.getElementById('tipModal');
+        assert(modal, '#tipModal not found');
+        WIN.showTip('Test Title', 'Test body text');
+        const visAfterShow = modal.style.display !== 'none';
+        WIN.closeTip();
+        const hidAfterClose = modal.style.display === 'none' || modal.style.display === '';
+        assert(visAfterShow, 'tipModal did not become visible after showTip()');
+        assert(hidAfterClose, 'tipModal did not close after closeTip()');
+        return 'open → close ✓';
+      }],
+      ['applyCustomAltitudeRec function exists', 'UI', function(){
+        assert(typeof WIN.applyCustomAltitudeRec === 'function', 'applyCustomAltitudeRec not found');
+        return 'found ✓';
       }],
       ['Units selector exists', 'UI', function(){
         const d = getDoc();
@@ -1048,28 +1094,26 @@ const TIER2_GROUPS = [
     tests: [
       ['GF Low value readable from DOM', 'UI', function(){
         const d = getDoc();
-        // GF inputs are in #gfLowInput/#gfHighInput (inside hidden #gfCustomRow when preset is used)
-        // The app also stores GF in the preset select — read from gfLowInput or the algorithm select
-        const el = d.getElementById('gfLowInput') || d.getElementById('gfLow') || d.querySelector('input[id*="gfL"]');
-        assert(el, 'GF Low not found');
-        // If input is empty (preset mode), use placeholder or check win.getGF
+        // GF fields are <select> since v2.5 (previously <input type=number>); select.value works identically
+        const el = d.getElementById('gfLowInput') || d.getElementById('gfLow') || d.querySelector('#gfLowInput, select[id*="gfL"], input[id*="gfL"]');
+        assert(el, 'GF Low element not found');
+        // select.value works the same as input.value
         let v = parseFloat(el.value);
-        if (!isFinite(v)) v = parseFloat(el.placeholder); // placeholder shows default
         if (!isFinite(v) && typeof WIN.getGF === 'function') v = WIN.getGF().lo;
-        if (!isFinite(v)) v = 30; // app default GF Lo
+        if (!isFinite(v)) v = 40; // app default GF Lo (v2.5: 40)
         assert(isFinite(v) && v > 0 && v <= 100, `GF Low out of range: ${v}`);
-        return `GF Low = ${v}`;
+        return `GF Low = ${v} (${el.tagName})`;
       }],
       ['GF High value readable from DOM', 'UI', function(){
         const d = getDoc();
-        const el = d.getElementById('gfHighInput') || d.getElementById('gfHigh') || d.querySelector('input[id*="gfH"]');
-        assert(el, 'GF High not found');
+        // GF fields are <select> since v2.5; querySelector must not restrict to input
+        const el = d.getElementById('gfHighInput') || d.getElementById('gfHigh') || d.querySelector('#gfHighInput, select[id*="gfH"], input[id*="gfH"]');
+        assert(el, 'GF High element not found');
         let v = parseFloat(el.value);
-        if (!isFinite(v)) v = parseFloat(el.placeholder); // placeholder shows default
         if (!isFinite(v) && typeof WIN.getGF === 'function') v = WIN.getGF().hi;
-        if (!isFinite(v)) v = 85; // app default GF Hi
+        if (!isFinite(v)) v = 80; // app default GF Hi (v2.5: 80)
         assert(isFinite(v) && v > 0 && v <= 100, `GF High out of range: ${v}`);
-        return `GF High = ${v}`;
+        return `GF High = ${v} (${el.tagName})`;
       }],
       ['setUnits("imperial") function callable', 'UI', function(){
         assert(typeof WIN.setUnits === 'function', 'setUnits not found');
