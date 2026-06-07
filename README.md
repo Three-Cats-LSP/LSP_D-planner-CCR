@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.5 Beta 2**
+**Version 2.5**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -36,6 +36,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Altitude presets: sea level, 500 m, 1000 m, 1500 m, 2000 m, 2500 m, 3000 m, custom
 - Acclimatization toggle (adjusts effective surface pressure)
 - All engine calculations use altitude-corrected surface pressure
+- Custom altitude input available in both Tec and Rec modes
 - Settings persisted across sessions
 
 ### Units
@@ -51,13 +52,14 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Summary stats bar: max depth, bottom time, TTS, CNS, OTU, altitude chip, travel gas chip
 - Gas tags strip: colour-coded pills per gas (surface → MOD ranges)
 - Profile export / print view
+- **Export includes Altitude and Acclimatization** — text export, copy, and TXT filename all reflect current altitude and acclimatization state
 
 ---
 
 ## Repository Files
 
 | File | Purpose |
-|------|---------|
+|------|---------| 
 | `index.html` | Main self-contained web app — the entire planner in one file |
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java engine |
@@ -87,12 +89,22 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
+### 2.5
+- **Altitude + Acclimatize in exports** — altitude label and acclimatization state now appear in text export, copy output, and TXT filename suffix (`_AltNNNmAccl` / `_AltNNNmNoAccl`); no suffix added at sea level
+- **"Alt:" label** — toolbar label shortened from "Altitude:" to "Alt:" in both Tec and Rec modes for a cleaner interface
+- **Rec mode custom altitude input** — Custom altitude option in Rec toolbar now shows an input field (mirrors Tec side behaviour); `applyCustomAltitudeRec()` syncs value back to engine
+- **GF custom dropdowns** — GF Low and High custom inputs replaced with dropdowns (Low: 10–100 step 5, default 40; High: 50–100 step 5, default 80) for easier entry on touchscreens and desktop
+- **Tap/click tooltip popups** — all 11 settings info icons replaced with tap/click `?` SVG buttons that open a centred popup modal (`#tipModal`); hover-only tooltips removed for full mobile compatibility
+- **SVG `?` icon** — pixel-perfect pure-path SVG icon used for all tooltip buttons and the Decompression Schedule header `?` button, ensuring consistent design across all controls
+- **tipModal display fix** — removed duplicate `display:none` in inline style that prevented the popup from opening
+
 ### 2.5 Beta 2
 - **Travel gas** — full implementation: dedicated card below bottom gas, descent table split into travel + bottom rows, ascent transit above bottom MOD, orange UI accent throughout
 - **Altitude diving** — altitude-corrected surface pressure for all engine calculations (ceiling, depth bar, tissue init), dropdown presets with acclimatization toggle, localStorage persistence
 - **Metric/Imperial fix** — complete: all gas card inputs, cylinder fields, MOD displays, travel gas switch depth, and dynamic deco gas cards all respond to global unit setting
+- **GF fixes** — default GF corrected to 20/85; `setCustomGF` no longer clamps mid-type; `appSettings` correctly tracks both GF fields
+- **Altitude globals** — `altSurfaceP`, `altitudeM`, `altAcclimatized` exposed on `window` for test suite access
 - **Help system** — `?` modal and `📖` Reference updated with Travel Gas and Altitude sections; field-level tooltips on all new controls
-- **Audit script** (`lsp_audit.py`) — 65-check automated audit covering default rates, unit handling, engine wiring, travel gas, and altitude; run before every release
 
 ### 2.5 Beta 1
 - Bühlmann ZH-L16C + GF engine
