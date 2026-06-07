@@ -2653,6 +2653,14 @@ const SURFACE_P = 1.013;    // legacy constant — kept for compatibility; engin
 let altSurfaceP   = 1.01325; // actual surface pressure at current altitude (bar)
 let altitudeM     = 0;       // current altitude in metres
 let altAcclimatized = true;  // true = tissues start saturated at altSurfaceP
+// Expose altitude globals for test harnesses (let doesn't land on window automatically)
+if (typeof window !== 'undefined') {
+  Object.defineProperties(window, {
+    altSurfaceP:   { get: () => altSurfaceP,   set: v => { altSurfaceP = v; },   configurable: true },
+    altitudeM:     { get: () => altitudeM,     set: v => { altitudeM = v; },     configurable: true },
+    altAcclimatized:{ get: () => altAcclimatized, set: v => { altAcclimatized = v; }, configurable: true },
+  });
+}
 let WATER_VAPOR = 0.0627; // alveolar water vapor pressure (bar) — updated by waterVapor setting
 
 // Water density pressure factors (bar per metre)

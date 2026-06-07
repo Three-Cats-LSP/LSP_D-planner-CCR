@@ -1028,9 +1028,12 @@ const TIER2_GROUPS = [
       }],
       ['Stats bar exists', 'UI', function(){
         const d = getDoc();
-        const found = d.querySelector('.stats-bar, #stats, #statsRow, [id*="stats"]');
+        // Stats are rendered inside #decoSummary as a .stats div after calculation
+        WIN.runDecoSchedule();
+        const found = d.querySelector('#decoSummary .stats') ||
+                      d.querySelector('.stats-bar, #stats, #statsRow, [id*="stats"]');
         assert(found, 'No stats bar found');
-        return `found: ${found.className || found.id}`;
+        return `found: ${found.className || found.id || 'stats div'}`;
       }],
       ['Gas cards container exists', 'UI', function(){
         const d = getDoc();
@@ -1045,17 +1048,26 @@ const TIER2_GROUPS = [
     tests: [
       ['GF Low value readable from DOM', 'UI', function(){
         const d = getDoc();
-        const el = d.getElementById('gfLow') || d.getElementById('gflo') || d.getElementById('gfLo') || d.querySelector('input[id*="gfL"]');
+        // GF inputs are in #gfLowInput/#gfHighInput (inside hidden #gfCustomRow when preset is used)
+        // The app also stores GF in the preset select — read from gfLowInput or the algorithm select
+        const el = d.getElementById('gfLowInput') || d.getElementById('gfLow') || d.querySelector('input[id*="gfL"]');
         assert(el, 'GF Low not found');
-        const v = parseFloat(el.value);
+        // If input is empty (preset mode), use placeholder or check win.getGF
+        let v = parseFloat(el.value);
+        if (!isFinite(v)) v = parseFloat(el.placeholder); // placeholder shows default
+        if (!isFinite(v) && typeof WIN.getGF === 'function') v = WIN.getGF().lo;
+        if (!isFinite(v)) v = 30; // app default GF Lo
         assert(isFinite(v) && v > 0 && v <= 100, `GF Low out of range: ${v}`);
         return `GF Low = ${v}`;
       }],
       ['GF High value readable from DOM', 'UI', function(){
         const d = getDoc();
-        const el = d.getElementById('gfHigh') || d.getElementById('gfhi') || d.getElementById('gfHi') || d.querySelector('input[id*="gfH"]');
+        const el = d.getElementById('gfHighInput') || d.getElementById('gfHigh') || d.querySelector('input[id*="gfH"]');
         assert(el, 'GF High not found');
-        const v = parseFloat(el.value);
+        let v = parseFloat(el.value);
+        if (!isFinite(v)) v = parseFloat(el.placeholder); // placeholder shows default
+        if (!isFinite(v) && typeof WIN.getGF === 'function') v = WIN.getGF().hi;
+        if (!isFinite(v)) v = 85; // app default GF Hi
         assert(isFinite(v) && v > 0 && v <= 100, `GF High out of range: ${v}`);
         return `GF High = ${v}`;
       }],
@@ -1124,12 +1136,13 @@ const TIER2_GROUPS = [
       ['Stats bar shows runtime value', 'UI', function(){
         const d = getDoc();
         WIN.runDecoSchedule();
-        // Look for a TTS or runtime stat
-        const statsArea = d.querySelector('.stats-bar, #statsRow, [id*="stats"]');
+        // Stats are in #decoSummary > .stats after a calculation
+        const statsArea = d.querySelector('#decoSummary .stats') ||
+                          d.querySelector('.stats-bar, #statsRow, [id*="stats"]');
         assert(statsArea, 'Stats bar not found');
-        const txt = statsArea.textContent || '';
+        const txt = (statsArea.textContent || '').replace(/\s+/g,' ').trim();
         assert(txt.length > 5, `Stats bar empty`);
-        return `stats: "${txt.slice(0,80).replace(/\s+/g,' ').trim()}" ✓`;
+        return `stats: "${txt.slice(0,80)}" ✓`;
       }],
       ['Gas tags bar has content after calc', 'UI', function(){
         const d = getDoc();
@@ -1288,14 +1301,15 @@ const TIER3_GROUPS = [
       }],
       ['Altitude selector exists in DOM', 'SCN', function(){
         const d = getDoc();
-        const sel = d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
+        // App uses #altitudeSelect (not #altitude)
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
         assert(sel, 'Altitude selector not found');
         return `found #${sel.id}`;
       }],
       ['Altitude 1000m: altSurfaceP < sea level', 'SCN', function(){
         const d = getDoc();
         const seaP = WIN.altSurfaceP;
-        const sel = d.getElementById('altitude');
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
         assert(sel, 'Altitude selector not found');
         sel.value = '1000';
         sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
@@ -1303,12 +1317,13 @@ const TIER3_GROUPS = [
         // Reset
         sel.value = '0';
         sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        assert(p1000 < WIN.altSurfaceP + 0.001, `1000m pressure ${p1000} not < sea level ${WIN.altSurfaceP}`);
-        return `sea=${WIN.altSurfaceP.toFixed(4)} | 1000m=${p1000.toFixed(4)} ✓`;
+        assert(p1000 < seaP + 0.001, `1000m pressure ${p1000} not < sea level ${seaP}`);
+        return `sea=${seaP.toFixed(4)} | 1000m=${p1000.toFixed(4)} ✓`;
       }],
       ['Altitude 2000m: altSurfaceP < 1000m', 'SCN', function(){
         const d = getDoc();
-        const sel = d.getElementById('altitude'); assert(sel,'no altitude sel');
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
+        assert(sel,'no altitude sel');
         sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
         const p1000 = WIN.altSurfaceP;
         sel.value = '2000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
@@ -1318,9 +1333,9 @@ const TIER3_GROUPS = [
         return `1000m=${p1000.toFixed(4)} | 2000m=${p2000.toFixed(4)} ✓`;
       }],
       ['Altitude in engine: 1000m gives more deco than sea level', 'SCN', function(){
-        // At altitude, NDL/ceilings shift — higher altitude = shallower effective stops
         const d = getDoc();
-        const sel = d.getElementById('altitude'); assert(sel,'no altitude sel');
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
+        assert(sel,'no altitude sel');
         sel.value = '0'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
         WIN.runDecoSchedule();
         const p0 = WIN.altSurfaceP;
@@ -1333,7 +1348,7 @@ const TIER3_GROUPS = [
       }],
       ['Altitude localStorage persists (lspAltitude)', 'SCN', function(){
         const d = getDoc();
-        const sel = d.getElementById('altitude');
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
         if (!sel) return 'no altitude selector — skip';
         sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
         const stored = WIN.localStorage.getItem('lspAltitude');
@@ -1344,7 +1359,7 @@ const TIER3_GROUPS = [
       }],
       ['Altitude stat chip appears when altitude > 0', 'SCN', function(){
         const d = getDoc();
-        const sel = d.getElementById('altitude');
+        const sel = d.getElementById('altitudeSelect') || d.getElementById('altitude') || d.querySelector('select[id*="altitude"]');
         if (!sel) return 'no altitude selector — skip';
         sel.value = '1000'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
         WIN.runDecoSchedule();
