@@ -392,7 +392,7 @@ function pretty(v, digits) {
   return (typeof v === 'number' && isFinite(v)) ? v.toFixed(digits == null ? 1 : digits) : String(v);
 }
 function modelLabel(model) {
-  return ({ ZHLCGF:'Bühlmann GF', VPMB:'VPM-B', VPMBGFS:'VPM-B/GFS', ALL:'All models', CORE:'Core' })[model] || model || 'General';
+  return ({ ZHLCGF:'Bühlmann GF', ZHLC_GF:'Bühlmann GF', VPMB:'VPM-B', VPMBGFS:'VPM-B/GFS', VPMB_GFS:'VPM-B/GFS', ALL:'All models', CORE:'Core' })[model] || model || 'General';
 }
 function gas(o2, he) {
   return { o2: o2, he: he || 0 };
@@ -530,94 +530,94 @@ const GROUPS = [
     tests: [
       ['Global engine object exists', 'CORE', function(){ assert(E && typeof E === 'object', 'VPMEngine missing'); return 'Engine ready'; }],
       ['calculate() function exists', 'CORE', function(){ assert(typeof E.calculate === 'function', 'calculate missing'); return 'calculate(): ok'; }],
-      ['Model registry exists if exposed', 'CORE', function(){ return (E.MODELS && typeof E.MODELS === 'object') ? Object.keys(E.MODELS).join(', ') : 'MODELS not exposed; using callable checks instead'; }, 'warn'],
-      ['ZHLCGF model callable', 'ZHLCGF', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'ZHLCGF'); assert(r && typeof r.totalRuntime === 'number', 'ZHLCGF did not return a valid result'); return 'call succeeded, RT ' + pretty(r.totalRuntime); }],
+      ['Model registry exists if exposed', 'CORE', function(){ const mods = E.MODELS && (Array.isArray(E.MODELS) ? E.MODELS : Object.keys(E.MODELS)); return mods ? mods.join(', ') : 'MODELS not exposed; using callable checks instead'; }, 'warn'],
+      ['ZHLC_GF model callable', 'ZHLC_GF', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(r && typeof r.totalRuntime === 'number', 'ZHLC_GF did not return a valid result'); return 'call succeeded, RT ' + pretty(r.totalRuntime); }],
       ['VPMB model callable', 'VPMB', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'VPMB'); assert(r && typeof r.totalRuntime === 'number', 'VPMB did not return a valid result'); return 'call succeeded, RT ' + pretty(r.totalRuntime); }],
-      ['VPMBGFS model callable', 'VPMBGFS', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'VPMBGFS'); assert(r && typeof r.totalRuntime === 'number', 'VPMBGFS did not return a valid result'); return 'call succeeded, RT ' + pretty(r.totalRuntime); }],
+      ['VPMB_GFS model callable', 'VPMB_GFS', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'VPMB_GFS'); assert(r && typeof r.totalRuntime === 'number', 'VPMB_GFS did not return a valid result'); return 'call succeeded, RT ' + pretty(r.totalRuntime); }],
       ['SURFACEP sanity', 'CORE', function(){ assert(approx(SURF, 1.013, 0.01), 'SURFACEP=' + SURF); return pretty(SURF, 3) + ' bar'; }],
-      ['BARPERMETRE availability', 'CORE', function(){ if (BAR == null || !isFinite(BAR)) return 'BARPERMETRE not exposed globally; skipping numeric sanity check'; assert(BAR >= 0.095 && BAR <= 0.105, 'BARPERMETRE=' + BAR); return pretty(BAR, 5) + ' bar/m'; }, 'warn'],
+      ['BAR_PER_METRE availability', 'CORE', function(){ if (BAR == null || !isFinite(BAR)) return 'BAR_PER_METRE not readable; using default salt value'; assert(BAR >= 0.095 && BAR <= 0.105, 'BARPERMETRE=' + BAR); return pretty(BAR, 5) + ' bar/m'; }, 'warn'],
     ]
   },
   {
     name: 'Result Contract',
     tests: [
-      ['Bühlmann result object shape', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); assertResultShape(r); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Bühlmann result object shape', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); assertResultShape(r); return 'RT ' + pretty(r.totalRuntime); }],
       ['VPM-B result object shape', 'VPMB', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); assertResultShape(r); return 'RT ' + pretty(r.totalRuntime); }],
-      ['VPM-B/GFS result object shape', 'VPMBGFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); assertResultShape(r); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Bühlmann plan integrity', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); assertPlanIntegrity(r); return segmentTypes(r).slice(0,8).join(' → '); }],
+      ['VPM-B/GFS result object shape', 'VPMB_GFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); assertResultShape(r); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Bühlmann plan integrity', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); assertPlanIntegrity(r); return segmentTypes(r).slice(0,8).join(' → '); }],
       ['VPM-B plan integrity', 'VPMB', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); assertPlanIntegrity(r); return segmentTypes(r).slice(0,8).join(' → '); }],
-      ['VPM-B/GFS plan integrity', 'VPMBGFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); assertPlanIntegrity(r); return segmentTypes(r).slice(0,8).join(' → '); }],
+      ['VPM-B/GFS plan integrity', 'VPMB_GFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); assertPlanIntegrity(r); return segmentTypes(r).slice(0,8).join(' → '); }],
     ]
   },
   {
     name: 'Bühlmann NDL and Deco',
     tests: [
-      ['20m / 20min stays no-deco', 'ZHLCGF', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'ZHLCGF'); assert(decoStops(r).length === 0, 'Unexpected deco stops: ' + decoStops(r).length); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
-      ['15m / 60min stays no-deco', 'ZHLCGF', function(){ const r = calc(level(15,60), NO_GASES, makeSettings(), 'ZHLCGF'); assert(decoStops(r).length === 0, 'Unexpected deco stops'); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
-      ['40m / 25min requires decompression', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); assert(decoStops(r).length > 0 || totalStopTime(r) > 0, 'No deco generated'); return decoStops(r).length + ' stops, RT ' + pretty(r.totalRuntime); }],
-      ['50m / 30min runtime exceeds bottom time', 'ZHLCGF', function(){ const r = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLCGF'); assert(r.totalRuntime > 30, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['50m / 30min runtime > 40m / 25min runtime', 'ZHLCGF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); const b = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLCGF'); assert(b.totalRuntime > a.totalRuntime, 'Deeper/longer dive produced less runtime'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],
-      ['Shallow 5m / 10min dive stays short and valid', 'ZHLCGF', function(){ const r = calc(level(5,10), NO_GASES, makeSettings(), 'ZHLCGF'); assert(r.totalRuntime >= 10 && r.totalRuntime < 30, 'RT out of range: ' + r.totalRuntime); return 'RT ' + pretty(r.totalRuntime); }],
+      ['20m / 20min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops: ' + decoStops(r).length); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
+      ['15m / 60min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(15,60), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops'); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
+      ['40m / 25min requires decompression', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length > 0 || totalStopTime(r) > 0, 'No deco generated'); return decoStops(r).length + ' stops, RT ' + pretty(r.totalRuntime); }],
+      ['50m / 30min runtime exceeds bottom time', 'ZHLC_GF', function(){ const r = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime > 30, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['50m / 30min runtime > 40m / 25min runtime', 'ZHLC_GF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const b = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(b.totalRuntime > a.totalRuntime, 'Deeper/longer dive produced less runtime'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],
+      ['Shallow 5m / 10min dive stays short and valid', 'ZHLC_GF', function(){ const r = calc(level(5,10), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime >= 10 && r.totalRuntime < 30, 'RT out of range: ' + r.totalRuntime); return 'RT ' + pretty(r.totalRuntime); }],
     ]
   },
   {
     name: 'Gradient Factors',
     tests: [
-      ['Lower GFHi increases or preserves runtime', 'ZHLCGF', function(){ const loose = calc(level(40,25), NO_GASES, makeSettings({ gfHi:85 }), 'ZHLCGF'); const tight = calc(level(40,25), NO_GASES, makeSettings({ gfHi:70 }), 'ZHLCGF'); assert(tight.totalRuntime + 1e-9 >= loose.totalRuntime, 'GFHi70 shorter than GFHi85'); return '85→' + pretty(loose.totalRuntime) + ' | 70→' + pretty(tight.totalRuntime); }],
-      ['Lower GFLo increases or preserves runtime', 'ZHLCGF', function(){ const standard = calc(level(40,25), NO_GASES, makeSettings({ gfLo:30, gfHi:85 }), 'ZHLCGF'); const deeper = calc(level(40,25), NO_GASES, makeSettings({ gfLo:20, gfHi:85 }), 'ZHLCGF'); assert(deeper.totalRuntime + 1e-9 >= standard.totalRuntime, 'GFLo20 shorter than GFLo30'); return '30/85→' + pretty(standard.totalRuntime) + ' | 20/85→' + pretty(deeper.totalRuntime); }],
-      ['More conservative last stop / step config still runs', 'ZHLCGF', function(){ const r = calc(level(45,25), NO_GASES, makeSettings({ stepSize:1, lastStop:1 }), 'ZHLCGF'); assert(r.totalRuntime > 25, 'Unexpected RT'); return '1m steps, 1m last stop, RT ' + pretty(r.totalRuntime); }],
-      ['Fractional minStopTime runs', 'ZHLCGF', function(){ const r = calc(level(45,25), NO_GASES, makeSettings({ minStopTime:0.5 }), 'ZHLCGF'); assert(r.totalRuntime > 25, 'RT too short'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Lower GFHi increases or preserves runtime', 'ZHLC_GF', function(){ const loose = calc(level(40,25), NO_GASES, makeSettings({ gfHi:85 }), 'ZHLC_GF'); const tight = calc(level(40,25), NO_GASES, makeSettings({ gfHi:70 }), 'ZHLC_GF'); assert(tight.totalRuntime + 1e-9 >= loose.totalRuntime, 'GFHi70 shorter than GFHi85'); return '85→' + pretty(loose.totalRuntime) + ' | 70→' + pretty(tight.totalRuntime); }],
+      ['Lower GFLo increases or preserves runtime', 'ZHLC_GF', function(){ const standard = calc(level(40,25), NO_GASES, makeSettings({ gfLo:30, gfHi:85 }), 'ZHLC_GF'); const deeper = calc(level(40,25), NO_GASES, makeSettings({ gfLo:20, gfHi:85 }), 'ZHLC_GF'); assert(deeper.totalRuntime + 1e-9 >= standard.totalRuntime, 'GFLo20 shorter than GFLo30'); return '30/85→' + pretty(standard.totalRuntime) + ' | 20/85→' + pretty(deeper.totalRuntime); }],
+      ['More conservative last stop / step config still runs', 'ZHLC_GF', function(){ const r = calc(level(45,25), NO_GASES, makeSettings({ stepSize:1, lastStop:1 }), 'ZHLC_GF'); assert(r.totalRuntime > 25, 'Unexpected RT'); return '1m steps, 1m last stop, RT ' + pretty(r.totalRuntime); }],
+      ['Fractional minStopTime runs', 'ZHLC_GF', function(){ const r = calc(level(45,25), NO_GASES, makeSettings({ minStopTime:0.5 }), 'ZHLC_GF'); assert(r.totalRuntime > 25, 'RT too short'); return 'RT ' + pretty(r.totalRuntime); }],
     ]
   },
   {
     name: 'Gas Behavior',
     tests: [
-      ['EAN32 bottom gas does not increase runtime vs air at 30m / 30min', 'ZHLCGF', function(){ const air = calc(level(30,30,21), NO_GASES, makeSettings(), 'ZHLCGF'); const nitrox = calc(level(30,30,32), NO_GASES, makeSettings(), 'ZHLCGF'); assert(nitrox.totalRuntime <= air.totalRuntime + 0.5, 'EAN32 runtime > air runtime'); return 'Air ' + pretty(air.totalRuntime) + ' | EAN32 ' + pretty(nitrox.totalRuntime); }],
-      ['EAN50 deco gas reduces or preserves runtime', 'ZHLCGF', function(){ const noDecoGas = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); const decoGas = calc(level(40,25), EAN50, makeSettings(), 'ZHLCGF'); assert(decoGas.totalRuntime <= noDecoGas.totalRuntime + 0.5, 'EAN50 increased RT unexpectedly'); return 'No gas ' + pretty(noDecoGas.totalRuntime) + ' | EAN50 ' + pretty(decoGas.totalRuntime); }],
-      ['EAN50 + O2 deco gas produces valid runtime', 'ZHLCGF', function(){ const r = calc(level(50,30), EAN50_O2, makeSettings(), 'ZHLCGF'); assert(r.totalRuntime > 30, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Deco gas tends to raise OTU vs no deco gas', 'ZHLCGF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); const b = calc(level(40,25), EAN50, makeSettings(), 'ZHLCGF'); assert(b.totalOTU >= a.totalOTU - 0.01, 'OTU dropped unexpectedly'); return 'OTU ' + Math.round(a.totalOTU) + ' → ' + Math.round(b.totalOTU); }],
-      ['Multi-level trimix input runs in Bühlmann', 'ZHLCGF', function(){ const r = calc(multiLevel([{depth:60,time:20,o2:18,he:45},{depth:30,time:10,o2:18,he:45}]), TRIMIX_DECO, makeSettings(), 'ZHLCGF'); assert(r.totalRuntime > 30, 'Runtime too short'); return 'RT ' + pretty(r.totalRuntime) + ', stops ' + decoStops(r).length; }],
+      ['EAN32 bottom gas does not increase runtime vs air at 30m / 30min', 'ZHLC_GF', function(){ const air = calc(level(30,30,21), NO_GASES, makeSettings(), 'ZHLC_GF'); const nitrox = calc(level(30,30,32), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(nitrox.totalRuntime <= air.totalRuntime + 0.5, 'EAN32 runtime > air runtime'); return 'Air ' + pretty(air.totalRuntime) + ' | EAN32 ' + pretty(nitrox.totalRuntime); }],
+      ['EAN50 deco gas reduces or preserves runtime', 'ZHLC_GF', function(){ const noDecoGas = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const decoGas = calc(level(40,25), EAN50, makeSettings(), 'ZHLC_GF'); assert(decoGas.totalRuntime <= noDecoGas.totalRuntime + 0.5, 'EAN50 increased RT unexpectedly'); return 'No gas ' + pretty(noDecoGas.totalRuntime) + ' | EAN50 ' + pretty(decoGas.totalRuntime); }],
+      ['EAN50 + O2 deco gas produces valid runtime', 'ZHLC_GF', function(){ const r = calc(level(50,30), EAN50_O2, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime > 30, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Deco gas tends to raise OTU vs no deco gas', 'ZHLC_GF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const b = calc(level(40,25), EAN50, makeSettings(), 'ZHLC_GF'); assert(b.totalOTU >= a.totalOTU - 0.01, 'OTU dropped unexpectedly'); return 'OTU ' + Math.round(a.totalOTU) + ' → ' + Math.round(b.totalOTU); }],
+      ['Multi-level trimix input runs in Bühlmann', 'ZHLC_GF', function(){ const r = calc(multiLevel([{depth:60,time:20,o2:18,he:45},{depth:30,time:10,o2:18,he:45}]), TRIMIX_DECO, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime > 30, 'Runtime too short'); return 'RT ' + pretty(r.totalRuntime) + ', stops ' + decoStops(r).length; }],
     ]
   },
   {
     name: 'VPM-B Algorithms',
     tests: [
       ['VPM-B 40m / 25min returns valid decompression plan', 'VPMB', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); assert(r.totalRuntime > 25, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['VPM-B/GFS 40m / 25min returns valid decompression plan', 'VPMBGFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); assert(r.totalRuntime > 25, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['VPM-B/GFS 40m / 25min returns valid decompression plan', 'VPMB_GFS', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); assert(r.totalRuntime > 25, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
       ['VPM-B deeper dive increases runtime', 'VPMB', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); const b = calc(level(50,25), NO_GASES, makeSettings(), 'VPMB'); assert(b.totalRuntime >= a.totalRuntime, '50m shorter than 40m'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],
-      ['VPM-B/GFS deeper dive increases runtime', 'VPMBGFS', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); const b = calc(level(50,25), NO_GASES, makeSettings(), 'VPMBGFS'); assert(b.totalRuntime >= a.totalRuntime, '50m shorter than 40m'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],
-      ['VPM-B and VPM-B/GFS remain within broad runtime envelope', 'ALL', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); const diff = Math.abs(a.totalRuntime - b.totalRuntime); assert(diff < 45, 'Model divergence too large: ' + diff.toFixed(1) + ' min'); return 'Δ=' + pretty(diff); }],
+      ['VPM-B/GFS deeper dive increases runtime', 'VPMB_GFS', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); const b = calc(level(50,25), NO_GASES, makeSettings(), 'VPMB_GFS'); assert(b.totalRuntime >= a.totalRuntime, '50m shorter than 40m'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],
+      ['VPM-B and VPM-B/GFS remain within broad runtime envelope', 'ALL', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); const diff = Math.abs(a.totalRuntime - b.totalRuntime); assert(diff < 45, 'Model divergence too large: ' + diff.toFixed(1) + ' min'); return 'Δ=' + pretty(diff); }],
       ['Higher conservatism in VPM-B does not reduce runtime', 'VPMB', function(){ const low = calc(level(45,25), NO_GASES, makeSettings({ conservatism:0 }), 'VPMB'); const high = calc(level(45,25), NO_GASES, makeSettings({ conservatism:4 }), 'VPMB'); assert(high.totalRuntime >= low.totalRuntime, 'Higher conservatism reduced runtime'); return 'C0 ' + pretty(low.totalRuntime) + ' | C4 ' + pretty(high.totalRuntime); }],
-      ['Higher GFS conservatism does not reduce runtime', 'VPMBGFS', function(){ const loose = calc(level(45,25), NO_GASES, makeSettings({ gfs: 85 }), 'VPMBGFS'); const tight = calc(level(45,25), NO_GASES, makeSettings({ gfs: 70 }), 'VPMBGFS'); assert(tight.totalRuntime >= loose.totalRuntime, 'Lower GFS reduced runtime unexpectedly'); return '85 ' + pretty(loose.totalRuntime) + ' | 70 ' + pretty(tight.totalRuntime); }],
+      ['Higher GFS conservatism does not reduce runtime', 'VPMB_GFS', function(){ const loose = calc(level(45,25), NO_GASES, makeSettings({ gfs: 85 }), 'VPMB_GFS'); const tight = calc(level(45,25), NO_GASES, makeSettings({ gfs: 70 }), 'VPMB_GFS'); assert(tight.totalRuntime >= loose.totalRuntime, 'Lower GFS reduced runtime unexpectedly'); return '85 ' + pretty(loose.totalRuntime) + ' | 70 ' + pretty(tight.totalRuntime); }],
     ]
   },
   {
     name: 'Units and Water Types',
     tests: [
-      ['Metric mode runs', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ metric:true, waterType:0 }), 'ZHLCGF'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Imperial mode runs', 'ZHLCGF', function(){ const r = calc([{ depth:130, time:25, o2:21, he:0 }], NO_GASES, makeSettings({ metric:false, waterType:0, stepSize:10, lastStop:10 }), 'ZHLCGF'); assert(r.totalRuntime > 25, 'Imperial RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Salt water runs', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:0 }), 'ZHLCGF'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Fresh water runs', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:1 }), 'ZHLCGF'); return 'RT ' + pretty(r.totalRuntime); }],
-      ['Salt vs fresh remain within broad envelope', 'ZHLCGF', function(){ const salt = calc(level(40,25), NO_GASES, makeSettings({ waterType:0 }), 'ZHLCGF'); const fresh = calc(level(40,25), NO_GASES, makeSettings({ waterType:1 }), 'ZHLCGF'); const diff = Math.abs(salt.totalRuntime - fresh.totalRuntime); assert(diff < 15, 'Water type shift too large: ' + diff.toFixed(1)); return 'Δ=' + pretty(diff); }],
-      ['Custom water density runs', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:2, customWaterDensity: 1030 }), 'ZHLCGF'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Metric mode runs', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ metric:true, waterType:0 }), 'ZHLC_GF'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Imperial mode runs', 'ZHLC_GF', function(){ const r = calc([{ depth:130, time:25, o2:21, he:0 }], NO_GASES, makeSettings({ metric:false, waterType:0, stepSize:10, lastStop:10 }), 'ZHLC_GF'); assert(r.totalRuntime > 25, 'Imperial RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Salt water runs', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:0 }), 'ZHLC_GF'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Fresh water runs', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:1 }), 'ZHLC_GF'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Salt vs fresh remain within broad envelope', 'ZHLC_GF', function(){ const salt = calc(level(40,25), NO_GASES, makeSettings({ waterType:0 }), 'ZHLC_GF'); const fresh = calc(level(40,25), NO_GASES, makeSettings({ waterType:1 }), 'ZHLC_GF'); const diff = Math.abs(salt.totalRuntime - fresh.totalRuntime); assert(diff < 15, 'Water type shift too large: ' + diff.toFixed(1)); return 'Δ=' + pretty(diff); }],
+      ['Custom water density runs', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ waterType:2, customWaterDensity: 1030 }), 'ZHLC_GF'); return 'RT ' + pretty(r.totalRuntime); }],
     ]
   },
   {
     name: 'Determinism and Stability',
     tests: [
-      ['Repeated Bühlmann calls are deterministic', 'ZHLCGF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01, 'Runtimes differ'); return pretty(a.totalRuntime) + ' == ' + pretty(b.totalRuntime); }],
+      ['Repeated Bühlmann calls are deterministic', 'ZHLC_GF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01, 'Runtimes differ'); return pretty(a.totalRuntime) + ' == ' + pretty(b.totalRuntime); }],
       ['Repeated VPM-B calls are deterministic', 'VPMB', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB'); assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01, 'Runtimes differ'); return pretty(a.totalRuntime) + ' == ' + pretty(b.totalRuntime); }],
-      ['Repeated VPM-B/GFS calls are deterministic', 'VPMBGFS', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'VPMBGFS'); assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01, 'Runtimes differ'); return pretty(a.totalRuntime) + ' == ' + pretty(b.totalRuntime); }],
-      ['Deep Bühlmann case completes without crash', 'ZHLCGF', function(){ const r = calc(level(80,20), NO_GASES, makeSettings(), 'ZHLCGF'); assert(r.totalRuntime > 20, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
+      ['Repeated VPM-B/GFS calls are deterministic', 'VPMB_GFS', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); const b = calc(level(40,25), NO_GASES, makeSettings(), 'VPMB_GFS'); assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01, 'Runtimes differ'); return pretty(a.totalRuntime) + ' == ' + pretty(b.totalRuntime); }],
+      ['Deep Bühlmann case completes without crash', 'ZHLC_GF', function(){ const r = calc(level(80,20), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime > 20, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
       ['Deep VPM-B case completes without crash', 'VPMB', function(){ const r = calc(level(80,20), NO_GASES, makeSettings(), 'VPMB'); assert(r.totalRuntime > 20, 'RT invalid'); return 'RT ' + pretty(r.totalRuntime); }],
     ]
   },
   {
     name: 'Output Sanity Warnings',
     tests: [
-      ['Warning if Bühlmann first stop is deeper than bottom depth', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLCGF'); const mx = maxStopDepth(r); assert(mx <= 40, 'First stop deeper than planned depth: ' + mx); return 'max stop depth ' + mx; }, 'warn'],
-      ['Warning if minimum stop depth exceeds configured last stop by too much', 'ZHLCGF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ lastStop:3 }), 'ZHLCGF'); const mn = minStopDepth(r); assert(mn >= 0, 'Negative min stop'); return 'min stop depth ' + mn; }, 'warn'],
-      ['Warning if deco gases produce no identifiable switch segment', 'ZHLCGF', function(){ const r = calc(level(50,30), EAN50_O2, makeSettings(), 'ZHLCGF'); return hasGasSwitch(r) ? 'switch segment found' : 'No explicit switch segment visible; engine may encode switches implicitly'; }, 'warn'],
+      ['Warning if Bühlmann first stop is deeper than bottom depth', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const mx = maxStopDepth(r); assert(mx <= 40, 'First stop deeper than planned depth: ' + mx); return 'max stop depth ' + mx; }, 'warn'],
+      ['Warning if minimum stop depth exceeds configured last stop by too much', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ lastStop:3 }), 'ZHLC_GF'); const mn = minStopDepth(r); assert(mn >= 0, 'Negative min stop'); return 'min stop depth ' + mn; }, 'warn'],
+      ['Warning if deco gases produce no identifiable switch segment', 'ZHLC_GF', function(){ const r = calc(level(50,30), EAN50_O2, makeSettings(), 'ZHLC_GF'); return hasGasSwitch(r) ? 'switch segment found' : 'No explicit switch segment visible; engine may encode switches implicitly'; }, 'warn'],
     ]
   }
 ];
@@ -742,7 +742,7 @@ function waitForEngine(iframe, timeout, cb) {
       const names = Object.getOwnPropertyNames(w);
       for (const key of names) {
         const value = w[key];
-        if (value && typeof value === 'object' && typeof value.calculate === 'function' && value.MODELS && ('ZHLCGF' in value.MODELS)) {
+        if (value && typeof value === 'object' && typeof value.calculate === 'function' && value.MODELS && ('ZHLC_GF' in value.MODELS)) {
           return { engine: value, win: w };
         }
       }
@@ -809,12 +809,12 @@ function startTests() {
 
     E = engine;
     WIN = win;
-    SURF = (win.SURFACEP !== undefined && isFinite(win.SURFACEP)) ? win.SURFACEP : 1.013;
-    const rawBAR = win.BARPERMETRE;
-    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : null;
+    SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
+    const rawBAR = win.BAR_PER_METRE;
+    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : (1/10.078);
 
     document.getElementById('meta-version').textContent = 'APPVERSION: ' + (win.APPVERSION || '—');
-    document.getElementById('meta-surface').textContent = 'SURFACEP: ' + pretty(SURF, 3);
+    document.getElementById('meta-surface').textContent = 'altSurfaceP: ' + pretty(SURF, 4);
     document.getElementById('meta-bar').textContent = 'BAR/m: ' + pretty(BAR, 5);
     document.getElementById('meta-engine').textContent = 'ENGINE: VPMEngine';
 
