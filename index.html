@@ -1257,9 +1257,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <option value="custom">Custom…</option>
       </select>
       <div id="gfCustomRow" style="display:none;align-items:center;gap:4px;">
-        <input type="number" id="gfLowInput" min="5" max="100" placeholder="40" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;" oninput="setCustomGF()" onchange="setCustomGF()">
+        <input type="number" id="gfLowInput" min="5" max="100" placeholder="40" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;" oninput="setCustomGF(false)" onchange="setCustomGF(true)">
         <span style="color:var(--muted);font-size:11px;font-weight:700;">/</span>
-        <input type="number" id="gfHighInput" min="5" max="100" placeholder="80" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;" oninput="setCustomGF()" onchange="setCustomGF()">
+        <input type="number" id="gfHighInput" min="5" max="100" placeholder="80" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;" oninput="setCustomGF(false)" onchange="setCustomGF(true)">
       </div>
     </div>
     <!-- Conservatism (VPM-B and VPM-B/GFS) -->
@@ -2909,7 +2909,7 @@ let diveCount  = 2;
 let stopDepthM = 6;
     let allowO2AtMOD = true;
 let stopDurMin = 3;
-let mGF        = { low: 30, high: 70 };
+let mGF        = { low: 20, high: 85 }; // matches default preset 20/85
 let lastTissues = null;
 
 // ═══════════════════════════════════════════════
@@ -3260,25 +3260,35 @@ function setGF(low, high) {
   }
 }
 
-function setCustomGF() {
+function setCustomGF(commit) {
+  // commit=true (onchange): clamp + apply immediately
+  // commit=false (oninput): just update mGF preview, no clamping mid-type
+  const clamp = (commit !== false);
   const lowInput  = document.getElementById('gfLowInput');
   const highInput = document.getElementById('gfHighInput');
 
-  // Clamp to valid range
-  [lowInput, highInput].forEach(inp => {
-    if (!inp) return;
-    const n = parseInt(inp.value);
-    if (!isNaN(n) && n > 100) inp.value = '100';
-    if (!isNaN(n) && n < 5 && inp.value !== '') inp.value = '5';
-  });
-
   const lowVal  = lowInput  ? lowInput.value  : '';
   const highVal = highInput ? highInput.value : '';
-  const low  = (lowVal  === '') ? mGF.low  : parseInt(lowVal)  || mGF.low;
-  const high = (highVal === '') ? mGF.high : parseInt(highVal) || mGF.high;
 
-  mGF.low  = Math.max(5, Math.min(100, low));
-  mGF.high = Math.max(5, Math.min(100, high));
+  let low  = (lowVal  === '') ? mGF.low  : parseInt(lowVal);
+  let high = (highVal === '') ? mGF.high : parseInt(highVal);
+
+  // Only NaN-fallback and clamp on commit (field blur / enter / spinner)
+  if (isNaN(low))  low  = mGF.low;
+  if (isNaN(high)) high = mGF.high;
+  if (clamp) {
+    low  = Math.max(5, Math.min(100, low));
+    high = Math.max(5, Math.min(100, high));
+    if (lowInput  && lowVal  !== '') lowInput.value  = low;
+    if (highInput && highVal !== '') highInput.value = high;
+  } else {
+    // mid-type: only update if value looks complete (>= 5)
+    if (low  < 5)  low  = mGF.low;  // don't apply partial
+    if (high < 5)  high = mGF.high;
+  }
+
+  mGF.low  = low;
+  mGF.high = high;
 
   // Save custom values for restoration
   if (lowVal  !== '') localStorage.setItem('gfCustomLow',  lowVal);
@@ -11313,7 +11323,7 @@ var appSettings = {
     'decoDepth', 'decoBT', 'decoGas', 'decoCustomO2',
     'descentRate', 'ascentRate', 'decoAscentRate', 'surfaceAscentRate', 'decoStep', 'lastDecoStop',
     'minStopTime', 'stopRounding', 'waterVapor', 'ppo2Bottom', 'ppo2Deco',
-    'algorithmSelect', 'conservatismSelect'
+    'algorithmSelect', 'conservatismSelect', 'gfPresetSelect', 'gfLowInput', 'gfHighInput'
   ],
   
   REC_FIELDS: ['ndlRange', 'ndlUImp', 'ndlUMet'],
@@ -11441,7 +11451,12 @@ var appSettings = {
         const el = document.getElementById(id);
         if (el) {
           el.value = values[id];
-          el.dispatchEvent(new Event('change', { bubbles: true }));
+          // GF preset needs special handler to sync mGF state
+          if (id === 'gfPresetSelect' && typeof handleGFSelect === 'function') {
+            handleGFSelect(values[id]);
+          } else {
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
           restored++;
         }
       };
@@ -11525,7 +11540,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize algorithm (REC mode by default)
   setAlgo('padi');
-  
+
+  // Sync mGF to whichever preset the select shows on first load
+  // (mGF default and select default must always match — this is the safety net)
+  const _gfSel = document.getElementById('gfPresetSelect');
+  if (_gfSel && typeof handleGFSelect === 'function') handleGFSelect(_gfSel.value);
+
   // Try to load immediately
   appSettings.load();
   if (!localStorage.getItem('lspDiveSettingsv6')) {
