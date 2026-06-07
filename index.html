@@ -2387,7 +2387,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 <!-- ══════════════════════════════════════
      INFO TIP MODAL (click/tap tooltips)
 ══════════════════════════════════════ -->
-<div id="tipModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:rgba(0,0,0,0.72);padding:20px;display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTip()">
+<div id="tipModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:rgba(0,0,0,0.72);padding:20px;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTip()">
   <div style="max-width:420px;width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px 20px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
     <div id="tipModalTitle" style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;"></div>
     <div id="tipModalBody" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;"></div>
@@ -2605,7 +2605,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.instagram.com/threecats_lsp" alt="Instagram QR Code" style="width: 140px; height: 140px; border: 3px solid var(--muted); border-radius: 8px; padding: 6px; background: white;"/>
       </a>
       <p style="color: var(--muted); font-size:12px; margin-top:8px;">@threecats_lsp</p>
-      <p style="color: var(--muted); font-size:10px; margin-top:4px; letter-spacing:1px; opacity:0.6;" id="appVersionLabel">Version 2.5 Beta 2</p>
+      <p style="color: var(--muted); font-size:10px; margin-top:4px; letter-spacing:1px; opacity:0.6;" id="appVersionLabel">Version 2.5</p>
     </div>
   </div>
 
@@ -2646,7 +2646,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 // ═══════════════════════════════════════════════
 // BÜHLMANN ZH-L16C DATA
 // ═══════════════════════════════════════════════
-const APP_VERSION = '2.5 Beta 2';
+const APP_VERSION = '2.5';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -11639,7 +11639,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const unitsEl = document.getElementById('unitsSelect');
   if (unitsEl) unitsEl.value = units || 'metric';
 
-  // Init new Beta 3 features
   calcCNS();
   
   // Initialize algorithm (REC mode by default)
