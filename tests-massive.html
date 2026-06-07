@@ -194,9 +194,9 @@ iframe { display: none; }
     <span class="filter-chip inactive" data-filter="tier1" onclick="setFilter('tier1')">TIER 1 ENGINE</span>
     <span class="filter-chip inactive" data-filter="tier2" onclick="setFilter('tier2')">TIER 2 UI/DOM</span>
     <span class="filter-chip inactive" data-filter="tier3" onclick="setFilter('tier3')">TIER 3 SCENARIOS</span>
-    <span class="filter-chip inactive" data-filter="ZHLCGF" onclick="setFilter('ZHLCGF')">BÜHLMANN</span>
+    <span class="filter-chip inactive" data-filter="ZHLC_GF" onclick="setFilter('ZHLC_GF')">BÜHLMANN (ZHLC_GF)</span>
     <span class="filter-chip inactive" data-filter="VPMB" onclick="setFilter('VPMB')">VPM-B</span>
-    <span class="filter-chip inactive" data-filter="VPMBGFS" onclick="setFilter('VPMBGFS')">VPM-B/GFS</span>
+    <span class="filter-chip inactive" data-filter="VPMB_GFS" onclick="setFilter('VPMB_GFS')">VPM-B/GFS</span>
     <span class="filter-chip inactive" data-filter="fail" onclick="setFilter('fail')">FAILURES</span>
   </div>
 
@@ -436,9 +436,9 @@ const TIER1_GROUPS = [
     tests: [
       ['VPMEngine global exists', 'CORE', function(){ assert(E && typeof E === 'object', 'VPMEngine missing'); return 'ok'; }],
       ['calculate() is a function', 'CORE', function(){ assert(typeof E.calculate === 'function'); return 'ok'; }],
-      ['ZHLCGF callable with simple dive', 'ZHLCGF', function(){ const r = calc(lv(20,20), NG, S(), 'ZHLCGF'); assert(r.totalRuntime > 0); return `RT=${pr(r.totalRuntime)}`; }],
+      ['ZHLCGF callable with simple dive', 'ZHLC_GF', function(){ const r = calc(lv(20,20), NG, S(), 'ZHLC_GF'); assert(r.totalRuntime > 0); return `RT=${pr(r.totalRuntime)}`; }],
       ['VPMB callable with simple dive', 'VPMB', function(){ const r = calc(lv(20,20), NG, S(), 'VPMB'); assert(r.totalRuntime > 0); return `RT=${pr(r.totalRuntime)}`; }],
-      ['VPMBGFS callable with simple dive', 'VPMBGFS', function(){ const r = calc(lv(20,20), NG, S(), 'VPMBGFS'); assert(r.totalRuntime > 0); return `RT=${pr(r.totalRuntime)}`; }],
+      ['VPMBGFS callable with simple dive', 'VPMB_GFS', function(){ const r = calc(lv(20,20), NG, S(), 'VPMB_GFS'); assert(r.totalRuntime > 0); return `RT=${pr(r.totalRuntime)}`; }],
       ['SURFACEP ≈ 1.013 bar', 'CORE', function(){ assert(approx(SURF, 1.013, 0.01), `SURFACEP=${SURF}`); return `${pr(SURF,3)} bar`; }],
     ]
   },
@@ -447,24 +447,24 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-B · Bühlmann — NDL Dives (no stops)',
     tests: [
-      ndlTest(5,  10,  'ZHLCGF'),
-      ndlTest(5,  60,  'ZHLCGF'),
-      ndlTest(9,  60,  'ZHLCGF'),
-      ndlTest(10, 60,  'ZHLCGF'),
-      ndlTest(12, 45,  'ZHLCGF'),
-      ndlTest(12, 55,  'ZHLCGF'),
-      ndlTest(15, 40,  'ZHLCGF'),
-      ndlTest(15, 50,  'ZHLCGF'),
-      ndlTest(18, 35,  'ZHLCGF'),
-      ndlTest(20, 20,  'ZHLCGF'),
-      ndlTest(20, 25,  'ZHLCGF'),
-      ndlTest(20, 30,  'ZHLCGF'),
-      ndlTest(22, 22,  'ZHLCGF'),
-      ndlTest(25, 15,  'ZHLCGF'),
-      ndlTest(30, 10,  'ZHLCGF'),
-      ndlTest(10, 90,  'ZHLCGF'),
-      ndlTest(8,  120, 'ZHLCGF'),
-      ndlTest(6,  180, 'ZHLCGF'),
+      ndlTest(5,  10,  'ZHLC_GF'),
+      ndlTest(5,  60,  'ZHLC_GF'),
+      ndlTest(9,  60,  'ZHLC_GF'),
+      ndlTest(10, 60,  'ZHLC_GF'),
+      ndlTest(12, 45,  'ZHLC_GF'),
+      ndlTest(12, 55,  'ZHLC_GF'),
+      ndlTest(15, 40,  'ZHLC_GF'),
+      ndlTest(15, 50,  'ZHLC_GF'),
+      ndlTest(18, 35,  'ZHLC_GF'),
+      ndlTest(20, 20,  'ZHLC_GF'),
+      ndlTest(20, 25,  'ZHLC_GF'),
+      ndlTest(20, 30,  'ZHLC_GF'),
+      ndlTest(22, 22,  'ZHLC_GF'),
+      ndlTest(25, 15,  'ZHLC_GF'),
+      ndlTest(30, 10,  'ZHLC_GF'),
+      ndlTest(10, 90,  'ZHLC_GF'),
+      ndlTest(8,  120, 'ZHLC_GF'),
+      ndlTest(6,  180, 'ZHLC_GF'),
     ]
   },
 
@@ -472,50 +472,50 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-C · Bühlmann — Deco Dives',
     tests: [
-      decoTest(30, 30, 'ZHLCGF'),
-      decoTest(30, 45, 'ZHLCGF'),
-      decoTest(30, 60, 'ZHLCGF'),
-      decoTest(33, 30, 'ZHLCGF'),
-      decoTest(36, 25, 'ZHLCGF'),
-      decoTest(40, 20, 'ZHLCGF'),
-      decoTest(40, 25, 'ZHLCGF'),
-      decoTest(40, 30, 'ZHLCGF'),
-      decoTest(40, 35, 'ZHLCGF'),
-      decoTest(40, 40, 'ZHLCGF'),
-      decoTest(40, 50, 'ZHLCGF'),
-      decoTest(45, 20, 'ZHLCGF'),
-      decoTest(45, 25, 'ZHLCGF'),
-      decoTest(45, 30, 'ZHLCGF'),
-      decoTest(50, 20, 'ZHLCGF'),
-      decoTest(50, 25, 'ZHLCGF'),
-      decoTest(50, 30, 'ZHLCGF'),
-      decoTest(55, 20, 'ZHLCGF'),
-      decoTest(60, 15, 'ZHLCGF'),
-      decoTest(60, 20, 'ZHLCGF'),
-      decoTest(60, 25, 'ZHLCGF'),
-      decoTest(70, 15, 'ZHLCGF'),
-      decoTest(70, 20, 'ZHLCGF'),
-      decoTest(80, 15, 'ZHLCGF'),
-      decoTest(80, 20, 'ZHLCGF'),
+      decoTest(30, 30, 'ZHLC_GF'),
+      decoTest(30, 45, 'ZHLC_GF'),
+      decoTest(30, 60, 'ZHLC_GF'),
+      decoTest(33, 30, 'ZHLC_GF'),
+      decoTest(36, 25, 'ZHLC_GF'),
+      decoTest(40, 20, 'ZHLC_GF'),
+      decoTest(40, 25, 'ZHLC_GF'),
+      decoTest(40, 30, 'ZHLC_GF'),
+      decoTest(40, 35, 'ZHLC_GF'),
+      decoTest(40, 40, 'ZHLC_GF'),
+      decoTest(40, 50, 'ZHLC_GF'),
+      decoTest(45, 20, 'ZHLC_GF'),
+      decoTest(45, 25, 'ZHLC_GF'),
+      decoTest(45, 30, 'ZHLC_GF'),
+      decoTest(50, 20, 'ZHLC_GF'),
+      decoTest(50, 25, 'ZHLC_GF'),
+      decoTest(50, 30, 'ZHLC_GF'),
+      decoTest(55, 20, 'ZHLC_GF'),
+      decoTest(60, 15, 'ZHLC_GF'),
+      decoTest(60, 20, 'ZHLC_GF'),
+      decoTest(60, 25, 'ZHLC_GF'),
+      decoTest(70, 15, 'ZHLC_GF'),
+      decoTest(70, 20, 'ZHLC_GF'),
+      decoTest(80, 15, 'ZHLC_GF'),
+      decoTest(80, 20, 'ZHLC_GF'),
       // with deco gas
-      decoTest(40, 25, 'ZHLCGF', EAN50, null, '40m/25min + EAN50 deco'),
-      decoTest(50, 25, 'ZHLCGF', EAN50, null, '50m/25min + EAN50 deco'),
-      decoTest(50, 25, 'ZHLCGF', EAN50_O2, null, '50m/25min + EAN50+O2 deco'),
-      decoTest(60, 20, 'ZHLCGF', EAN50_O2, null, '60m/20min + EAN50+O2 deco'),
-      decoTest(60, 20, 'ZHLCGF', TX_DECO, null, '60m/20min + trimix deco stack'),
+      decoTest(40, 25, 'ZHLC_GF', EAN50, null, '40m/25min + EAN50 deco'),
+      decoTest(50, 25, 'ZHLC_GF', EAN50, null, '50m/25min + EAN50 deco'),
+      decoTest(50, 25, 'ZHLC_GF', EAN50_O2, null, '50m/25min + EAN50+O2 deco'),
+      decoTest(60, 20, 'ZHLC_GF', EAN50_O2, null, '60m/20min + EAN50+O2 deco'),
+      decoTest(60, 20, 'ZHLC_GF', TX_DECO, null, '60m/20min + trimix deco stack'),
       // nitrox bottom
-      decoTest(30, 40, 'ZHLCGF', NG, null, '30m/40min EAN32 bottom'),  // will use default 21% actually
-      ['30m/40min EAN32 bottom — valid deco', 'ZHLCGF', function(){
-        const r = calc(lv(30,40,32), NG, S(), 'ZHLCGF');
+      decoTest(30, 40, 'ZHLC_GF', NG, null, '30m/40min EAN32 bottom'),  // will use default 21% actually
+      ['30m/40min EAN32 bottom — valid deco', 'ZHLC_GF', function(){
+        const r = calc(lv(30,40,32), NG, S(), 'ZHLC_GF');
         assertIntegrity(r); assert(r.totalRuntime > 40);
         return `RT=${pr(r.totalRuntime)}, ${decoStops(r).length} stops`;
       }],
       // conservative GF
-      decoTest(40, 25, 'ZHLCGF', NG, {gfLo:20, gfHi:70}, '40m/25min GF20/70 (conservative)'),
-      decoTest(40, 25, 'ZHLCGF', NG, {gfLo:30, gfHi:75}, '40m/25min GF30/75'),
+      decoTest(40, 25, 'ZHLC_GF', NG, {gfLo:20, gfHi:70}, '40m/25min GF20/70 (conservative)'),
+      decoTest(40, 25, 'ZHLC_GF', NG, {gfLo:30, gfHi:75}, '40m/25min GF30/75'),
       // very deep
-      ['100m/10min — completes without crash', 'ZHLCGF', function(){
-        const r = calc(lv(100,10), NG, S(), 'ZHLCGF');
+      ['100m/10min — completes without crash', 'ZHLC_GF', function(){
+        const r = calc(lv(100,10), NG, S(), 'ZHLC_GF');
         assertShape(r); assert(r.totalRuntime > 10);
         return `RT=${pr(r.totalRuntime)}`;
       }],
@@ -526,52 +526,52 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-D · Bühlmann — Monotonicity',
     tests: [
-      monoTest('30m/25', lv(30,25), '35m/25', lv(35,25), 'ZHLCGF', 'Deeper (30→35m) ≥ more runtime'),
-      monoTest('35m/25', lv(35,25), '40m/25', lv(40,25), 'ZHLCGF', 'Deeper (35→40m) ≥ more runtime'),
-      monoTest('40m/25', lv(40,25), '50m/25', lv(50,25), 'ZHLCGF', 'Deeper (40→50m) ≥ more runtime'),
-      monoTest('50m/25', lv(50,25), '60m/25', lv(60,25), 'ZHLCGF', 'Deeper (50→60m) ≥ more runtime'),
-      monoTest('60m/15', lv(60,15), '70m/15', lv(70,15), 'ZHLCGF', 'Deeper (60→70m) ≥ more runtime'),
-      monoTest('40m/20', lv(40,20), '40m/25', lv(40,25), 'ZHLCGF', 'Longer BT (20→25 min) ≥ more runtime'),
-      monoTest('40m/25', lv(40,25), '40m/30', lv(40,30), 'ZHLCGF', 'Longer BT (25→30 min) ≥ more runtime'),
-      monoTest('40m/30', lv(40,30), '40m/40', lv(40,40), 'ZHLCGF', 'Longer BT (30→40 min) ≥ more runtime'),
-      monoTest('40m/40', lv(40,40), '40m/60', lv(40,60), 'ZHLCGF', 'Longer BT (40→60 min) ≥ more runtime'),
+      monoTest('30m/25', lv(30,25), '35m/25', lv(35,25), 'ZHLC_GF', 'Deeper (30→35m) ≥ more runtime'),
+      monoTest('35m/25', lv(35,25), '40m/25', lv(40,25), 'ZHLC_GF', 'Deeper (35→40m) ≥ more runtime'),
+      monoTest('40m/25', lv(40,25), '50m/25', lv(50,25), 'ZHLC_GF', 'Deeper (40→50m) ≥ more runtime'),
+      monoTest('50m/25', lv(50,25), '60m/25', lv(60,25), 'ZHLC_GF', 'Deeper (50→60m) ≥ more runtime'),
+      monoTest('60m/15', lv(60,15), '70m/15', lv(70,15), 'ZHLC_GF', 'Deeper (60→70m) ≥ more runtime'),
+      monoTest('40m/20', lv(40,20), '40m/25', lv(40,25), 'ZHLC_GF', 'Longer BT (20→25 min) ≥ more runtime'),
+      monoTest('40m/25', lv(40,25), '40m/30', lv(40,30), 'ZHLC_GF', 'Longer BT (25→30 min) ≥ more runtime'),
+      monoTest('40m/30', lv(40,30), '40m/40', lv(40,40), 'ZHLC_GF', 'Longer BT (30→40 min) ≥ more runtime'),
+      monoTest('40m/40', lv(40,40), '40m/60', lv(40,60), 'ZHLC_GF', 'Longer BT (40→60 min) ≥ more runtime'),
       // GF monotonicity
-      ['GFHi 85→70 → more runtime', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S({gfHi:85}), 'ZHLCGF');
-        const b = calc(lv(40,25), NG, S({gfHi:70}), 'ZHLCGF');
+      ['GFHi 85→70 → more runtime', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S({gfHi:85}), 'ZHLC_GF');
+        const b = calc(lv(40,25), NG, S({gfHi:70}), 'ZHLC_GF');
         assert(b.totalRuntime + 0.5 >= a.totalRuntime, `GF70 shorter: ${pr(b.totalRuntime)} < ${pr(a.totalRuntime)}`);
         return `85→${pr(a.totalRuntime)} | 70→${pr(b.totalRuntime)}`;
       }],
-      ['GFLo 30→20 → more runtime', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S({gfLo:30}), 'ZHLCGF');
-        const b = calc(lv(40,25), NG, S({gfLo:20}), 'ZHLCGF');
+      ['GFLo 30→20 → more runtime', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S({gfLo:30}), 'ZHLC_GF');
+        const b = calc(lv(40,25), NG, S({gfLo:20}), 'ZHLC_GF');
         assert(b.totalRuntime + 0.5 >= a.totalRuntime, `GFLo20 shorter`);
         return `Lo30→${pr(a.totalRuntime)} | Lo20→${pr(b.totalRuntime)}`;
       }],
-      ['GFHi 85→60 → more runtime', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S({gfHi:85}), 'ZHLCGF');
-        const b = calc(lv(40,25), NG, S({gfHi:60}), 'ZHLCGF');
+      ['GFHi 85→60 → more runtime', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S({gfHi:85}), 'ZHLC_GF');
+        const b = calc(lv(40,25), NG, S({gfHi:60}), 'ZHLC_GF');
         assert(b.totalRuntime + 0.5 >= a.totalRuntime);
         return `85→${pr(a.totalRuntime)} | 60→${pr(b.totalRuntime)}`;
       }],
       // nitrox monotonicity
-      ['EAN21 (air) vs EAN32 → nitrox shorter or equal', 'ZHLCGF', function(){
-        const air  = calc(lv(30,30,21), NG, S(), 'ZHLCGF');
-        const nx32 = calc(lv(30,30,32), NG, S(), 'ZHLCGF');
+      ['EAN21 (air) vs EAN32 → nitrox shorter or equal', 'ZHLC_GF', function(){
+        const air  = calc(lv(30,30,21), NG, S(), 'ZHLC_GF');
+        const nx32 = calc(lv(30,30,32), NG, S(), 'ZHLC_GF');
         assert(nx32.totalRuntime <= air.totalRuntime + 1, `EAN32 longer than air by ${pr(nx32.totalRuntime - air.totalRuntime)}`);
         return `Air ${pr(air.totalRuntime)} | EAN32 ${pr(nx32.totalRuntime)}`;
       }],
       // stop count monotonicity (deeper = more stops)
-      ['50m → more stops than 40m (same BT)', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
-        const b = calc(lv(50,25), NG, S(), 'ZHLCGF');
+      ['50m → more stops than 40m (same BT)', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(50,25), NG, S(), 'ZHLC_GF');
         assert(decoStops(b).length >= decoStops(a).length, `50m fewer stops (${decoStops(b).length} < ${decoStops(a).length})`);
         return `40m: ${decoStops(a).length} stops | 50m: ${decoStops(b).length} stops`;
       }],
       // deco gas monotonicity
-      ['EAN50 deco gas ≤ runtime of no deco gas', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
-        const b = calc(lv(40,25), EAN50, S(), 'ZHLCGF');
+      ['EAN50 deco gas ≤ runtime of no deco gas', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(40,25), EAN50, S(), 'ZHLC_GF');
         assert(b.totalRuntime <= a.totalRuntime + 1, `EAN50 added ${pr(b.totalRuntime - a.totalRuntime)} min`);
         return `No gas ${pr(a.totalRuntime)} | EAN50 ${pr(b.totalRuntime)}`;
       }],
@@ -582,52 +582,52 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-E · Bühlmann — Gas & CNS/OTU',
     tests: [
-      ['CNS finite & ≥ 0 on standard dive', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['CNS finite & ≥ 0 on standard dive', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         assert(r.totalCNS != null && isFinite(r.totalCNS) && r.totalCNS >= 0);
         return `CNS=${pr(r.totalCNS,1)}%`;
       }],
-      ['OTU finite & ≥ 0 on standard dive', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['OTU finite & ≥ 0 on standard dive', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         assert(r.totalOTU != null && isFinite(r.totalOTU) && r.totalOTU >= 0);
         return `OTU=${Math.round(r.totalOTU)}`;
       }],
-      ['Longer dive accumulates more CNS', 'ZHLCGF', function(){
-        const a = calc(lv(40,20), NG, S(), 'ZHLCGF');
-        const b = calc(lv(40,40), NG, S(), 'ZHLCGF');
+      ['Longer dive accumulates more CNS', 'ZHLC_GF', function(){
+        const a = calc(lv(40,20), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(40,40), NG, S(), 'ZHLC_GF');
         assert(b.totalCNS >= a.totalCNS, `longer dive less CNS`);
         return `20min ${pr(a.totalCNS,1)}% | 40min ${pr(b.totalCNS,1)}%`;
       }],
-      ['Deeper dive accumulates more CNS', 'ZHLCGF', function(){
-        const a = calc(lv(30,25), NG, S(), 'ZHLCGF');
-        const b = calc(lv(50,25), NG, S(), 'ZHLCGF');
+      ['Deeper dive accumulates more CNS', 'ZHLC_GF', function(){
+        const a = calc(lv(30,25), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(50,25), NG, S(), 'ZHLC_GF');
         assert(b.totalCNS >= a.totalCNS, `deeper dive less CNS`);
         return `30m ${pr(a.totalCNS,1)}% | 50m ${pr(b.totalCNS,1)}%`;
       }],
-      ['EAN50 deco ≥ OTU vs no deco gas', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
-        const b = calc(lv(40,25), EAN50, S(), 'ZHLCGF');
+      ['EAN50 deco ≥ OTU vs no deco gas', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(40,25), EAN50, S(), 'ZHLC_GF');
         assert(b.totalOTU >= a.totalOTU - 0.5);
         return `NG=${Math.round(a.totalOTU)} | EAN50=${Math.round(b.totalOTU)} OTU`;
       }],
-      ['EAN50+O2 gives finite CNS/OTU', 'ZHLCGF', function(){
-        const r = calc(lv(50,25), EAN50_O2, S(), 'ZHLCGF');
+      ['EAN50+O2 gives finite CNS/OTU', 'ZHLC_GF', function(){
+        const r = calc(lv(50,25), EAN50_O2, S(), 'ZHLC_GF');
         assert(isFinite(r.totalCNS) && isFinite(r.totalOTU));
         return `CNS=${pr(r.totalCNS,1)}% OTU=${Math.round(r.totalOTU)}`;
       }],
-      ['Trimix He50 50m/20min — finite CNS', 'ZHLCGF', function(){
-        const r = calc(lv(50,20,21,35), TX_DECO, S(), 'ZHLCGF');
+      ['Trimix He50 50m/20min — finite CNS', 'ZHLC_GF', function(){
+        const r = calc(lv(50,20,21,35), TX_DECO, S(), 'ZHLC_GF');
         assertShape(r); assert(isFinite(r.totalCNS));
         return `RT=${pr(r.totalRuntime)}, CNS=${pr(r.totalCNS,1)}%`;
       }],
-      ['Max stop depth ≤ planned depth (Bühlmann)', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['Max stop depth ≤ planned depth (Bühlmann)', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         const mx = maxStopDepth(r);
         assert(mx <= 40, `First stop deeper than bottom: ${mx}m`);
         return `max stop=${mx}m ≤ 40m ✓`;
       }],
-      ['Min stop depth ≥ 0', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['Min stop depth ≥ 0', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         const mn = minStopDepth(r);
         assert(mn >= 0, `Negative min stop: ${mn}`);
         return `min stop=${mn}m ✓`;
@@ -639,19 +639,19 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-F · Bühlmann — Plan Integrity',
     tests: [
-      ['40m/25min — full integrity check', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S(), 'ZHLCGF'); assertIntegrity(r); return segTypes(r).slice(0,6).join(' → '); }],
-      ['60m/20min — full integrity check', 'ZHLCGF', function(){ const r = calc(lv(60,20), NG, S(), 'ZHLCGF'); assertIntegrity(r); return segTypes(r).slice(0,8).join(' → '); }],
-      ['60m/20min + EAN50+O2 — full integrity check', 'ZHLCGF', function(){ const r = calc(lv(60,20), EAN50_O2, S(), 'ZHLCGF'); assertIntegrity(r); return `${r.plan.length} segs`; }],
-      ['Run times monotonically increasing', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['40m/25min — full integrity check', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S(), 'ZHLC_GF'); assertIntegrity(r); return segTypes(r).slice(0,6).join(' → '); }],
+      ['60m/20min — full integrity check', 'ZHLC_GF', function(){ const r = calc(lv(60,20), NG, S(), 'ZHLC_GF'); assertIntegrity(r); return segTypes(r).slice(0,8).join(' → '); }],
+      ['60m/20min + EAN50+O2 — full integrity check', 'ZHLC_GF', function(){ const r = calc(lv(60,20), EAN50_O2, S(), 'ZHLC_GF'); assertIntegrity(r); return `${r.plan.length} segs`; }],
+      ['Run times monotonically increasing', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         let last = -Infinity;
         (r.plan || []).forEach((s, i) => {
           if (s.run != null) { assert(s.run + 1e-9 >= last, `run decreased @${i}: ${s.run} < ${last}`); last = s.run; }
         });
         return 'all runs ≥ previous ✓';
       }],
-      ['Stop depths never increase during ascent', 'ZHLCGF', function(){
-        const r = calc(lv(50,25), NG, S(), 'ZHLCGF');
+      ['Stop depths never increase during ascent', 'ZHLC_GF', function(){
+        const r = calc(lv(50,25), NG, S(), 'ZHLC_GF');
         let lastD = Infinity;
         stopSegs(r).forEach((s, i) => {
           assert(s.depth <= lastD + 1e-9, `stop depth increased @${i}: ${s.depth} > ${lastD}`);
@@ -659,16 +659,16 @@ const TIER1_GROUPS = [
         });
         return `${stopSegs(r).length} stops in correct order ✓`;
       }],
-      ['No negative segment times', 'ZHLCGF', function(){
-        const r = calc(lv(60,20), EAN50, S(), 'ZHLCGF');
+      ['No negative segment times', 'ZHLC_GF', function(){
+        const r = calc(lv(60,20), EAN50, S(), 'ZHLC_GF');
         (r.plan || []).forEach((s, i) => {
           if ((s.time || 0) < -0.001) throw new Error(`Negative time at segment ${i}: ${s.time}`);
         });
         return 'all times ≥ 0 ✓';
       }],
-      ['Determinism: two identical calls give same RT', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
-        const b = calc(lv(40,25), NG, S(), 'ZHLCGF');
+      ['Determinism: two identical calls give same RT', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
+        const b = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01);
         return `${pr(a.totalRuntime)} == ${pr(b.totalRuntime)} ✓`;
       }],
@@ -741,55 +741,55 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-H · VPM-B/GFS — Profiles',
     tests: [
-      ndlTest(10, 60, 'VPMBGFS'),
-      ndlTest(15, 40, 'VPMBGFS'),
-      ndlTest(20, 20, 'VPMBGFS'),
-      decoTest(30, 35, 'VPMBGFS'),
-      decoTest(35, 30, 'VPMBGFS'),
-      decoTest(40, 20, 'VPMBGFS'),
-      decoTest(40, 25, 'VPMBGFS'),
-      decoTest(40, 30, 'VPMBGFS'),
-      decoTest(40, 35, 'VPMBGFS'),
-      decoTest(45, 20, 'VPMBGFS'),
-      decoTest(45, 25, 'VPMBGFS'),
-      decoTest(50, 20, 'VPMBGFS'),
-      decoTest(50, 25, 'VPMBGFS'),
-      decoTest(50, 30, 'VPMBGFS'),
-      decoTest(60, 15, 'VPMBGFS'),
-      decoTest(60, 20, 'VPMBGFS'),
-      decoTest(70, 15, 'VPMBGFS'),
-      decoTest(80, 15, 'VPMBGFS'),
-      decoTest(40, 25, 'VPMBGFS', EAN50, null, 'VPM-B/GFS 40m/25min + EAN50'),
-      monoTest('40m/25', lv(40,25), '50m/25', lv(50,25), 'VPMBGFS', 'VPMBGFS: 50m ≥ 40m runtime'),
-      monoTest('40m/20', lv(40,20), '40m/30', lv(40,30), 'VPMBGFS', 'VPMBGFS: 30min ≥ 20min runtime'),
+      ndlTest(10, 60, 'VPMB_GFS'),
+      ndlTest(15, 40, 'VPMB_GFS'),
+      ndlTest(20, 20, 'VPMB_GFS'),
+      decoTest(30, 35, 'VPMB_GFS'),
+      decoTest(35, 30, 'VPMB_GFS'),
+      decoTest(40, 20, 'VPMB_GFS'),
+      decoTest(40, 25, 'VPMB_GFS'),
+      decoTest(40, 30, 'VPMB_GFS'),
+      decoTest(40, 35, 'VPMB_GFS'),
+      decoTest(45, 20, 'VPMB_GFS'),
+      decoTest(45, 25, 'VPMB_GFS'),
+      decoTest(50, 20, 'VPMB_GFS'),
+      decoTest(50, 25, 'VPMB_GFS'),
+      decoTest(50, 30, 'VPMB_GFS'),
+      decoTest(60, 15, 'VPMB_GFS'),
+      decoTest(60, 20, 'VPMB_GFS'),
+      decoTest(70, 15, 'VPMB_GFS'),
+      decoTest(80, 15, 'VPMB_GFS'),
+      decoTest(40, 25, 'VPMB_GFS', EAN50, null, 'VPM-B/GFS 40m/25min + EAN50'),
+      monoTest('40m/25', lv(40,25), '50m/25', lv(50,25), 'VPMB_GFS', 'VPMBGFS: 50m ≥ 40m runtime'),
+      monoTest('40m/20', lv(40,20), '40m/30', lv(40,30), 'VPMB_GFS', 'VPMBGFS: 30min ≥ 20min runtime'),
       // GFS conservatism
-      ['VPMBGFS: lower GFS (70 vs 85) → more runtime', 'VPMBGFS', function(){
-        const a = calc(lv(45,25), NG, S({gfs:85}), 'VPMBGFS');
-        const b = calc(lv(45,25), NG, S({gfs:70}), 'VPMBGFS');
+      ['VPMBGFS: lower GFS (70 vs 85) → more runtime', 'VPMB_GFS', function(){
+        const a = calc(lv(45,25), NG, S({gfs:85}), 'VPMB_GFS');
+        const b = calc(lv(45,25), NG, S({gfs:70}), 'VPMB_GFS');
         assert(b.totalRuntime + 0.5 >= a.totalRuntime);
         return `85→${pr(a.totalRuntime)} | 70→${pr(b.totalRuntime)}`;
       }],
-      ['VPMBGFS: GFS 60 gives valid plan', 'VPMBGFS', function(){
-        const r = calc(lv(45,25), NG, S({gfs:60}), 'VPMBGFS');
+      ['VPMBGFS: GFS 60 gives valid plan', 'VPMB_GFS', function(){
+        const r = calc(lv(45,25), NG, S({gfs:60}), 'VPMB_GFS');
         assertIntegrity(r); return `RT=${pr(r.totalRuntime)}`;
       }],
       // cross-model comparison
       ['ZHLCGF vs VPMB vs VPMBGFS runtime spread ≤ 45min', 'ALL', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         const b = calc(lv(40,25), NG, S(), 'VPMB');
-        const c = calc(lv(40,25), NG, S(), 'VPMBGFS');
+        const c = calc(lv(40,25), NG, S(), 'VPMB_GFS');
         const spread = Math.max(a.totalRuntime, b.totalRuntime, c.totalRuntime) - Math.min(a.totalRuntime, b.totalRuntime, c.totalRuntime);
         assert(spread < 45, `Spread too large: ${pr(spread,1)}min`);
         return `ZHL=${pr(a.totalRuntime)} VPM=${pr(b.totalRuntime)} GFS=${pr(c.totalRuntime)}`;
       }],
-      ['VPMBGFS determinism', 'VPMBGFS', function(){
-        const a = calc(lv(40,25), NG, S(), 'VPMBGFS');
-        const b = calc(lv(40,25), NG, S(), 'VPMBGFS');
+      ['VPMBGFS determinism', 'VPMB_GFS', function(){
+        const a = calc(lv(40,25), NG, S(), 'VPMB_GFS');
+        const b = calc(lv(40,25), NG, S(), 'VPMB_GFS');
         assert(Math.abs(a.totalRuntime - b.totalRuntime) < 0.01);
         return `${pr(a.totalRuntime)} == ${pr(b.totalRuntime)} ✓`;
       }],
-      ['VPMBGFS 80m/15min — no crash', 'VPMBGFS', function(){
-        const r = calc(lv(80,15), NG, S(), 'VPMBGFS');
+      ['VPMBGFS 80m/15min — no crash', 'VPMB_GFS', function(){
+        const r = calc(lv(80,15), NG, S(), 'VPMB_GFS');
         assertShape(r); assert(r.totalRuntime > 15);
         return `RT=${pr(r.totalRuntime)}`;
       }],
@@ -800,27 +800,27 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-I · Units & Water Types',
     tests: [
-      ['Metric salt: 40m/25min — runs', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S({metric:true, waterType:0}), 'ZHLCGF'); return `RT=${pr(r.totalRuntime)}`; }],
-      ['Metric fresh: 40m/25min — runs', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S({metric:true, waterType:1}), 'ZHLCGF'); return `RT=${pr(r.totalRuntime)}`; }],
-      ['Imperial salt: 130ft/25min — runs', 'ZHLCGF', function(){
-        const r = calc([{depth:130, time:25, o2:21, he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'ZHLCGF');
+      ['Metric salt: 40m/25min — runs', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S({metric:true, waterType:0}), 'ZHLC_GF'); return `RT=${pr(r.totalRuntime)}`; }],
+      ['Metric fresh: 40m/25min — runs', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S({metric:true, waterType:1}), 'ZHLC_GF'); return `RT=${pr(r.totalRuntime)}`; }],
+      ['Imperial salt: 130ft/25min — runs', 'ZHLC_GF', function(){
+        const r = calc([{depth:130, time:25, o2:21, he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'ZHLC_GF');
         assert(r.totalRuntime > 25); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Imperial fresh: 100ft/30min — runs', 'ZHLCGF', function(){
-        const r = calc([{depth:100, time:30, o2:21, he:0}], NG, S({metric:false, waterType:1, stepSize:10, lastStop:10}), 'ZHLCGF');
+      ['Imperial fresh: 100ft/30min — runs', 'ZHLC_GF', function(){
+        const r = calc([{depth:100, time:30, o2:21, he:0}], NG, S({metric:false, waterType:1, stepSize:10, lastStop:10}), 'ZHLC_GF');
         assert(r.totalRuntime > 30); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Custom density 1030 kg/m³ — runs', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S({waterType:2, customWaterDensity:1030}), 'ZHLCGF');
+      ['Custom density 1030 kg/m³ — runs', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S({waterType:2, customWaterDensity:1030}), 'ZHLC_GF');
         return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Custom density 1010 kg/m³ — runs', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S({waterType:2, customWaterDensity:1010}), 'ZHLCGF');
+      ['Custom density 1010 kg/m³ — runs', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S({waterType:2, customWaterDensity:1010}), 'ZHLC_GF');
         return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Salt vs fresh RT difference < 15min', 'ZHLCGF', function(){
-        const a = calc(lv(40,25), NG, S({waterType:0}), 'ZHLCGF');
-        const b = calc(lv(40,25), NG, S({waterType:1}), 'ZHLCGF');
+      ['Salt vs fresh RT difference < 15min', 'ZHLC_GF', function(){
+        const a = calc(lv(40,25), NG, S({waterType:0}), 'ZHLC_GF');
+        const b = calc(lv(40,25), NG, S({waterType:1}), 'ZHLC_GF');
         const d = Math.abs(a.totalRuntime - b.totalRuntime);
         assert(d < 15, `Diff too large: ${pr(d,1)}min`);
         return `Δ=${pr(d,1)}min`;
@@ -829,8 +829,8 @@ const TIER1_GROUPS = [
         const r = calc([{depth:165, time:20, o2:21, he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'VPMB');
         assert(r.totalRuntime > 20); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['VPMBGFS imperial: 130ft/25min — runs', 'VPMBGFS', function(){
-        const r = calc([{depth:130, time:25, o2:21, he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'VPMBGFS');
+      ['VPMBGFS imperial: 130ft/25min — runs', 'VPMB_GFS', function(){
+        const r = calc([{depth:130, time:25, o2:21, he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'VPMB_GFS');
         assert(r.totalRuntime > 25); return `RT=${pr(r.totalRuntime)}`;
       }],
     ]
@@ -841,44 +841,44 @@ const TIER1_GROUPS = [
     tier: 1, name: 'T1-J · Edge Cases & Extreme Profiles',
     tests: [
       // Very shallow
-      ['5m/5min — no error, quick RT', 'ZHLCGF', function(){ const r = calc(lv(5,5), NG, S(), 'ZHLCGF'); assert(r.totalRuntime < 20); return `RT=${pr(r.totalRuntime)}`; }],
-      ['5m/30min — no error', 'ZHLCGF', function(){ const r = calc(lv(5,30), NG, S(), 'ZHLCGF'); assert(r.totalRuntime >= 30); return `RT=${pr(r.totalRuntime)}`; }],
+      ['5m/5min — no error, quick RT', 'ZHLC_GF', function(){ const r = calc(lv(5,5), NG, S(), 'ZHLC_GF'); assert(r.totalRuntime < 20); return `RT=${pr(r.totalRuntime)}`; }],
+      ['5m/30min — no error', 'ZHLC_GF', function(){ const r = calc(lv(5,30), NG, S(), 'ZHLC_GF'); assert(r.totalRuntime >= 30); return `RT=${pr(r.totalRuntime)}`; }],
       // Very deep
-      ['90m/10min — no crash', 'ZHLCGF', function(){ const r = calc(lv(90,10), NG, S(), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['90m/10min — no crash', 'ZHLC_GF', function(){ const r = calc(lv(90,10), NG, S(), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
       ['100m/10min — no crash (VPMB)', 'VPMB', function(){ const r = calc(lv(100,10), NG, S(), 'VPMB'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
       // Long bottom times
-      ['20m/120min — runs', 'ZHLCGF', function(){ const r = calc(lv(20,120), NG, S(), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
-      ['15m/180min — runs', 'ZHLCGF', function(){ const r = calc(lv(15,180), NG, S(), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['20m/120min — runs', 'ZHLC_GF', function(){ const r = calc(lv(20,120), NG, S(), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['15m/180min — runs', 'ZHLC_GF', function(){ const r = calc(lv(15,180), NG, S(), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
       // GF extremes
-      ['GF 100/100 (ceiling) — runs', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S({gfLo:100, gfHi:100}), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
-      ['GF 20/50 (deep+conservative) — runs', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S({gfLo:20, gfHi:50}), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['GF 100/100 (ceiling) — runs', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S({gfLo:100, gfHi:100}), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['GF 20/50 (deep+conservative) — runs', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S({gfLo:20, gfHi:50}), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
       // 1m step / 1m last stop
-      ['1m step, 1m last stop — runs', 'ZHLCGF', function(){ const r = calc(lv(40,25), NG, S({stepSize:1, lastStop:1}), 'ZHLCGF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
+      ['1m step, 1m last stop — runs', 'ZHLC_GF', function(){ const r = calc(lv(40,25), NG, S({stepSize:1, lastStop:1}), 'ZHLC_GF'); assertShape(r); return `RT=${pr(r.totalRuntime)}`; }],
       // Trimix
-      ['Trimix 21/35 60m/20min — runs', 'ZHLCGF', function(){
-        const r = calc(lv(60,20,21,35), TX_DECO, S(), 'ZHLCGF');
+      ['Trimix 21/35 60m/20min — runs', 'ZHLC_GF', function(){
+        const r = calc(lv(60,20,21,35), TX_DECO, S(), 'ZHLC_GF');
         assertShape(r); assert(r.totalRuntime > 20); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Trimix 18/45 70m/20min — runs', 'ZHLCGF', function(){
-        const r = calc(lv(70,20,18,45), TX_DECO, S(), 'ZHLCGF');
+      ['Trimix 18/45 70m/20min — runs', 'ZHLC_GF', function(){
+        const r = calc(lv(70,20,18,45), TX_DECO, S(), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Helitrox 35/25 50m/25min — runs', 'ZHLCGF', function(){
-        const r = calc(lv(50,25,35,25), EAN50_O2, S(), 'ZHLCGF');
+      ['Helitrox 35/25 50m/25min — runs', 'ZHLC_GF', function(){
+        const r = calc(lv(50,25,35,25), EAN50_O2, S(), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
       // State isolation
-      ['State isolation: call after deep dive still works', 'ZHLCGF', function(){
-        calc(lv(80,20), NG, S(), 'ZHLCGF'); // potentially state-dirtying
-        const r = calc(lv(20,20), NG, S(), 'ZHLCGF');
+      ['State isolation: call after deep dive still works', 'ZHLC_GF', function(){
+        calc(lv(80,20), NG, S(), 'ZHLC_GF'); // potentially state-dirtying
+        const r = calc(lv(20,20), NG, S(), 'ZHLC_GF');
         const stops = decoStops(r);
         assert(stops.length === 0, `NDL dive got ${stops.length} stops after deep dive`);
         return 'no state leak ✓';
       }],
       ['Multiple model switches — no cross-contamination', 'ALL', function(){
-        const a = calc(lv(40,25), NG, S(), 'ZHLCGF');
+        const a = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         const b = calc(lv(40,25), NG, S(), 'VPMB');
-        const c = calc(lv(40,25), NG, S(), 'ZHLCGF'); // re-run Bühlmann
+        const c = calc(lv(40,25), NG, S(), 'ZHLC_GF'); // re-run Bühlmann
         assert(Math.abs(a.totalRuntime - c.totalRuntime) < 0.01, `ZHL results differ after VPM-B call: ${pr(a.totalRuntime)} vs ${pr(c.totalRuntime)}`);
         return 'no cross-contamination ✓';
       }],
@@ -889,22 +889,22 @@ const TIER1_GROUPS = [
   {
     tier: 1, name: 'T1-K · Multi-Level Dives',
     tests: [
-      ['Two-level: 40m→30m (Bühlmann)', 'ZHLCGF', function(){
-        const r = calc(mlv([{depth:40,time:20},{depth:30,time:10}]), NG, S(), 'ZHLCGF');
+      ['Two-level: 40m→30m (Bühlmann)', 'ZHLC_GF', function(){
+        const r = calc(mlv([{depth:40,time:20},{depth:30,time:10}]), NG, S(), 'ZHLC_GF');
         assertIntegrity(r); return `RT=${pr(r.totalRuntime)}, ${r.plan.length} segs`;
       }],
-      ['Two-level: 50m→30m (Bühlmann)', 'ZHLCGF', function(){
-        const r = calc(mlv([{depth:50,time:15},{depth:30,time:10}]), EAN50, S(), 'ZHLCGF');
+      ['Two-level: 50m→30m (Bühlmann)', 'ZHLC_GF', function(){
+        const r = calc(mlv([{depth:50,time:15},{depth:30,time:10}]), EAN50, S(), 'ZHLC_GF');
         assertIntegrity(r); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Three-level: 60m→40m→20m trimix (Bühlmann)', 'ZHLCGF', function(){
-        const r = calc(mlv([{depth:60,time:20,o2:18,he:45},{depth:40,time:5,o2:18,he:45},{depth:20,time:5,o2:18,he:45}]), TX_DECO, S(), 'ZHLCGF');
+      ['Three-level: 60m→40m→20m trimix (Bühlmann)', 'ZHLC_GF', function(){
+        const r = calc(mlv([{depth:60,time:20,o2:18,he:45},{depth:40,time:5,o2:18,he:45},{depth:20,time:5,o2:18,he:45}]), TX_DECO, S(), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['Two-level 2nd level deeper than 1st — should still run', 'ZHLCGF', function(){
+      ['Two-level 2nd level deeper than 1st — should still run', 'ZHLC_GF', function(){
         // engine may or may not support ascending order, just check no crash
         try {
-          const r = calc(mlv([{depth:30,time:10},{depth:40,time:15}]), NG, S(), 'ZHLCGF');
+          const r = calc(mlv([{depth:30,time:10},{depth:40,time:15}]), NG, S(), 'ZHLC_GF');
           assertShape(r); return `RT=${pr(r.totalRuntime)} (accepted)`;
         } catch(e) {
           return `Engine rejected (acceptable): ${e.message.slice(0,60)}`;
@@ -1158,7 +1158,7 @@ const TIER2_GROUPS = [
         assert(sel, 'Algorithm selector not found');
         return `current: ${sel.value}`;
       }],
-      ['Switch to ZHLCGF — runDecoSchedule succeeds', 'ZHLCGF', function(){
+      ['Switch to ZHLCGF — runDecoSchedule succeeds', 'ZHLC_GF', function(){
         const d = getDoc();
         const sel = d.getElementById('algorithm') || d.querySelector('select[id*="algo"]');
         if (sel) { sel.value = sel.querySelector('option[value*="ZHL"], option[value*="Buhl"], option[value*="GF"]') ? sel.querySelector('option[value*="ZHL"], option[value*="Buhl"], option[value*="GF"]').value : sel.options[0].value; sel.dispatchEvent(new WIN.Event('change',{bubbles:true})); }
@@ -1370,8 +1370,8 @@ const TIER3_GROUPS = [
       ['Two sequential engine dives give more deco on 2nd', 'SCN', function(){
         // Simulate residual N2: run a deco dive, then another equivalent dive
         // This tests only engine consistency (no DOM)
-        const r1 = calc(lv(40,25), NG, S(), 'ZHLCGF');
-        const r2 = calc(lv(40,25), NG, S(), 'ZHLCGF');
+        const r1 = calc(lv(40,25), NG, S(), 'ZHLC_GF');
+        const r2 = calc(lv(40,25), NG, S(), 'ZHLC_GF');
         // Without true surface interval the engine is stateless — should be identical
         assert(Math.abs(r1.totalRuntime - r2.totalRuntime) < 0.01, 'Stateless engine results differ');
         return 'Engine stateless between calls ✓';
@@ -1383,8 +1383,8 @@ const TIER3_GROUPS = [
   {
     tier: 3, name: 'T3-D · Imperial Mode — Full Plan',
     tests: [
-      ['Imperial 100ft/25min — Bühlmann full integrity', 'ZHLCGF', function(){
-        const r = calc([{depth:100,time:25,o2:21,he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'ZHLCGF');
+      ['Imperial 100ft/25min — Bühlmann full integrity', 'ZHLC_GF', function(){
+        const r = calc([{depth:100,time:25,o2:21,he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'ZHLC_GF');
         assertIntegrity(r);
         return `RT=${pr(r.totalRuntime)} min, ${decoStops(r).length} stops`;
       }],
@@ -1393,8 +1393,8 @@ const TIER3_GROUPS = [
         assertIntegrity(r);
         return `RT=${pr(r.totalRuntime)} min`;
       }],
-      ['Imperial 165ft/20min — VPMBGFS integrity', 'VPMBGFS', function(){
-        const r = calc([{depth:165,time:20,o2:21,he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'VPMBGFS');
+      ['Imperial 165ft/20min — VPMBGFS integrity', 'VPMB_GFS', function(){
+        const r = calc([{depth:165,time:20,o2:21,he:0}], NG, S({metric:false, waterType:0, stepSize:10, lastStop:10}), 'VPMB_GFS');
         assertIntegrity(r);
         return `RT=${pr(r.totalRuntime)} min`;
       }],
@@ -1434,23 +1434,23 @@ const TIER3_GROUPS = [
     tier: 3, name: 'T3-E · Stress & Boundary Profiles',
     tests: [
       // All three models on a hard profile
-      ['Bühlmann 80m/20min + EAN50+O2 — no crash', 'ZHLCGF', function(){
-        const r = calc(lv(80,20), EAN50_O2, S(), 'ZHLCGF');
+      ['Bühlmann 80m/20min + EAN50+O2 — no crash', 'ZHLC_GF', function(){
+        const r = calc(lv(80,20), EAN50_O2, S(), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
       ['VPM-B 80m/20min + EAN50+O2 — no crash', 'VPMB', function(){
         const r = calc(lv(80,20), EAN50_O2, S(), 'VPMB');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['VPMBGFS 80m/20min + EAN50+O2 — no crash', 'VPMBGFS', function(){
-        const r = calc(lv(80,20), EAN50_O2, S(), 'VPMBGFS');
+      ['VPMBGFS 80m/20min + EAN50+O2 — no crash', 'VPMB_GFS', function(){
+        const r = calc(lv(80,20), EAN50_O2, S(), 'VPMB_GFS');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
       // Rapid successive calls (stress test)
-      ['10 rapid successive Bühlmann calls — all stable', 'ZHLCGF', function(){
+      ['10 rapid successive Bühlmann calls — all stable', 'ZHLC_GF', function(){
         const results = [];
         for (let i = 0; i < 10; i++) {
-          const r = calc(lv(40,25), NG, S(), 'ZHLCGF');
+          const r = calc(lv(40,25), NG, S(), 'ZHLC_GF');
           assertShape(r);
           results.push(r.totalRuntime);
         }
@@ -1469,25 +1469,25 @@ const TIER3_GROUPS = [
       }],
       // Mix of models in alternation
       ['Alternating ZHL/VPM/GFS × 5 — no cross-contamination', 'ALL', function(){
-        const models = ['ZHLCGF','VPMB','VPMBGFS','ZHLCGF','VPMB'];
-        const rt0 = calc(lv(40,25), NG, S(), 'ZHLCGF').totalRuntime;
+        const models = ['ZHLC_GF','VPMB','VPMB_GFS','ZHLC_GF','VPMB'];
+        const rt0 = calc(lv(40,25), NG, S(), 'ZHLC_GF').totalRuntime;
         models.forEach(m => calc(lv(40,25), NG, S(), m));
-        const rt1 = calc(lv(40,25), NG, S(), 'ZHLCGF').totalRuntime;
+        const rt1 = calc(lv(40,25), NG, S(), 'ZHLC_GF').totalRuntime;
         assert(Math.abs(rt0 - rt1) < 0.01, `ZHL result changed after model mixing: ${rt0} → ${rt1}`);
         return 'no drift ✓';
       }],
       // Extreme GF values
-      ['GF 10/50 extreme conservative — no crash', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S({gfLo:10, gfHi:50}), 'ZHLCGF');
+      ['GF 10/50 extreme conservative — no crash', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S({gfLo:10, gfHi:50}), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
-      ['GF 100/100 permissive — no crash', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), NG, S({gfLo:100, gfHi:100}), 'ZHLCGF');
+      ['GF 100/100 permissive — no crash', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), NG, S({gfLo:100, gfHi:100}), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
       // O2 breathing
-      ['Pure O2 deco at 6m — no crash', 'ZHLCGF', function(){
-        const r = calc(lv(40,25), O2_100, S(), 'ZHLCGF');
+      ['Pure O2 deco at 6m — no crash', 'ZHLC_GF', function(){
+        const r = calc(lv(40,25), O2_100, S(), 'ZHLC_GF');
         assertShape(r); return `RT=${pr(r.totalRuntime)}`;
       }],
     ]
@@ -1511,9 +1511,9 @@ function matchesFilter(group, result) {
   if (ACTIVE_FILTER === 'tier1') return group.tier === 1;
   if (ACTIVE_FILTER === 'tier2') return group.tier === 2;
   if (ACTIVE_FILTER === 'tier3') return group.tier === 3;
-  if (ACTIVE_FILTER === 'ZHLCGF') return result.model === 'ZHLCGF';
+  if (ACTIVE_FILTER === 'ZHLC_GF') return result.model === 'ZHLC_GF';
   if (ACTIVE_FILTER === 'VPMB') return result.model === 'VPMB';
-  if (ACTIVE_FILTER === 'VPMBGFS') return result.model === 'VPMBGFS';
+  if (ACTIVE_FILTER === 'VPMB_GFS') return result.model === 'VPMB_GFS';
   return true;
 }
 
@@ -1621,7 +1621,7 @@ function waitForEngine(iframe, timeout, cb) {
         const keys = Object.getOwnPropertyNames(w);
         for (const k of keys) {
           const v = w[k];
-          if (v && typeof v === 'object' && typeof v.calculate === 'function' && v.MODELS && 'ZHLCGF' in v.MODELS) return {engine: v, win: w};
+          if (v && typeof v === 'object' && typeof v.calculate === 'function' && v.MODELS && 'ZHLC_GF' in v.MODELS) return {engine: v, win: w};
         }
       } catch(_) {}
     } catch(_) {}
@@ -1695,9 +1695,9 @@ async function startTests() {
     }
 
     E = engine; WIN = win;
-    SURF = (win.SURFACEP !== undefined && isFinite(win.SURFACEP)) ? win.SURFACEP : (win.altSurfaceP || 1.01325);
-    const rawBAR = win.BARPERMETRE;
-    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1/rawBAR) : rawBAR) : null;
+    SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
+    const rawBAR = win.BAR_PER_METRE;
+    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1/rawBAR) : rawBAR) : (1/10.078);
 
     document.getElementById('meta-version').textContent = 'APP: ' + (win.APP_VERSION || win.APPVERSION || '—');
     document.getElementById('meta-surface').textContent = 'SURFACEP: ' + SURF.toFixed(4);
