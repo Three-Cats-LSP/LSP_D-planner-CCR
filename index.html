@@ -8950,6 +8950,12 @@ function buildExportText(mode) {
   const depthUnit = units === 'imperial' ? 'ft' : 'm';  // use live global
   const du = depthUnit; // shorthand - used without space: `${val}${du}`
 
+  // ── altitude + acclimatize helper ──
+  const altM      = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
+  const altAccl   = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
+  const altLabel  = altM === 0 ? 'Sea level (0 m)' : `${altM} m`;
+  const acclLabel = altAccl ? 'Yes' : 'No';
+
   // ── helper: clean DOM text (strip emoji, fix subscripts) ──
   const clean = t => t
     .replace(/[🔵🔴🟢🔴⇄↓↑⚠️🤿✓⚡🚨⏱ℹ]/g, '')
@@ -8987,6 +8993,7 @@ function buildExportText(mode) {
     lines.push(`Bottom T. : ${bt} min`);
     if (gasStr)  lines.push(`Gas       : ${gasStr}`);
     lines.push(`Water     : ${density}`);
+    lines.push(`Altitude  : ${altLabel}  Acclimatized: ${acclLabel}`);
     lines.push('');
 
     // Pull results from rendered stats
@@ -9113,6 +9120,7 @@ function buildExportText(mode) {
     const wvTxt  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
     const wvLblTxt = wvTxt<=0.058?'M':'B';
     lines.push(`Stop Rounding: ${rndTxt}  WV: ${wvTxt}(${wvLblTxt})`);
+    lines.push(`Altitude     : ${altLabel}  Acclimatized: ${acclLabel}`);
     gswInfos.forEach((g, i) => lines.push(`Deco Gas ${i+1}  : ${g.gas} (switch @ ${g.depth})`));
     lines.push(`Deco Time   : ${decoTimeVal}  Run Time: ${runTimeVal}  CNS: ${cnsExpVal}  OTU: ${otuExpVal}  PrT: ${prtExpVal}`);
     lines.push('');
@@ -9242,6 +9250,7 @@ function buildExportText(mode) {
     lines.push(`Descent     : ${eDescentRate}${du}/min  Ascent: ${eAscentRate}${du}/min  Deco: ${eDecoAscentRate}${du}/min  Surface: ${eSurfAscentRate}${du}/min`);
     lines.push(`Last Stop   : ${eLastStop}${du}  Step: ${eDecoStep}${du}`);
     lines.push(`Stop Rounding: ${eRnd}  WV: ${eWV}(${eWVL})`);
+    lines.push(`Altitude     : ${altLabel}  Acclimatized: ${acclLabel}`);
     if (c.msg) lines.push(`Note        : ${clean(c.msg)}`);
     lines.push('');
 
@@ -9443,6 +9452,10 @@ function buildMessengerText(mode) {
     const cWV  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
     const cWVL = cWV<=0.058?'M':'B';
     result.push(`Stp Rounding: ${cRnd}  WV: ${cWV}(${cWVL})`);
+    const _cAltM   = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
+    const _cAltLbl = _cAltM === 0 ? 'Sea level' : `${_cAltM}m`;
+    const _cAccl   = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
+    result.push(`Altitude    : ${_cAltLbl}  Acclimatized: ${_cAccl ? 'Yes' : 'No'}`);
     const _cLastStop = document.getElementById('lastDecoStop')?.value || '-';
     const _cDecoStep = document.getElementById('decoStep')?.value    || '-';
     const _cAscRate  = document.getElementById('ascentRate')?.value      || '-';
@@ -9525,6 +9538,10 @@ function buildMessengerText(mode) {
   const wvVal  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
   const wvLbl  = wvVal<=0.058?'M':'B';
   result.push(`Stp Rounding: ${rndVal}  WV: ${wvVal}(${wvLbl})`);
+  const _mAltM   = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
+  const _mAltLbl = _mAltM === 0 ? 'Sea level' : `${_mAltM}m`;
+  const _mAccl   = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
+  result.push(`Altitude    : ${_mAltLbl}  Acclimatized: ${_mAccl ? 'Yes' : 'No'}`);
   const _lastStop2    = document.getElementById('lastDecoStop')?.value || '-';
   const _decoStep2    = document.getElementById('decoStep')?.value    || '-';
   const _ascentRate2     = document.getElementById('ascentRate')?.value      || '-';
@@ -9605,6 +9622,10 @@ function exportTXT(mode) {
   const now     = new Date();
   const dateStr = now.toISOString().split('T')[0];
   const du      = units === 'metric' ? 'm' : 'ft';
+  // altitude suffix for filename
+  const _expAltM  = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
+  const _expAccl  = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
+  const _altSuffix = _expAltM === 0 ? '' : `_Alt${_expAltM}m${_expAccl ? 'Accl' : 'NoAccl'}`;
   let tag = '';
   if (mode === 'deco') {
     const d    = document.getElementById('decoDepth')?.value || '0';
@@ -9617,17 +9638,17 @@ function exportTXT(mode) {
     if (algo === 'ZHLC_GF')  algoTag = `GF${gfLo}-${gfHi}_Buhlmann`;
     else if (algo === 'VPMB') algoTag = `C${cons}_VPM-B`;
     else                      algoTag = `GF${gfHi}_C${cons}_VPM-B_GFS`;
-    tag = `Deco_${d}${du}_${bt}min_${algoTag}`;
+    tag = `Deco_${d}${du}_${bt}min_${algoTag}${_altSuffix}`;
   } else if (mode === 'planner') {
     const d  = document.getElementById('depth')?.value || '0';
     const bt = document.getElementById('bt')?.value    || '0';
-    tag = `Plan_${d}${du}_${bt}min`;
+    tag = `Plan_${d}${du}_${bt}min${_altSuffix}`;
   } else if (mode === 'contingency') {
     const d  = document.getElementById('decoDepth')?.value || '0';
     const bt = document.getElementById('decoBT')?.value    || '0';
     const sc = (window._lastContingency?.label || 'Contingency')
                .replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
-    tag = `Emergency_${d}${du}_${bt}min_${sc}`;
+    tag = `Emergency_${d}${du}_${bt}min_${sc}${_altSuffix}`;
   } else if (mode === 'multi') {
     tag = 'Multi_Dive';
   } else if (mode === 'cns') {
