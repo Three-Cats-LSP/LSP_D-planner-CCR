@@ -1620,7 +1620,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         </select>
       </div>
       <div class="field">
-        <label>Minimum Stop <span title="Minimum time spent at any deco stop,&#10;regardless of ceiling clearance.&#10;1:00 = standard. Smaller values give&#10;precise plans but are harder to execute." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>Minimum Stop <span onclick="showTip('Minimum Stop','Minimum time spent at any deco stop, regardless of ceiling clearance.\n1:00 = standard. Smaller values give precise plans but are harder to execute.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;" title=""><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="minStopTime">
           <option value="2" selected>2:00</option>
           <option value="1">1:00</option>
@@ -1630,21 +1630,21 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         </select>
       </div>
       <div class="field">
-        <label>Stop Rounding <span title="Whether stop times are rounded to whole minutes.&#10;No = fractional (Bühlmann default).&#10;Yes (MultiDeco) = whole-minute rounding,&#10;matching MultiDeco output." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>Stop Rounding <span onclick="showTip('Stop Rounding','Whether stop times are rounded to whole minutes.\nNo = fractional (Buhlmann default).\nYes (MultiDeco) = whole-minute rounding, matching MultiDeco output.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="stopRounding">
           <option value="fractional">No</option>
           <option value="wholeminute" selected>Yes (MultiDeco)</option>
         </select>
       </div>
       <div class="field">
-        <label>Transit Mode <span title="How deco-zone ascent transits between stops are modelled.&#10;&#10;Schreiner (accurate): tissues off-gas via Schreiner equation during each ascent segment. Most physically correct. Stop durations reflect actual hold time at depth only.&#10;&#10;MultiDeco compatible: ascent between stops is treated as instantaneous for tissue loading (matches MultiDeco 4.x behaviour). Transit time is added to the displayed stop duration, so stop times and run times match MultiDeco output exactly. Slightly more conservative." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>Transit Mode <span onclick="showTip('Transit Mode','How deco-zone ascent transits between stops are modelled.\n\nSchreiner (accurate): tissues off-gas via Schreiner equation during each ascent segment. Most physically correct. Stop durations reflect actual hold time at depth only.\n\nMultiDeco compatible: ascent between stops is treated as instantaneous for tissue loading (matches MultiDeco 4.x). Transit time is added to the displayed stop duration, so stop times and run times match MultiDeco output exactly. Slightly more conservative.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="decoTransitMode">
           <option value="schreiner">Schreiner (accurate)</option>
           <option value="multideco" selected>MultiDeco compatible</option>
         </select>
       </div>
       <div class="field">
-        <label>Water Vapor <span title="Alveolar water vapor pressure used in&#10;tissue loading calculations.&#10;0.0627 bar = Bühlmann standard.&#10;0.0577 bar = MultiDeco standard.&#10;Pair with Stop Rounding to match target tool." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>Water Vapor <span onclick="showTip('Water Vapor','Alveolar water vapor pressure used in tissue loading calculations.\n0.0627 bar = Buhlmann standard.\n0.0577 bar = MultiDeco standard.\nPair with Stop Rounding to match target tool.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="waterVapor" onchange="updateWaterVapor()">
           <option value="0.0627">0.0627 bar (Bühlmann)</option>
           <option value="0.0577" selected>0.0577 bar (MultiDeco)</option>
@@ -1662,14 +1662,14 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
     <div class="form-grid" style="margin-top:10px;">
       <div class="field">
-        <label>N₂ Narcotic <span title="Whether N₂ is counted as narcotic&#10;when calculating Equivalent Narcotic Depth (END).&#10;Yes = NOAA/IANTD standard." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>N₂ Narcotic <span onclick="showTip('N2 Narcotic','Whether N2 is counted as narcotic when calculating Equivalent Narcotic Depth (END).\nYes = NOAA/IANTD standard.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="n2NarcSel" onchange="setNarcosis('n2', this.value==='yes')">
           <option value="yes" selected>Yes</option>
           <option value="no">No</option>
         </select>
       </div>
       <div class="field">
-        <label>O₂ Narcotic <span title="Whether O₂ is counted as narcotic&#10;when calculating Equivalent Narcotic Depth (END).&#10;Yes = NOAA/IANTD standard.&#10;No = some technical agencies exclude O₂." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>O₂ Narcotic <span onclick="showTip('O2 Narcotic','Whether O2 is counted as narcotic when calculating Equivalent Narcotic Depth (END).\nYes = NOAA/IANTD standard.\nNo = some technical agencies exclude O2.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="o2NarcSel" onchange="setNarcosis('o2', this.value==='yes')">
           <option value="yes" selected>Yes</option>
           <option value="no">No</option>
@@ -1692,7 +1692,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         </select>
       </div>
       <div class="field">
-        <label>O&#8322; @ MOD <span title="Controls how pure O₂ (100%) MOD is calculated.&#10;• Allow at MOD: O₂ is always usable at 6 m — real-world standard (Shearwater, V-Planner).&#10;• Strict ppO₂: O₂ subject to the ppO₂ limit check; at 1.6 bar limit it still yields 6 m, but at 1.5 bar it gives 5 m." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;margin-left:2px;cursor:help;opacity:0.55;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>O₂ @ MOD <span onclick="showTip('O2 @ MOD','Controls how pure O2 (100%) MOD is calculated.\n\n• Allow at MOD: O2 is always usable at 6m — real-world standard (Shearwater, V-Planner).\n• Strict ppO2: O2 subject to the ppO2 limit check; at 1.6 bar limit it still yields 6m, but at 1.5 bar it gives 5m.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <select id="o2AtMODSelect" onchange="setAllowO2AtMOD(this.value === 'on');updateGasMODDisplays()">
           <option value="on" selected>Allow at MOD</option>
           <option value="off">Strict ppO&#8322;</option>
@@ -1721,7 +1721,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
           <input type="number" id="decoCustomO2" value="21" min="21" max="40" step="1" oninput="if(window._lastContingency) calcContingency()">
         </div>
         <div class="field">
-          <label title="Calculated from selected gas fraction and current ppO₂ limit">MOD <span title="MOD is calculated, not table-based. Uses the selected gas O₂ fraction and current ppO₂ limit." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;margin-left:2px;cursor:help;opacity:0.55;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+          <label>MOD <span onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
           <input type="text" id="botMODDisplay" readonly style="cursor:default;" placeholder="Enter depth & gas" title="Calculated MOD using selected Bottom Gas and Max Bottom ppO₂">
         </div>
         <div class="field"><label>Cyl. Size (L)</label><input type="number" id="cylBot_size" value="12" min="1" max="30" step="0.5" placeholder="12"></div>
@@ -1812,7 +1812,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
             <input type="text" id="dg1SwitchDepthDisplay" class="switch-depth-display" readonly style="cursor:default;" placeholder="Calculate to see">
           </div>
           <div class="field">
-            <label title="Calculated from selected gas fraction and current ppO₂ limit">MOD <span title="MOD is calculated, not table-based. Uses the selected gas O₂ fraction and current ppO₂ limit." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;margin-left:2px;cursor:help;opacity:0.55;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+            <label>MOD <span onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
             <input type="text" id="dg1MODDisplay" readonly style="cursor:default;" placeholder="Select gas" title="Calculated MOD using selected gas and Max Deco ppO₂">
           </div>
           <div class="field"><label>Cyl. Size (L)</label><input type="number" id="cylDg1_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
@@ -1845,7 +1845,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
             <input type="text" id="dg2SwitchDepthDisplay" class="switch-depth-display" readonly style="cursor:default;" placeholder="Calculate to see">
           </div>
           <div class="field">
-            <label title="Calculated from selected gas fraction and current ppO₂ limit">MOD <span title="MOD is calculated, not table-based. Uses the selected gas O₂ fraction and current ppO₂ limit." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;margin-left:2px;cursor:help;opacity:0.55;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+            <label>MOD <span onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
             <input type="text" id="dg2MODDisplay" readonly style="cursor:default;" placeholder="Select gas" title="Calculated MOD using selected gas and Max Deco ppO₂">
           </div>
           <div class="field"><label>Cyl. Size (L)</label><input type="number" id="cylDg2_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
@@ -2383,6 +2383,17 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
 </div>
 
+
+<!-- ══════════════════════════════════════
+     INFO TIP MODAL (click/tap tooltips)
+══════════════════════════════════════ -->
+<div id="tipModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:rgba(0,0,0,0.72);padding:20px;display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTip()">
+  <div style="max-width:420px;width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px 20px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <div id="tipModalTitle" style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;"></div>
+    <div id="tipModalBody" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;"></div>
+    <button onclick="closeTip()" style="margin-top:14px;width:100%;padding:8px;background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;">✕ Close</button>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════
      SETTINGS HELP MODAL
@@ -3110,6 +3121,17 @@ function loadTableViewPreference() {
       btn.style.borderColor = 'var(--accent)';
     }
   }
+}
+
+// ── Info tip popup (click/tap tooltips) ──
+function showTip(title, text) {
+  document.getElementById('tipModalTitle').textContent = title;
+  document.getElementById('tipModalBody').textContent  = text;
+  const m = document.getElementById('tipModal');
+  m.style.display = 'flex';
+}
+function closeTip() {
+  document.getElementById('tipModal').style.display = 'none';
 }
 
 function toggleWarningModal() {
@@ -6162,7 +6184,7 @@ function addDecoGasCard() {
         <input type="text" id="dg${idx}SwitchDepthDisplay" class="switch-depth-display" readonly style="cursor:default;" placeholder="Calculate to see">
       </div>
       <div class="field">
-        <label title="Calculated from selected gas fraction and current ppO₂ limit">MOD <span title="MOD is calculated, not table-based. Uses the selected gas O₂ fraction and current ppO₂ limit." style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;" onmouseenter="const t=this.getAttribute('title');this.removeAttribute('title');void this.offsetWidth;this.setAttribute('title',t)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;margin-left:2px;cursor:help;opacity:0.55;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
+        <label>MOD <span onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><rect x="5" y="4.8" width="1" height="3.2" rx="0.5" fill="currentColor"/><rect x="5" y="2.8" width="1" height="1" rx="0.5" fill="currentColor"/></svg></span></label>
         <input type="text" id="dg${idx}MODDisplay" readonly style="cursor:default;" placeholder="Select gas" title="Calculated MOD using selected gas and Max Deco ppO₂">
       </div>
       <div class="field"><label>Cyl. Size (L)</label><input type="number" id="cylDg${idx}_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
