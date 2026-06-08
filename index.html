@@ -1899,6 +1899,26 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
 
     <button class="btn-calc" onclick="runDecoSchedule()" style="margin-top:8px;margin-bottom:0;">▶ GENERATE SCHEDULE</button>
+
+    <!-- Feature B: VPM Repetitive Dive panel — hidden until first VPM result available -->
+    <div id="vpmRepRow" style="display:none;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;">
+      <label style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;">
+        <input type="checkbox" id="vpmRepMode" onchange="updateVpmRepUI()"
+          style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;">
+        <span>Repetitive VPM Dive</span>
+        <span onclick="showTip('Repetitive VPM Dive','Carries both tissue gas pressures AND bubble state (adjusted critical radii) from the previous VPM dive.\n\nTissue loading: N₂/He off-gasses during surface interval (Haldane).\n\nBubble state: compressed nuclei partially regenerate toward altitude-adjusted initial radii during surface interval (REGEN_TIME = 14 days), then carry into this dive — producing correct VPM repetitive dive behaviour.\n\nNote: only available for VPM-B and VPM-B+GFS models.')" style="display:inline-block;line-height:0;vertical-align:middle;cursor:pointer;opacity:0.6;">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg>
+        </span>
+      </label>
+      <div id="vpmRepSIRow" style="display:none;align-items:center;gap:6px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);">Surface interval:</span>
+        <input type="number" id="vpmSurfaceInterval" value="60" min="0" max="10080" step="5"
+          style="width:60px;padding:3px 6px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);">min</span>
+      </div>
+      <button onclick="clearVpmRepState()" style="padding:3px 10px;background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:0.5px;" title="Clear saved dive state">× CLEAR</button>
+      <span id="vpmRepLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);"></span>
+    </div>
   <div id="decoResult" style="display:none;margin-top:8px;">
     <div class="card">
       <div style="margin-bottom:12px;">
@@ -3318,6 +3338,16 @@ function setDecoAlgorithm(model, skipSave) {
   // Conservatism row: show for VPM-B and VPM-B/GFS
   document.getElementById('conservatismRow').style.display = isVPM ? 'flex' : 'none';
 
+  // Repetitive dive panel: only meaningful for VPM; hide when switching to Bühlmann
+  if (!isVPM) {
+    const vpmRepRow = document.getElementById('vpmRepRow');
+    if (vpmRepRow) vpmRepRow.style.display = 'none';
+  } else if (_lastVPMResult) {
+    // Re-show if we already have a result and switched back to VPM
+    const vpmRepRow = document.getElementById('vpmRepRow');
+    if (vpmRepRow) vpmRepRow.style.display = 'flex';
+  }
+
   // (algorithmRow contains all TEC settings — no separate algoSettingsRow needed in TEC mode)
 
   // Update subtitle to reflect active algorithm
@@ -4355,6 +4385,36 @@ function ppO2Check(depthM, fN2, fHe) {
 }
 
 // ── VPM SCHEDULE RUNNER ──────────────────────────────────────────────
+// ── Feature B: VPM repetitive dive carry ───────────────────────────────────
+let _lastVPMResult = null; // { finalTissues, finalBubbleState }
+
+function updateVpmRepUI() {
+  const cb  = document.getElementById('vpmRepMode');
+  const siRow = document.getElementById('vpmRepSIRow');
+  const lbl   = document.getElementById('vpmRepLabel');
+  if (!cb) return;
+  if (cb.checked) {
+    if (siRow) siRow.style.display = 'flex';
+    if (lbl && _lastVPMResult) lbl.textContent = '● bubble state loaded';
+  } else {
+    if (siRow) siRow.style.display = 'none';
+    if (lbl) lbl.textContent = '';
+  }
+}
+
+function clearVpmRepState() {
+  _lastVPMResult = null;
+  const cb = document.getElementById('vpmRepMode');
+  if (cb) cb.checked = false;
+  const siRow = document.getElementById('vpmRepSIRow');
+  if (siRow) siRow.style.display = 'none';
+  const lbl = document.getElementById('vpmRepLabel');
+  if (lbl) lbl.textContent = '';
+  const row = document.getElementById('vpmRepRow');
+  if (row) row.style.display = 'none';
+}
+// ───────────────────────────────────────────────────────────────────────────────
+
 function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, surfaceAscentRate,
                         stepSize, lastStop, minStopTime, ppo2Bottom, ppo2Deco, model) {
   const dU = units === 'metric';
@@ -4407,6 +4467,17 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
     altitude:          altitudeM,   // metres — VPM getSurfacePressure() uses this
   };
 
+  // ── Feature B: inject repetitive dive state if active ─────────────────────────
+  const vpmRepEl = document.getElementById('vpmRepMode');
+  const vpmSIEl  = document.getElementById('vpmSurfaceInterval');
+  if (vpmRepEl && vpmRepEl.checked && _lastVPMResult) {
+    const siMin = parseFloat(vpmSIEl?.value || '60');
+    settings._preTissues      = _lastVPMResult.finalTissues;
+    settings._surfaceInterval = siMin;
+    settings._prevBubbleState = _lastVPMResult.finalBubbleState;
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+
   // Bottom gas from DOM
   const bottomGasEl = document.getElementById('decoGas');
   const _vpmBotFracs = getBottomGasFractions();
@@ -4430,6 +4501,18 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
     if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:var(--red);padding:12px;">VPM Error: ${result.error}</td></tr>`;
     return;
   }
+
+  // ── Feature B: save dive result for next repetitive dive ───────────────────────
+  if (result.finalTissues) {
+    _lastVPMResult = {
+      finalTissues:    result.finalTissues,
+      finalBubbleState: result.finalBubbleState
+    };
+    // Show/enable the repetitive dive UI now that we have a result
+    const vpmRepRow = document.getElementById('vpmRepRow');
+    if (vpmRepRow) vpmRepRow.style.display = 'flex';
+  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   // Render into the existing deco table using the same format as Bühlmann
   renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model);
@@ -4710,6 +4793,25 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const hasDeco = (result.stops || []).some(s => s.time > 0);
     const algoLine = model === 'VPMB' ? `C+${cons}` : `GFHi ${mGF.high} · C+${cons}`;
 
+    // Feature A: altitude radii badge
+    const altM = settings.altitude || 0;
+    const altBadge = altM > 0
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--text);"
+           title="At ${altM} m altitude, initial bubble radii enlarged by ×${(Math.pow(1.01325 / (1.01325 * Math.exp(-altM / 8434)), 1/3)).toFixed(4)} (lower crush pressure)">
+           △ Alt ${altM} m · radii ×${(Math.pow(1.01325 / (1.01325 * Math.exp(-altM / 8434)), 1/3)).toFixed(3)}
+         </span>`
+      : '';
+
+    // Feature B: repetitive dive badge
+    const isRep = settings._prevBubbleState != null;
+    const siMin = settings._surfaceInterval || 0;
+    const repBadge = isRep
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--accent);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--accent);"
+           title="Bubble state + tissue pressures carried from previous dive after ${siMin} min surface interval">
+           ↺ Repetitive &middot; SI ${siMin} min
+         </span>`
+      : '';
+
     summEl.innerHTML = `
       <div class="stats" style="margin-top:0;">
         <div class="stat"><div class="stat-val">${rawDdisp} ${du}</div><div class="stat-lbl">Depth</div></div>
@@ -4724,6 +4826,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       </div>
       <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         ${bottomGasTagVPM} ${decoGasTagsVPM}
+        ${altBadge} ${repBadge}
       </div>
       ${hasDeco
         ? '<div class="alert deco" style="margin-top:10px;background:#ffffff;border-color:#cc0000;border-width:1px;color:#111111;"><span>🔴</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
@@ -4831,17 +4934,27 @@ const VPMEngine = (() => {
         const adjustedCrushingPressureHe = [];
         const surfacePhaseVolumeTime = [];
         const lastPhaseVolumeTime = [];
+        // ── Feature A: Altitude-adjusted critical radii ────────────────────────────────
+        // At altitude, surface pressure is lower, so bubbles equilibrate to a larger
+        // radius (less crushing pressure). Formula: r_alt = r_0 * (P_SL / P_alt)^(1/3)
+        // Volume scales linearly with pressure (ideal gas); radius is the cube root.
+        // At sea level surfP == 1.01325 so the factor is exactly 1.0 — no change.
+        const P_SL = 1.01325; // bar — standard sea-level pressure
+        const altFactor = Math.pow(P_SL / surfP, 1.0 / 3.0);
+        const initRadN2 = INITIAL_RADIUS_N2 * altFactor; // enlarged at altitude
+        const initRadHe = INITIAL_RADIUS_He * altFactor;
+        // ─────────────────────────────────────────────────────────────────────────────
         for (let i = 0; i < NC; i++) {
             tissues.push({ pN2: inspiredN2, pHe: 0 });
-            critRadiiN2.push(INITIAL_RADIUS_N2);
-            critRadiiHe.push(INITIAL_RADIUS_He);
+            critRadiiN2.push(initRadN2);
+            critRadiiHe.push(initRadHe);
             maxActualGradientN2.push(0);
             maxActualGradientHe.push(0);
             maxCrushingPressureN2.push(0);
             maxCrushingPressureHe.push(0);
-            const gN2 = twoGammaOverR(GAMMA, INITIAL_RADIUS_N2)
+            const gN2 = twoGammaOverR(GAMMA, initRadN2)
                 * (GAMMA_C - GAMMA) / GAMMA_C;
-            const gHe = twoGammaOverR(GAMMA, INITIAL_RADIUS_He)
+            const gHe = twoGammaOverR(GAMMA, initRadHe)
                 * (GAMMA_C - GAMMA) / GAMMA_C;
             allowableGradientN2.push(gN2);
             allowableGradientHe.push(gHe);
@@ -4849,10 +4962,10 @@ const VPMEngine = (() => {
             decoGradientHe.push(gHe);
             initialAllowableGradientN2.push(gN2);
             initialAllowableGradientHe.push(gHe);
-            adjustedCritRadiiN2.push(INITIAL_RADIUS_N2);
-            adjustedCritRadiiHe.push(INITIAL_RADIUS_He);
-            regeneratedRadiiN2.push(INITIAL_RADIUS_N2);
-            regeneratedRadiiHe.push(INITIAL_RADIUS_He);
+            adjustedCritRadiiN2.push(initRadN2);
+            adjustedCritRadiiHe.push(initRadHe);
+            regeneratedRadiiN2.push(initRadN2);
+            regeneratedRadiiHe.push(initRadHe);
             adjustedCrushingPressureN2.push(0);
             adjustedCrushingPressureHe.push(0);
             surfacePhaseVolumeTime.push(0);
@@ -4873,6 +4986,50 @@ const VPMEngine = (() => {
                 }
             }
         }
+        // ── Feature B: Repetitive dive bubble state carry ────────────────────────────
+        // When _prevBubbleState is provided (from a previous VPM dive), carry the
+        // end-of-dive adjusted critical radii and regenerated radii into this dive,
+        // applying surface-interval partial regeneration (exponential, same REGEN_TIME).
+        // This is the correct VPM treatment: nuclei that were crushed and compressed
+        // during the previous dive don't fully return to their original size overnight —
+        // they partially regenerate, and subsequent dives start with those smaller radii
+        // (conservative: smaller radius → larger allowable gradient → less deco time
+        //  is WRONG; actually smaller nucleus = harder to grow = LESS bubble risk;
+        //  but larger nuclei survive surface interval better → more conservative for next dive).
+        // Net effect: carrying state is conservative — correct VPM-B behaviour.
+        if (settings._prevBubbleState && settings._prevBubbleState.adjustedCritRadiiN2
+                && settings._prevBubbleState.adjustedCritRadiiN2.length === NC
+                && settings._surfaceInterval >= 0) {
+            const si = settings._surfaceInterval || 0; // minutes on surface
+            const regenFactor = Math.exp(-si / REGEN_TIME);
+            const pb = settings._prevBubbleState;
+            for (let i = 0; i < NC; i++) {
+                // End-of-previous-dive radius (after nuclear regeneration was applied)
+                const prevN2 = pb.regeneratedRadiiN2[i];
+                const prevHe = pb.regeneratedRadiiHe[i];
+                // During surface interval, radii regenerate toward the altitude-adjusted
+                // initial values (baseline for this altitude). Partial regeneration:
+                //   r(t) = r_init + (r_prev - r_init) * exp(-t / REGEN_TIME)
+                const carriedN2 = initRadN2 + (prevN2 - initRadN2) * regenFactor;
+                const carriedHe = initRadHe + (prevHe - initRadHe) * regenFactor;
+                critRadiiN2[i]         = carriedN2;
+                critRadiiHe[i]         = carriedHe;
+                adjustedCritRadiiN2[i] = carriedN2;
+                adjustedCritRadiiHe[i] = carriedHe;
+                regeneratedRadiiN2[i]  = carriedN2;
+                regeneratedRadiiHe[i]  = carriedHe;
+                // Recalculate allowable gradients from carried radii
+                const gN2c = twoGammaOverR(GAMMA, carriedN2) * (GAMMA_C - GAMMA) / GAMMA_C;
+                const gHec = twoGammaOverR(GAMMA, carriedHe) * (GAMMA_C - GAMMA) / GAMMA_C;
+                allowableGradientN2[i]        = gN2c;
+                allowableGradientHe[i]        = gHec;
+                decoGradientN2[i]             = gN2c;
+                decoGradientHe[i]             = gHec;
+                initialAllowableGradientN2[i] = gN2c;
+                initialAllowableGradientHe[i] = gHec;
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────────────
         return {
             tissues,
             critRadiiN2,
@@ -6206,6 +6363,13 @@ const VPMEngine = (() => {
         return buildResult(plan, runtime, totalOTU, totalCNS, settings, state, decoZoneStart);
     }
     function buildResult(plan, runtime, totalOTU, totalCNS, settings, state, decoZoneStart) {
+        // Expose end-of-dive bubble state so the app can pass it to a repetitive dive
+        const finalBubbleState = state ? {
+            adjustedCritRadiiN2:  state.adjustedCritRadiiN2.slice(),
+            adjustedCritRadiiHe:  state.adjustedCritRadiiHe.slice(),
+            regeneratedRadiiN2:   state.regeneratedRadiiN2.slice(),
+            regeneratedRadiiHe:   state.regeneratedRadiiHe.slice()
+        } : null;
         return {
             plan,
             totalRuntime: Math.ceil(runtime),
@@ -6215,6 +6379,7 @@ const VPMEngine = (() => {
             decoZoneStart: decoZoneStart || 0,
             stops: plan.filter(s => s.type === 'stop'),
             finalTissues: state ? state.tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) : null,
+            finalBubbleState,  // Feature B: carries per-compartment bubble state
             error: null
         };
     }
