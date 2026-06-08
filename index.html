@@ -12015,8 +12015,9 @@ async function exportPDF() {
     doc.setTextColor(0,0,0);y+=9;
   }
 
-  const contEl=document.getElementById('contingencyResult');
-  if(contEl&&contEl.style.display!=='none'&&window._lastContingency){
+  // Emergency plan intentionally excluded from main deco PDF.
+  // Use the dedicated Emergency Plan PDF button for that.
+  if(false){
     doc.addPage(); drawHeader();
     const cc=window._lastContingency;
     doc.setFillColor(255,240,240);doc.setDrawColor(200,100,100);
