@@ -4601,10 +4601,10 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
   // ───────────────────────────────────────────────────────────────────────────
 
   // Render into the existing deco table using the same format as Bühlmann
-  renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model);
+  renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model, _vpmBotFracs);
 }
 
-function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model) {
+function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model, _vpmBotFracs) {
   const dU = units === 'metric';
   const du = dU ? 'm' : 'ft';
   const plan = result.plan || [];
