@@ -94,7 +94,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java engine |
 | `VpmbGfsEngine.java` | VPM-B/GF hybrid Java engine |
-| `tests-massive.html` | 288-check regression suite — engines, UI/DOM, travel gas, altitude, trimix, VPM |
+| `tests-massive.html` | 294-check regression suite — engines, UI/DOM, travel gas, altitude, trimix, VPM, GF UI |
 | `Knowledge Base/` | Reference PDFs and study materials (see below) |
 
 ### Knowledge Base

@@ -177,7 +177,7 @@ iframe { display: none; }
   <div class="header">
     <div class="title">
       <h1>LSP D-PLANNER</h1>
-      <p>Massive regression suite · 300+ engine plans · UI integration · travel gas · altitude · imperial</p>
+      <p>Massive regression suite · 300+ engine plans · UI integration · travel gas · altitude · imperial · GF UI validation</p>
     </div>
     <div class="controls">
       <button id="run-btn" onclick="startTests()">▶ Run All Tests</button>
@@ -236,7 +236,7 @@ iframe { display: none; }
         <div class="metric-row"><span>Trimix profiles</span><span>TMX21/35, 18/45, 10/70</span></div>
         <div class="metric-row"><span>First stop depths</span><span>VPM-B vs ZHL</span></div>
         <div class="metric-row"><span>Cross-model ordering</span><span>Maiken invariants</span></div>
-        <div class="metric-row"><span>Tier 2 — UI/DOM</span><span>live DOM checks</span></div>
+        <div class="metric-row"><span>Tier 2 — UI/DOM</span><span>algo switching · GF UI · SAC units</span></div>
         <div class="metric-row"><span>Tier 3 — Scenarios</span><span>special cases</span></div>
       </div>
       <div class="card">
@@ -248,7 +248,8 @@ iframe { display: none; }
         <div class="metric-row"><span>CNS / OTU</span><span>numeric sanity</span></div>
         <div class="metric-row"><span>Travel gas</span><span>DOM + engine</span></div>
         <div class="metric-row"><span>Altitude</span><span>surface P correction</span></div>
-        <div class="metric-row"><span>Imperial units</span><span>ft / psi / cu ft</span></div>
+        <div class="metric-row"><span>Imperial units</span><span>ft / psi / cu ft / SAC conversion</span></div>
+        <div class="metric-row"><span>GF UI</span><span>VPM-B/GFS High-only mode</span></div>
         <div class="metric-row"><span>Multi-dive</span><span>residual loading</span></div>
         <div class="metric-row"><span>Edge cases</span><span>5m → 80m, 1min → 180min</span></div>
         <div class="metric-row"><span>Determinism</span><span>no state leakage</span></div>
@@ -1503,18 +1504,95 @@ const TIER2_GROUPS = [
     tests: [
       ['App exposes current algorithm reading', 'UI', function(){
         const d = getDoc();
-        const sel = d.getElementById('algorithm') || d.getElementById('model') || d.querySelector('select[id*="algo"]');
+        const sel = d.getElementById('algorithm') || d.getElementById('model') || d.querySelector('select[id*="algo"]') || d.getElementById('algorithmSelect');
         assert(sel, 'Algorithm selector not found');
         return `current: ${sel.value}`;
       }],
       ['Switch to ZHLCGF — runDecoSchedule succeeds', 'ZHLC_GF', function(){
         const d = getDoc();
-        const sel = d.getElementById('algorithm') || d.querySelector('select[id*="algo"]');
-        if (sel) { sel.value = sel.querySelector('option[value*="ZHL"], option[value*="Buhl"], option[value*="GF"]') ? sel.querySelector('option[value*="ZHL"], option[value*="Buhl"], option[value*="GF"]').value : sel.options[0].value; sel.dispatchEvent(new WIN.Event('change',{bubbles:true})); }
+        const sel = d.getElementById('algorithmSelect') || d.getElementById('algorithm') || d.querySelector('select[id*="algo"]');
+        assert(sel, 'Algorithm selector not found');
+        const opt = sel.querySelector('option[value="ZHLC_GF"]') || sel.querySelector('option[value*="ZHL"], option[value*="GF"]');
+        if (opt) { sel.value = opt.value; sel.dispatchEvent(new WIN.Event('change',{bubbles:true})); }
         WIN.runDecoSchedule();
         const out = d.getElementById('decoResult');
         assert(out && out.innerHTML.length > 50, 'Output empty after ZHL run');
-        return 'ZHL output rendered ✓';
+        return `ZHL (${sel.value}) output rendered ✓`;
+      }],
+      ['Switch to VPMB — runDecoSchedule succeeds', 'VPMB', function(){
+        const d = getDoc();
+        const sel = d.getElementById('algorithmSelect') || d.querySelector('select[id*="algo"]');
+        assert(sel, 'Algorithm selector not found');
+        const opt = sel.querySelector('option[value="VPMB"]');
+        assert(opt, 'VPMB option not found in algorithm selector');
+        sel.value = 'VPMB'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        WIN.runDecoSchedule();
+        const out = d.getElementById('decoResult');
+        assert(out && out.innerHTML.length > 50, 'Output empty after VPM-B run');
+        return 'VPM-B output rendered ✓';
+      }],
+      ['Switch to VPMB_GFS — runDecoSchedule succeeds', 'VPMB_GFS', function(){
+        const d = getDoc();
+        const sel = d.getElementById('algorithmSelect') || d.querySelector('select[id*="algo"]');
+        assert(sel, 'Algorithm selector not found');
+        const opt = sel.querySelector('option[value="VPMB_GFS"]');
+        assert(opt, 'VPMB_GFS option not found in algorithm selector');
+        sel.value = 'VPMB_GFS'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        WIN.runDecoSchedule();
+        const out = d.getElementById('decoResult');
+        assert(out && out.innerHTML.length > 50, 'Output empty after VPM-B/GFS run');
+        return 'VPM-B/GFS output rendered ✓';
+      }],
+      ['VPMB_GFS: GF row shows only High input (Low hidden)', 'VPMB_GFS', function(){
+        const d = getDoc();
+        const sel = d.getElementById('algorithmSelect') || d.querySelector('select[id*="algo"]');
+        assert(sel, 'Algorithm selector not found');
+        // Switch to VPMB_GFS
+        sel.value = 'VPMB_GFS'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        // GF presets row must be visible
+        const presetsRow = d.getElementById('gfPresetsRow');
+        assert(presetsRow, 'gfPresetsRow not found');
+        const presetsVisible = presetsRow.style.display !== 'none';
+        assert(presetsVisible, 'gfPresetsRow hidden in VPMB_GFS mode');
+        // GF label should say 'GF Hi:' not 'GF:'
+        const gfLabel = d.getElementById('gfLabel');
+        if (gfLabel) {
+          const labelText = gfLabel.textContent.trim();
+          assert(/hi/i.test(labelText), `GF label should say 'GF Hi:' in VPMB_GFS, got: "${labelText}"`);
+        }
+        // If custom row visible, Low input must be hidden
+        const customRow = d.getElementById('gfCustomRow');
+        if (customRow && customRow.style.display !== 'none') {
+          const lowEl = d.getElementById('gfLowInput');
+          if (lowEl) {
+            const lowHidden = lowEl.style.display === 'none';
+            assert(lowHidden, 'gfLowInput should be hidden in VPMB_GFS custom mode');
+          }
+        }
+        // Switch back to Bühlmann
+        const bhlOpt = sel.querySelector('option[value="ZHLC_GF"]');
+        if (bhlOpt) { sel.value = 'ZHLC_GF'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true})); }
+        return 'VPMB_GFS: GF Hi label ✓, Low input hidden ✓, presets row visible ✓';
+      }],
+      ['Switch back to ZHLCGF — GF Low+High restored', 'ZHLC_GF', function(){
+        const d = getDoc();
+        const sel = d.getElementById('algorithmSelect') || d.querySelector('select[id*="algo"]');
+        assert(sel, 'Algorithm selector not found');
+        // Cycle: GFS → Bühlmann
+        sel.value = 'VPMB_GFS'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        sel.value = 'ZHLC_GF';  sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
+        const gfLabel = d.getElementById('gfLabel');
+        if (gfLabel) {
+          const txt = gfLabel.textContent.trim();
+          assert(!/hi$/i.test(txt) || /gf:/i.test(txt), `GF label should reset after switching back to Bühlmann, got: "${txt}"`);
+        }
+        // Custom row: Low input should be visible (not hidden)
+        const customRow = d.getElementById('gfCustomRow');
+        if (customRow && customRow.style.display !== 'none') {
+          const lowEl = d.getElementById('gfLowInput');
+          if (lowEl) assert(lowEl.style.display !== 'none', 'gfLowInput still hidden after switching back to Bühlmann');
+        }
+        return 'GF Low+High restored after Bühlmann switch ✓';
       }],
     ]
   },
@@ -1781,6 +1859,46 @@ const TIER3_GROUPS = [
         WIN.runDecoSchedule();
         assert(ok, 'decoResult empty in imperial mode');
         return 'imperial calc + metric reset ✓';
+      }],
+      ['Imperial: SAC value converts on unit switch (not left as L/min)', 'SCN', function(){
+        const d = getDoc();
+        // Read metric SAC value first
+        const sacEl = d.getElementById('sacBottom');
+        assert(sacEl, 'sacBottom input not found');
+        const metricVal = parseFloat(sacEl.value);
+        assert(isFinite(metricVal) && metricVal > 0, `sacBottom has no valid metric value: ${sacEl.value}`);
+        // Switch to imperial
+        WIN.setUnits('imperial');
+        const imperialVal = parseFloat(sacEl.value);
+        assert(isFinite(imperialVal) && imperialVal > 0, `sacBottom has no valid imperial value after switch: ${sacEl.value}`);
+        // Imperial value must be much smaller than metric (L/min → cu ft/min, factor ~0.0353)
+        // Metric SAC ~16-22 L/min → imperial ~0.55-0.78 cu ft/min. Must be < 5.
+        const converted = imperialVal < 5;
+        WIN.setUnits('metric');
+        const resetVal = parseFloat(sacEl.value);
+        if (!converted) return `SAC not converted: imperial=${imperialVal} (expected < 5 cu ft/min) — 28x overestimate bug present`;
+        assert(Math.abs(resetVal - metricVal) < 1, `SAC not restored after metric switch: was ${metricVal}, now ${resetVal}`);
+        return `SAC: ${metricVal} L/min → ${imperialVal.toFixed(2)} cu ft/min ↓ restored ${resetVal} L/min ✓`;
+      }],
+      ['Imperial: gas consumption card shows cu ft not L', 'SCN', function(){
+        WIN.setUnits('imperial');
+        WIN.runDecoSchedule();
+        const d = getDoc();
+        // Gas consumption cards are inside #gasConsumption or similar
+        const gasEl = d.getElementById('gasConsumption') || d.querySelector('[id*="gasConsump"], [id*="gas-cons"]');
+        if (!gasEl || gasEl.style.display === 'none' || !gasEl.innerHTML.trim()) {
+          WIN.setUnits('metric');
+          WIN.runDecoSchedule();
+          return 'gasConsumption element not visible after imperial run — skipping (warn)';
+        }
+        const html = gasEl.innerHTML;
+        const hasLitres = /\d+\s*L(?!\s*\/|\s*m|iter)/.test(html);  // standalone L but not L/min or L/m
+        const hasCuFt  = /cu\s*ft/i.test(html);
+        WIN.setUnits('metric');
+        WIN.runDecoSchedule();
+        if (hasLitres && !hasCuFt) return `Gas card shows L in imperial mode — volUnit display bug present`;
+        assert(hasCuFt, `Gas card has neither L nor cu ft in imperial mode — cannot verify`);
+        return 'Gas card shows cu ft in imperial mode ✓';
       }],
     ]
   },
