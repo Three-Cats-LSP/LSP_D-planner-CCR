@@ -3968,19 +3968,6 @@ function saturateLinear(tissues, fromDepth, toDepth, t, fN2, fHe) {
   }));
 }
 
-/**
- * Z-factor (compressibility) for N₂ at diving pressures.
- * Uses a simplified virial equation fitted to NIST data for N₂ (0–20 bar, 20–37°C).
- * Z ≈ 1 + B(T)·P  where B ≈ −4.0e-3 bar⁻¹ at ~25°C for N₂.
- * Effective pN2_real = pN2_ideal / Z(pAmb)
- * This correction is small (<2% at 6 bar) but included for completeness.
- */
-function zFactorN2(pBar) {
-  // Second virial coefficient B for N₂ at ~25°C ≈ -4.0e-3 L/mol, converted to bar⁻¹ ≈ +0.00166
-  // Net effect: at high pressure N₂ is slightly less soluble than ideal
-  const B = 0.00166; // bar⁻¹  (positive = slightly supra-ideal at dive pressures)
-  return 1 + B * pBar;
-}
 
 function saturate(tissues, depthM, t, fN2, fHe) {
   const pAmb = depthBar(depthM);
