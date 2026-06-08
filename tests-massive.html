@@ -298,6 +298,7 @@ let UI_CHECK_COUNT = 0;
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
 function assert(cond, msg) { if (!cond) throw new Error(msg || 'Assertion failed'); }
+const assertCond = assert;  // alias used in T1-L through T1-O groups
 function approx(a, b, tol) { return Math.abs(a - b) <= (tol == null ? 0.01 : tol); }
 function finite(v, label) { assert(typeof v === 'number' && isFinite(v), (label||'value') + ' not finite: ' + v); }
 function cloneJ(x) { return JSON.parse(JSON.stringify(x)); }
