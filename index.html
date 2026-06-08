@@ -1651,6 +1651,13 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         </select>
       </div>
       <div class="field">
+        <label>He HT Comp 1 <span onclick="showTip('He Half-Time','Helium half-time for the fastest (compartment 1) tissue.\n\nBaker 1.88 min — canonical VPM-B value (Baker FORTRAN 1998, ApexDeco, MultiDeco).\nBühlmann 1.51 min — Bühlmann 2003 textbook value (Subsurface, Shearwater, DivePro).\n\nRatio to N2 comp 1 (4.0 min):\n  Baker:     4.0 / 1.88 = 2.13\n  Bühlmann:  4.0 / 1.51 = 2.65 (≈ √(28/4), physical diffusion ratio)\n\nPractical difference: negligible for dives >15 min. Only measurable on very short deep bounce dives where fast-compartment He loading is significant.\n\nDefault: Baker 1.88 (matches VPM-B and ApexDeco).')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></span></label>
+        <select id="heHalfTimeMode" onchange="updateHeHalfTime()">
+          <option value="baker">1.88 min (Baker / VPM-B)</option>
+          <option value="buhl2003" selected>1.51 min (Bühlmann 2003)</option>
+        </select>
+      </div>
+      <div class="field">
         <label>BT SAC (L/min)</label>
         <input type="number" id="sacBottom" value="22" min="5" max="60" step="1">
       </div>
@@ -1709,16 +1716,25 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       <div class="form-grid" style="margin-bottom:0;">
         <div class="field">
           <label>Gas Mix</label>
-          <select id="decoGas" onchange="toggleDecoCustomO2('decoGas','decoCustomO2Field');updateGasMODDisplays();if(window._lastContingency) calcContingency()">
+          <select id="decoGas" onchange="toggleDecoCustomO2('decoGas','decoCustomO2Field');toggleBottomTrimix();updateGasMODDisplays();if(window._lastContingency) calcContingency()">
             <option value="air">Air (21%)</option>
             <option value="ean32">EAN32 (32%)</option>
             <option value="ean36">EAN36 (36%)</option>
             <option value="custom">Custom O₂ %</option>
+            <option value="trimix">Trimix (O₂/He %)</option>
           </select>
         </div>
         <div class="field" id="decoCustomO2Field" style="display:none;">
           <label>O₂ %</label>
           <input type="number" id="decoCustomO2" value="21" min="21" max="40" step="1" oninput="if(window._lastContingency) calcContingency()">
+        </div>
+        <div class="field" id="botTrimixO2Field" style="display:none;">
+          <label>O₂ %</label>
+          <input type="number" id="botTrimixO2" value="21" min="5" max="40" step="1" oninput="updateGasMODDisplays();if(window._lastContingency) calcContingency()" placeholder="21">
+        </div>
+        <div class="field" id="botTrimixHeField" style="display:none;">
+          <label>He %</label>
+          <input type="number" id="botTrimixHe" value="35" min="0" max="90" step="1" oninput="updateGasMODDisplays();if(window._lastContingency) calcContingency()" placeholder="35">
         </div>
         <div class="field">
           <label>MOD <span onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')" style="display:inline-block;line-height:0;vertical-align:middle;margin-left:2px;cursor:pointer;opacity:0.6;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline-block;vertical-align:middle;" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></span></label>
@@ -1796,16 +1812,25 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <div class="form-grid" style="margin-bottom:0;">
           <div class="field">
             <label>Gas Mix</label>
-            <select id="dg1Mix" onchange="toggleDecoCustomO2('dg1Mix','dg1CustomField');updateGasMODDisplays()">
+            <select id="dg1Mix" onchange="toggleDecoCustomO2('dg1Mix','dg1CustomField');toggleDecoTrimix(1);updateGasMODDisplays()">
               <option value="none">— None —</option>
               <option value="ean50" selected>EAN50 (50%)</option>
               <option value="o2">100% O₂</option>
               <option value="custom">Custom O₂ %</option>
+              <option value="trimix">Trimix (O₂/He %)</option>
             </select>
           </div>
           <div class="field" id="dg1CustomField" style="display:none;">
             <label>O₂ %</label>
             <input type="number" id="dg1CustomO2" value="50" min="21" max="100" step="1">
+          </div>
+          <div class="field" id="dg1TrimixO2Field" style="display:none;">
+            <label>O₂ %</label>
+            <input type="number" id="dg1TrimixO2" value="21" min="5" max="60" step="1" oninput="updateGasMODDisplays()" placeholder="21">
+          </div>
+          <div class="field" id="dg1TrimixHeField" style="display:none;">
+            <label>He %</label>
+            <input type="number" id="dg1TrimixHe" value="35" min="0" max="90" step="1" oninput="updateGasMODDisplays()" placeholder="35">
           </div>
           <div class="field">
             <label>Optimal Switch Depth</label>
@@ -1829,16 +1854,25 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <div class="form-grid" style="margin-bottom:0;">
           <div class="field">
             <label>Gas Mix</label>
-            <select id="dg2Mix" onchange="toggleDecoCustomO2('dg2Mix','dg2CustomField');updateGasMODDisplays()">
+            <select id="dg2Mix" onchange="toggleDecoCustomO2('dg2Mix','dg2CustomField');toggleDecoTrimix(2);updateGasMODDisplays()">
               <option value="none">— None —</option>
               <option value="ean50">EAN50 (50%)</option>
               <option value="o2" selected>100% O₂</option>
               <option value="custom">Custom O₂ %</option>
+              <option value="trimix">Trimix (O₂/He %)</option>
             </select>
           </div>
           <div class="field" id="dg2CustomField" style="display:none;">
             <label>O₂ %</label>
             <input type="number" id="dg2CustomO2" value="80" min="21" max="100" step="1">
+          </div>
+          <div class="field" id="dg2TrimixO2Field" style="display:none;">
+            <label>O₂ %</label>
+            <input type="number" id="dg2TrimixO2" value="21" min="5" max="60" step="1" oninput="updateGasMODDisplays()" placeholder="21">
+          </div>
+          <div class="field" id="dg2TrimixHeField" style="display:none;">
+            <label>He %</label>
+            <input type="number" id="dg2TrimixHe" value="35" min="0" max="90" step="1" oninput="updateGasMODDisplays()" placeholder="35">
           </div>
           <div class="field">
             <label>Optimal Switch Depth</label>
@@ -2605,7 +2639,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://www.instagram.com/threecats_lsp" alt="Instagram QR Code" style="width: 140px; height: 140px; border: 3px solid var(--muted); border-radius: 8px; padding: 6px; background: white;"/>
       </a>
       <p style="color: var(--muted); font-size:12px; margin-top:8px;">@threecats_lsp</p>
-      <p style="color: var(--muted); font-size:10px; margin-top:4px; letter-spacing:1px; opacity:0.6;" id="appVersionLabel">Version 2.5</p>
+      <p style="color: var(--muted); font-size:10px; margin-top:4px; letter-spacing:1px; opacity:0.6;" id="appVersionLabel">Version 2.6</p>
     </div>
   </div>
 
@@ -2646,7 +2680,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 // ═══════════════════════════════════════════════
 // BÜHLMANN ZH-L16C DATA
 // ═══════════════════════════════════════════════
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -2655,6 +2689,26 @@ const ZHL16C = [
   [146.0, 0.3500, 0.9222],[187.0, 0.3295, 0.9319],[239.0, 0.3065, 0.9403],
   [305.0, 0.2835, 0.9477],[390.0, 0.2610, 0.9544],[498.0, 0.2480, 0.9602],
   [635.0, 0.2327, 0.9653],
+];
+
+// He half-times for global Bühlmann engine (trimix support)
+// Two variants: Baker 1998 (VPM-B canonical, ht[0]=1.88) and Bühlmann 2003 (ht[0]=1.51)
+// Active set is selected by heHalfTimeMode setting — updated by updateHeHalfTime()
+const ZHL16C_HE_HT_BAKER = [
+  1.88, 3.02, 4.72, 6.99, 10.21, 14.48, 20.53, 29.11,
+  41.20, 55.19, 70.69, 90.34, 115.29, 147.42, 188.24, 240.03,
+];
+const ZHL16C_HE_HT_BUHL2003 = [
+  1.51, 3.02, 4.72, 6.99, 10.21, 14.48, 20.53, 29.11,
+  41.20, 55.19, 70.69, 90.34, 115.29, 147.42, 188.24, 240.03,
+];
+let ZHL16C_HE_HT = ZHL16C_HE_HT_BUHL2003.slice(); // default: Bühlmann 2003 (Shearwater/Subsurface)
+// He a/b values for weighted ceiling (Bühlmann ZHL-16C He)
+const ZHL16C_HE_AB = [
+  [1.7424, 0.4245],[1.3830, 0.5747],[1.1919, 0.6527],[1.0458, 0.7223],
+  [0.9220, 0.7582],[0.8205, 0.7957],[0.7305, 0.8279],[0.6502, 0.8553],
+  [0.5950, 0.8757],[0.5545, 0.8903],[0.5333, 0.8997],[0.5189, 0.9073],
+  [0.5181, 0.9122],[0.5176, 0.9171],[0.5172, 0.9217],[0.5119, 0.9267],
 ];
 
 // Rec RDP data
@@ -2710,18 +2764,18 @@ if (typeof window !== 'undefined') {
 let WATER_VAPOR = 0.0627; // alveolar water vapor pressure (bar) — updated by waterVapor setting
 
 // Water density pressure factors (bar per metre)
-// NOTE: These are ApexDeco-convention empirical values, NOT strict SI physics.
+const WATER_DENSITY = {
+  fresh:    0.09681,  // ApexDeco-convention (strict SI: 1000 kg/m³ → 0.09807)
+  en13319:  0.09964,  // 1020 kg/m³ — EN13319
+  salt:     0.10020,  // ApexDeco-convention (strict SI: 1025 kg/m³ → 0.10052, 1027 → 0.10071)
+};
+// NOTE: WATER_DENSITY values are ApexDeco-convention empirical constants, NOT strict SI physics.
 // Strict SI:  1000 kg/m³ × 9.80665 / 100000 = 0.09807 bar/m (fresh)
 //             1025 kg/m³ × 9.80665 / 100000 = 0.10052 bar/m (standard ocean)
 //             1027 kg/m³ × 9.80665 / 100000 = 0.10071 bar/m (ApexDeco ref density)
 // App uses rounded/matched constants to align output with ApexDeco and dive computers.
 // BAR_PER_METRE init = 1/10.078 = 0.09922 (ApexDeco default before setWater() is called).
 // Do NOT compare BAR_PER_METRE to strict SI range before setWater('salt') is called.
-const WATER_DENSITY = {
-  fresh:    0.09681,  // ApexDeco-convention (strict SI: 1000 kg/m³ → 0.09807)
-  en13319:  0.09964,  // 1020 kg/m³ — EN13319
-  salt:     0.10020,  // ApexDeco-convention (strict SI: 1025 kg/m³ → 0.10052, 1027 → 0.10071)
-};
 let BAR_PER_METRE = 1/10.078; // ApexDeco init default (= 0.09922); updated by setWater()
 
 // ── Narcosis settings ──
@@ -2752,11 +2806,13 @@ function setNarcosis(gas, isNarc) {
  * depthM : actual depth
  * returns END in metres (0 if no narcotic component)
  */
-function calcEND(depthM, fN2) {
-  const fO2 = 1 - fN2;
+function calcEND(depthM, fN2, fHe) {
+  // He is non-narcotic; fO2 = 1 - fN2 - fHe for trimix
+  const fH = fHe || 0;
+  const fO2 = Math.max(0, 1 - fN2 - fH);
   const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
 
-  // Narcotic partial pressures at depth
+  // Narcotic partial pressures at depth (He excluded — non-narcotic)
   const pNarcN2 = narcoticN2 ? pAmb * fN2 : 0;
   const pNarcO2 = narcoticO2 ? pAmb * fO2 : 0;
   const pNarc   = pNarcN2 + pNarcO2;
@@ -2972,6 +3028,17 @@ function setAllowO2AtMOD(val) {
 function updateWaterVapor() {
   const val = parseFloat(document.getElementById('waterVapor')?.value) || 0.0627;
   WATER_VAPOR = val;
+}
+
+function updateHeHalfTime() {
+  const mode = document.getElementById('heHalfTimeMode')?.value || 'buhl2003';
+  const src = mode === 'buhl2003' ? ZHL16C_HE_HT_BUHL2003 : ZHL16C_HE_HT_BAKER;
+  // Update global array in-place (preserves all references)
+  for (let i = 0; i < 16; i++) ZHL16C_HE_HT[i] = src[i];
+  // Patch VPMEngine's internal ZHL16C_He[0].ht to match
+  if (window.VPMEngine && typeof window.VPMEngine._setHeHT1 === 'function') {
+    window.VPMEngine._setHeHT1(src[0]);
+  }
 }
 const FN2_AIR   = 0.79;
 const FN2_EAN32 = 0.68;
@@ -3680,7 +3747,8 @@ function initTissues() {
   // Not acclimatized: tissues loaded to sea-level pressure (just arrived at altitude).
   const surfP = altAcclimatized ? altSurfaceP : SEA_LEVEL_P;
   const pN2 = (surfP - WATER_VAPOR) * 0.7902;  // alveolar N2 at surface
-  return ZHL16C.map(() => pN2);
+  // Return {pN2, pHe} objects — pHe=0 at surface (no He breathed on surface)
+  return ZHL16C.map(() => ({ pN2, pHe: 0 }));
 }
 
 function toggleCustomO2() {
@@ -3717,12 +3785,16 @@ function schreinerLinear(p0, fN2, ht, t, p0Amb, R) {
  * Saturate tissues during a linear pressure change (descent or ascent).
  * fromDepth → toDepth over time t minutes, breathing fN2.
  */
-function saturateLinear(tissues, fromDepth, toDepth, t, fN2) {
+function saturateLinear(tissues, fromDepth, toDepth, t, fN2, fHe) {
   if (t <= 0) return tissues;
   const p0Amb = depthBar(fromDepth);
   const pEndAmb = depthBar(toDepth);
   const R = (pEndAmb - p0Amb) / t;  // bar/min (+ve descent, -ve ascent)
-  return tissues.map((p0, i) => schreinerLinear(p0, fN2, ZHL16C[i][0], t, p0Amb, R));
+  const fH = fHe || 0;
+  return tissues.map((t0, i) => ({
+    pN2: schreinerLinear(t0.pN2, fN2, ZHL16C[i][0], t, p0Amb, R),
+    pHe: fH > 0 ? schreinerLinear(t0.pHe, fH, ZHL16C_HE_HT[i], t, p0Amb, R) : t0.pHe,
+  }));
 }
 
 /**
@@ -3739,18 +3811,32 @@ function zFactorN2(pBar) {
   return 1 + B * pBar;
 }
 
-function saturate(tissues, depthM, t, fN2) {
-  const pN2 = (depthBar(depthM) - WATER_VAPOR) * fN2;
-  return tissues.map((p0,i) => schreiner(p0, pN2, ZHL16C[i][0], t));
+function saturate(tissues, depthM, t, fN2, fHe) {
+  const pAmb = depthBar(depthM);
+  const pN2insp = (pAmb - WATER_VAPOR) * fN2;
+  const pHeinsp = (pAmb - WATER_VAPOR) * (fHe || 0);
+  return tissues.map((t0, i) => ({
+    pN2: schreiner(t0.pN2, pN2insp, ZHL16C[i][0], t),
+    pHe: schreiner(t0.pHe, pHeinsp, ZHL16C_HE_HT[i], t),
+  }));
 }
 
 function ceiling(tissues, gfHigh) {
-  // Baker GF formula: stop required if pN2 > pAmb + GF*(M_value - pAmb)
-  // Equivalent ceiling: pAmb = (pN2 - GF*a) / (1 - GF + GF/b)
+  // Baker GF formula with weighted a/b for trimix: pAmb = (pTotal - GF*a) / (1 - GF + GF/b)
   let maxC = 0;
-  tissues.forEach((pN2, i) => {
-    const [,a,b] = ZHL16C[i];
-    const pAmbMin = (pN2 - gfHigh * a) / (1 - gfHigh + gfHigh / b);
+  tissues.forEach((t0, i) => {
+    const pN2 = t0.pN2;
+    const pHe = t0.pHe || 0;
+    const pTotal = pN2 + pHe;
+    let a, b;
+    if (pHe > 0 && pTotal > 0) {
+      // Weighted Bühlmann a/b (same formula as VPMEngine)
+      a = (pN2 * ZHL16C[i][1] + pHe * ZHL16C_HE_AB[i][0]) / pTotal;
+      b = (pN2 * ZHL16C[i][2] + pHe * ZHL16C_HE_AB[i][1]) / pTotal;
+    } else {
+      [, a, b] = ZHL16C[i];
+    }
+    const pAmbMin = (pTotal - gfHigh * a) / (1 - gfHigh + gfHigh / b);
     const cM = Math.max(0, (pAmbMin - altSurfaceP) / BAR_PER_METRE);
     if (cM > maxC) maxC = cM;
   });
@@ -3760,7 +3846,7 @@ function ceiling(tissues, gfHigh) {
 function buhNDL(depthM, fN2, gfLow, gfHigh) {
   let tissues = initTissues();
   for (let t=0; t<=500; t++) {
-    const next = saturate(tissues, depthM, 1, fN2);
+    const next = saturate(tissues, depthM, 1, fN2, 0);
     if (ceiling(next, gfHigh/100) > 0) return t;
     tissues = next;
   }
@@ -3769,10 +3855,19 @@ function buhNDL(depthM, fN2, gfLow, gfHigh) {
 
 function maxSatPct(tissues, gfHigh) {
   let max = 0;
-  tissues.forEach((pN2, i) => {
-    const [,a,b] = ZHL16C[i];
-    const mv = a*(gfHigh/100) + altSurfaceP/b;
-    const pct = Math.round((pN2/mv)*100);
+  tissues.forEach((t0, i) => {
+    const pN2 = t0.pN2;
+    const pHe = t0.pHe || 0;
+    const pTotal = pN2 + pHe;
+    let a, b;
+    if (pHe > 0 && pTotal > 0) {
+      a = (pN2 * ZHL16C[i][1] + pHe * ZHL16C_HE_AB[i][0]) / pTotal;
+      b = (pN2 * ZHL16C[i][2] + pHe * ZHL16C_HE_AB[i][1]) / pTotal;
+    } else {
+      [, a, b] = ZHL16C[i];
+    }
+    const mv = a * (gfHigh / 100) + altSurfaceP / b;
+    const pct = Math.round((pTotal / mv) * 100);
     if (pct > max) max = pct;
   });
   return max;
@@ -3861,7 +3956,7 @@ function runPlanner() {
   } else {
     // Bühlmann
     let tissues = initTissues();
-    tissues = saturate(tissues, depthM, bt, fN2);
+    tissues = saturate(tissues, depthM, bt, fN2, 0);  // Planner tab: nitrox only (He=0)
     lastTissues = tissues;
     const gfHF = gfH/100;
     const ndl = buhNDL(depthM, fN2, gfL, gfH);
@@ -3992,10 +4087,18 @@ function updateTissueViz(tissues, gfH) {
   grid.innerHTML = '';
   if (tbody) tbody.innerHTML = '';
 
-  tissues.forEach((pN2, i) => {
-    const [ht, a, b] = ZHL16C[i];
+  tissues.forEach((t0, i) => {
+    const pN2 = t0.pN2;
+    const pHe = t0.pHe || 0;
+    const pTotal = pN2 + pHe;
+    const [ht, a_n2, b_n2] = ZHL16C[i];
+    let a, b;
+    if (pHe > 0 && pTotal > 0) {
+      a = (pN2 * a_n2 + pHe * ZHL16C_HE_AB[i][0]) / pTotal;
+      b = (pN2 * b_n2 + pHe * ZHL16C_HE_AB[i][1]) / pTotal;
+    } else { a = a_n2; b = b_n2; }
     const mv  = a * gfF + altSurfaceP / b;
-    const pct = Math.min(100, Math.round((pN2 / mv) * 100));
+    const pct = Math.min(100, Math.round((pTotal / mv) * 100));
     const col = pct >= 100 ? 'var(--red)' : pct >= 85 ? 'var(--orange)' : pct >= 70 ? 'var(--yellow)' : 'var(--green)';
     const tc  = pct >= 100 ? '#ff7080' : pct >= 85 ? '#ff9a40' : pct >= 70 ? '#ffe060' : '#70f0aa';
     const status = pct >= 100 ? '!! LIMIT' : pct >= 85 ? '! HIGH' : pct >= 70 ? '~ MED' : 'OK';
@@ -4013,7 +4116,7 @@ function updateTissueViz(tissues, gfH) {
 
     if (tbody) tbody.innerHTML += `<tr>
       <td>${i+1}</td><td>${ht}</td>
-      <td>${pN2.toFixed(3)}</td><td>${mv.toFixed(3)}</td>
+      <td>${pTotal.toFixed(3)}${pHe>0?' ('+pN2.toFixed(2)+'+'+pHe.toFixed(2)+')':''}</td><td>${mv.toFixed(3)}</td>
       <td style="color:${tc}">${pct}%</td><td>${status}</td>
     </tr>`;
   });
@@ -4029,28 +4132,97 @@ function toggleDecoCustomO2(selectId, fieldId) {
   document.getElementById(fieldId).style.display = isCustom ? 'block' : 'none';
 }
 
-function getDecoGasFrac(selectId, customId) {
+// Toggle trimix He/O2 fields for bottom gas card
+function toggleBottomTrimix() {
+  const isTrimix = document.getElementById('decoGas').value === 'trimix';
+  document.getElementById('botTrimixO2Field').style.display = isTrimix ? 'block' : 'none';
+  document.getElementById('botTrimixHeField').style.display = isTrimix ? 'block' : 'none';
+}
+
+// Toggle trimix fields for a deco gas card (idx = card index)
+function toggleDecoTrimix(idx) {
+  const val = document.getElementById(`dg${idx}Mix`)?.value;
+  const isTrimix = val === 'trimix';
+  const o2f = document.getElementById(`dg${idx}TrimixO2Field`);
+  const hef = document.getElementById(`dg${idx}TrimixHeField`);
+  if (o2f) o2f.style.display = isTrimix ? 'block' : 'none';
+  if (hef) hef.style.display = isTrimix ? 'block' : 'none';
+}
+
+// Get {fO2, fHe, fN2} from a gas card select+custom fields
+function getDecoGasFractions(selectId, customId, trimixO2Id, trimixHeId) {
   const mix = document.getElementById(selectId)?.value;
   if (!mix || mix === 'none') return null;
-  if (mix === 'ean50')  return 0.50;  // fN2 = 50%
-  if (mix === 'ean80')  return 0.20;  // fN2 = 20%
-  if (mix === 'o2')     return 0.00;  // pure O2, fN2 = 0
+  if (mix === 'ean50')  return { fO2: 0.50, fHe: 0,    fN2: 0.50 };
+  if (mix === 'ean80')  return { fO2: 0.80, fHe: 0,    fN2: 0.20 };
+  if (mix === 'o2')     return { fO2: 1.00, fHe: 0,    fN2: 0.00 };
   if (mix === 'custom') {
-    const o2pct = parseFloat(document.getElementById(customId)?.value) || 50;
-    return (100 - Math.min(100, Math.max(21, o2pct))) / 100;
+    const o2 = parseFloat(document.getElementById(customId)?.value) || 50;
+    const fO2 = Math.min(1, Math.max(0.05, o2 / 100));
+    return { fO2, fHe: 0, fN2: Math.max(0, 1 - fO2) };
+  }
+  if (mix === 'trimix') {
+    const o2 = parseFloat(document.getElementById(trimixO2Id)?.value) || 21;
+    const he = parseFloat(document.getElementById(trimixHeId)?.value) || 35;
+    const fO2 = Math.min(0.99, Math.max(0.05, o2 / 100));
+    const fHe = Math.min(0.95, Math.max(0, he / 100));
+    const fN2 = Math.max(0, 1 - fO2 - fHe);
+    return { fO2, fHe, fN2 };
   }
   return null;
 }
 
-function getDecoGasLabel(selectId, customId) {
-  const mix = document.getElementById(selectId)?.value;
-  if (!mix || mix === 'none') return null;
-  if (mix === 'ean50')  return 'EAN50';
-  if (mix === 'ean80')  return 'EAN80';
-  if (mix === 'o2')     return '100% O2';
-  if (mix === 'custom') return `EAN${document.getElementById(customId)?.value || 50}`;
-  return null;
+// Get trimix gas label: "18/45" for trimix, "EAN50" for nitrox, "AIR" for air, "100% O2"
+function getGasLabel(fO2, fHe) {
+  if (fO2 === null || fO2 === undefined) return null;
+  const o2pct = Math.round(fO2 * 100);
+  const hePct = Math.round((fHe || 0) * 100);
+  if (fO2 >= 0.995) return '100% O2';
+  if (hePct > 0) return `${o2pct}/${hePct}`;
+  if (o2pct === 21) return 'AIR';
+  return `EAN${o2pct}`;
 }
+
+function getDecoGasFrac(selectId, customId) {
+  const fracs = getDecoGasFractions(selectId, customId,
+    selectId.replace('Mix', 'TrimixO2'), selectId.replace('Mix', 'TrimixHe'));
+  return fracs ? fracs.fN2 : null;
+}
+
+function getDecoGasLabel(selectId, customId) {
+  const fracs = getDecoGasFractions(selectId, customId,
+    selectId.replace('Mix', 'TrimixO2'), selectId.replace('Mix', 'TrimixHe'));
+  return fracs ? getGasLabel(fracs.fO2, fracs.fHe) : null;
+}
+
+// Full fractions for a deco gas card by card-index n
+function getDecoCardFractions(n) {
+  return getDecoGasFractions(
+    `dg${n}Mix`, `dg${n}CustomO2`, `dg${n}TrimixO2`, `dg${n}TrimixHe`
+  );
+}
+
+// Get bottom gas {fO2, fHe, fN2} from the bottom gas card UI
+function getBottomGasFractions() {
+  const mix = document.getElementById('decoGas')?.value;
+  if (mix === 'air')    return { fO2: 0.21, fHe: 0, fN2: 0.79 };
+  if (mix === 'ean32')  return { fO2: 0.32, fHe: 0, fN2: 0.68 };
+  if (mix === 'ean36')  return { fO2: 0.36, fHe: 0, fN2: 0.64 };
+  if (mix === 'custom') {
+    const o2 = parseFloat(document.getElementById('decoCustomO2')?.value) || 21;
+    const fO2 = Math.min(0.40, Math.max(0.21, o2 / 100));
+    return { fO2, fHe: 0, fN2: 1 - fO2 };
+  }
+  if (mix === 'trimix') {
+    const o2 = parseFloat(document.getElementById('botTrimixO2')?.value) || 21;
+    const he = parseFloat(document.getElementById('botTrimixHe')?.value) || 35;
+    const fO2 = Math.min(0.40, Math.max(0.05, o2 / 100));
+    const fHe = Math.min(0.95, Math.max(0, he / 100));
+    return { fO2, fHe, fN2: Math.max(0, 1 - fO2 - fHe) };
+  }
+  return { fO2: 0.21, fHe: 0, fN2: 0.79 };
+}
+
 
 // Returns the best available gas at a given depth.
 // "Best" = lowest fN2 (highest O₂) whose floored ppO₂ at curDepthM is within
@@ -4168,7 +4340,7 @@ function getActiveGas(curDepthM, bottomFN2, decoGases, getPPO2LimitFn, bottomLab
       best = dg;
     }
   }
-  return best || { fN2: bottomFN2, label: bottomLabel || 'Bottom' };
+  return best || { fN2: bottomFN2, fHe: 0, label: bottomLabel || 'Bottom' };
 }
 
 // Truncate ppO2 to 1 decimal place (floor, not round) — 1.67 → 1.6
@@ -4176,8 +4348,9 @@ function floorPPO2(val) {
   return Math.floor(val * 10) / 10;
 }
 
-function ppO2Check(depthM, fN2) {
-  const o2frac = 1 - fN2;
+function ppO2Check(depthM, fN2, fHe) {
+  // He is inert: fO2 = 1 - fN2 - fHe (trimix-safe)
+  const o2frac = Math.max(0, 1 - fN2 - (fHe || 0));
   return ((altSurfaceP + depthM * BAR_PER_METRE) * o2frac).toFixed(2);
 }
 
@@ -4198,7 +4371,8 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
                 : mixEl.value === 'ean50' ? 50
                 : mixEl.value === 'ean80' ? 20
                 : parseInt(document.getElementById(`dg${n}CustomO2`)?.value) || 50;
-    const hePct = 0; // no He in deco gases for now (v2.0 Trimix will add this)
+    const dgvFracs = getDecoCardFractions(n);
+    const hePct = dgvFracs ? Math.round(dgvFracs.fHe * 100) : 0;
     decoGases.push({ o2: o2pct, he: hePct });
   }
 
@@ -4235,9 +4409,9 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
 
   // Bottom gas from DOM
   const bottomGasEl = document.getElementById('decoGas');
-  const bottomO2pct = bottomGasEl?.value === 'air' ? 21
-                    : parseInt(document.getElementById('customO2')?.value) || 21;
-  const bottomHePct = 0;
+  const _vpmBotFracs = getBottomGasFractions();
+  const bottomO2pct = Math.round(_vpmBotFracs.fO2 * 100);
+  const bottomHePct = Math.round(_vpmBotFracs.fHe * 100);
 
   const levels = [{ depth: depthM, time: bt, o2: bottomO2pct, he: bottomHePct }];
 
@@ -4285,14 +4459,15 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
 
   let html = '';
   let prevGas = `${bottomO2pct}/${bottomHePct}`;
-  let gasLabel = bottomO2pct === 21 ? 'AIR' : `EAN${bottomO2pct}`;
+  let gasLabel = getGasLabel(bottomO2pct/100, bottomHePct/100);
 
   plan.forEach(seg => {
     const segGas = seg.gas || prevGas;
-    const [o2str] = segGas.split('/');
-    const o2pct = parseInt(o2str) || bottomO2pct;
+    const gasParts = segGas.split('/');
+    const o2pct = parseInt(gasParts[0]) || bottomO2pct;
+    const hepct = parseInt(gasParts[1]) || 0;
     const gc = gasColor(o2pct);
-    const gasDisp = o2pct >= 99 ? '100% O2' : o2pct === 21 ? 'AIR' : `EAN${o2pct}`;
+    const gasDisp = getGasLabel(o2pct/100, hepct/100);
     const pAmb = settings.metric ? (1.013 + seg.depth / 10.078) : (1.013 + seg.depth * 0.0305);
     const ppO2 = (o2pct / 100 * (seg.startDepth !== undefined ? 1.013 + seg.startDepth / 10.078 : pAmb)).toFixed(2);
 
@@ -4516,8 +4691,8 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const stepDisp = settings.stepSize || 3;
     const algoLabel = model === 'VPMB' ? 'VPM-B' : 'VPM-B/GFS';
 
-    // END narcotic depth
-    const bottomFN2vpm = (100 - bottomO2pct) / 100;
+    // END narcotic depth — use true fN2 (excluding He, which is non-narcotic)
+    const bottomFN2vpm = _vpmBotFracs.fN2;
     const endMvpm = ((depthM + 10) * bottomFN2vpm / 0.79) - 10;
     const endDispVPM = dU ? Math.round(endMvpm) : Math.round(endMvpm * 3.28084);
     const endColorVPM = endMvpm > 40 ? 'var(--red)' : endMvpm > 30 ? 'var(--orange)' : 'var(--green)';
@@ -6101,35 +6276,30 @@ function updateGasMODDisplays() {
     return `MOD = floor((${ppO2limit} / ${fO2.toFixed(2)} − 1) / BAR_PER_METRE)\n= floor(${exact.toFixed(2)}) = ${Math.floor(exact)} m\nLimit: ${label} ppO₂ ${ppO2limit} bar | ${o2AtMOD ? 'Allow at MOD' : 'Strict ppO₂'}`;
   }
 
-  // Bottom gas MOD
-  const botSel = document.getElementById('decoGas');
-  const botCustom = parseFloat(document.getElementById('decoCustomO2')?.value) || 21;
-  let botFO2 = 0.21;
-  if (botSel) {
-    if (botSel.value === 'ean32') botFO2 = 0.32;
-    else if (botSel.value === 'ean36') botFO2 = 0.36;
-    else if (botSel.value === 'air') botFO2 = 0.21;
-    else if (botSel.value === 'custom') botFO2 = botCustom / 100;
-  }
-  const botMOD = calcMOD(botFO2, ppO2Limit);
-  const botEl = document.getElementById('botMODDisplay');
+  // Bottom gas MOD — unified getBottomGasFractions() handles trimix
+  const botFracs = getBottomGasFractions();
+  const botFO2   = botFracs.fO2;
+  const botMOD   = calcMOD(botFO2, ppO2Limit);
+  const botEl    = document.getElementById('botMODDisplay');
   if (botEl) {
-    botEl.value = fmtDepth(botMOD);
-    botEl.title = tooltipText(botFO2, ppO2Limit, 'Bottom');
+    const botLabel = getGasLabel(botFO2, botFracs.fHe);
+    const heNote   = botFracs.fHe > 0 ? '  (' + botLabel + ')' : '';
+    botEl.value    = fmtDepth(botMOD) + heNote;
+    botEl.title    = tooltipText(botFO2, ppO2Limit, 'Bottom');
   }
 
   // Loop over all deco gas cards
-  for (const idx of (typeof getAllDecoGasIds === 'function' ? getAllDecoGasIds() : [1,2])) {
-    const sel  = document.getElementById(`dg${idx}Mix`);
-    const disp = document.getElementById(`dg${idx}MODDisplay`);
+  for (const cidx of (typeof getAllDecoGasIds === 'function' ? getAllDecoGasIds() : [1,2])) {
+    const sel  = document.getElementById(`dg${cidx}Mix`);
+    const disp = document.getElementById(`dg${cidx}MODDisplay`);
     if (!sel || !disp) continue;
     if (sel.value === 'none' || !sel.value) { disp.value = '—'; disp.title = 'Select a gas mix to see MOD'; continue; }
-    let fO2 = 0;
-    if (sel.value === 'ean50') fO2 = 0.50;
-    else if (sel.value === 'o2') fO2 = 1.00;
-    else if (sel.value === 'custom') fO2 = parseFloat(document.getElementById(`dg${idx}CustomO2`)?.value || 50) / 100;
+    const dgFracs = getDecoCardFractions(cidx);
+    if (!dgFracs) { disp.value = '—'; continue; }
+    const fO2 = dgFracs.fO2;
     const mod = calcMOD(fO2, ppO2Deco);
-    disp.value = fmtDepth(mod);
+    const heNote = dgFracs.fHe > 0 ? '  (' + getGasLabel(fO2, dgFracs.fHe) + ')' : '';
+    disp.value = fmtDepth(mod) + heNote;
     disp.title = tooltipText(fO2, ppO2Deco, 'Deco');
   }
 }
@@ -6175,16 +6345,25 @@ function addDecoGasCard() {
     <div class="form-grid" style="margin-bottom:0;">
       <div class="field">
         <label>Gas Mix</label>
-        <select id="dg${idx}Mix" onchange="toggleDecoCustomO2('dg${idx}Mix','dg${idx}CustomField');updateGasMODDisplays()">
+        <select id="dg${idx}Mix" onchange="toggleDecoCustomO2('dg${idx}Mix','dg${idx}CustomField');toggleDecoTrimix(${idx});updateGasMODDisplays()">
           <option value="none" selected>— None —</option>
           <option value="ean50">EAN50 (50%)</option>
           <option value="o2">100% O₂</option>
           <option value="custom">Custom O₂ %</option>
+          <option value="trimix">Trimix (O₂/He %)</option>
         </select>
       </div>
       <div class="field" id="dg${idx}CustomField" style="display:none;">
         <label>O₂ %</label>
         <input type="number" id="dg${idx}CustomO2" value="50" min="21" max="100" step="1">
+      </div>
+      <div class="field" id="dg${idx}TrimixO2Field" style="display:none;">
+        <label>O₂ %</label>
+        <input type="number" id="dg${idx}TrimixO2" value="21" min="5" max="60" step="1" oninput="updateGasMODDisplays()" placeholder="21">
+      </div>
+      <div class="field" id="dg${idx}TrimixHeField" style="display:none;">
+        <label>He %</label>
+        <input type="number" id="dg${idx}TrimixHe" value="35" min="0" max="90" step="1" oninput="updateGasMODDisplays()" placeholder="35">
       </div>
       <div class="field">
         <label>Optimal Switch Depth</label>
@@ -6339,20 +6518,19 @@ function runDecoSchedule() {
   // Bottom gas
   const bottomMix = document.getElementById('decoGas').value;
   const bottomMixEl = document.getElementById('decoGas');
-  const bottomMixLabel = (() => { const t = (bottomMixEl?.options[bottomMixEl?.selectedIndex]?.text || bottomMix).trim(); if (/air/i.test(t) || t.includes('21')) return 'AIR'; const m = t.match(/[Ee][Aa][Nn]\s*(\d+)/); if (m) return 'EAN'+m[1]; if (/100/.test(t)) return '100% O2'; return t.toUpperCase().replace(/\s+/g,''); })();
-  let bottomFN2;
-  if (bottomMix === 'custom') {
-    const o2 = parseFloat(document.getElementById('decoCustomO2')?.value) || 21;
-    bottomFN2 = (100 - Math.min(40, Math.max(21, o2))) / 100;
-  } else {
-    bottomFN2 = getN2Frac(bottomMix);
-  }
+  // Use getBottomGasFractions() — handles air/nitrox/trimix uniformly
+  const _botFracs = getBottomGasFractions();
+  let bottomFN2 = _botFracs.fN2;
+  let bottomFHe = _botFracs.fHe;
+  let bottomFO2 = _botFracs.fO2;
+  const bottomMixLabel = getGasLabel(bottomFO2, bottomFHe);  // must come after _botFracs
 
   // ── Calculate optimal switch depth from ppO2 limit ──
   // ppO2 = (SURFACE_P + depth * 0.1) * fO2  ≤  maxPPO2
   // depth = (maxPPO2 / fO2 - SURFACE_P) / 0.1
-  function optimalSwitchDepth(fN2) {
-    const fO2 = 1 - fN2;
+  function optimalSwitchDepth(fN2, fO2override) {
+    // fO2override must be passed for trimix (fO2 ≠ 1-fN2 when He > 0)
+    const fO2 = (fO2override != null) ? fO2override : (1 - fN2);
     if (fO2 <= 0) return 0;
     // Pure O2 (≥99.5%): switch at 6m (o2MaxDepth), matching ApexDeco default
     if (fO2 >= 0.995) return Math.max(lastStop, units === 'metric' ? 6 : 20);
@@ -6369,14 +6547,17 @@ function runDecoSchedule() {
   const dU = units === 'metric';
   const decoGases = [];
   for (const idx of getAllDecoGasIds()) {
-    const fN2   = getDecoGasFrac(`dg${idx}Mix`, `dg${idx}CustomO2`);
+    const dgf   = getDecoCardFractions(idx);
+    const fN2   = dgf ? dgf.fN2 : getDecoGasFrac(`dg${idx}Mix`, `dg${idx}CustomO2`);
+    const fHe   = dgf ? (dgf.fHe || 0) : 0;
+    const fO2   = dgf ? dgf.fO2 : (fN2 != null ? Math.max(0, 1 - fN2 - fHe) : null);
     const label = getDecoGasLabel(`dg${idx}Mix`, `dg${idx}CustomO2`);
-    const depth = fN2 !== null ? optimalSwitchDepth(fN2) : null;
+    const depth = fN2 !== null ? optimalSwitchDepth(fN2, fO2) : null;
     const swEl  = document.getElementById(`dg${idx}SwitchDepthDisplay`);
     if (swEl) swEl.value = depth !== null
-      ? (dU ? depth+'m' : mToFt(depth)+'ft') + '  (ppO₂ ' + ((altSurfaceP + depth * BAR_PER_METRE) * (1 - fN2)).toFixed(2) + ')'
+      ? (dU ? depth+'m' : mToFt(depth)+'ft') + '  (ppO₂ ' + ((altSurfaceP + depth * BAR_PER_METRE) * (fO2 != null ? fO2 : (1-fN2))).toFixed(2) + ')'
       : '—';
-    if (fN2 !== null && depth !== null) decoGases.push({ depth, fN2, label });
+    if (fN2 !== null && depth !== null) decoGases.push({ depth, fN2, fHe, fO2: fO2 ?? Math.max(0, 1-fN2-fHe), label });
   }
   decoGases.sort((a, b) => b.depth - a.depth);
 
@@ -6388,7 +6569,7 @@ function runDecoSchedule() {
   let   _travelAscentEntry = null;
   if (_travelInfoPre) {
     // Bottom gas MOD using bottom ppO2 limit
-    const botFO2 = 1 - bottomFN2;
+    const botFO2 = bottomFO2;  // trimix-aware O2 fraction
     const botMODm = botFO2 > 0
       ? Math.floor((ppo2Bottom / botFO2 - altSurfaceP) / BAR_PER_METRE)
       : depthM;
@@ -6426,16 +6607,16 @@ function runDecoSchedule() {
     tissues = saturateLinear(tissues, 0, travelSwitchM, travelDescentTime, travelInfo.fN2);
     // Phase 2: travel switch depth → bottom on bottom gas
     const bottomDescentTime = (depthM - travelSwitchM) / descentRate;
-    tissues = saturateLinear(tissues, travelSwitchM, depthM, bottomDescentTime, bottomFN2);
+    tissues = saturateLinear(tissues, travelSwitchM, depthM, bottomDescentTime, bottomFN2, bottomFHe);
   } else {
     // No travel gas or switch depth >= bottom: entire descent on bottom gas
-    tissues = saturateLinear(tissues, 0, depthM, descentTime, bottomFN2);
+    tissues = saturateLinear(tissues, 0, depthM, descentTime, bottomFN2, bottomFHe);
   }
 
   // Bottom time input = total time from leaving surface (industry standard).
   // Subtract descent time to get actual time spent at depth.
   const btAtDepth = Math.max(0, bt - descentTime);
-  tissues = saturate(tissues, depthM, btAtDepth, bottomFN2);
+  tissues = saturate(tissues, depthM, btAtDepth, bottomFN2, bottomFHe);
   const tissuesAtBottom = [...tissues]; // snapshot for ceiling graph overlay
 
   const steps = [];
@@ -6506,12 +6687,12 @@ function runDecoSchedule() {
         // Transit time is still counted in RT and added to the displayed stop duration below.
         // (Schreiner mode: tissues off-gas normally during transit — more accurate.)
       } else {
-        tissues = saturateLinear(tissues, cur, stopDepth, travelDur, travelGas.fN2);
+        tissues = saturateLinear(tissues, cur, stopDepth, travelDur, travelGas.fN2, travelGas.fHe || 0);
       }
       steps.push({
         type: 'ascent', from: cur, to: stopDepth,
         dur: travelDur, gas: travelGas.label,
-        pO2: ppO2Check(cur, travelGas.fN2), fN2: travelGas.fN2,
+        pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
         decoTransit: decoZoneEntered && mdCompatMode
       });
       rt  += travelDur;
@@ -6526,11 +6707,12 @@ function runDecoSchedule() {
     // Select best gas available at this stop depth
     const stopGas  = getActiveGas(cur, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
     const stopFN2  = stopGas.fN2;
+    const stopFHe  = stopGas.fHe || 0;
     const gasLabel = stopGas.label;
 
     // Gas switch pause — saturate tissues at this depth during the switch
     if (gasLabel !== prevEngineGas && switchPauseT > 0) {
-      tissues = saturate(tissues, cur, switchPauseT, stopFN2);
+      tissues = saturate(tissues, cur, switchPauseT, stopFN2, stopFHe);
       rt += switchPauseT;
     }
     prevEngineGas = gasLabel;
@@ -6559,7 +6741,7 @@ function runDecoSchedule() {
       const rtOnArrival = rt;
       let stopT = 0;
       while (ceiling(tissues, gfForClear) > ceilTarget && stopT < 360) {
-        tissues = saturate(tissues, cur, holdStep, stopFN2);
+        tissues = saturate(tissues, cur, holdStep, stopFN2, stopFHe);
         stopT += holdStep; rt += holdStep;
       }
       if (isFirstDecoStop) {
@@ -6570,10 +6752,10 @@ function runDecoSchedule() {
         const actualStop = Math.max(rawRounded, minFirstStop);
         if (actualStop > stopT) {
           const extra = actualStop - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           rt += extra; stopT = actualStop;
         }
-        if (stopT < 1/60) { tissues = saturate(tissues, cur, 1/60 - stopT, stopFN2); rt += 1/60 - stopT; stopT = 1/60; }
+        if (stopT < 1/60) { tissues = saturate(tissues, cur, 1/60 - stopT, stopFN2, stopFHe); rt += 1/60 - stopT; stopT = 1/60; }
       } else {
         let roundedStop;
         {
@@ -6582,18 +6764,18 @@ function runDecoSchedule() {
         }
         if (roundedStop > stopT) {
           const extra = roundedStop - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           rt += extra; stopT = roundedStop;
         }
         // Enforce minimum stop time — every non-first deco stop gets at least minStopT
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           rt += extra; stopT = minStopT;
         }
       }
       const mustStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe });
     } else if (minStopT > 0 && minStopZoneDepth !== null && cur <= minStopZoneDepth && cur !== lastStop) {
       decoZoneEntered = true;
       let stopT = 0;
@@ -6609,11 +6791,11 @@ function runDecoSchedule() {
         stopT = needed;
       }
       if (stopT > 0) {
-        tissues = saturate(tissues, cur, stopT, stopFN2);
+        tissues = saturate(tissues, cur, stopT, stopFN2, stopFHe);
         rt += stopT;
       }
       while (ceiling(tissues, gfForClear) > ceilTarget && stopT < 360) {
-        tissues = saturate(tissues, cur, minStopT, stopFN2);
+        tissues = saturate(tissues, cur, minStopT, stopFN2, stopFHe);
         stopT += minStopT; rt += minStopT;
       }
       if (!isFirstDecoStop) {
@@ -6622,18 +6804,18 @@ function runDecoSchedule() {
         const roundedStop = totalAtLevel - transitDur;
         if (roundedStop > stopT) {
           const extra = roundedStop - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           rt += extra; stopT = roundedStop;
         }
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           rt += extra; stopT = minStopT;
         }
       }
       if (stopT > 0) {
         const minStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe });
       }
     } else if (cur === lastStop) {
       const isDecoNeeded = steps.some(s => s.type === 'deco');
@@ -6642,7 +6824,7 @@ function runDecoSchedule() {
       if (isDecoNeeded) {
         const transitToLastStop = (stopDepths.length > 1) ? (stopDepths[stopDepths.length - 2] - lastStop) / decoRate : 0;
         while (ceiling(tissues, gfAt(0)) > 0.01 && stopT < 180) {
-          tissues = saturate(tissues, cur, minStopT, stopFN2);
+          tissues = saturate(tissues, cur, minStopT, stopFN2, stopFHe);
           stopT += minStopT; rt += minStopT;
         }
         let roundedLastStop;
@@ -6652,21 +6834,21 @@ function runDecoSchedule() {
         }
         if (roundedLastStop > stopT) {
           const extra = roundedLastStop - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           stopT += extra; rt += extra;
         }
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = saturate(tissues, cur, extra, stopFN2);
+          tissues = saturate(tissues, cur, extra, stopFN2, stopFHe);
           stopT += extra; rt += extra;
         }
       } else {
         stopT = Math.max(3, minStopT);
-        tissues = saturate(tissues, cur, stopT, stopFN2);
+        tissues = saturate(tissues, cur, stopT, stopFN2, stopFHe);
         rt += stopT;
       }
       const lastStopDisplay = mdCompatMode ? stopT + transitToLastStop : stopT;
-      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2), fN2: stopFN2 });
+      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe });
     }
     // No stop needed and not lastStop — continue ascending
   }
@@ -6712,7 +6894,7 @@ function runDecoSchedule() {
         const frac = di / descSteps;
         const partDur = descentTime * frac;
         const partDepth = depthM * frac;
-        const tis = di === 0 ? dTissues : saturateLinear([...initTissues()], 0, partDepth, partDur, bottomFN2);
+        const tis = di === 0 ? dTissues : saturateLinear([...initTissues()], 0, partDepth, partDur, bottomFN2, bottomFHe);
         const gf = gfAt ? gfAt(partDepth) : gfH;
         const ceilM = Math.max(0, ceiling(tis, gf));
         ceilWps.push({ t: partDur, ceil: ceilM });
@@ -6726,7 +6908,7 @@ function runDecoSchedule() {
       let bTissues = [...tissuesAtBottom]; // end of bottom
       // Reconstruct intermediate bottom states (simplified: just record ceiling at start and end)
       const gfBottom = gfAt ? gfAt(depthM) : gfH;
-      ceilWps.push({ t: descentTime, ceil: Math.max(0, ceiling(saturateLinear([...initTissues()], 0, depthM, descentTime, bottomFN2), gfBottom)) });
+      ceilWps.push({ t: descentTime, ceil: Math.max(0, ceiling(saturateLinear([...initTissues()], 0, depthM, descentTime, bottomFN2, bottomFHe), gfBottom)) });
       ceilWps.push({ t: bt, ceil: Math.max(0, ceiling(bTissues, gfBottom)) });
     }
 
@@ -6745,16 +6927,16 @@ function runDecoSchedule() {
             const frac = si / nSteps;
             const partDur = s.dur * frac;
             const midTis = s.type === 'ascent'
-              ? saturateLinear([...cTissues2], s.from, s.to, partDur, s.fN2 || bottomFN2)
-              : saturate([...cTissues2], s.depth || 0, partDur, s.fN2 || bottomFN2);
+              ? saturateLinear([...cTissues2], s.from, s.to, partDur, s.fN2 || bottomFN2, s.fHe !== undefined ? s.fHe : bottomFHe)
+              : saturate([...cTissues2], s.depth || 0, partDur, s.fN2 || bottomFN2, s.fHe !== undefined ? s.fHe : bottomFHe);
             const gfMid = gfAt ? gfAt(s.type === 'ascent' ? (s.from + (s.to - s.from) * frac) : (s.depth || 0)) : gfH;
             ceilWps.push({ t: walkT + partDur, ceil: Math.max(0, ceiling(midTis, gfMid)) });
           }
         }
         if (s.type === 'ascent') {
-          cTissues2 = saturateLinear(cTissues2, s.from, s.to, s.dur, s.fN2 || bottomFN2);
+          cTissues2 = saturateLinear(cTissues2, s.from, s.to, s.dur, s.fN2 || bottomFN2, s.fHe !== undefined ? s.fHe : bottomFHe);
         } else {
-          cTissues2 = saturate(cTissues2, s.depth || 0, s.dur, s.fN2 || bottomFN2);
+          cTissues2 = saturate(cTissues2, s.depth || 0, s.dur, s.fN2 || bottomFN2, s.fHe !== undefined ? s.fHe : bottomFHe);
         }
         walkT += s.dur;
       }
@@ -6785,7 +6967,7 @@ function runDecoSchedule() {
   }
 
   // Build gas info row with real values: label @ switch depth — O₂%
-  const bottomO2pct  = Math.round((1 - bottomFN2) * 100);
+  const bottomO2pct  = Math.round(bottomFO2 * 100);  // trimix-safe (was 1-bottomFN2)
   const _travelInfoTag = getTravelGasInfo();
   const _travelSwitchMtag = _travelInfoTag ? Math.min(_travelInfoTag.switchDepthM, depthM) : 0;
   const travelGasTag = _travelInfoTag
@@ -6797,13 +6979,13 @@ function runDecoSchedule() {
     : '';
   const bottomGasTag = `<span style="background:#ffffff;border:2px solid #4169E1;border-radius:4px;padding:2px 8px;font-size:10px;color:#111111;font-weight:700;"><strong>Bottom: ${bottomMixLabel} — ${bottomO2pct}% O₂ @ ${_travelInfoTag ? (dU?_travelSwitchMtag+'m':mToFt(_travelSwitchMtag)+'ft') : 'surface'}→${dU ? rawD+'m' : mToFt(rawD)+'ft'}</strong></span>`;
   const decoGasTags  = decoGases.filter(dg => !dg.isTravelGas).map(dg => {
-    const o2pct = Math.round((1 - dg.fN2) * 100);
+    const o2pct = Math.round((dg.fO2 != null ? dg.fO2 : Math.max(0, 1 - dg.fN2 - (dg.fHe||0))) * 100);  // trimix-safe
     const depthDisp = dU ? dg.depth + ' m' : mToFt(dg.depth) + ' ft';
     return `<span style="background:#ffffff;border:2px solid #4169E1;border-radius:4px;padding:2px 8px;font-size:10px;color:#111111;font-weight:700;">Deco: ${dg.label.toUpperCase()} — ${o2pct}% O₂ @ ${depthDisp}</span>`;
   }).join(' ');
 
   // ── END (Equivalent Narcotic Depth) at bottom depth ──
-  const endM     = calcEND(depthM, bottomFN2);
+  const endM     = calcEND(depthM, bottomFN2, bottomFHe);
   const endDisp  = Math.round(endM);
   const endColor = endM > 40 ? 'var(--red)' : endM > 30 ? 'var(--orange)' : endM > 20 ? 'var(--yellow)' : 'var(--green)';
   const narcoStr = `N₂:${narcoticN2?'✓':'✗'} O₂:${narcoticO2?'✓':'✗'}`;
@@ -7012,7 +7194,7 @@ function runDecoSchedule() {
       const isO2        = s.fN2 === 0;
       const switchDepth = s.type === 'deco' ? s.depth : s.from;
       const switchDepthDisp = dU ? switchDepth+'m' : mToFt(switchDepth)+'ft';
-      const switchPpO2  = ppO2Check(switchDepth, s.fN2);
+      const switchPpO2  = ppO2Check(switchDepth, s.fN2, s.fHe || 0);
       const sppVal      = parseFloat(switchPpO2);
       const switchLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
       const sppColor    = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);font-weight:700;' : '';
@@ -7454,7 +7636,7 @@ function runUnifiedPlan() {
     }
 
     // Load tissues for this dive (use actual bt, even if over NDL — diver plans what they plan)
-    tissues = saturate(tissues, dM, bt, fN2);
+    tissues = saturate(tissues, dM, bt, fN2, 0);
 
     // Offgas during surface interval
     if (i < diveCount - 1) {
@@ -7463,9 +7645,9 @@ function runUnifiedPlan() {
       const si     = parseFloat(siEl?.value) || 60;
       if (siDisp) siDisp.textContent = si + ' min';
       // Offgas
-      for (let s = 0; s < Math.floor(si); s++) tissues = saturate(tissues, 0, 1, fN2);
+      for (let s = 0; s < Math.floor(si); s++) tissues = saturate(tissues, 0, 1, fN2, 0);
       const frac = si % 1;
-      if (frac > 0) tissues = saturate(tissues, 0, frac, fN2);
+      if (frac > 0) tissues = saturate(tissues, 0, frac, fN2, 0);
     }
   }
 }
@@ -7642,7 +7824,7 @@ function runSolver() {
 
   // Simulate dive 1 tissues
   let tissues = initTissues();
-  tissues = saturate(tissues, d1m, bt1, fN2);
+  tissues = saturate(tissues, d1m, bt1, fN2, 0);
 
   // Subsequent dives
   for (let i = 1; i < diveCount; i++) {
@@ -7651,8 +7833,8 @@ function runSolver() {
     // Offgas during surface interval (breathe air at surface)
     const siSteps = Math.floor(si);
     const siFrac  = si - siSteps;
-    for (let s = 0; s < siSteps; s++) tissues = saturate(tissues, 0, 1, fN2);
-    if (siFrac > 0) tissues = saturate(tissues, 0, siFrac, fN2);
+    for (let s = 0; s < siSteps; s++) tissues = saturate(tissues, 0, 1, fN2, 0);
+    if (siFrac > 0) tissues = saturate(tissues, 0, siFrac, fN2, 0);
 
     const dM   = depths[i];
     const ndlN = buhNDL(dM, fN2, mGF.low, mGF.high);
@@ -7742,7 +7924,7 @@ function runSolver() {
     // Continue chain with conservative BT assumption
     if (i < diveCount - 1) {
       const useBT = Math.max(1, Math.min(maxBT, 20));
-      tissues = saturate(tissues, dM, useBT, fN2);
+      tissues = saturate(tissues, dM, useBT, fN2, 0);
     }
   }
 }
@@ -7772,7 +7954,7 @@ function runMulti() {
 
     if (isBuh) {
       ndl  = buhNDL(depthM, fN2, mGF.low, mGF.high);
-      tissues = saturate(tissues, depthM, bt, fN2);
+      tissues = saturate(tissues, depthM, bt, fN2, 0);
       ceil = ceiling(tissues, gfHF);
       sat  = maxSatPct(tissues, mGF.high);
       safe = bt <= ndl && ceil <= 0;
@@ -7782,7 +7964,7 @@ function runMulti() {
       const modM = mix !== 'air' ? nitroxMOD(fO2Multi, 1.4) : Infinity;
       const beyondMOD = depthM > modM;
       ndl   = padiNDL(depthM, mix);
-      tissues = saturate(tissues, depthM, bt, fN2);
+      tissues = saturate(tissues, depthM, bt, fN2, 0);
       group = padiGroup(depthM, bt, mix);
       safe  = bt <= ndl && !beyondMOD;
     }
@@ -7840,14 +8022,14 @@ function runMulti() {
       let recommendedSI = '';
       
       if (isBuh) {
-        tissues = saturate(tissues, 0, siMins, fN2);
+        tissues = saturate(tissues, 0, siMins, fN2, 0);
         const ceilAfter = ceiling(tissues, gfHF);
         clearText = ceilAfter>0.5
           ? `<span style="color:var(--orange);">⚠ Ceiling still ${Math.ceil(ceilAfter)} m</span>`
           : `<span style="color:var(--green);">✓ Cleared</span>`;
       } else {
         // Rec mode — calculate recommended SI based on PADI RDP pressure groups
-        tissues = saturate(tissues, 0, siMins, fN2);
+        tissues = saturate(tissues, 0, siMins, fN2, 0);
         
         // Get current dive pressure group after this dive
         const currentGroup = group;
@@ -10303,11 +10485,14 @@ async function exportContingencyPDF() {
       doc.addPage(); drawHeader();
       sectionTitle('TISSUE SATURATION','Buhlmann ZH-L16C - N2 compartment loading at end of dive');
       const gfFem=mGF.high/100;
-      lastTissues.forEach((pN2,i)=>{
+      lastTissues.forEach((t0lp,i)=>{
+        const pN2lp=t0lp.pN2; const pHelp=t0lp.pHe||0; const pN2=pN2lp; const pTotlp=pN2lp+pHelp;
         checkY(7);
-        const [ht,a,b]=ZHL16C[i];
+        const [ht,a_n,b_n]=ZHL16C[i];
+        let a=a_n,b=b_n;
+        if(pHelp>0&&pTotlp>0){a=(pN2lp*a_n+pHelp*ZHL16C_HE_AB[i][0])/pTotlp;b=(pN2lp*b_n+pHelp*ZHL16C_HE_AB[i][1])/pTotlp;}
         const mv=a*gfFem+altSurfaceP/b;
-        const pct=Math.min(100,Math.round((pN2/mv)*100));
+        const pct=Math.min(100,Math.round((pTotlp/mv)*100));
         const cr=pct>=100?[220,0,0]:pct>=85?[200,80,0]:pct>=70?[180,150,0]:[20,160,60];
         doc.setFontSize(6.5); doc.setFont('NotoSans','normal'); doc.setTextColor(100,100,120);
         doc.text(`${i+1}`,ML+3,y+4,{align:'center'});
@@ -11337,11 +11522,14 @@ async function exportPDF() {
       doc.addPage(); drawHeader();
       sectionTitle('TISSUE SATURATION','Buhlmann ZH-L16C - N2 compartment loading at end of dive');
       const gfF = mGF.high/100;
-      lastTissues.forEach((pN2,i)=>{
+      lastTissues.forEach((t0pdf,i)=>{
+        const pN2pdf=t0pdf.pN2; const pHepdf=t0pdf.pHe||0; const pTotpdf=pN2pdf+pHepdf;
         checkY(7);
-        const [ht,a,b]=ZHL16C[i];
+        const [ht,a_n2pdf,b_n2pdf]=ZHL16C[i];
+        let a=a_n2pdf,b=b_n2pdf;
+        if(pHepdf>0&&pTotpdf>0){a=(pN2pdf*a_n2pdf+pHepdf*ZHL16C_HE_AB[i][0])/pTotpdf;b=(pN2pdf*b_n2pdf+pHepdf*ZHL16C_HE_AB[i][1])/pTotpdf;}
         const mv=a*gfF+altSurfaceP/b;
-        const pct=Math.min(100,Math.round((pN2/mv)*100));
+        const pct=Math.min(100,Math.round((pTotpdf/mv)*100));
         const cr=pct>=100?[220,0,0]:pct>=85?[200,80,0]:pct>=70?[180,150,0]:[20,160,60];
         // Row label
         doc.setFontSize(6.5); doc.setFont('NotoSans','normal'); doc.setTextColor(100,100,120);
@@ -11434,7 +11622,10 @@ var appSettings = {
     'decoDepth', 'decoBT', 'decoGas', 'decoCustomO2',
     'descentRate', 'ascentRate', 'decoAscentRate', 'surfaceAscentRate', 'decoStep', 'lastDecoStop',
     'minStopTime', 'stopRounding', 'waterVapor', 'ppo2Bottom', 'ppo2Deco',
-    'algorithmSelect', 'conservatismSelect', 'gfPresetSelect', 'gfLowInput', 'gfHighInput'
+    'algorithmSelect', 'conservatismSelect', 'gfPresetSelect', 'gfLowInput', 'gfHighInput',
+    'heHalfTimeMode',
+    'botTrimixO2', 'botTrimixHe',
+    'dg1TrimixO2', 'dg1TrimixHe', 'dg2TrimixO2', 'dg2TrimixHe',
   ],
   
   REC_FIELDS: ['ndlRange', 'ndlUImp', 'ndlUMet'],
@@ -11667,12 +11858,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   updateWaterVapor(); // apply after settings loaded
   setDecoAlgorithm(document.getElementById('algorithmSelect')?.value || 'ZHLC_GF', true);
-  
+  // Sync He half-time mode to ZHL16C_HE_HT array and VPMEngine on startup
+  updateHeHalfTime();
+
   // Try again after elements render
   setTimeout(() => {
     console.log('[LSP] Retry load after render');
     appSettings.load();
     updateWaterVapor();
+    updateHeHalfTime(); // re-sync after VPMEngine fully ready
   }, 1000);
 });
 
