@@ -9770,6 +9770,32 @@ function buildExportText(mode) {
       lines.push('');
     }
 
+    // ── Gas Consumption ──
+    const _gcEl = document.getElementById('gasConsumptionSummary');
+    if (_gcEl && _gcEl.style.display !== 'none' && _gcEl.innerHTML.trim()) {
+      lines.push('GAS CONSUMPTION');
+      lines.push('-'.repeat(40));
+      // Each gas is a .stat card: stat-val = volume, stat-lbl = gas name
+      _gcEl.querySelectorAll('.stat').forEach(s => {
+        const vol = clean(s.querySelector('.stat-val')?.textContent || '').replace(/\s+/g,' ').trim();
+        const lbl = clean(s.querySelector('.stat-lbl')?.textContent || '').trim().toUpperCase();
+        if (!vol || !lbl) return;
+        // avail / SHORT line (small div below the progress bar)
+        let availTxt = '';
+        s.querySelectorAll('div').forEach(d => {
+          const t = d.textContent.trim();
+          if (/avail|short/i.test(t)) availTxt = clean(t);
+        });
+        const availStr = availTxt ? `  (${availTxt})` : '';
+        lines.push(`  ${lbl.padEnd(8)}: ${vol}${availStr}`);
+      });
+      // SAC footer: "Bottom SAC: X L/min - Deco SAC: Y L/min"
+      const _sacFooter = Array.from(_gcEl.querySelectorAll('div'))
+        .find(d => /Bottom SAC/i.test(d.textContent));
+      if (_sacFooter) lines.push(`  ${clean(_sacFooter.textContent)}`);
+      lines.push('');
+    }
+
     lines.push('!! SAFETY REMINDERS');
     lines.push('- Do NOT skip mandatory deco stops');
     lines.push('- Check ppO2 before each gas switch');
