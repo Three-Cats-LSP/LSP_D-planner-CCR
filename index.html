@@ -11623,12 +11623,35 @@ async function exportPDF() {
   const gfStr = decoModelSel==='ZHLC_GF' ? `GF ${mGF.low}/${mGF.high}`
               : decoModelSel==='VPMB'     ? `C+${cons}`
               :                             `GFHi ${mGF.high} · C+${cons}`;
+  // VPM extras
+  const _pdfAltM      = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
+  const _pdfAccl      = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
+  const _pdfAltLbl    = _pdfAltM === 0 ? 'Sea level' : `${_pdfAltM} m`;
+  const _pdfAltSurfP  = 1.01325 * Math.exp(-_pdfAltM / 8434);
+  const _pdfRadii     = isVPM && _pdfAltM > 0 ? Math.pow(1.01325 / _pdfAltSurfP, 1/3).toFixed(3) : null;
+  const _pdfHeHt      = document.getElementById('heHalfTimeMode')?.value || 'buhlmann2003';
+  const _pdfHeHtLbl   = _pdfHeHt === 'baker' ? 'Baker 1.88 min' : 'Buhlmann 2003 1.51 min';
+  const _pdfRepEl     = document.getElementById('vpmRepMode');
+  const _pdfRepActive = isVPM && _pdfRepEl && _pdfRepEl.checked && typeof _lastVPMResult !== 'undefined' && _lastVPMResult;
+  const _pdfSI        = _pdfRepActive ? (parseFloat(document.getElementById('vpmSurfaceInterval')?.value || '60')) : null;
+  const _pdfTravelEl  = document.getElementById('travelGasEnable');
+  const _pdfHasTravel = _pdfTravelEl && (_pdfTravelEl.checked || _pdfTravelEl.value === 'true' || _pdfTravelEl.dataset.active === 'true');
+  const _pdfSacUnit   = units === 'imperial' ? 'cu ft/min' : 'L/min';
   const du       = units === 'imperial' ? 'ft' : 'm';
   const depthVal = document.getElementById('decoDepth')?.value || '—';
   const btVal    = document.getElementById('decoBT')?.value    || '—';
   const densityLabel = { fresh:'Fresh', en13319:'EN13319', salt:'Salt' }[localStorage.getItem('waterDensity')||'en13319']||'Salt';
   const gasTagEls = Array.from(document.querySelectorAll('#decoSummary div[style*="border-radius:16px"]'));
-  const bottomGasVal = gasTagEls.length ? gasTagEls[0].textContent.replace(/Bottom:/i,'').trim().split('—')[0].trim() : 'AIR';
+  // Bottom gas: use fractions directly for accurate trimix label
+  const _pdfBotFracs  = getBottomGasFractions();
+  const _pdfBotLabel  = getGasLabel(_pdfBotFracs.fO2, _pdfBotFracs.fHe);
+  const _pdfBotO2     = Math.round(_pdfBotFracs.fO2 * 100);
+  const _pdfBotHe     = Math.round((_pdfBotFracs.fHe || 0) * 100);
+  const _pdfBotN2     = Math.round(_pdfBotFracs.fN2 * 100);
+  const _pdfIsTrimix  = _pdfBotHe > 0;
+  const bottomGasVal  = _pdfIsTrimix
+    ? `${_pdfBotLabel} (O2:${_pdfBotO2}% He:${_pdfBotHe}% N2:${_pdfBotN2}%)`
+    : _pdfBotLabel;
   const totalsRowEl = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
   let decoTimeVal='—', totalRTVal='—', cnsVal='—', otuVal='—', prtVal='—';
   if (totalsRowEl) {
@@ -11686,14 +11709,22 @@ async function exportPDF() {
   }
 
   drawHeader();
-  sectionTitle('DIVE PLAN SUMMARY');
+  // Altitude + acclimatize subtitle for summary
+  const _pdfSummaryAlt = _pdfAltM > 0
+    ? `Altitude: ${_pdfAltLbl}  Accl: ${_pdfAccl?'Yes':'No'}${_pdfRadii ? `  VPM Radii x${_pdfRadii}` : ''}`
+    : '';
+  sectionTitle('DIVE PLAN SUMMARY', _pdfSummaryAlt || undefined);
+  // END: trimix-aware (N2 fraction from fractions, not select)
+  const _pdfEndM = Math.round(((parseFloat(depthVal||0) + (units==='imperial'?33:10)) * _pdfBotFracs.fN2 / 0.79) - (units==='imperial'?33:10));
+  const _pdfO2Narc = document.getElementById('o2NarcSel')?.value === 'yes' ? 'O2:Y' : 'O2:N';
+  const _pdfEndStr = isVPM ? 'N/A' : `${_pdfEndM} ${du}  N2:Y ${_pdfO2Narc}`;
   const stats=[
-    [`${depthVal} ${du}`,'Depth'],[`${btVal} min`,'BT Time'],[bottomGasVal,'Bottom Gas'],
+    [`${depthVal} ${du}`,'Depth'],[`${btVal} min`,'BT Time'],[_pdfBotLabel,'Bottom Gas'],
     [decoTimeVal,'Deco Time'],[totalRTVal,'Run Time'],[gfStr,isVPM?algo:'GF Low/High'],
     [`${document.getElementById('lastDecoStop')?.value||'—'} ${du}`,'Last Stop'],
     [`${document.getElementById('decoStep')?.value||'—'} ${du}`,'Step Size'],
     [cnsVal,'CNS%'],[otuVal,'OTU'],[prtVal,'PrT'],
-    [(()=>{ const fN2=(100-(parseInt(document.getElementById('decoBottomGas')?.value||'21')||21))/100; const endM=Math.round(((parseFloat(depthVal||0)+10)*fN2/0.79)-10); const o2Narc=document.getElementById('o2NarcSel')?.value==='yes'?'O2:Y':'O2:N'; return `${isVPM?'—':endM+' '+du}  N2:Y ${o2Narc}`; })(),'END Narcotic']
+    [_pdfEndStr,'END Narcotic']
   ];
   const sw=CW/6, sh=10;
   stats.forEach((s,i)=>{
@@ -11723,6 +11754,33 @@ async function exportPDF() {
     });
     y+=2;
   }
+  // Trimix bottom gas detail row (only if He > 0)
+  if (_pdfIsTrimix) {
+    checkY(7);
+    doc.setFillColor(230,240,255); doc.setDrawColor(150,180,220);
+    doc.roundedRect(ML, y, CW, 5.5, 1, 1, 'FD');
+    doc.setFontSize(7.5); doc.setFont('NotoSans','bold'); doc.setTextColor(0,40,120);
+    doc.text(`Bottom Gas: ${_pdfBotLabel}   O2: ${_pdfBotO2}%   He: ${_pdfBotHe}%   N2: ${_pdfBotN2}%   (Trimix)`, ML+2, y+3.8);
+    doc.setTextColor(0,0,0); y+=7;
+  }
+  // VPM repetitive dive info row
+  if (_pdfRepActive) {
+    checkY(7);
+    doc.setFillColor(240,248,255); doc.setDrawColor(150,180,220);
+    doc.roundedRect(ML, y, CW, 5.5, 1, 1, 'FD');
+    doc.setFontSize(7.5); doc.setFont('NotoSans','normal'); doc.setTextColor(0,60,130);
+    doc.text(`Repetitive dive  --  Surface interval: ${_pdfSI} min  (bubble state + tissue loading carried)`, ML+2, y+3.8);
+    doc.setTextColor(0,0,0); y+=7;
+  }
+  // He half-time mode row (VPM only)
+  if (isVPM) {
+    checkY(7);
+    doc.setFillColor(245,245,255); doc.setDrawColor(180,180,220);
+    doc.roundedRect(ML, y, CW, 5.5, 1, 1, 'FD');
+    doc.setFontSize(7.5); doc.setFont('NotoSans','normal'); doc.setTextColor(60,60,120);
+    doc.text(`He half-time mode: ${_pdfHeHtLbl}`, ML+2, y+3.8);
+    doc.setTextColor(0,0,0); y+=7;
+  }
   const alertEls=document.querySelectorAll('#decoSummary .alert');
   [...alertEls].forEach(el=>{
     const txt=cleanPDF(el.textContent);
@@ -11746,7 +11804,13 @@ async function exportPDF() {
   const _wv     = parseFloat(document.getElementById('waterVapor')?.value || '0.0627');
   const _wvL    = _wv <= 0.058 ? 'M' : 'B';
   const _rnd    = (document.getElementById('stopRounding')?.value || 'fractional') === 'wholeminute' ? 'Yes' : 'No';
-  sectionTitle('DIVE PROFILE',`${depthVal}${du} / ${btVal}min / ${bottomGasVal} / ${gfStr}  |  Des:${_dRate} Asc:${_aRate} Deco:${_daRate} Sur:${_saRate} ${du}/min  |  Rounding:${_rnd}  WV:${_wv}(${_wvL})`);
+  // Build trimix detail + travel gas + VPM extras for profile subtitle
+  const _pdfBotDetail = _pdfIsTrimix ? `${_pdfBotLabel} (O2:${_pdfBotO2}% He:${_pdfBotHe}% N2:${_pdfBotN2}%)` : _pdfBotLabel;
+  const _pdfTravelStr = _pdfHasTravel ? '  Travel gas: ON' : '';
+  const _pdfRepStr    = _pdfRepActive ? `  Rep.dive SI:${_pdfSI}min` : '';
+  const _pdfAltStr    = _pdfAltM > 0 ? `  Alt:${_pdfAltLbl}${_pdfRadii?` Radii x${_pdfRadii}`:''}` : '';
+  const _pdfHeHtStr   = isVPM ? `  He t½:${_pdfHeHtLbl}` : '';
+  sectionTitle('DIVE PROFILE',`${depthVal}${du} / ${btVal}min / ${_pdfBotDetail} / ${gfStr}  |  Des:${_dRate} Asc:${_aRate} Deco:${_daRate} Sur:${_saRate} ${du}/min  |  Rounding:${_rnd}  WV:${_wv}(${_wvL})${_pdfTravelStr}${_pdfAltStr}${_pdfRepStr}${_pdfHeHtStr}`);
   const colW=[8,24,16,18,20,16,14,14];
   const colX=[ML]; colW.forEach((w,i)=>{if(i<colW.length-1)colX.push(colX[i]+colW[i]);});
   checkY(7); doc.setFillColor(0,85,170); doc.rect(ML,y,CW,6,'F');
@@ -11817,7 +11881,7 @@ async function exportPDF() {
     doc.addPage(); drawHeader();
     const sacBot=document.getElementById('sacBottom')?.value||'20';
     const sacDec=document.getElementById('sacDeco')?.value||'15';
-    sectionTitle('GAS CONSUMPTION',`Bottom SAC: ${sacBot} L/min  Deco SAC: ${sacDec} L/min`);
+    sectionTitle('GAS CONSUMPTION',`Bottom SAC: ${sacBot} ${_pdfSacUnit}  Deco SAC: ${sacDec} ${_pdfSacUnit}`);
     const gs=gasConsEl.querySelectorAll('.stat'); const gsw2=CW/Math.max(gs.length,1);
     gs.forEach((g,i)=>{
       const val=g.querySelector('.stat-val')?.textContent?.trim()||'';
