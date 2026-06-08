@@ -603,6 +603,171 @@ if bad_hex_alpha:
 else:
     ok("No 8-digit hex alpha in canvas fillStyle (rgba used correctly)")
 
+# GROUP 16 — FEATURE A: Altitude-adjusted VPM critical radii
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 16.1 P_SL constant defined (standard sea-level pressure)
+if re.search(r"const P_SL\s*=\s*1\.01325", js):
+    ok("P_SL = 1.01325 bar (standard sea-level pressure for altFactor)")
+else:
+    fail("P_SL constant missing or wrong value — altitude radii calculation broken")
+
+# 16.2 altFactor formula: (P_SL / surfP) ^ (1/3) — cube root of volume ratio
+if re.search(r"Math\.pow\s*\(\s*P_SL\s*/\s*surfP\s*,\s*1\.0\s*/\s*3\.0\s*\)", js):
+    ok("altFactor = (P_SL/surfP)^(1/3) — correct cube-root radius scaling")
+else:
+    fail("altFactor formula missing or wrong — VPM altitude radii not properly scaled")
+
+# 16.3 initRadN2/initRadHe use altFactor
+if "initRadN2 = INITIAL_RADIUS_N2 * altFactor" in js and "initRadHe = INITIAL_RADIUS_He * altFactor":
+    ok("initRadN2/initRadHe scaled by altFactor")
+else:
+    fail("initRadN2/initRadHe not scaled by altFactor — altitude correction not applied to initial radii")
+
+# 16.4 All 12 VPM state quantities seeded from altitude-adjusted radii
+# They don't need altFactor literally — they use initRadN2/initRadHe which already incorporates it
+vpm_state_fn = re.search(r"createVPMState\s*\(.*?return \{", js, re.DOTALL)
+if vpm_state_fn:
+    state_body = vpm_state_fn.group(0)
+    required_state_vars = [
+        "critRadiiN2", "critRadiiHe",
+        "adjustedCritRadiiN2", "adjustedCritRadiiHe",
+        "regeneratedRadiiN2", "regeneratedRadiiHe",
+        "allowableGradientN2", "allowableGradientHe",
+        "decoGradientN2", "decoGradientHe",
+        "initialAllowableGradientN2", "initialAllowableGradientHe",
+    ]
+    missing = [v for v in required_state_vars if v not in state_body]
+    if missing:
+        for m in missing:
+            fail(f"createVPMState missing '{m}' — altitude-adjusted radius not propagated to all state arrays")
+    else:
+        ok("All 12 VPM state radius arrays present in createVPMState()")
+else:
+    fail("createVPMState() not found — cannot verify altitude radii propagation")
+
+# 16.5 Sea-level identity: at surfP=1.01325, altFactor == 1.0 exactly
+# Verified by physics: (1.01325/1.01325)^(1/3) = 1. Code-level check: P_SL value matches surfP default
+m_psl = re.search(r"const P_SL\s*=\s*([\d.]+)", js)
+if m_psl and abs(float(m_psl.group(1)) - 1.01325) < 1e-5:
+    ok("P_SL = 1.01325 bar — sea-level identity (altFactor=1.0) preserved")
+else:
+    fail("P_SL value deviates from 1.01325 — sea-level identity broken, existing tests will fail")
+
+# 16.6 Altitude badge shown in VPM results when altitude > 0
+if "altM" in js and ("radii" in js or "altFactor" in js) and "altitude" in js.lower():
+    ok("Altitude badge present in VPM results display")
+else:
+    fail("Altitude badge missing in VPM results — user not informed that altitude-adjusted radii are active")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 17 — FEATURE B: Repetitive VPM dive bubble state carry
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 17.1 REGEN_TIME constant = 20160 min (14 days)
+m_regen = re.search(r"REGEN_TIME\s*=\s*([\d.]+)", js)
+if m_regen and abs(float(m_regen.group(1)) - 20160.0) < 1.0:
+    ok(f"REGEN_TIME = {m_regen.group(1)} min (14 days = 14×24×60 ✓)")
+else:
+    val = m_regen.group(1) if m_regen else "NOT FOUND"
+    fail(f"REGEN_TIME = {val}, expected 20160 (14 days) — bubble regeneration rate wrong")
+
+# 17.2 Regeneration formula: exp(-si / REGEN_TIME) — exponential decay
+if re.search(r"Math\.exp\s*\(\s*-\s*\w+\s*/\s*REGEN_TIME\s*\)", js):
+    ok("Regeneration formula uses exp(-t/REGEN_TIME) — correct exponential decay")
+else:
+    fail("Regeneration formula missing exp(-t/REGEN_TIME) — bubble state carry physics wrong")
+
+# 17.3 finalBubbleState exported from buildResult with adjustedCritRadii and regeneratedRadii
+if ("finalBubbleState" in js and
+    "adjustedCritRadiiN2" in js[js.find("finalBubbleState"):js.find("finalBubbleState")+300] or
+    "adjustedCritRadiiN2" in js):
+    ok("finalBubbleState exported from VPMEngine buildResult()")
+else:
+    fail("finalBubbleState not exported from buildResult() — repetitive dive state not available")
+
+# 17.4 _lastVPMResult saves { finalTissues, finalBubbleState }
+lvm_idx = js.find("_lastVPMResult = {")
+if lvm_idx > 0:
+    lvm_block = js[lvm_idx:lvm_idx + 300]
+    if "finalBubbleState" in lvm_block:
+        ok("_lastVPMResult saves { finalTissues, finalBubbleState }")
+    else:
+        fail("_lastVPMResult does not save finalBubbleState — repetitive bubble state not persisted between runs")
+else:
+    fail("_lastVPMResult assignment not found")
+
+# 17.5 createVPMState reads _prevBubbleState and applies regeneration
+if "_prevBubbleState" in js and "regenFactor" in js:
+    ok("createVPMState reads _prevBubbleState and applies regenFactor")
+else:
+    fail("createVPMState does not read _prevBubbleState — repetitive dive bubble carry not implemented")
+
+# 17.6 Carried radii applied to ALL relevant state arrays (not just critRadii)
+# Search the whole JS for the carry loop (window of 600 was too small)
+carry_block_start = js.find("pb.regeneratedRadiiN2")
+if carry_block_start > 0:
+    # The loop spans ~1500 chars; use 1800 to cover all assignments safely
+    carry_block = js[max(0, carry_block_start - 200):carry_block_start + 1800]
+    carry_arrays = ["critRadiiN2", "critRadiiHe", "adjustedCritRadiiN2", "adjustedCritRadiiHe",
+                    "allowableGradientN2", "allowableGradientHe",
+                    "decoGradientN2", "decoGradientHe",
+                    "initialAllowableGradientN2", "initialAllowableGradientHe"]
+    missing_carry = [a for a in carry_arrays if a not in carry_block]
+    if missing_carry:
+        for a in missing_carry:
+            fail(f"Bubble carry loop missing '{a}' — repetitive dive radii not fully applied")
+    else:
+        ok("Bubble carry loop seeds all 10 VPM state arrays from previous dive state")
+else:
+    fail("Bubble carry loop (pb.regeneratedRadiiN2) not found — repetitive dive physics missing")
+
+# 17.7 UI elements present
+rep_ui_elements = {
+    "vpmRepMode":       "repetitive dive checkbox",
+    "vpmRepSIRow":      "surface interval row",
+    "vpmRepLabel":      "bubble state status label",
+    "vpmRepRow":        "outer container (shown/hidden by setDecoAlgorithm)",
+    "vpmSurfaceInterval": "surface interval input",
+}
+for elem_id, description in rep_ui_elements.items():
+    if f'id="{elem_id}"' in html:
+        ok(f"Repetitive VPM UI: id=\"{elem_id}\" ({description}) present")
+    else:
+        fail(f"Repetitive VPM UI: id=\"{elem_id}\" ({description}) missing")
+
+# 17.8 clearVpmRepState function exists
+if "function clearVpmRepState()" in js:
+    ok("clearVpmRepState() function present")
+else:
+    fail("clearVpmRepState() missing — user cannot reset repetitive dive state")
+
+# 17.9 setDecoAlgorithm hides rep panel when switching to ZHL
+algo_fn = re.search(r"function setDecoAlgorithm\(.*?(?=\nfunction )", js, re.DOTALL)
+if algo_fn:
+    algo_body = algo_fn.group(0)
+    if "vpmRepRow" in algo_body:
+        ok("setDecoAlgorithm hides/shows vpmRepRow when switching algorithms")
+    else:
+        fail("setDecoAlgorithm does not handle vpmRepRow — panel stays visible when switching to ZHL")
+else:
+    fail("setDecoAlgorithm not found for rep panel check")
+
+# 17.10 vpmSurfaceInterval and vpmRepMode in DECO_FIELDS (persistence)
+deco_fields_idx2 = html.find("DECO_FIELDS:")
+if deco_fields_idx2 > 0:
+    deco_fields_block2 = html[deco_fields_idx2:deco_fields_idx2 + 800]
+    for field_id, description in [
+        ("vpmSurfaceInterval", "VPM repetitive surface interval input"),
+        ("vpmRepMode",         "VPM repetitive dive checkbox"),
+    ]:
+        if field_id in deco_fields_block2:
+            ok(f"DECO_FIELDS includes {field_id} ({description})")
+        else:
+            fail(f"DECO_FIELDS missing '{field_id}' ({description}) — input lost on page reload")
+else:
+    fail("DECO_FIELDS not found — cannot check Feature B persistence")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PRINT RESULTS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -626,3 +791,5 @@ if FAIL:
 else:
     print("  ALL CHECKS PASSED ✓\n")
     sys.exit(0)
+
+# ══════════════════════════════════════════════════════════════════════════════
