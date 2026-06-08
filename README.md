@@ -94,7 +94,9 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java engine |
 | `VpmbGfsEngine.java` | VPM-B/GF hybrid Java engine |
-| `tests-massive.html` | 294-check regression suite — engines, UI/DOM, travel gas, altitude, trimix, VPM, GF UI |
+| [`tests.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests.html) | Core regression suite — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases |
+| [`tests-extended.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first stop depths |
+| [`tests-massive.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive.html) | 294-check regression suite — engines, UI/DOM, travel gas, altitude, trimix, VPM, GF UI |
 | `Knowledge Base/` | Reference PDFs and study materials (see below) |
 
 ### Knowledge Base
