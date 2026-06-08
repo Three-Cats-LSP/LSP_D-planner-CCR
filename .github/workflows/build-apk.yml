@@ -62,4 +62,5 @@ jobs:
           git config user.name "Three Cats LSP"
           git add "Android Apk/LSP_D-planner.apk"
           git commit -m "build(android): update LSP_D-planner.apk [skip ci]" --allow-empty
+          git pull --rebase origin main
           git push
