@@ -4531,6 +4531,31 @@ function enforceMinDecoProfile(steps, enabled, min9m, min6m, isMetric, fallbackG
     }
     // Resolve the gas the diver is breathing at this depth
     const { gas, fN2, fHe } = resolveGasAtDepth(targetDepthM);
+    // If the step at insertIdx is an ascent row that STRADDLES the injection
+    // depth, split it so the stop sits between its deep and shallow pieces.
+    const straddle = result[insertIdx];
+    if (straddle && straddle.type === 'ascent') {
+      const sFromM = isMetric ? straddle.from : Math.round(straddle.from / 3.28084);
+      const sToM   = isMetric ? straddle.to   : Math.round(straddle.to   / 3.28084);
+      if (sFromM > targetDepthM && sToM < targetDepthM) {
+        const lowerDur = straddle.dur * (sFromM - targetDepthM) / (sFromM - sToM);
+        const upperDur = straddle.dur * (targetDepthM - sToM) / (sFromM - sToM);
+        const lowerPiece = { ...straddle, to: targetDisplay, dur: lowerDur };
+        const upperPiece = { ...straddle, from: targetDisplay, dur: upperDur };
+        const injectRow = {
+          type: 'deco',
+          depth: targetDisplay,
+          to: targetDisplay,
+          dur: minDur,
+          gas,
+          fN2,
+          fHe,
+          pO2: null,
+        };
+        result.splice(insertIdx, 1, lowerPiece, injectRow, upperPiece);
+        return;
+      }
+    }
     result.splice(insertIdx, 0, {
       type: 'deco',
       depth: targetDisplay,
@@ -7731,7 +7756,7 @@ function runDecoSchedule() {
         <td data-label="Run">${rtDisp}</td>
         <td data-label="Mix" style="color:${rowBg?'#b30000':'var(--red)'};">${s.gas.toUpperCase()}</td>
         <td data-label="EAD" style="color:${rowBg?'#555':'var(--muted)'};font-size:11px;">${eadDisp}</td>
-        <td data-label="PPO2" style="${rowBg?'color:#b30000;font-weight:700;':pO2Color}">${s.pO2}</td>
+        <td data-label="PPO2" style="${rowBg?'color:#b30000;font-weight:700;':pO2Color}">${pO2Val.toFixed(2)}</td>
         <td data-label="CNS%" style="${rowBg?'color:#b30000;font-weight:700;':cnsColor}">${cnsPct}</td>
       </tr>`;
     // ── SAFETY STOP ROW ──
