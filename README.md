@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.8.3**
+**Version 2.8.4**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -178,7 +178,18 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.8.3 (current)
+### 2.8.4 (current)
+
+UX fixes over 2.8.3. Additive only — no engine changes; all 147 `audit.py` checks pass.
+
+**Decompression table**
+- **PRESETS button restyled** — the Decompression Schedule header PRESETS control now uses the `btn-export` style with a save (floppy-disk) icon, matching the Copy/SLATE/TXT/PDF export buttons.
+- **END column always on** — the Equivalent Narcotic Depth column is now permanently visible in the deco table; the show/hide toggle was removed.
+
+**Surface Interval**
+- **Dedicated sub-tab** — Surface Interval is now a proper **Surf Int** sub-tab in the main tab bar, available at any time in both **Rec** and **Tec** modes (no calculation required first).
+
+### 2.8.3
 
 UX polish over 2.8.1. Additive only — no engine changes; all 147 `audit.py` checks pass.
 
@@ -314,4 +325,5 @@ Bug fixes and UX improvements over 2.8.0. Additive only — no engine changes; a
 ---
 
 *Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
+
 
