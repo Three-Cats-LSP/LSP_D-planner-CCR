@@ -10599,42 +10599,54 @@ function buildGasPlanText() {
   if (!gp || !gp.rows.length) return null;
   const volU  = units === 'imperial' ? 'cu ft' : 'L';
   const presU = units === 'imperial' ? 'psi'   : 'bar';
-  const sizeU = units === 'imperial' ? 'cu ft' : 'L';
+  const depthU = units === 'imperial' ? 'ft' : 'm';
   const dateStr = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-  const ruleName = gp.rule === 'half' ? 'Half Tank' : 'Rule of Thirds';
+  const ruleName = gp.rule === 'half' ? 'Half Tank' : 'Thirds';
+
+  // Pull dive info from last plan
+  const depth   = document.getElementById('decoDepth')?.value  || '—';
+  const bt      = document.getElementById('decoBT')?.value     || '—';
+  const lastPlan = window._lastPlan;
+  const rtStr   = lastPlan ? `RT ${lastPlan.rt} min` : '';
+
   const L = [];
-  L.push('═══════════════════════════════════');
-  L.push('  LSP D-PLANNER — GAS PLAN');
-  L.push(`  ${dateStr} · ${units === 'imperial' ? 'Imperial' : 'Metric'}`);
-  L.push('═══════════════════════════════════');
-  L.push('');
-  L.push(`RULE: ${ruleName}`);
-  L.push('');
+  L.push('LSP GAS PLAN');
+  L.push(`${dateStr} | ${units === 'imperial' ? 'Imperial' : 'Metric'} | Rule: ${ruleName}`);
+  L.push(`Dive: ${depth}${depthU} / BT ${bt} min${rtStr ? ' / ' + rtStr : ''}`);
+  L.push('---');
+
   gp.rows.forEach(r => {
     if (r.kind === 'bottom') {
       const ruleTxt = gp.rule === 'half' ? '1/2' : '1/3';
-      L.push(`BOTTOM GAS (${r.label})`);
-      L.push(`  Reserve:       ${gpPresDisp(r.reserveBar)} ${presU}`);
-      L.push(`  Usable:        ${gpVolDisp(r.totalL)} ${volU}`);
-      L.push(`  ${ruleTxt} Volume:    ${gpVolDisp(r.portionL)} ${volU}`);
-      L.push(`  Turn Pressure: ${gpPresDisp(r.turnBar)} ${presU}`);
-      L.push('');
-    } else {
-      L.push(`${r.label.toUpperCase()}`);
-      L.push(`  Reserve:       ${gpPresDisp(r.reserveBar)} ${presU}`);
-      L.push(`  Available:     ${gpVolDisp(r.totalL)} ${volU}`);
-      if (r.reqL == null) {
-        L.push(`  Required:      — (run deco plan first)`);
-        L.push(`  Status:        NO PLAN`);
+      L.push(`BOTTOM (${r.label})`);
+      L.push(`  Usable: ${gpVolDisp(r.totalL)}${volU}  Reserve: ${gpPresDisp(r.reserveBar)}${presU}`);
+      if (r.shortL != null && r.shortL > 0) {
+        L.push(`  ! INSUFFICIENT: need ${gpVolDisp(r.reqL)}${volU}, have ${gpVolDisp(r.totalL)}${volU} (short ${gpVolDisp(r.shortL)}${volU})`);
+        if (r.maxBTmin != null) {
+          L.push(`  > Shorten BT to ${r.maxBTmin} min, turn at ${gpPresDisp(r.maxTurnBar)}${presU}`);
+          L.push(`  > Or use a larger cylinder / add a stage`);
+        }
       } else {
-        const ok = r.totalL >= r.reqL;
-        L.push(`  Required:      ${gpVolDisp(r.reqL)} ${volU}`);
-        L.push(`  Status:        ${ok ? (r.totalL >= r.reqL * 1.10 ? 'SUFFICIENT' : 'SUFFICIENT (TIGHT)') : 'INSUFFICIENT'}`);
+        L.push(`  Turn: ${gpPresDisp(r.turnBar)}${presU}  (${ruleTxt} of ${gpVolDisp(r.portionL)}${volU})`);
+        if (r.reqL != null) L.push(`  Plan needs: ${gpVolDisp(r.reqL)}${volU} — OK`);
       }
-      L.push('');
+    } else {
+      const name = r.label.toUpperCase();
+      L.push(name);
+      L.push(`  Avail: ${gpVolDisp(r.totalL)}${volU}  Reserve: ${gpPresDisp(r.reserveBar)}${presU}`);
+      if (r.reqL == null) {
+        L.push('  Required: run deco plan first');
+      } else {
+        const margin = r.totalL - r.reqL;
+        const status = r.totalL >= r.reqL * 1.10 ? 'OK' : r.totalL >= r.reqL ? 'TIGHT' : 'INSUFFICIENT';
+        L.push(`  Need: ${gpVolDisp(r.reqL)}${volU}  Margin: ${gpVolDisp(margin)}${volU}  [${status}]`);
+        if (status === 'INSUFFICIENT') L.push('  > Add more gas or reduce deco obligation');
+      }
     }
+    L.push('');
   });
-  L.push('═══════════════════════════════════');
+
+  L.push('LSP D-Planner — three-cats-lsp.github.io/LSP_D-planner');
   return L.join('\n');
 }
 
