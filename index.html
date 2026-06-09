@@ -1674,11 +1674,11 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       <div id="minDecoProfileFields" style="display:none;grid-column:1/-1;">
         <div class="form-grid" style="margin-top:6px;">
           <div class="field">
-            <label id="minDeco9mLabel">9m stop</label>
+            <label id="minDeco9mLabel">9m (min)</label>
             <input type="number" id="minDeco9m" value="1" min="1" max="10" step="1">
           </div>
           <div class="field">
-            <label id="minDeco6mLabel">6m stop</label>
+            <label id="minDeco6mLabel">6m (min)</label>
             <input type="number" id="minDeco6m" value="3" min="1" max="10" step="1">
           </div>
         </div>
@@ -4449,8 +4449,8 @@ function toggleMinDecoProfile() {
 function updateMinDecoLabels(isMetric) {
   const l9 = document.getElementById('minDeco9mLabel');
   const l6 = document.getElementById('minDeco6mLabel');
-  if (l9) l9.textContent = isMetric ? '9m stop' : '30ft stop';
-  if (l6) l6.textContent = isMetric ? '6m stop' : '20ft stop';
+  if (l9) l9.textContent = isMetric ? '9m (min)' : '30ft (min)';
+  if (l6) l6.textContent = isMetric ? '6m (min)' : '20ft (min)';
 }
 
 /**
