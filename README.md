@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.8.1**
+**Version 2.8.3**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -178,7 +178,22 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.8.1 (current)
+### 2.8.3 (current)
+
+UX polish over 2.8.1. Additive only — no engine changes; all 147 `audit.py` checks pass.
+
+**Decompression table**
+- **Gas switch row border** — removed the bottom border and extra padding on the gas-switch row; only the thin top green border remains, so the row height matches every other row.
+- **END column toggle fix** — the END column now reliably shows/hides on mobile too. A mobile-layout flex rule was overriding the column's hidden state; the toggle now wins in both desktop and mobile views.
+
+**Surface Interval**
+- **Always visible** — the embedded Rec/Tec Surface Interval panel containers now default to visible, so the collapsible panel header is shown after every dive calculation.
+
+**Navigation & controls**
+- **Reference button moved to top nav** — the `[?]` Reference & Info button moved to the header mode-switcher row, right after **🔧 Tools**, and was removed from the sub-tab and Tools tab bars.
+- **PRESETS button restyled** — the Decompression Schedule header PRESETS control is now a compact `★` icon button matching the Rec/Tec/Tools style, instead of a large accent-colored button.
+
+### 2.8.1
 
 Bug fixes and UX improvements over 2.8.0. Additive only — no engine changes; all 147 `audit.py` checks pass.
 
@@ -299,3 +314,4 @@ Bug fixes and UX improvements over 2.8.0. Additive only — no engine changes; a
 ---
 
 *Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
+
