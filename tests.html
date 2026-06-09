@@ -76,6 +76,7 @@
 // ─── INFRASTRUCTURE ──────────────────────────────────────────────────────────
 
 let E = null;
+let WIN_APP = null;
 let SURF, BAR;
 
 function assert(cond, msg) {
@@ -528,9 +529,11 @@ var GROUPS = [
       // The test reads BAR_PER_METRE AFTER setWater('salt') so the correct
       // WATER_DENSITY.salt constant (0.10020) is in effect — not the init default.
       ['BAR_PER_METRE in salt range after setWater (0.0993–0.1007)', function() {
-        if (win.setWaterType) win.setWaterType('salt');
-        else if (win.setWater) win.setWater('salt');
-        var live = win.BAR_PER_METRE;
+        var w = WIN_APP;
+        if (!w) return 'WIN_APP not ready (warn)';
+        if (w.setWaterType) w.setWaterType('salt');
+        else if (w.setWater) w.setWater('salt');
+        var live = w.BAR_PER_METRE;
         var v = (live != null && isFinite(live)) ? ((live > 1) ? 1/live : live) : BAR;
         assert(v != null && v >= 0.0993 && v <= 0.1007,
           'Got ' + v + ' — expected WATER_DENSITY.salt ≈ 0.10020 (ApexDeco convention)');
@@ -650,6 +653,7 @@ function startTests() {
     }
 
     E = engine;
+    WIN_APP = win;
     // altSurfaceP is a let — lands on window in inline scripts
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
     // BAR_PER_METRE is a let at top-level script scope
