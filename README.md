@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.8.0**
+**Version 2.8.1**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -23,7 +23,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Stop rounding (whole minute or 30-second)
 - Water vapour correction (Bühlmann standard 0.0577 bar)
 - Transit Mode (MultiDeco compatible) for deco algorithm switching
-- **Named dive profile presets** — save and recall full dive setups (see Tools & Productivity)
+- **Named dive profile presets** — save and recall full dive setups, opened from the **★ PRESETS** button in the Decompression Schedule card header (see Tools & Productivity)
 
 ### Gas Management
 - **Bottom gas** — primary mix including full trimix (O₂/He/N₂) with gas consumption tracking
@@ -66,6 +66,12 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Surface interval input (minutes) with persistent state
 - Result summary shows altitude radii factor badge and repetitive dive badge
 
+### Surface Interval Calculator
+- **In-results panels** *(new in 2.8.1)* — a collapsible **Surface Interval** panel is available directly in both **Rec** and **Tec** results, below the dive output. It pre-fills Dive 1 depth and bottom time from the dive you just calculated.
+- Also available as a standalone **Surf Int** sub-tab in the Tools tab.
+- Simulates Dive 1 forward on the same Bühlmann ZH-L16C tissue model used by the planner, off-gasses all 16 compartments at the surface, and finds the minimum surface interval before a planned second dive.
+- Shows minimum SI, recommended SI (min × 1.5), the controlling compartment, a reverse-profile warning, and a per-compartment tissue-loading bar chart.
+
 ### Units
 - **Metric** (metres, bar, litres) and **Imperial** (feet, psi, cu ft) — switchable globally
 - All inputs, labels, MOD displays, rate selectors, gas cards, and SAC values update on unit change
@@ -81,15 +87,16 @@ The Tools tab bundles quick planning calculators and reference material:
 - **Best Mix** — depth + ppO₂ → best O₂%, ppO₂, and gas name
 - **Max Depth** — O₂% → max depth at 1.4 and 1.6 bar (m + ft)
 - **Avg Depth** — max + average depth → planning depth, ratio, profile class
-- **Gas Table** *(new in 2.8.0)* — MOD and MND reference table for common mixes (Air, EAN32/36/40/50, 100% O₂, trimix 21/35, 18/45, 15/55). Live ppO₂ selector recalculates the MOD column; MND computed at END = 3.5 bar (N₂+O₂ narcotic, He non-narcotic). Respects metric/imperial units.
-- **Surf Int** *(new in 2.8.0)* — Surface Interval calculator. Simulates Dive 1 forward on the same Bühlmann ZH-L16C tissue model used by the planner, off-gasses all 16 compartments at the surface, and finds the minimum surface interval before a planned second dive. Shows minimum SI, recommended SI (min × 1.5), the controlling compartment, a reverse-profile warning, and a per-compartment tissue-loading bar chart.
+- **Gas Table** — MOD and MND reference table for common mixes (Air, EAN32/36/40/50, 100% O₂, trimix 21/35, 18/45, 15/55). Live ppO₂ selector recalculates the MOD column; MND computed at END = 3.5 bar (N₂+O₂ narcotic, He non-narcotic). Respects metric/imperial units.
+- **Surf Int** — Surface Interval calculator (also embedded in Rec and Tec results, see above). Simulates Dive 1 forward on the Bühlmann ZH-L16C tissue model, off-gasses all 16 compartments at the surface, and finds the minimum surface interval before a planned second dive. Shows minimum SI, recommended SI (min × 1.5), the controlling compartment, a reverse-profile warning, and a per-compartment tissue-loading bar chart.
 - **Unit Converter** — bidirectional pressure / volume / depth / temperature / weight conversion
 - **Knowledge** — static reference, algorithm notes, and links to the Knowledge Base PDFs
 
 ### Output & Export
 - Colour-coded dive table (descent, bottom, deco stops)
-- **END column toggle** *(new in 2.8.0)* — show/hide an Equivalent Narcotic Depth column directly in the deco table (button in the Dive Profile header). State persists across sessions.
-- **Deco Slate export** *(new in 2.8.0)* — compact, monospaced waterproof-slate format showing deco stops only (depth, cumulative run time, gas, ppO₂) with a header (date, algorithm, bottom + switch gases) and footer (total bottom time, total deco time). Opens in a copyable modal via the **SLATE** button. Respects metric/imperial units.
+- **END column toggle** — show/hide an Equivalent Narcotic Depth column directly in the deco table (button in the Dive Profile header). State persists across sessions and applies on every recalculation and on page load.
+- **Deco Slate export** — compact, monospaced waterproof-slate format showing deco stops only (depth, cumulative run time, gas, ppO₂) with a header (date, algorithm, bottom + switch gases) and footer (total bottom time, total deco time). Opens in a copyable modal via the **SLATE** button (now with a slate/tablet icon). The same slate is also appended to **PDF** and **TXT** exports. Respects metric/imperial units.
+- Export buttons ordered **Copy → SLATE → TXT → PDF**.
 - Summary stats bar: max depth, bottom time, TTS, CNS, OTU, altitude chip, travel gas chip
 - Gas tags strip: colour-coded pills per gas (surface → MOD ranges)
 - Profile export / print view; TXT, COPY, and PDF exports include altitude and acclimatization state
@@ -171,7 +178,26 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.8.0 (current)
+### 2.8.1 (current)
+
+Bug fixes and UX improvements over 2.8.0. Additive only — no engine changes; all 147 `audit.py` checks pass.
+
+**Decompression table**
+- **Gas switch row border** — replaced the heavy inset box-shadow borders on the gas-switch row with standard thin 1px green borders, matching every other row; kept the yellow highlight. The row's colspan now spans all columns (including the optional END column), so no unfilled trailing cell remains.
+- **END column toggle fix** — the END column now actually shows/hides when toggled. `applyEndColumn()` runs after every deco-table render (Bühlmann and VPM-B) and on page load when the toggle is already enabled from a previous session.
+
+**Surface Interval**
+- **Embedded in Rec and Tec results** — the Surface Interval calculator is now available as a collapsible panel directly within both Rec and Tec results, not just in the Tools tab. It pre-fills Dive 1 depth and bottom time from the dive just calculated. Collapsed by default.
+
+**Output & export**
+- **SLATE button icon** — the SLATE export button now shows a slate/tablet icon, matching the size and style of the other export buttons.
+- **Export button order** — buttons reordered to **Copy → SLATE → TXT → PDF**.
+- **Slate in PDF and TXT** — the deco slate is now appended as a section to both the PDF and TXT exports (reusing the same slate generator as the SLATE modal), not just the copyable modal.
+
+**Productivity**
+- **PRESETS button relocated** — the **★ PRESETS** button moved from the bottom of the gas settings to the Decompression Schedule card header, styled as a prominent accent button alongside the card title and help icon.
+
+### 2.8.0
 
 **New planning tools**
 - **Gas Table** — new Tools sub-tab: MOD and MND quick-reference table for common nitrox and trimix mixes (Air, EAN32/36/40/50, 100% O₂, 21/35, 18/45, 15/55). Live ppO₂ selector recalculates the MOD column; MND computed at END = 3.5 bar (N₂+O₂ narcotic, He non-narcotic). Respects metric/imperial units.
