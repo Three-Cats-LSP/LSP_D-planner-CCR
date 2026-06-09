@@ -4510,12 +4510,14 @@ function enforceMinDecoProfile(steps, enabled, min9m, min6m, isMetric) {
     }
     // Pick gas from the step just ABOVE (deeper side) the insertion point
     // — that's the gas the diver is actually breathing at this depth
+    // Walk backward, skipping steps with empty/null gas
     let gas = '';
     let fN2 = null;
     let fHe = null;
     for (let i = insertIdx - 1; i >= 0; i--) {
-      if (result[i].gas) {
-        gas = result[i].gas;
+      const sg = result[i].gas;
+      if (sg && sg.trim() !== '') {
+        gas = sg;
         fN2 = result[i].fN2 ?? null;
         fHe = result[i].fHe ?? null;
         break;
@@ -7677,7 +7679,7 @@ function runDecoSchedule() {
     const rtDisp = fmtMM(rowRT);
 
     // ── GAS SWITCH ROW ──
-    if (s.gas !== prevGas && s.gas !== bottomMixLabel) {
+    if (s.gas && s.gas !== prevGas && s.gas !== bottomMixLabel) {
       const isO2        = s.fN2 === 0;
       const switchDepth = s.type === 'deco' ? s.depth : (s.from ?? s.depth);
       const switchDepthDisp = dU ? switchDepth+'m' : mToFt(switchDepth)+'ft';
@@ -7696,7 +7698,7 @@ function runDecoSchedule() {
 
     const gasColor = s.type === 'deco'
       ? 'var(--red)'
-      : s.fN2 === 0 ? 'var(--accent)' : 'var(--green)';
+      : (_sFN2 === 0) ? 'var(--accent)' : 'var(--green)';
 
     // ── DECO STOP ROW ──
     if (s.type === 'deco') {
