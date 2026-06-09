@@ -4495,15 +4495,20 @@ function enforceMinDecoProfile(steps, enabled, min9m, min6m, isMetric) {
   // Find insertion points in result array (after deeper stops, before shallower)
   function injectStop(targetDepthM, minDur, gasAtShallow) {
     const targetDisplay = isMetric ? targetDepthM : Math.round(targetDepthM * 3.28084);
-    // Find the first deco stop shallower than targetDepthM to insert before
-    let insertIdx = result.length; // default: append before ascent-to-surface
+    // Find the first stop/ascent step that is shallower than targetDepthM
+    // Consider deco, safety, and ascent steps — not just deco
+    let insertIdx = result.length;
     for (let i = 0; i < result.length; i++) {
       const s = result[i];
-      if (s.type !== 'deco') continue;
-      const d = isMetric ? s.depth : Math.round(s.depth / 3.28084);
+      // Skip descent and bottom phases — only look at ascent phase steps
+      if (s.type === 'descent' || s.type === 'bottom') continue;
+      // Get the depth of this step (ascent steps use 'to', stop steps use 'depth')
+      const rawD = s.type === 'ascent' ? (s.to ?? s.depth) : s.depth;
+      if (rawD == null) continue;
+      const d = isMetric ? rawD : Math.round(rawD / 3.28084);
       if (d < targetDepthM) { insertIdx = i; break; }
     }
-    // Pick gas from nearest shallower deco stop or last gas used
+    // Pick gas from nearest shallower stop or last gas used
     let gas = gasAtShallow;
     for (let i = insertIdx; i < result.length; i++) {
       if (result[i].gas) { gas = result[i].gas; break; }
