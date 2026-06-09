@@ -1,10 +1,12 @@
 # LSP D-Planner
 
-**Version 2.7.8**
+**Version 2.8.0**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
 🌐 **Live App**: https://three-cats-lsp.github.io/LSP_D-planner/
+
+📱 **Android APK**: [`Android Apk/LSP_D-planner.apk`](https://github.com/Three-Cats-LSP/LSP_D-planner/raw/main/Android%20Apk/LSP_D-planner.apk)
 
 ---
 
@@ -13,7 +15,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 ### Decompression Algorithms
 - **Bühlmann ZH-L16C + Gradient Factors (GF)** — industry-standard tissue model with configurable Low/High GF presets or custom entry
 - **VPM-B** — Varying Permeability Model bubble decompression with configurable conservatism margin
-- **VPM-B/GF hybrid** — VPM-B bubble mechanics set deep stop depth; GF High applied at shallow/surface stops only. GF High configurable via presets or custom.
+- **VPM-B/GF hybrid (VPM-B/GFS)** — VPM-B bubble mechanics set deep stop depth; GF High applied at shallow/surface stops only. GF High configurable via presets or custom.
 
 ### Dive Planning
 - Multi-dive support with surface interval tissue loading
@@ -21,6 +23,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Stop rounding (whole minute or 30-second)
 - Water vapour correction (Bühlmann standard 0.0577 bar)
 - Transit Mode (MultiDeco compatible) for deco algorithm switching
+- **Named dive profile presets** — save and recall full dive setups (see Tools & Productivity)
 
 ### Gas Management
 - **Bottom gas** — primary mix including full trimix (O₂/He/N₂) with gas consumption tracking
@@ -72,11 +75,24 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 - Full CNS O₂ and OTU calculation throughout the dive profile
 - Displayed per segment and as totals
 
+### Tools Tab
+The Tools tab bundles quick planning calculators and reference material:
+- **MOD** — O₂% + ppO₂ slider → Maximum Operating Depth in m/ft
+- **Best Mix** — depth + ppO₂ → best O₂%, ppO₂, and gas name
+- **Max Depth** — O₂% → max depth at 1.4 and 1.6 bar (m + ft)
+- **Avg Depth** — max + average depth → planning depth, ratio, profile class
+- **Gas Table** *(new in 2.8.0)* — MOD and MND reference table for common mixes (Air, EAN32/36/40/50, 100% O₂, trimix 21/35, 18/45, 15/55). Live ppO₂ selector recalculates the MOD column; MND computed at END = 3.5 bar (N₂+O₂ narcotic, He non-narcotic). Respects metric/imperial units.
+- **Surf Int** *(new in 2.8.0)* — Surface Interval calculator. Simulates Dive 1 forward on the same Bühlmann ZH-L16C tissue model used by the planner, off-gasses all 16 compartments at the surface, and finds the minimum surface interval before a planned second dive. Shows minimum SI, recommended SI (min × 1.5), the controlling compartment, a reverse-profile warning, and a per-compartment tissue-loading bar chart.
+- **Unit Converter** — bidirectional pressure / volume / depth / temperature / weight conversion
+- **Knowledge** — static reference, algorithm notes, and links to the Knowledge Base PDFs
+
 ### Output & Export
 - Colour-coded dive table (descent, bottom, deco stops)
+- **END column toggle** *(new in 2.8.0)* — show/hide an Equivalent Narcotic Depth column directly in the deco table (button in the Dive Profile header). State persists across sessions.
+- **Deco Slate export** *(new in 2.8.0)* — compact, monospaced waterproof-slate format showing deco stops only (depth, cumulative run time, gas, ppO₂) with a header (date, algorithm, bottom + switch gases) and footer (total bottom time, total deco time). Opens in a copyable modal via the **SLATE** button. Respects metric/imperial units.
 - Summary stats bar: max depth, bottom time, TTS, CNS, OTU, altitude chip, travel gas chip
 - Gas tags strip: colour-coded pills per gas (surface → MOD ranges)
-- Profile export / print view; text export includes altitude and acclimatization state
+- Profile export / print view; TXT, COPY, and PDF exports include altitude and acclimatization state
 
 ### UI
 - Unified `?` tooltip icon system across all settings — consistent colour, size, and style
@@ -90,7 +106,7 @@ A technical dive decompression planner for mixed-gas deco diving. Runs entirely 
 | Path | Purpose |
 |------|---------|
 | `index.html` | Self-contained web app — the entire planner in one file |
-| `audit.py` | Static analysis script — 111 checks across 20+ groups. Run before every commit. |
+| `audit.py` | Static analysis script — 147 checks across 20+ groups. Run before every commit. |
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java engine |
 | `VpmbGfsEngine.java` | VPM-B/GF hybrid Java engine |
@@ -132,7 +148,7 @@ All reference documents used in developing and validating the planner are in `Kn
 python3 audit.py index.html
 ```
 
-Exit 0 = all 111 checks pass. Run before every commit to main.
+Exit 0 = all 147 checks pass. Run before every commit to main.
 
 ---
 
@@ -155,7 +171,23 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.7.8 (current)
+### 2.8.0 (current)
+
+**New planning tools**
+- **Gas Table** — new Tools sub-tab: MOD and MND quick-reference table for common nitrox and trimix mixes (Air, EAN32/36/40/50, 100% O₂, 21/35, 18/45, 15/55). Live ppO₂ selector recalculates the MOD column; MND computed at END = 3.5 bar (N₂+O₂ narcotic, He non-narcotic). Respects metric/imperial units.
+- **Surface Interval calculator** — new Tools sub-tab: simulates Dive 1 on the existing Bühlmann ZH-L16C tissue model, off-gasses all 16 compartments at the surface, and finds the minimum surface interval for a planned second dive. Reports minimum SI, recommended SI (× 1.5), controlling compartment, a reverse-profile warning, and a tissue-loading bar chart.
+
+**Output & export**
+- **Deco Slate export** — new **SLATE** button: compact monospaced waterproof-slate output (deco stops only, cumulative run time, gas, ppO₂) with date/algorithm/gas header and TBT/deco-time footer, in a copyable modal. Respects units.
+- **END column toggle** — show/hide an Equivalent Narcotic Depth column in the deco table from the Dive Profile header; trimix-aware (He non-narcotic); state persisted in `localStorage`.
+
+**Productivity**
+- **Named dive profile presets** — save the full dive setup (algorithm, GF/conservatism, all gas mixes and cylinders, depth, bottom time, altitude, water type, SAC, min-deco settings, rounding) as a named preset and recall it later. Stored in `localStorage` (up to 20 presets); each preset shows a one-line summary.
+
+**Quality**
+- All 147 `audit.py` checks pass; changes are additive over 2.7.8 with no engine changes.
+
+### 2.7.8
 
 **Algorithms**
 - **getPPO2Limit trimix fix** — function previously used `1-fN2` as fO2, which is wrong for trimix (e.g. 21/35 trimix gave fO2=0.56 instead of 0.21, selecting the wrong ppO2 band and placing the switch depth ~9m too shallow). Fixed in 4 places: function signature now takes fO2 directly; all call sites compute `Math.max(0, 1-fN2-fHe)` before calling
