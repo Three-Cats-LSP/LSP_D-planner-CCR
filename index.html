@@ -2981,7 +2981,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   window.setAndroidApp = function() { hideApkIcon(); };
 })();
 
-const APP_VERSION = '2.8.4';
+const APP_VERSION = '2.8.6';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -10907,6 +10907,86 @@ function copySlate() {
   }
 }
 
+function buildContingencySlateText() {
+  const cc = window._lastContingency;
+  if (!cc || !cc.newRows) return null;
+  const du = units === 'metric' ? 'm' : 'ft';
+  const clean = t => (t || '').replace(/[📋⚠️🤿✓⚡🔵🔴🟢🚨⏱ℹ⇄↓↑]/g,'').replace(/\s*·\s*/g,' ').replace(/ppO₂/g,'ppO2').replace(/O₂/g,'O2').replace(/[—–]/g,'-').replace(/Bühlmann/g,'Buhlmann').replace(/\s+/g,' ').trim();
+  const shortMix = m => {
+    const s = clean(m);
+    if (!s) return '-';
+    if (/^\d+\/\d+$/.test(s)) return s;
+    if (s === '100%' || /^100/i.test(s)) return '100%';
+    if (/air/i.test(s)) return 'Air';
+    const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
+    const pct = s.match(/(\d+)\s*%/); if (pct) return pct[1] + '/00';
+    return s;
+  };
+  // Parse rows from HTML string using a temporary DOM fragment
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = cc.newRows;
+  const rows = tmp.querySelectorAll('tr[data-phase]');
+  if (!rows.length) return null;
+  const dateStr = new Date().toISOString().slice(0,10);
+  const algoSel = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
+  const algoNames = { ZHLC_GF: 'Buhlmann GF', VPMB: 'VPM-B', VPMB_GFS: 'VPM-B/GFS' };
+  const algoName = algoNames[algoSel] || algoSel;
+  const algoLine = algoSel === 'ZHLC_GF'
+    ? `${algoName} ${mGF.low}/${mGF.high}`
+    : algoSel === 'VPMB'
+      ? `${algoName} +${document.getElementById('conservatismSelect')?.value ?? '0'}`
+      : `${algoName} GF Hi ${mGF.high}`;
+  const botFracs = getBottomGasFractions();
+  const botLabel = shortMix(getGasLabel(botFracs.fO2, botFracs.fHe));
+  const gswRows = Array.from(rows).filter(tr => tr.dataset.phase === 'switch');
+  const switchParts = gswRows.map(tr => {
+    const txt = clean(tr.querySelector('td[colspan]')?.textContent || '');
+    const gasM = txt.match(/^([^@]+)@/);
+    const depM = txt.match(/@\s*([\d.]+)\s*(m|ft)/i);
+    const gas = gasM ? shortMix(gasM[1]) : '';
+    const dep = depM ? `${depM[1]}${depM[2] || du}` : '';
+    return gas ? `${gas} @ ${dep}` : '';
+  }).filter(Boolean);
+  const mixLine = `${botLabel} (BTM) [EMRG: ${cc.label}]` + (switchParts.length ? ' | ' + switchParts.join(' | ') : '');
+  const out = [];
+  rows.forEach(tr => {
+    const ph = tr.dataset.phase;
+    if (ph !== 'deco' && ph !== 'safety') return;
+    const tds = tr.querySelectorAll('td');
+    const depRaw = clean(tds[1]?.textContent).replace(/(m|ft)$/i,'');
+    const dep = (depRaw + du).padStart(5);
+    const run = clean(tds[3]?.textContent).padStart(5);
+    const gas = shortMix(tds[4]?.textContent).padEnd(6);
+    const ppo2 = clean(tds[6]?.textContent).padStart(4);
+    out.push(`${dep}  ${run}  ${gas} ${ppo2}`);
+  });
+  const tbt = document.getElementById('decoBT')?.value || '-';
+  let decoMin = 0;
+  rows.forEach(tr => {
+    if (tr.dataset.phase === 'deco' || tr.dataset.phase === 'safety') {
+      const stp = clean(tr.querySelectorAll('td')[2]?.textContent || '');
+      const p = stp.split(':');
+      if (p.length === 2) decoMin += parseInt(p[0]) + parseInt(p[1]) / 60;
+    }
+  });
+  const bar = '========================';
+  const lines = ['LSP D-PLANNER EMERGENCY SLATE', bar,
+    `Date: ${dateStr}`, `Algo: ${algoLine}`, `Mix: ${mixLine}`, '',
+    'DEPTH  TIME   GAS    PPO2'];
+  if (out.length) out.forEach(l => lines.push(l));
+  else lines.push('  (no decompression stops)');
+  lines.push(bar);
+  lines.push(`TBT: ${tbt} min | DECO: ${Math.round(decoMin)} min`);
+  return lines.join('\n');
+}
+
+function showContingencySlate() {
+  const text = buildContingencySlateText();
+  if (!text) { showToast('Run an emergency plan first', 'slate'); return; }
+  document.getElementById('slateModalBody').textContent = text;
+  document.getElementById('slateModal').style.display = 'flex';
+}
+
 // ── Messenger-safe format: ascent schedule only, no column padding ──
 // Short enough to share in WhatsApp, Telegram, iMessage, Reddit
 function buildMessengerText(mode) {
@@ -11424,6 +11504,7 @@ function calcContingency() {
       <div class="export-row">
         <button class="btn-export" onclick="copyDiveProfile('contingency')" title="Copy to clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="btn-export" onclick="exportTXT('contingency')" title="Download .txt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></button>
+        <button class="btn-export" onclick="showContingencySlate()" title="Emergency slate (waterproof format)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg></button>
         <button class="btn-export" onclick="exportContingencyPDF()" title="Export PDF"><span style="display:inline-block;width:16px;height:16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0px;line-height:16px;text-align:center;overflow:visible;white-space:nowrap;">PDF</span></button>
       </div>
     </div>`;
