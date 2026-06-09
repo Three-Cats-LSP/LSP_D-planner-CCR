@@ -2785,14 +2785,8 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <a href="https://github.com/Three-Cats-LSP/LSP_D-planner" target="_blank" rel="noopener noreferrer" title="View source on GitHub" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'">
     <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--muted)" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.165 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.603-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
   </a>
-  <a href="https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk" download="LSP_D-planner.apk" title="Download Android APK" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'">
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 16l-5-5h3V4h4v7h3l-5 5z" fill="var(--muted)"/>
-      <path d="M5 18h14v2H5v-2z" fill="var(--muted)"/>
-      <path d="M8.5 2.5 Q12 6 15.5 2.5" stroke="var(--muted)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-      <circle cx="9.2" cy="1.8" r="0.8" fill="var(--muted)"/>
-      <circle cx="14.8" cy="1.8" r="0.8" fill="var(--muted)"/>
-    </svg>
+  <a id="apkDownloadIcon" href="https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk" download="LSP_D-planner.apk" title="Download Android APK" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'">
+    <img src="https://cdn-icons-png.magnific.com/512/9788/9788887.png" width="36" height="36" alt="Download APK" style="display:block;"/>
   </a>
   </div>
   <p id="mainVersionLabel" style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:6px;letter-spacing:1px;opacity:0.5;"></p>
@@ -2805,7 +2799,22 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 // ═══════════════════════════════════════════════
 // BÜHLMANN ZH-L16C DATA
 // ═══════════════════════════════════════════════
-const APP_VERSION = '2.7.3';
+
+// ── Android WebView detection — hide APK download icon in-app ──
+(function() {
+  function hideApkIcon() {
+    var el = document.getElementById('apkDownloadIcon');
+    if (el) el.style.display = 'none';
+  }
+  // Primary: userAgent flag injected by MainActivity
+  if (/LSPDPlanner\/Android/i.test(navigator.userAgent)) {
+    hideApkIcon();
+  }
+  // Fallback: window flag set by JavascriptInterface
+  window.setAndroidApp = function() { hideApkIcon(); };
+})();
+
+const APP_VERSION = '2.7.4';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
