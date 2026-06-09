@@ -965,7 +965,6 @@ body.light-theme .asc-color { color: #1a9e55 !important; }
 .deco-table tr[data-phase="switch"],
 body:not(.light-theme) .deco-table tr[data-phase="switch"] {
   background: #FFD700 !important;
-  box-shadow: inset 0 2px 0 #007A33, inset 0 -2px 0 #007A33 !important;
 }
 .deco-table tr[data-phase="switch"] td,
 body:not(.light-theme) .deco-table tr[data-phase="switch"] td {
@@ -973,7 +972,8 @@ body:not(.light-theme) .deco-table tr[data-phase="switch"] td {
   font-weight: 700 !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-  border-bottom: none !important;
+  border-top: 1px solid #007A33 !important;
+  border-bottom: 1px solid #007A33 !important;
 }
 /* First td (icon cell) — center like all other phase icons */
 .deco-table tr[data-phase="switch"] td:first-child {
@@ -981,12 +981,12 @@ body:not(.light-theme) .deco-table tr[data-phase="switch"] td {
 }
 body.light-theme .deco-table tr[data-phase="switch"] {
   background: #FFD700 !important;
-  box-shadow: inset 0 2px 0 #007A33, inset 0 -2px 0 #007A33 !important;
 }
 body.light-theme .deco-table tr[data-phase="switch"] td {
   color: #007A33 !important;
   font-weight: 700 !important;
-  border-bottom: none !important;
+  border-top: 1px solid #007A33 !important;
+  border-bottom: 1px solid #007A33 !important;
 }
 }
 
@@ -1525,6 +1525,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <div id="plannerProfileCanvas-crosshair-h" style="display:none;position:absolute;left:0;right:0;height:1px;background:rgba(0,217,255,0.3);pointer-events:none;"></div>
 </div>
   <div id="plannerProfileLegend" style="display:none;margin-top:4px;"></div>
+  <div id="recSurfIntContainer" style="display:none;"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1595,8 +1596,11 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 ══════════════════════════════════════ -->
 <div class="panel active" id="deco">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="card-title" style="margin-bottom:0;">Decompression Schedule</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+      <div class="card-title" style="margin-bottom:0;margin-right:auto;">Decompression Schedule</div>
+      <button id="presetsHeaderBtn" onclick="openPresetModal()" title="Dive presets"
+        style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:0.5px;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;"
+        onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">★ PRESETS</button>
       <button class="tip-icon tip-btn" onclick="document.getElementById('settingsHelpModal').style.display='block'" title="Settings help"><svg width="14" height="14" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></button>
     </div>
     <div class="info-box">Generates a full ascent profile with deco stops using Bühlmann ZH-L16C + Gradient Factors. Configure up to two decompression gases below — they switch automatically at the specified depths during ascent and are factored into tissue off-gassing.</div>
@@ -1955,13 +1959,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
     </div>
 
-    <button onclick="openPresetModal()" id="presetsBtn"
-      style="margin-top:8px;width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;"
-      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-      ★ PRESETS
-    </button>
-
     <button class="btn-calc" onclick="runDecoSchedule()" style="margin-top:8px;margin-bottom:0;">▶ GENERATE SCHEDULE</button>
 
     <!-- Feature B: VPM Repetitive Dive panel — hidden until first VPM result available -->
@@ -1990,9 +1987,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
           <div class="card-title" style="margin:0;">Dive Profile</div>
           <div class="export-row">
             <button class="btn-export" onclick="copyDiveProfile('deco')" title="Copy to clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <button class="btn-export" onclick="showSlate()" title="Deco slate (waterproof format)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg></button>
             <button class="btn-export" onclick="exportTXT('deco')" title="Download .txt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></button>
             <button class="btn-export" onclick="exportPDF()" title="Export PDF"><span style="display:inline-block;width:16px;height:16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0px;line-height:16px;text-align:center;overflow:visible;white-space:nowrap;">PDF</span></button>
-            <button class="btn-export" onclick="showSlate()" title="Deco slate (waterproof format)"><span style="display:inline-block;width:34px;height:16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0px;line-height:16px;text-align:center;overflow:visible;white-space:nowrap;">SLATE</span></button>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
@@ -2126,6 +2123,8 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       </table>
     </div>
   </div>
+
+  <div id="tecSurfIntContainer" style="display:none;"></div>
 
 </div><!-- /deco panel -->
 
@@ -2985,7 +2984,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   window.setAndroidApp = function() { hideApkIcon(); };
 })();
 
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -3463,7 +3462,7 @@ function setAlgo(a) {
 
   // ── Clear all result cards on every algo switch ──
   ['decoResult','gasConsumptionSummary','contingencyCard','contingencyResult','diveGraphCard',
-   'plannerProfileCanvas-wrap'].forEach(id => {
+   'plannerProfileCanvas-wrap','recSurfIntContainer','tecSurfIntContainer'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   const _pr2 = document.getElementById('plannerResult'); if(_pr2){_pr2.style.display='none';_pr2.innerHTML='';}
@@ -4442,6 +4441,9 @@ function runPlanner() {
   document.getElementById('plannerResult').innerHTML = html;
   document.getElementById('plannerResult').style.display = 'block';
   setTimeout(drawPlannerProfile, 30);
+
+  // Surface Interval panel (collapsed) — pre-fill Dive 1 from this dive
+  renderSurfIntPanel('recSurfIntContainer', 'recSi', depthM, bt);
 }
 
 function safetyStopHTML(depthM, depthFt, dur) {
@@ -5136,7 +5138,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const switchPpO2 = (o2pct / 100 * switchPAmb).toFixed(2);
       html += `<tr data-phase="switch">
         <td style="font-size:16px;text-align:center;padding:10px 6px;">⇄</td>
-        <td colspan="7" style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:10px 10px;text-align:left;">
+        <td colspan="20" style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:10px 10px;text-align:left;">
           <strong>${gasDisp}</strong> @ ${switchDepth}${du}  ppO₂ ${switchPpO2}
         </td>
       </tr>`;
@@ -5229,13 +5231,16 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
   const prtColorVPM = prtValVPM < 15 ? 'var(--green)' : prtValVPM < 25 ? 'var(--yellow)' : prtValVPM < 40 ? 'var(--orange)' : 'var(--red)';
   const cnsFootColor = result.totalCNS != null ? (result.totalCNS >= 100 ? 'var(--red)' : result.totalCNS >= 80 ? 'var(--orange)' : result.totalCNS >= 50 ? 'var(--yellow)' : 'var(--green)') : 'var(--muted)';
   tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
-    <td colspan="8" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
+    <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
       <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${rt}'00"</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${deco>0?'var(--orange)':'var(--green)'};font-weight:700;margin-right:16px;">${Math.round(deco)}'00"</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${cnsDisp}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${otuDisp}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min)">PrT:</span> <span style="color:${prtColorVPM};font-weight:700;">${prtDispVPM}</span>
     </td>
   </tr>`;
 
   // ── END column (Feature): inject cells + apply toggle state ──
   applyEndColumn();
+
+  // Surface Interval panel (collapsed) — pre-fill Dive 1 from this dive
+  if (!_contingencyRunning) renderSurfIntPanel('tecSurfIntContainer', 'tecSi', depthM, bt);
 
   // ── POST-RENDER: show/hide same cards as Bühlmann ────────────────────────
   // Dive graph — works for VPM (reads table rows)
@@ -7968,7 +7973,7 @@ function runDecoSchedule() {
       const sppColor    = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);font-weight:700;' : '';
       tbody.innerHTML += `<tr data-phase="switch">
         <td style="font-size:16px;text-align:center;padding:10px 6px;">⇄</td>
-        <td colspan="7" style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:10px 10px;text-align:left;">
+        <td colspan="20" style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:10px 10px;text-align:left;">
           <strong>${s.gas.replace(/\s+/g,'').toUpperCase()}</strong> @ ${switchDepthDisp}  ppO₂ ${switchPpO2}
         </td>
       </tr>`;
@@ -8062,7 +8067,7 @@ function runDecoSchedule() {
   const prtGfHint = prtVal < 15 ? 'GF Hi ≤80' : prtVal < 25 ? 'GF Hi ≤75' : prtVal < 40 ? 'GF Hi ≤70' : 'GF Hi ≤60';
   const prtColor  = prtVal < 15 ? 'var(--green)' : prtVal < 25 ? 'var(--yellow)' : prtVal < 40 ? 'var(--orange)' : 'var(--red)';
   tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
-    <td colspan="8" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
+    <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
       <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;margin-right:16px;">${totalOTUval}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min). Fraedrich 2019 severity index for GF High selection.">PrT:</span> <span style="color:${prtColor};font-weight:700;" title="${prtGfHint} recommended (Fraedrich 2019)">${prtDisp}</span>
     </td>
   </tr>`;
@@ -8172,6 +8177,8 @@ function runDecoSchedule() {
       setTimeout(drawDecoProfile, 50);
     }, 100);
     setTimeout(() => { drawGFCurve(); attachGFCurveInteraction(); }, 250);
+    // Surface Interval panel (collapsed) — pre-fill Dive 1 from this dive
+    renderSurfIntPanel('tecSurfIntContainer', 'tecSi', depthM, bt);
   }
   } catch(err) {
     console.error('[Deco] Error:', err);
@@ -9850,21 +9857,23 @@ function renderGasTable() {
 // SURFACE INTERVAL — minimum SI between two air dives
 // Reuses the app's ZH-L16C compartment data + saturate()/initTissues()
 // ═══════════════════════════════════════════════
-function calcSurfInt() {
-  const d1 = parseFloat(document.getElementById('siD1Depth')?.value) || 30;
-  const bt1 = parseFloat(document.getElementById('siD1BT')?.value) || 25;
-  const d2 = parseFloat(document.getElementById('siD2Depth')?.value) || 30;
-  const gfLow = (parseFloat(document.getElementById('siGfLow')?.value) || 30) / 100;
+function calcSurfInt(prefix) {
+  const P = prefix || 'si';
+  const gid = (suffix) => document.getElementById(P + suffix);
+  const d1 = parseFloat(gid('D1Depth')?.value) || 30;
+  const bt1 = parseFloat(gid('D1BT')?.value) || 25;
+  const d2 = parseFloat(gid('D2Depth')?.value) || 30;
+  const gfLow = (parseFloat(gid('GfLow')?.value) || 30) / 100;
   const dU = units === 'metric';
   const conv = dU ? 1 : 3.28084;
   const uLbl = dU ? 'm' : 'ft';
   const fmtD = (m) => Math.round(m * conv) + ' ' + uLbl;
 
   // Update slider displays
-  const setD = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  setD('siD1DepthDisplay', fmtD(d1));
-  setD('siD1BTDisplay', bt1 + ' min');
-  setD('siD2DepthDisplay', fmtD(d2));
+  const setD = (suffix, txt) => { const el = gid(suffix); if (el) el.textContent = txt; };
+  setD('D1DepthDisplay', fmtD(d1));
+  setD('D1BTDisplay', bt1 + ' min');
+  setD('D2DepthDisplay', fmtD(d2));
 
   const descentRate = 18; // m/min (per spec)
   const fN2 = FN2_AIR;
@@ -9919,25 +9928,25 @@ function calcSurfInt() {
     return h > 0 ? `${h}h ${String(m).padStart(2,'0')}m` : `${m} min`;
   };
 
-  document.getElementById('siMinResult').textContent = minSI === 0 ? 'None' : fmtHM(minSI);
-  document.getElementById('siRecResult').textContent = recSI === 0 ? 'None' : fmtHM(recSI);
-  document.getElementById('siDriverResult').textContent = driver < 0
+  if (gid('MinResult')) gid('MinResult').textContent = minSI === 0 ? 'None' : fmtHM(minSI);
+  if (gid('RecResult')) gid('RecResult').textContent = recSI === 0 ? 'None' : fmtHM(recSI);
+  if (gid('DriverResult')) gid('DriverResult').textContent = driver < 0
     ? 'No off-gassing required'
     : `Compartment ${driver + 1} (${ZHL16C[driver][0]} min t½)`;
 
   // ── Reverse profile warning ──
-  const warnEl = document.getElementById('siReverseWarn');
-  if (d2 > d1) {
+  const warnEl = gid('ReverseWarn');
+  if (warnEl && d2 > d1) {
     warnEl.style.display = 'block';
     warnEl.style.borderLeft = '3px solid var(--orange)';
     warnEl.innerHTML = `<strong>⚠ Reverse profile.</strong> Dive 2 (${fmtD(d2)}) is deeper than Dive 1 (${fmtD(d1)}). Add extra surface interval and consider a more conservative plan.`;
-  } else {
+  } else if (warnEl) {
     warnEl.style.display = 'none';
   }
 
   // ── Tissue loading chart at recommended SI ──
   const chartT = satSurface(tissues, recSI);
-  const chart = document.getElementById('siTissueChart');
+  const chart = gid('TissueChart');
   if (chart) {
     chart.innerHTML = '';
     ZHL16C.forEach((c, i) => {
@@ -9952,6 +9961,95 @@ function calcSurfInt() {
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${barCol};width:38px;text-align:right;flex-shrink:0;">${pct}%</span>
       </div>`;
     });
+  }
+}
+
+// ── Reusable Surface Interval panel for REC/TEC results areas ──
+// Builds a compact collapsible panel with prefixed input/output IDs so the
+// calcSurfInt() engine can drive it without colliding with the Tools tab ('si').
+// preDepthM / preBtMin pre-fill Dive 1 from the just-calculated dive.
+function renderSurfIntPanel(containerId, prefix, preDepthM, preBtMin) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  const P = prefix;
+  const dU = units === 'metric';
+  const conv = dU ? 1 : 3.28084;
+  const uLbl = dU ? 'm' : 'ft';
+  // Clamp pre-fill values to the slider ranges
+  const d1Init = Math.round(Math.max(5, Math.min(60, preDepthM || 30)));
+  const btInit = Math.round(Math.max(5, Math.min(120, preBtMin || 25)));
+  const fmtD = (m) => Math.round(m * conv) + ' ' + uLbl;
+  c.innerHTML = `
+    <div class="card" style="margin-top:16px;padding:0;overflow:hidden;">
+      <button type="button" onclick="toggleSurfIntPanel('${P}')" id="${P}Toggle"
+        style="width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--card2);border:none;border-radius:10px;padding:12px 16px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:0.5px;">
+        <span>Surface Interval</span><span id="${P}Caret" style="color:var(--accent);">▾</span>
+      </button>
+      <div id="${P}Body" style="display:none;padding:14px 16px;">
+        <div class="info-box" style="margin-top:0;">Minimum surface interval before a second dive, using the Bühlmann ZH-L16C tissue model. Dive 1 is pre-filled from your current plan.</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:150px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+              <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 1 Depth</label>
+              <span id="${P}D1DepthDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1;">${fmtD(d1Init)}</span>
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="${P}D1Depth" class="lsp-slider" min="5" max="60" value="${d1Init}" step="1" oninput="updateSliderFill(this);calcSurfInt('${P}')">
+            </div>
+          </div>
+          <div style="flex:1;min-width:150px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+              <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 1 Bottom Time</label>
+              <span id="${P}D1BTDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1;">${btInit} min</span>
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="${P}D1BT" class="lsp-slider" min="5" max="120" value="${btInit}" step="1" oninput="updateSliderFill(this);calcSurfInt('${P}')">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+          <div style="flex:1;min-width:150px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+              <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Dive 2 Planned Depth</label>
+              <span id="${P}D2DepthDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1;">${fmtD(d1Init)}</span>
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="${P}D2Depth" class="lsp-slider" min="5" max="60" value="${d1Init}" step="1" oninput="updateSliderFill(this);calcSurfInt('${P}')">
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);">GF Lo:</span>
+            <select id="${P}GfLow" onchange="calcSurfInt('${P}')" style="padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;">
+              <option value="20">20</option><option value="25">25</option><option value="30" selected>30</option>
+              <option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:4px;">
+          <div class="stat"><div class="stat-val" id="${P}MinResult" style="color:var(--accent);">—</div><div class="stat-lbl">Minimum SI</div></div>
+          <div class="stat"><div class="stat-val" id="${P}RecResult" style="color:var(--green);">—</div><div class="stat-lbl">Recommended (×1.5)</div></div>
+          <div class="stat" style="grid-column:1/-1;"><div class="stat-val" id="${P}DriverResult" style="font-size:13px;color:var(--muted);">—</div><div class="stat-lbl">Controlling Compartment</div></div>
+        </div>
+        <div id="${P}ReverseWarn" style="display:none;margin-top:12px;" class="info-box"></div>
+        <div style="margin-top:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Tissue Loading at Recommended SI</div>
+          <div id="${P}TissueChart" style="display:flex;flex-direction:column;gap:3px;"></div>
+        </div>
+      </div>
+    </div>`;
+  c.style.display = 'block';
+}
+
+function toggleSurfIntPanel(prefix) {
+  const body = document.getElementById(prefix + 'Body');
+  const caret = document.getElementById(prefix + 'Caret');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (caret) caret.textContent = open ? '▴' : '▾';
+  if (open) {
+    document.querySelectorAll('#' + prefix + 'Body .lsp-slider').forEach(s => updateSliderFill(s));
+    calcSurfInt(prefix);
   }
 }
 
@@ -11031,8 +11129,12 @@ function buildMessengerText(mode) {
 
 // ── Download .txt file ──
 function exportTXT(mode) {
-  const text = buildExportText(mode);
+  let text = buildExportText(mode);
   if (!text) return;
+  if (mode === 'deco') {
+    const slate = buildSlateText();
+    if (slate) text += '\n\n' + slate;
+  }
   const now     = new Date();
   const dateStr = now.toISOString().split('T')[0];
   const du      = units === 'metric' ? 'm' : 'ft';
@@ -11315,7 +11417,7 @@ function calcContingency() {
       <table class="deco-table table-view" style="font-size:10px;">
         <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>Mix</th><th>EAD</th><th class="end-col">END</th><th>PPO2</th><th>CNS%</th></tr></thead>
         <tbody>${newRows.replace(/<tr[^>]*data-phase="totals"[^>]*>[\s\S]*?<\/tr>/, '')}<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
-          <td colspan="8" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
+          <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
             <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emRunFmt}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:var(--orange);font-weight:700;margin-right:16px;">${_emDecoFmt}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsColor};font-weight:700;margin-right:16px;">${totalCNS || '—'}</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emOTU}</span><span style="color:var(--muted);">PrT:</span> <span style="color:${prtColorEm};font-weight:700;">${_emPrT}</span>
           </td>
         </tr></tbody>
@@ -12632,6 +12734,16 @@ async function exportPDF() {
   let lx=ML; leg.forEach((l,i)=>{doc.setTextColor(...lc[i]);doc.text(l,lx,y+3.5);lx+=doc.getTextWidth(l)+5;});
   doc.setTextColor(0,0,0); y+=8;
 
+  // DECO SLATE section — compact waterproof-slate format (same as SLATE modal)
+  const _pdfSlate = buildSlateText();
+  if (_pdfSlate) {
+    checkY(14); sectionTitle('DECO SLATE','Compact waterproof-slate format');
+    const _slLines = _pdfSlate.split('\n').slice(1); // drop title line (already in section header)
+    doc.setFontSize(7.5); doc.setFont('NotoSans','normal'); doc.setTextColor(20,20,20);
+    _slLines.forEach(l=>{ checkY(4.2); doc.text(cleanPDF(l)||' ', ML+2, y+3); y+=4.2; });
+    doc.setTextColor(0,0,0); y+=4;
+  }
+
   // HIGH CNS% alert if applicable
   const _cnsPctMain = cnsVal ? parseFloat(cnsVal) : 0;
   if (_cnsPctMain >= 80) {
@@ -13226,6 +13338,8 @@ document.addEventListener('DOMContentLoaded', function() {
   setDecoAlgorithm(document.getElementById('algorithmSelect')?.value || 'ZHLC_GF', true);
   // Sync He half-time mode to ZHL16C_HE_HT array and VPMEngine on startup
   updateHeHalfTime();
+  // Apply persisted END column state on load (button label + table class)
+  applyEndColumn();
 
   // Try again after elements render
   setTimeout(() => {
@@ -13248,3 +13362,4 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
+
