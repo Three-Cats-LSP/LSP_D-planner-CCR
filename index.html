@@ -9888,6 +9888,11 @@ function buildExportText(mode) {
     const wvLblTxt = wvTxt<=0.058?'M':'B';
     lines.push(`Stop Rounding: ${rndTxt}  WV: ${wvTxt}(${wvLblTxt})`);
     lines.push(`Altitude     : ${altLabel}  Acclimatized: ${acclLabel}${_expAltRadii}`);
+    const _expMdpEn  = document.getElementById('minDecoProfileEnable')?.value === 'yes';
+    const _expMdp9m  = document.getElementById('minDeco9m')?.value || '1';
+    const _expMdp6m  = document.getElementById('minDeco6m')?.value || '3';
+    const _depthUnit = units === 'imperial' ? 'ft' : 'm';
+    if (_expMdpEn) lines.push(`Min Deco Profile: ON  (9${_depthUnit}: ${_expMdp9m} min  6${_depthUnit}: ${_expMdp6m} min)`);
     if (_vpmRepActive) lines.push(`Repetitive   : Yes  Surface Interval: ${_vpmSI} min  (bubble state + tissue loading carried)`);
     gswInfos.forEach((g, i) => {
       // Re-read deco gas labels properly via getDecoCardFractions for trimix accuracy
@@ -10052,6 +10057,11 @@ function buildExportText(mode) {
     lines.push(`Last Stop   : ${eLastStop}${du}  Step: ${eDecoStep}${du}`);
     lines.push(`Stop Rounding: ${eRnd}  WV: ${eWV}(${eWVL})`);
     lines.push(`Altitude     : ${altLabel}  Acclimatized: ${acclLabel}`);
+    const _eMdpEn = document.getElementById('minDecoProfileEnable')?.value === 'yes';
+    const _eMdp9m = document.getElementById('minDeco9m')?.value || '1';
+    const _eMdp6m = document.getElementById('minDeco6m')?.value || '3';
+    const _eDu    = units === 'imperial' ? 'ft' : 'm';
+    if (_eMdpEn) lines.push(`Min Deco Profile: ON  (9${_eDu}: ${_eMdp9m} min  6${_eDu}: ${_eMdp6m} min)`);
     if (c.msg) lines.push(`Note        : ${clean(c.msg)}`);
     lines.push('');
 
@@ -10352,6 +10362,11 @@ function buildMessengerText(mode) {
   const wvVal  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
   const wvLbl  = wvVal<=0.058?'M':'B';
   result.push(`Stp Rounding: ${rndVal}  WV: ${wvVal}(${wvLbl})`);
+  const _cpMdpEn = document.getElementById('minDecoProfileEnable')?.value === 'yes';
+  const _cpMdp9m = document.getElementById('minDeco9m')?.value || '1';
+  const _cpMdp6m = document.getElementById('minDeco6m')?.value || '3';
+  const _cpDu    = units === 'imperial' ? 'ft' : 'm';
+  if (_cpMdpEn) result.push(`Min Deco Profile: ON  (9${_cpDu}: ${_cpMdp9m} min  6${_cpDu}: ${_cpMdp6m} min)`);
   const _mAltM   = (typeof altitudeM !== 'undefined') ? altitudeM : 0;
   const _mAltLbl = _mAltM === 0 ? 'Sea level' : `${_mAltM}m`;
   const _mAccl   = (typeof altAcclimatized !== 'undefined') ? altAcclimatized : true;
@@ -11987,7 +12002,11 @@ async function exportPDF() {
   const _pdfRepStr    = _pdfRepActive ? `  Rep.dive SI:${_pdfSI}min` : '';
   const _pdfAltStr    = _pdfAltM > 0 ? `  Alt:${_pdfAltLbl}${_pdfRadii?` Radii x${_pdfRadii}`:''}` : '';
   const _pdfHeHtStr   = isVPM ? `  He t½:${_pdfHeHtLbl}` : '';
-  sectionTitle('DIVE PROFILE',`${depthVal}${du} / ${btVal}min / ${_pdfBotDetail} / ${gfStr}  |  Des:${_dRate} Asc:${_aRate} Deco:${_daRate} Sur:${_saRate} ${du}/min  |  Rounding:${_rnd}  WV:${_wv}(${_wvL})${_pdfTravelStr}${_pdfAltStr}${_pdfRepStr}${_pdfHeHtStr}`);
+  const _pdfMdpEn  = document.getElementById('minDecoProfileEnable')?.value === 'yes';
+  const _pdfMdp9m  = document.getElementById('minDeco9m')?.value || '1';
+  const _pdfMdp6m  = document.getElementById('minDeco6m')?.value || '3';
+  const _pdfMdpStr = _pdfMdpEn ? `  MinDeco:ON(9${du}:${_pdfMdp9m}' 6${du}:${_pdfMdp6m}')` : '';
+  sectionTitle('DIVE PROFILE',`${depthVal}${du} / ${btVal}min / ${_pdfBotDetail} / ${gfStr}  |  Des:${_dRate} Asc:${_aRate} Deco:${_daRate} Sur:${_saRate} ${du}/min  |  Rounding:${_rnd}  WV:${_wv}(${_wvL})${_pdfTravelStr}${_pdfAltStr}${_pdfRepStr}${_pdfHeHtStr}${_pdfMdpStr}`);
   const colW=[8,24,16,18,20,16,14,14];
   const colX=[ML]; colW.forEach((w,i)=>{if(i<colW.length-1)colX.push(colX[i]+colW[i]);});
   checkY(7); doc.setFillColor(0,85,170); doc.rect(ML,y,CW,6,'F');
