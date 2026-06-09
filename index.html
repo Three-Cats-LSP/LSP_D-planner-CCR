@@ -1606,6 +1606,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
     <div class="info-box">Generates a full ascent profile with deco stops using Bühlmann ZH-L16C + Gradient Factors. Configure up to two decompression gases below — they switch automatically at the specified depths during ascent and are factored into tissue off-gassing.</div>
     <div class="form-grid">
+      <div class="field" style="display:flex;align-items:flex-end;">
+        <button class="btn-export" id="presetsHeaderBtn" onclick="openPresetModal()" title="Dive presets"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+      </div>
       <div class="field"><label id="decoDepthLbl">Depth (m)</label><input type="number" id="decoDepth" value="40" min="1" max="120" step="1" oninput="if(window._lastContingency) calcContingency()"></div>
       <div class="field"><label>BT Time (min)</label><input type="number" id="decoBT" value="30" min="1" max="300" step="1" oninput="if(window._lastContingency) calcContingency()"></div>
 
@@ -1767,9 +1770,8 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
           <option value="off">Strict ppO&#8322;</option>
         </select>
       </div>
-      <div class="field" style="display:flex;align-items:flex-end;gap:8px;">
+      <div class="field" style="display:flex;align-items:flex-end;">
         <button class="btn-export btn-reset-red" onclick="resetToDefaults()" title="Reset all settings to defaults"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
-        <button class="btn-export" id="presetsHeaderBtn" onclick="openPresetModal()" title="Dive presets"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
       </div>
     </div>
 
