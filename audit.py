@@ -1095,6 +1095,50 @@ elif "function resetToDefaults()" in js:
 else:
     fail("resetToDefaults function not found")
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 23 — getPPO2Limit trimix safety
+# Bug: getPPO2Limit(fN2) used 1-fN2 as fO2 — wrong for trimix (He > 0)
+# e.g. 21/35 trimix: fN2=0.44 → 1-fN2=0.56 → ppo2High(1.4) band selected
+# Correct: fO2=0.21 → <28% → ppo2Low(1.6) band → switch depth 9m deeper
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 23.1 getPPO2Limit takes fO2 directly (not fN2)
+ppl_fn = re.search(r"function getPPO2Limit\((\w+)\)", js)
+if ppl_fn:
+    param = ppl_fn.group(1)
+    if param == 'fO2':
+        ok("getPPO2Limit(fO2) — uses fO2 directly, trimix-safe")
+    else:
+        fail(f"getPPO2Limit({param}) — uses {param}, not fO2; 1-fN2 wrong for trimix (wrong ppO2 limit band)")
+else:
+    fail("getPPO2Limit function not found")
+
+# 23.2 getPPO2Limit body uses fO2 directly (not 1-fN2)
+ppl_body = re.search(r"function getPPO2Limit\(.*?\{(.*?)\}", js, re.DOTALL)
+if ppl_body:
+    body = ppl_body.group(1)
+    if "1 - fN2" in body or "1-fN2" in body:
+        fail("getPPO2Limit body still uses 1-fN2 — trimix ppO2 limit wrong")
+    else:
+        ok("getPPO2Limit body does not use 1-fN2 (trimix-safe)")
+
+# 23.3 optimalSwitchDepth passes fO2 (not fN2) to getPPO2Limit
+osd_fn = re.search(r"function optimalSwitchDepth\(.*?\n  \}", js, re.DOTALL)
+if osd_fn:
+    osd_body = osd_fn.group(0)
+    if "getPPO2Limit(fO2)" in osd_body or "getPPO2Limit(fO2 " in osd_body:
+        ok("optimalSwitchDepth passes fO2 to getPPO2Limit (trimix-safe switch depth)")
+    elif "getPPO2Limit(fN2)" in osd_body:
+        fail("optimalSwitchDepth passes fN2 to getPPO2Limit — switch depth wrong for trimix")
+
+# 23.4 Stop row rendering passes trimix-safe fO2 to getPPO2Limit
+stop_loop = js[js.find("collapsedMDP.forEach"):js.find("collapsedMDP.forEach")+600] if "collapsedMDP.forEach" in js else ""
+if "getPPO2Limit(_sFO2)" in stop_loop or ("getPPO2Limit" in stop_loop and "_sFHe" in stop_loop):
+    ok("Stop row rendering passes trimix-safe fO2 to getPPO2Limit")
+elif "getPPO2Limit(_sFN2)" in stop_loop:
+    fail("Stop row passes _sFN2 to getPPO2Limit — ppO2 limit color wrong for trimix stops")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PRINT RESULTS
 # ══════════════════════════════════════════════════════════════════════════════

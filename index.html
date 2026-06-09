@@ -7023,9 +7023,9 @@ function runDecoSchedule() {
   }
   // ââ END VPM branch â BÃ¼hlmann continues below âââââââââââââââââââââ
 
-  // Returns the ppO2 limit for a given fN2 based on O2 fraction bands
-  function getPPO2Limit(fN2) {
-    const fO2pct = (1 - fN2) * 100;
+  // Returns the ppO2 limit for a given fO2 based on O2 fraction bands
+  function getPPO2Limit(fO2) {
+    const fO2pct = fO2 * 100;  // fO2 passed directly — trimix-safe
     if (fO2pct >= 45) return ppo2High;
     if (fO2pct >= 28) return ppo2Mid;
     return ppo2Low;
@@ -7053,7 +7053,7 @@ function runDecoSchedule() {
     if (fO2 <= 0) return 0;
     // Pure O2 (â¥99.5%): switch at 6m (o2MaxDepth), matching ApexDeco default
     if (fO2 >= 0.995) return Math.max(lastStop, units === 'metric' ? 6 : 20);
-    const limit = getPPO2Limit(fN2);
+    const limit = getPPO2Limit(fO2);  // fO2 already trimix-safe above
     // Exact MOD: deepest depth where raw ppO2 strictly <= limit (no floor truncation)
     const exactMOD = (limit / fO2 - altSurfaceP) / BAR_PER_METRE;
     // Snap DOWN to nearest deco stop (multiple of decoStep) that is <= exactMOD
@@ -7712,7 +7712,8 @@ function runDecoSchedule() {
     const _sFN2    = s.fN2 ?? bottomFN2;
     const _sFHe    = s.fHe ?? 0;
     const pO2Val   = s.pO2 != null ? parseFloat(s.pO2) : parseFloat(ppO2Check(s.depth, _sFN2, _sFHe));
-    const gasLimit = getPPO2Limit(_sFN2);
+    const _sFO2    = Math.max(0, 1 - _sFN2 - _sFHe);  // trimix-safe fO2
+    const gasLimit = getPPO2Limit(_sFO2);
     const pO2Color = pO2Val > gasLimit ? 'color:var(--red);font-weight:700;' : pO2Val > gasLimit * 0.97 ? 'color:var(--orange);' : 'color:var(--muted);';
     const stepDur  = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
     rowRT += stepDur;
@@ -7725,7 +7726,9 @@ function runDecoSchedule() {
       const switchDepthDisp = dU ? switchDepth+'m' : mToFt(switchDepth)+'ft';
       const switchPpO2  = ppO2Check(switchDepth, s.fN2, s.fHe || 0);
       const sppVal      = parseFloat(switchPpO2);
-      const switchLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
+      const _swFHe  = s.fHe ?? 0;
+      const _swFO2  = Math.max(0, 1 - (s.fN2 ?? bottomFN2) - _swFHe);  // trimix-safe
+      const switchLimit = getPPO2Limit(_swFO2);
       const sppColor    = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);font-weight:700;' : '';
       tbody.innerHTML += `<tr data-phase="switch">
         <td style="font-size:16px;text-align:center;padding:10px 6px;">â</td>
