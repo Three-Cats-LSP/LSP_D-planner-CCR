@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.7**
+**Version 2.7.6**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -155,7 +155,21 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.7.3 (current)
+### 2.7.6 (current)
+
+**Decompression**
+- **Min Deco Profile** — settings toggle with configurable 9m and 6m minimum stop durations; injected stops always show the correct actively-breathed gas (not bottom gas); stop table order correct with ascent rows split around injected stops; ppO₂ computed for injected stops
+
+**Android**
+- APK version number now propagates from `APP_VERSION` in `index.html` at build time
+- External links open in system browser
+- APK download icon visible in web view only (hidden inside app)
+
+**UI**
+- Browser window title renamed to **Rec & Tec**
+- Min Deco Profile settings and values included in TXT, copy, and PDF exports
+
+### 2.7.3
 
 **Android**
 - **APK download icon** — third footer icon (alongside Instagram and GitHub) links directly to `Android Apk/LSP_D-planner.apk` for one-tap device download
