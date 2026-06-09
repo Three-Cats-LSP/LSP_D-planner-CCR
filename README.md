@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.7.7**
+**Version 2.7.8**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -155,7 +155,15 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.7.7 (current)
+### 2.7.8 (current)
+
+**Algorithms**
+- **getPPO2Limit trimix fix** — function previously used `1-fN2` as fO2, which is wrong for trimix (e.g. 21/35 trimix gave fO2=0.56 instead of 0.21, selecting the wrong ppO2 band and placing the switch depth ~9m too shallow). Fixed in 4 places: function signature now takes fO2 directly; all call sites compute `Math.max(0, 1-fN2-fHe)` before calling
+
+**Quality**
+- **audit.py** — expanded to 147 checks; Group 23 added covering `getPPO2Limit` trimix correctness
+
+### 2.7.7
 
 **Decompression**
 - **Min Deco Profile UI** — Off/On toggle and 9m/6m inputs now flow as standard-sized grid cells alongside other settings (no overflow, correct on mobile and desktop)
