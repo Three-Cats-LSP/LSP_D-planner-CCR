@@ -2784,10 +2784,11 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
     <div class="card" style="margin-bottom:12px;border-left:3px solid #ff9900;">
       <div class="card-title" style="color:#ff9900;">🟠 Travel Gas</div>
-      <div class="info-box"><strong>What is a travel gas?</strong> A breathing mix used from the surface down to the depth where your bottom gas becomes safe (its MOD). It prevents O₂ toxicity on descent when the bottom mix is too O₂-rich for shallow depths. Example: diving 40 m on EAN32 — EAN32 exceeds 1.4 bar ppO₂ above ~32 m, so you breathe AIR from the surface to the switch depth, then switch to EAN32 for the rest of the descent.</div>
-      <div class="info-box"><strong>Ascent transit:</strong> Travel gas is also used on ascent. Once you rise above the bottom gas MOD, the bottom mix becomes unsafe again. You switch back to travel gas until you reach the first deco gas switch depth. The planner handles this automatically and shows both legs as separate table rows.</div>
-      <div class="info-box"><strong>Switch Mode — Auto (recommended):</strong> Switch depth is calculated from the travel gas MOD at the current ppO₂ Bottom limit. The planner picks the deepest safe switch point automatically.</div>
-      <div class="info-box"><strong>Switch Mode — Manual:</strong> You specify the switch depth directly. Useful to match a buddy's plan, align with a landmark depth, or override the auto calculation.</div>
+      <div class="info-box"><strong>Definition:</strong> A travel gas (also called a back-gas or transit gas) is a breathing mix used from the surface to the depth where the bottom gas MOD is reached on descent, and again on ascent when you rise above the bottom gas MOD until the first deco gas switch. It prevents O₂ toxicity at shallower depths when the bottom mix has a high O₂ fraction.</div>
+      <div class="info-box"><strong>When you need it:</strong> Any time your bottom gas ppO₂ exceeds the configured limit in shallow water. Common scenario: EAN32 as bottom gas on a 40 m dive — EAN32 hits 1.4 bar ppO₂ at ~33 m, so you need a travel gas (e.g. AIR or a custom mix) for the surface-to-33 m segment.</div>
+      <div class="info-box"><strong>Switch depth — Auto:</strong> Calculated as the MOD of the travel gas at the configured ppO₂ Bottom limit. This is where the travel gas itself reaches its limit — the planner switches you to bottom gas exactly there. Formula: <code style="font-family:'JetBrains Mono',monospace;">depth = (ppO₂_limit / fO₂_travel − P_surface) / 0.099</code></div>
+      <div class="info-box"><strong>Switch depth — Manual:</strong> Diver-specified. Useful when coordinating with a buddy, aligning with a site landmark, or when using a hypoxic travel gas that has a minimum safe depth.</div>
+      <div class="info-box"><strong>Table output:</strong> When a travel gas is active, the descent in the deco table splits into two rows: travel gas (orange) surface → switch depth, then bottom gas (blue) switch depth → bottom. On ascent, a travel gas segment also appears above the bottom gas MOD. Gas consumption is tracked separately per gas.</div>
       <div class="info-box"><strong>Cylinder fields:</strong> Travel gas cylinder size (L) and pressure (bar) — included in the gas consumption summary alongside bottom and deco gases.</div>
     </div>
 
@@ -2884,15 +2885,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <p style="font-size:12px;color:var(--muted);margin-top:12px;font-style:italic;">
       Dive planning is a skill taught in dive courses. This tool is intended to support trained divers in understanding their plans — not to replace the training itself.
     </p>
-  </div>
-
-  <div class="card" style="margin-bottom:12px;border-left:3px solid #ff9900;">
-    <div class="card-title" style="color:#ff9900;">🟠 Travel Gas</div>
-    <div class="info-box"><strong>Definition:</strong> A travel gas (also called a back-gas or transit gas) is a breathing mix used from the surface to the depth where the bottom gas MOD is reached on descent, and again on ascent when you rise above the bottom gas MOD until the first deco gas switch. It prevents O₂ toxicity at shallower depths when the bottom mix has a high O₂ fraction.</div>
-    <div class="info-box"><strong>When you need it:</strong> Any time your bottom gas ppO₂ exceeds the configured limit in shallow water. Common scenario: EAN32 as bottom gas on a 40 m dive — EAN32 hits 1.4 bar ppO₂ at ~33 m, so you need a travel gas (e.g. AIR or a custom mix) for the surface-to-33 m segment.</div>
-    <div class="info-box"><strong>Switch depth — Auto:</strong> Calculated as the MOD of the travel gas at the configured ppO₂ Bottom limit. This is where the travel gas itself reaches its limit — the planner switches you to bottom gas exactly there. Formula: <code style="font-family:'JetBrains Mono',monospace;">depth = (ppO₂_limit / fO₂_travel − P_surface) / 0.099</code></div>
-    <div class="info-box"><strong>Switch depth — Manual:</strong> Diver-specified. Useful when coordinating with a buddy, aligning with a site landmark, or when using a hypoxic travel gas that has a minimum safe depth.</div>
-    <div class="info-box"><strong>Table output:</strong> When a travel gas is active, the descent in the deco table splits into two rows: travel gas (orange) surface → switch depth, then bottom gas (blue) switch depth → bottom. On ascent, a travel gas segment also appears above the bottom gas MOD. Gas consumption is tracked separately per gas.</div>
   </div>
 
   <div class="card">
@@ -13362,4 +13354,5 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
+
 
