@@ -2981,7 +2981,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   window.setAndroidApp = function() { hideApkIcon(); };
 })();
 
-const APP_VERSION = '2.8.6';
+const APP_VERSION = '2.8.7';
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -11503,8 +11503,8 @@ function calcContingency() {
     <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
       <div class="export-row">
         <button class="btn-export" onclick="copyDiveProfile('contingency')" title="Copy to clipboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="btn-export" onclick="exportTXT('contingency')" title="Download .txt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></button>
         <button class="btn-export" onclick="showContingencySlate()" title="Emergency slate (waterproof format)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg></button>
+        <button class="btn-export" onclick="exportTXT('contingency')" title="Download .txt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></button>
         <button class="btn-export" onclick="exportContingencyPDF()" title="Export PDF"><span style="display:inline-block;width:16px;height:16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0px;line-height:16px;text-align:center;overflow:visible;white-space:nowrap;">PDF</span></button>
       </div>
     </div>`;
@@ -11850,6 +11850,22 @@ async function exportContingencyPDF() {
         doc.setTextColor(0,0,0);y+=5;
       });
     }
+  }
+
+  // ── DECO SLATE section ──────────────────────────
+  const slateText = buildContingencySlateText();
+  if (slateText) {
+    checkY(10);
+    doc.setFillColor(30,30,60); doc.rect(ML,y,CW,6,'F');
+    doc.setFontSize(7); doc.setFont('NotoSans','bold'); doc.setTextColor(255,255,255);
+    doc.text('EMERGENCY SLATE', ML+2, y+4);
+    doc.setTextColor(0,0,0); y+=8;
+    doc.setFont('NotoSans','normal'); doc.setFontSize(7);
+    slateText.split('\n').forEach(line => {
+      checkY(5);
+      doc.text(cleanPDF(line), ML, y); y+=4.5;
+    });
+    y+=4;
   }
 
   const totalPages=doc.getNumberOfPages();
