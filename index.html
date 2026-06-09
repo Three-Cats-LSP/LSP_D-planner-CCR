@@ -2895,8 +2895,10 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <div class="card">
     <div class="card-title">Algorithm Comparison</div>
     <div class="info-box"><strong>Rec (Recreational Dive Planner):</strong> A conservative lookup table derived from the Bühlmann model and US Navy tables. Fixed depth/time grid — easy to use, no computation. Uses pressure groups (A–Z) to track nitrogen load between dives. Best for recreational divers within 40 m.</div>
-    <div class="info-box"><strong>Bühlmann ZH-L16C:</strong> Full tissue compartment model by Dr. Albert Bühlmann (Zürich, 1983). Computes N₂ saturation per-minute using the Schreiner equation across 16 parallel compartments. Gradient Factors (Baker, 1998) add a safety buffer. Used in virtually all modern dive computers. More precise for multi-level and multi-day diving.</div>
-    <div class="info-box"><strong>When to use which:</strong> Rec for simple recreational dives with a table-based approach. Bühlmann for dive computer-style planning, deeper dives (30–40 m), technical diving consideration, or when you want to understand what your computer is computing.</div>
+    <div class="info-box"><strong>Bühlmann ZH-L16C + GF:</strong> Full tissue compartment model by Dr. Albert Bühlmann (Zürich, 1983). Computes N₂/He saturation per-minute using the Schreiner equation across 16 parallel compartments. Gradient Factors (Baker, 1998) add a configurable safety buffer via GF Low (deep stops) and GF High (surface ceiling). Used in virtually all modern dive computers. Best for multi-level, repetitive, and technical diving.</div>
+    <div class="info-box"><strong>VPM-B (Varying Permeability Model):</strong> Bubble-mechanics model by Yount &amp; Hoffman (1986), B-variant by Baker. Instead of tissue tension limits, VPM-B tracks the behaviour of bubble nuclei in tissues and limits their growth. Tends to produce more and shallower deep stops compared to Bühlmann GF. Configurable conservatism margin (+0 to +5). Preferred by many technical divers using helium mixes.</div>
+    <div class="info-box"><strong>VPM-B/GFS (Hybrid):</strong> VPM-B bubble mechanics determine the deep stop schedule; Gradient Factor High then controls the final shallow/surface stops. Combines the nuclei-growth model with a familiar GF ceiling at the top of the ascent. Useful when you want VPM-B deep stops but GF-style control over the last deco stops.</div>
+    <div class="info-box"><strong>When to use which:</strong> Rec for simple no-stop recreational dives. Bühlmann+GF for dive computer-style planning and most technical diving. VPM-B or VPM-B/GFS when bubble-mechanics deep stops are preferred — common in trimix and cave diving communities.</div>
 
     <div style="margin-top:16px;">
       <div class="card-title">Key Depth Limits</div>
@@ -10050,7 +10052,7 @@ function toggleSurfIntPanel(prefix) {
 
 // Init tools on tab open
 function switchTool(name, btn) {
-  ['mod','bestmix','maxdepth','avgdepth','gastable','surfint','converter','knowledge'].forEach(t => {
+  ['mod','bestmix','maxdepth','avgdepth','gastable','converter','knowledge'].forEach(t => {
     document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
@@ -10060,7 +10062,6 @@ function switchTool(name, btn) {
   if (name === 'maxdepth')  calcMaxDepth();
   if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'gastable')  renderGasTable();
-  if (name === 'surfint')   calcSurfInt();
   if (name === 'converter') initConverter();
 }
 
