@@ -10444,17 +10444,43 @@ function calcGasPlan() {
   const botFracs = getBottomGasFractions();
   const botLabel = getGasLabel(botFracs.fO2, botFracs.fHe) || 'Bottom';
   if (botSize > 0 && botFill > botRes) {
-    const usableL = (botFill - botRes) * botSize;
+    const usableL  = (botFill - botRes) * botSize;
     const fraction = _gasRule === 'half' ? 0.5 : (1 / 3);
-    const portionL = usableL * fraction;           // gas usable on the way "out"
-    const turnBar  = botFill - portionL / botSize;  // pressure to turn the dive at
+    const portionL = usableL * fraction;
+    const turnBar  = botFill - portionL / botSize;
+
+    // Cross-check against last deco plan consumption
+    const reqL      = gpRequiredFor(botLabel);
+    const lastPlan  = window._lastPlan;
+    let   shortL    = null;   // > 0 means insufficient
+    let   maxBTmin  = null;   // suggested max BT
+    let   maxTurnBar = null;  // turn pressure at max BT
+    if (reqL != null && reqL > usableL) {
+      shortL = reqL - usableL;
+      // Back-calculate max BT from consumption rate
+      // Bottom phase time ≈ BT (descent is included in gasConsumed for bottom gas)
+      const plannedBT = parseFloat(document.getElementById('decoBT')?.value) || 0;
+      if (plannedBT > 0 && reqL > 0) {
+        const ratePerMin = reqL / plannedBT;         // L per BT-minute
+        maxBTmin = Math.floor(usableL / ratePerMin); // max BT with available gas
+        maxBTmin = Math.max(1, maxBTmin);
+        // Turn pressure at max BT: same rule fraction but on available gas
+        const maxPortionL = usableL * fraction;
+        maxTurnBar = botFill - maxPortionL / botSize;
+      }
+    }
+
     rows.push({
-      kind: 'bottom',
-      label: botLabel,
-      totalL: usableL,
+      kind:       'bottom',
+      label:      botLabel,
+      totalL:     usableL,
       portionL,
       turnBar,
       reserveBar: botRes,
+      reqL,
+      shortL,
+      maxBTmin,
+      maxTurnBar,
     });
   }
 
@@ -10498,14 +10524,34 @@ function calcGasPlan() {
     rows.forEach(r => {
       if (r.kind === 'bottom') {
         const ruleTxt = _gasRule === 'half' ? '1/2' : '1/3';
-        html += `<tr>
-          <td>${r.label}</td>
-          <td>${gpVolDisp(r.totalL)} ${volU}</td>
-          <td>${gpVolDisp(r.portionL)} ${volU} <span style="color:var(--muted);">(${ruleTxt})</span></td>
-          <td style="color:var(--accent);font-weight:700;">${gpPresDisp(r.turnBar)} ${presU}</td>
-          <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
-          <td><span style="color:var(--accent);">⟳ turn</span></td>
-        </tr>`;
+        if (r.shortL != null && r.shortL > 0) {
+          // Insufficient for deco plan — warning + max BT suggestion
+          const btSuggest = r.maxBTmin != null
+            ? `Max BT with this cylinder: <strong>${r.maxBTmin} min</strong>, turn at <strong>${gpPresDisp(r.maxTurnBar)} ${presU}</strong>`
+            : '';
+          html += `<tr>
+            <td>${r.label}</td>
+            <td style="color:var(--red);font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
+            <td style="color:var(--red);">need ${gpVolDisp(r.reqL)} ${volU}</td>
+            <td style="color:var(--muted);font-size:10px;">(${ruleTxt} rule)</td>
+            <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
+            <td><span style="color:var(--red);">✗ short ${gpVolDisp(r.shortL)} ${volU}</span></td>
+          </tr>`;
+          if (btSuggest) html += `<tr><td colspan="6" style="color:var(--yellow);font-size:11px;padding:4px 8px;border-bottom:1px solid var(--border);">⚠ ${btSuggest} — or use a larger cylinder.</td></tr>`;
+        } else {
+          // Sufficient — normal turn pressure row with plan check
+          const suffNote = r.reqL != null
+            ? ` <span style="color:var(--green);font-size:10px;">✓ ${gpVolDisp(r.reqL)} ${volU} needed</span>`
+            : '';
+          html += `<tr>
+            <td>${r.label}</td>
+            <td>${gpVolDisp(r.totalL)} ${volU}</td>
+            <td>${gpVolDisp(r.portionL)} ${volU} <span style="color:var(--muted);">(${ruleTxt})</span></td>
+            <td style="color:var(--accent);font-weight:700;">${gpPresDisp(r.turnBar)} ${presU}</td>
+            <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
+            <td><span style="color:var(--accent);">⟳ turn</span>${suffNote}</td>
+          </tr>`;
+        }
       } else {
         let suffCell, statusCol;
         if (r.reqL == null) {
