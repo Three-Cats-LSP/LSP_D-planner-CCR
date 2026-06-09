@@ -9881,12 +9881,11 @@ function calcSurfInt(prefix) {
   const btAtDepth = Math.max(0, bt1 - descTime);
   tissues = saturate(tissues, d1, btAtDepth, fN2, 0);
 
-  // ── Tolerated tissue tension at Dive 2 entry depth, using GF-Lo ──
-  // For each compartment, max tolerated inert pressure such that ceiling at d2 ok:
-  // pTol = (pAmb_d2 - gfLow*altSurfaceP... ) — use Bühlmann: pAmbTol = (pComp - gf*a)/(1-gf+gf/b)
-  // We need pComp <= gf*a + pAmb_d2*(1-gf+gf/b)  → tolerated tension at d2.
-  const pAmbD2 = altSurfaceP + d2 * BAR_PER_METRE;
-  const tolTension = ZHL16C.map(([ht, a, b]) => gfLow * a + pAmbD2 * (1 - gfLow + gfLow / b));
+  // ── Tolerated tissue tension at the SURFACE, using GF-Lo ──
+  // The surface interval must be long enough that the diver can safely
+  // surface (ceiling = 0m). Using pAmbD2 would incorrectly allow deeper
+  // Dive 2 entries to bypass the off-gassing check entirely.
+  const tolTension = ZHL16C.map(([ht, a, b]) => gfLow * a + altSurfaceP * (1 - gfLow + gfLow / b));
 
   // ── Off-gas at surface (air) and find minimum SI ──
   const surfP = altSurfaceP;
