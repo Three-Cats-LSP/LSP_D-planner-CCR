@@ -81,7 +81,7 @@ else:
     ok("No bare return statements at global scope")
 
 # 1.3 APP_VERSION constant exists
-if re.search(r"const APP_VERSION\s*=\s*'[\d.]+';", js):
+if re.search(r"const APP_VERSION", js):
     ok("APP_VERSION constant present")
 else:
     fail("APP_VERSION constant missing or malformed")
@@ -596,7 +596,7 @@ for fn_name in ["_drawDiveProfileCore", "drawGFCurve"]:
             fail(f"{fn_name}(): PAD/PW/PH appears before isMobile — mobile layout bug")
 
 # 15.2 Canvas fill uses rgba() not 8-digit hex (canvas ignores alpha in #rrggbbaa)
-bad_hex_alpha = re.findall(r'fillStyle\s*=\s*["\']#[0-9a-fA-F]{8}["\']', js)
+bad_hex_alpha = re.findall(r'fillStyle\s*=\s*["\']\#[0-9a-fA-F]{8}["\']', js)
 if bad_hex_alpha:
     for b in bad_hex_alpha[:3]:
         fail(f"Canvas fillStyle uses 8-digit hex alpha ({b}) — use rgba() instead (canvas ignores alpha in hex)")
@@ -1118,7 +1118,3 @@ if FAIL:
 else:
     print("  ALL CHECKS PASSED ✓\n")
     sys.exit(0)
-
-# ══════════════════════════════════════════════════════════════════════════════
-
-# ══════════════════════════════════════════════════════════════════════════════

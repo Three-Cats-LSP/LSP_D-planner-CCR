@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.7.6**
+**Version 2.7.7**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -155,7 +155,17 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.7.6 (current)
+### 2.7.7 (current)
+
+**Decompression**
+- **Min Deco Profile UI** — Off/On toggle and 9m/6m inputs now flow as standard-sized grid cells alongside other settings (no overflow, correct on mobile and desktop)
+- **Reset to Defaults** — fixed 6 fields that were not being reset: `minDecoProfileEnable`, `minDeco9m`, `minDeco6m`, `cylTravelGas_size`, `cylTravelGas_pres`, `heHalfTimeMode`
+
+**Quality**
+- **audit.py** — expanded to 143 checks; new Groups 21 (Min Deco Profile) and 22 (Reset to Defaults completeness)
+- Tooltip title renamed to **Minimum Decompression Profile**
+
+### 2.7.6
 
 **Decompression**
 - **Min Deco Profile** — settings toggle with configurable 9m and 6m minimum stop durations; injected stops always show the correct actively-breathed gas (not bottom gas); stop table order correct with ascent rows split around injected stops; ppO₂ computed for injected stops
