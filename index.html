@@ -7654,9 +7654,11 @@ function runDecoSchedule() {
     <td data-label="CNS%" style="color:var(--muted);">${btCNS}</td>
   </tr>`;
 
-  collapsed.forEach(s => {
-    const pO2Val   = parseFloat(s.pO2);
-    const gasLimit = getPPO2Limit(s.fN2 ?? bottomFN2);
+  collapsedMDP.forEach(s => {
+    const _sFN2    = s.fN2 ?? bottomFN2;
+    const _sFHe    = s.fHe ?? 0;
+    const pO2Val   = s.pO2 != null ? parseFloat(s.pO2) : parseFloat(ppO2Check(s.depth, _sFN2, _sFHe));
+    const gasLimit = getPPO2Limit(_sFN2);
     const pO2Color = pO2Val > gasLimit ? 'color:var(--red);font-weight:700;' : pO2Val > gasLimit * 0.97 ? 'color:var(--orange);' : 'color:var(--muted);';
     const stepDur  = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
     rowRT += stepDur;
@@ -7665,7 +7667,7 @@ function runDecoSchedule() {
     // ── GAS SWITCH ROW ──
     if (s.gas !== prevGas && s.gas !== bottomMixLabel) {
       const isO2        = s.fN2 === 0;
-      const switchDepth = s.type === 'deco' ? s.depth : s.from;
+      const switchDepth = s.type === 'deco' ? s.depth : (s.from ?? s.depth);
       const switchDepthDisp = dU ? switchDepth+'m' : mToFt(switchDepth)+'ft';
       const switchPpO2  = ppO2Check(switchDepth, s.fN2, s.fHe || 0);
       const sppVal      = parseFloat(switchPpO2);
@@ -7691,7 +7693,7 @@ function runDecoSchedule() {
       totalOTU     += segOTU(pO2Val, stepDur);
       addGas(s.gas, s.depth, stepDur, sacDeco);
       const cnsColor = parseFloat(cnsPct) > 80 ? 'color:var(--red);font-weight:700;' : parseFloat(cnsPct) > 40 ? 'color:var(--yellow);' : 'color:var(--muted);';
-      const eadDisp = fmtEAD(s.depth, s.fN2);
+      const eadDisp = fmtEAD(s.depth, _sFN2);
       // Row highlight when cumulative CNS exceeds threshold (like MultiDeco)
       const cumCnsPct = totalCNSfrac * 100;
       const rowBg = cumCnsPct >= 100
