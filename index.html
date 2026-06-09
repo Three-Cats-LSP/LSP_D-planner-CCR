@@ -4508,10 +4508,18 @@ function enforceMinDecoProfile(steps, enabled, min9m, min6m, isMetric) {
       const d = isMetric ? rawD : Math.round(rawD / 3.28084);
       if (d < targetDepthM) { insertIdx = i; break; }
     }
-    // Pick gas from nearest shallower stop or last gas used
-    let gas = gasAtShallow;
-    for (let i = insertIdx; i < result.length; i++) {
-      if (result[i].gas) { gas = result[i].gas; break; }
+    // Pick gas from the step just ABOVE (deeper side) the insertion point
+    // — that's the gas the diver is actually breathing at this depth
+    let gas = '';
+    let fN2 = null;
+    let fHe = null;
+    for (let i = insertIdx - 1; i >= 0; i--) {
+      if (result[i].gas) {
+        gas = result[i].gas;
+        fN2 = result[i].fN2 ?? null;
+        fHe = result[i].fHe ?? null;
+        break;
+      }
     }
     const newStop = {
       type: 'deco',
@@ -4519,16 +4527,15 @@ function enforceMinDecoProfile(steps, enabled, min9m, min6m, isMetric) {
       to: targetDisplay,
       dur: minDur,
       gas: gas || '',
+      fN2: fN2,
+      fHe: fHe ?? 0,
       pO2: null,
     };
     result.splice(insertIdx, 0, newStop);
   }
 
-  // Determine the shallowest gas available (used when injecting stops)
-  const lastGas = steps.filter(s => s.gas).slice(-1)[0]?.gas || '';
-
-  if (!enforced[9] && min9m > 0) injectStop(depth9, min9m, lastGas);
-  if (!enforced[6] && min6m > 0) injectStop(depth6, min6m, lastGas);
+  if (!enforced[9] && min9m > 0) injectStop(depth9, min9m);
+  if (!enforced[6] && min6m > 0) injectStop(depth6, min6m);
 
   return result;
 }
