@@ -155,15 +155,7 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.7.4 (current)
-
-**Android**
-- **APK icon** — replaced custom SVG with Magnific gradient APK icon (PNG)
-- **APK icon hidden in app** — footer APK download link not shown when running inside Android WebView (detected via custom User-Agent `LSPDPlanner/Android`)
-- **External links open in system browser** — all `http`/`https` links now launch the device browser instead of opening inside the app
-- **Version propagation** — `APP_VERSION` from `index.html` is now automatically extracted during build and applied to Android `versionName` and `versionCode` in `build.gradle`
-
-### 2.7.3
+### 2.7.3 (current)
 
 **Android**
 - **APK download icon** — third footer icon (alongside Instagram and GitHub) links directly to `Android Apk/LSP_D-planner.apk` for one-tap device download
