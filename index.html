@@ -5460,9 +5460,9 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const sufficient = usableL != null && !short;
 
       // Sufficiency colour
-      const sufCol = !hasCyl ? 'var(--muted)' : short ? 'var(--red)' : tight ? 'var(--yellow)' : 'var(--green)';
-      const sufIcon = !hasCyl ? '—' : short ? '✗' : tight ? '⚠' : '✓';
-      const sufTxt  = !hasCyl ? 'No cyl data' : short ? `Short ${Math.round(reqL-usableL)} ${volUnitV}` : tight ? 'Tight' : 'OK';
+      const sufCol = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
+      const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
+      const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : 'No cyl data';
 
       // Turn pressure cell (bottom gas only)
       const turnCell = (isBottom && turnBar != null)
@@ -8385,9 +8385,9 @@ function runDecoSchedule() {
       const turnDisp = turnBar != null ? (units === 'imperial' ? Math.round(turnBar*14.5038) : Math.round(turnBar)) : null;
       const short = usableL != null && reqL > usableL;
       const tight = usableL != null && !short && reqL > usableL * 0.90;
-      const sufCol  = !hasCyl ? 'var(--muted)' : short ? 'var(--red)' : tight ? 'var(--yellow)' : 'var(--green)';
-      const sufIcon = !hasCyl ? '—' : short ? '✗' : tight ? '⚠' : '✓';
-      const sufTxt  = !hasCyl ? '—' : short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : 'OK';
+      const sufCol  = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
+      const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
+      const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : '—';
       const turnCell = (isBot && turnDisp != null)
         ? `<td style="padding:5px 6px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDisp} ${presUnitV}</td>`
         : `<td style="padding:5px 6px;color:var(--muted);font-size:11px;">one-way</td>`;
