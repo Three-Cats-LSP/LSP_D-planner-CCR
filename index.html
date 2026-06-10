@@ -171,6 +171,12 @@ body.light-theme .warn, body.light-theme .warn * { color:#884400 !important; }
 body.light-theme .ok,   body.light-theme .ok *   { color:#116622 !important; }
 body.light-theme .info, body.light-theme .info *  { color:#0077aa !important; }
 
+/* Gas consumption — BT suggestion banner row */
+.gas-bt-cell { background:#FF4433 !important; color:#fff !important; font-weight:700; font-size:11px; padding:6px 10px; border-bottom:2px solid #cc2200; }
+.gas-bt-cell span, .gas-bt-cell strong, .gas-bt-cell * { color:#fff !important; }
+body.light-theme .gas-bt-cell { color:#000 !important; }
+body.light-theme .gas-bt-cell span, body.light-theme .gas-bt-cell strong, body.light-theme .gas-bt-cell * { color:#000 !important; }
+
 /* Gas consumption — tight warning row */
 body .deco-table tr.gas-tight-row td,
 body .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
@@ -1104,7 +1110,12 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   .deco-table.table-view th { display:table-cell !important; padding:5px 6px !important; font-size:8px !important; }
   .deco-table.table-view thead tr { display:table-row !important; background:none !important; }
 
-  /* Tight gas warning row — must come AFTER background:none rules above to win */
+  /* BT banner + tight warning rows — must come AFTER background:none rules above to win */
+  .gas-bt-cell { background:#FF4433 !important; color:#fff !important; }
+  .gas-bt-cell *, .gas-bt-cell strong, .gas-bt-cell span { color:#fff !important; }
+  body.light-theme .gas-bt-cell { color:#000 !important; }
+  body.light-theme .gas-bt-cell *, body.light-theme .gas-bt-cell strong, body.light-theme .gas-bt-cell span { color:#000 !important; }
+
   .deco-table tr.gas-tight-row td,
   .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
   .deco-table tr.gas-tight-row td span,
@@ -5588,6 +5599,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitVPM2} · deco: ${sacDeco} ${sacUnitVPM2}</div>
     </div>`;
     gasElVPM.innerHTML = ghtml;
+    _applyGasWarningStyles(gasElVPM);
     gasElVPM.style.display = 'block';
   }
 
@@ -8463,6 +8475,7 @@ function runDecoSchedule() {
       </div>`;
       gasEl.innerHTML = html;
       gasEl.style.display = 'block';
+      _applyGasWarningStyles(gasEl);
     } else {
       // Emergency plan — keep simple sufficient/short table
       const volUnitV2 = units === 'imperial' ? 'cu ft' : 'L';
@@ -10627,6 +10640,29 @@ function gpRequiredFor(label) {
   return key ? gc[key] : null;
 }
 
+// Force red banner styles on gas warning rows — bypasses all CSS specificity battles
+function _applyGasWarningStyles(container) {
+  if (!container) return;
+  const isLight = document.body.classList.contains('light-theme');
+  const textCol = isLight ? '#000' : '#fff';
+  container.querySelectorAll('.gas-bt-cell').forEach(td => {
+    td.style.setProperty('background', '#FF4433', 'important');
+    td.style.setProperty('color', textCol, 'important');
+    td.style.setProperty('font-weight', '700', 'important');
+    td.style.setProperty('font-size', '11px', 'important');
+    td.style.setProperty('padding', '6px 10px', 'important');
+    td.style.setProperty('border-bottom', '2px solid #cc2200', 'important');
+    td.querySelectorAll('*').forEach(el => el.style.setProperty('color', textCol, 'important'));
+  });
+  container.querySelectorAll('tr.gas-tight-row td').forEach(td => {
+    td.style.setProperty('background', '#FF4433', 'important');
+    td.style.setProperty('color', textCol, 'important');
+    td.style.setProperty('font-weight', '600', 'important');
+    td.style.setProperty('border-bottom', '2px solid #cc2200', 'important');
+    td.querySelectorAll('*').forEach(el => el.style.setProperty('color', textCol, 'important'));
+  });
+}
+
 function calcGasPlan() {
   const volU  = units === 'imperial' ? 'cu ft' : 'L';
   const presU = units === 'imperial' ? 'psi'   : 'bar';
@@ -10746,7 +10782,7 @@ function calcGasPlan() {
             <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
             <td><span style="color:var(--red) !important;font-weight:700;">✗ short ${gpVolDisp(r.shortL)} ${volU}</span></td>
           </tr>`;
-          if (btSuggest) html += `<tr><td colspan="6" style="background:#FF4433;border-bottom:2px solid #cc2200;color:#fff;font-weight:700;font-size:11px;padding:6px 10px;">⚠ ${btSuggest} — or use a larger cylinder.</td></tr>`;
+          if (btSuggest) html += `<tr class="gas-bt-row"><td colspan="6" class="gas-bt-cell">⚠ ${btSuggest} — or use a larger cylinder.</td></tr>`;
         } else {
           // Sufficient — normal turn pressure row with plan check
           const suffNote = r.reqL != null
