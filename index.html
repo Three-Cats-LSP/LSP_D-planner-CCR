@@ -5618,6 +5618,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
 
     // ── Gas Consumption card (VPM) — rendered via calcGasPlan() ──
     window._lastGasConsumed = Object.assign({}, gasConsVPM);
+    _syncCylToGasPlan();
     calcGasPlan();
     const gpBodyVPM = document.getElementById('gpResultBody');
     const gpNoteVPM = document.getElementById('gpResultNote');
@@ -8452,6 +8453,7 @@ function runDecoSchedule() {
   if (!_contingencyRunning) {
     window._lastGasConsumed = Object.assign({}, gasConsumed);
   }
+  _syncCylToGasPlan();
 
   // ── GAS CONSUMPTION SUMMARY ──
   const gasEl = _contingencyRunning
@@ -10694,6 +10696,30 @@ function gpRequiredFor(label) {
   // Case-insensitive fallback
   const key = Object.keys(gc).find(k => k.toLowerCase() === label.toLowerCase());
   return key ? gc[key] : null;
+}
+
+// Sync main cylinder inputs → Gas Plan cylinder fields before calcGasPlan()
+// Main: cylBot_size, cylBot_pres, cylBot_reserve  →  gp: gpBot_size, gpBot_fill, gpBot_reserve
+function _syncCylToGasPlan() {
+  const map = [
+    ['cylBot_size',          'gpBot_size'],
+    ['cylBot_pres',          'gpBot_fill'],
+    ['cylBot_reserve',       'gpBot_reserve'],
+    ['cylTravelGas_size',    'gpTravel_size'],
+    ['cylTravelGas_pres',    'gpTravel_fill'],
+    ['cylTravelGas_reserve', 'gpTravel_reserve'],
+    ['cylDg1_size',          'gpDg1_size'],
+    ['cylDg1_pres',          'gpDg1_fill'],
+    ['cylDg1_reserve',       'gpDg1_reserve'],
+    ['cylDg2_size',          'gpDg2_size'],
+    ['cylDg2_pres',          'gpDg2_fill'],
+    ['cylDg2_reserve',       'gpDg2_reserve'],
+  ];
+  map.forEach(([src, dst]) => {
+    const srcEl = document.getElementById(src);
+    const dstEl = document.getElementById(dst);
+    if (srcEl && dstEl && srcEl.value) dstEl.value = srcEl.value;
+  });
 }
 
 // Force red banner styles on gas warning rows — bypasses all CSS specificity battles
