@@ -948,6 +948,12 @@ if ("const volU" in calc_gas_plan_units or "volUnit" in calc_gas_plan_units):
 else:
     fail("volUnitV not declared in Buhlmann gas loop — ReferenceError when gas consumption renders")
 
+# 20.1b ZHLEngine exposed on window for test harnesses
+if "window.ZHLEngine = ZHLEngine" in js and "const ZHLEngine = (() => {" in js:
+    ok("ZHLEngine callable interface exposed — Bühlmann testable without DOM coupling")
+else:
+    fail("ZHLEngine not exposed on window — ZHLC_GF tests in test harness will run VPM-B instead")
+
 # 20.3b calcEND_tool uses calcEND() — not simplified sea-level formula
 # Bug: was using pNarc * 10 - 10 (wrong at altitude, ignored narcotic toggles)
 end_tool_fn = js[js.find("function calcEND_tool()"):js.find("function calcEND_tool()") + 1500]

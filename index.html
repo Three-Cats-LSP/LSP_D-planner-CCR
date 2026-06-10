@@ -8767,6 +8767,11 @@ function runDecoSchedule() {
   // ── TOTALS FOOTER ROW ──
   const totalCNSpct  = (totalCNSfrac * 100).toFixed(1);
   const totalOTUval  = Math.round(totalOTU);
+  // ── Update headless hook with CNS/OTU totals (now known) ──
+  if (window._lastPlan) {
+    window._lastPlan.totalCNS = parseFloat(totalCNSpct);
+    window._lastPlan.totalOTU = totalOTUval;
+  }
   const totalRunMMSS = toMMSS(rowRT);
   const decoTimeMMSS = toMMSS(decoTime);
   const cnsFootColor = totalCNSfrac >= 1 ? 'var(--red)' : totalCNSfrac >= 0.8 ? 'var(--orange)' : totalCNSfrac >= 0.5 ? 'var(--yellow)' : 'var(--green)';
@@ -8956,6 +8961,153 @@ function runDecoSchedule() {
     document.getElementById('decoResult').style.display = 'block';
   }
 }
+
+// ═══════════════════════════════════════════════
+// ZHL ENGINE — headless Bühlmann interface for test harnesses
+// Mirrors VPMEngine.calculate(levels, gases, settings, 'ZHLC_GF')
+// so Tier 1 tests can directly call the Bühlmann engine.
+// ═══════════════════════════════════════════════
+const ZHLEngine = (() => {
+  function setEl(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+  function getEl(id) {
+    return document.getElementById(id);
+  }
+
+  function calculate(levels, decoGases, settings) {
+    if (!levels || levels.length === 0) return { error: 'No levels', stops: [], plan: [], totalRuntime: 0 };
+    const s = settings || {};
+    const isMetric = s.metric !== false;
+
+    // ── Temporarily wire DOM to match settings ──────────────────────────────
+    const level = levels[0];  // primary bottom level
+    setEl('decoDepth', isMetric ? level.depth : Math.round(level.depth * 3.28084));
+    setEl('decoBT',    level.time);
+    setEl('ascentRate',      s.ascentRate      || 10);
+    setEl('decoAscentRate',  s.decoAscentRate  || 3);
+    setEl('surfaceAscentRate', s.surfaceAscentRate || 3);
+    setEl('descentRate',     s.descentRate     || 20);
+    setEl('minStopTime',     s.minStopTime     || 1);
+    setEl('decoStep',        s.stepSize        || 3);
+    setEl('lastDecoStop',    s.lastStop        || 3);
+    setEl('ppo2Bottom',      s.ppO2Bottom      || 1.4);
+    setEl('ppo2Deco',        s.ppO2Deco        || 1.6);
+
+    // ── GF: set via mGF global (Bühlmann reads from mGF, not settings) ──────
+    const prevGF = { low: mGF.low, high: mGF.high };
+    mGF.low  = s.gfLo  || s.gfLow  || 30;
+    mGF.high = s.gfHi  || s.gfHigh || 85;
+
+    // ── Units ─────────────────────────────────────────────────────────────────
+    // Only call setUnits if we actually need to switch — avoids heavy DOM walk on every call
+    const prevUnits = units;
+    const needUnits = s.metric === false ? 'imperial' : 'metric';
+    if (units !== needUnits) setUnits(needUnits);
+
+    // ── Algorithm: force ZHLC_GF ─────────────────────────────────────────────
+    const algoEl = document.getElementById('algorithmSelect');
+    const prevAlgo = algoEl ? algoEl.value : 'ZHLC_GF';
+    if (algoEl) { algoEl.value = 'ZHLC_GF'; algoEl.dispatchEvent(new Event('change', {bubbles:true})); }
+
+    // ── Bottom gas (first level's o2/he) ────────────────────────────────────
+    const fO2bot = level.o2 / 100;
+    const fHeBot = (level.he || 0) / 100;
+    const fN2bot = Math.max(0, 1 - fO2bot - fHeBot);
+    // Set custom trimix mix
+    const decoGasEl = document.getElementById('decoGas');
+    let prevDecoGasVal = decoGasEl ? decoGasEl.value : 'air';
+    if (decoGasEl) {
+      if (fHeBot > 0) {
+        decoGasEl.value = 'custom';
+        setEl('decoCustomO2', Math.round(fO2bot * 100));
+        setEl('decoCustomHe', Math.round(fHeBot * 100));
+      } else if (Math.round(fO2bot * 100) === 21) {
+        decoGasEl.value = 'air';
+      } else if (Math.round(fO2bot * 100) === 32) {
+        decoGasEl.value = 'ean32';
+      } else {
+        decoGasEl.value = 'custom';
+        setEl('decoCustomO2', Math.round(fO2bot * 100));
+        setEl('decoCustomHe', 0);
+      }
+    }
+
+    // ── Deco gases ──────────────────────────────────────────────────────────
+    // Clear all deco gas slots then set from gases array
+    const prevDGVals = [];
+    for (let n = 1; n <= 3; n++) {
+      const mixEl = document.getElementById(`dg${n}Mix`);
+      if (mixEl) { prevDGVals.push({ id: `dg${n}Mix`, val: mixEl.value }); mixEl.value = 'none'; }
+    }
+    (decoGases || []).forEach((g, i) => {
+      const n = i + 1;
+      const mixEl = document.getElementById(`dg${n}Mix`);
+      if (!mixEl) return;
+      const o2pct = g.o2;
+      if (o2pct === 100) { mixEl.value = 'o2'; }
+      else if (o2pct === 50) { mixEl.value = 'ean50'; }
+      else if (o2pct === 80) { mixEl.value = 'ean80'; }
+      else { mixEl.value = 'custom'; setEl(`dg${n}CustomO2`, o2pct); setEl(`dg${n}CustomHe`, g.he || 0); }
+    });
+
+    // ── Run the Bühlmann engine ───────────────────────────────────────────────
+    try {
+      runDecoSchedule();
+    } catch(e) {
+      // restore state before returning error
+      mGF.low = prevGF.low; mGF.high = prevGF.high;
+      setUnits(prevUnits);
+      if (algoEl) algoEl.value = prevAlgo;
+      return { error: e.message, stops: [], plan: [], totalRuntime: 0 };
+    }
+
+    const lp = window._lastPlan;
+
+    // ── Restore DOM state ─────────────────────────────────────────────────────
+    mGF.low = prevGF.low; mGF.high = prevGF.high;
+    if (units !== prevUnits) setUnits(prevUnits);
+    if (algoEl) { algoEl.value = prevAlgo; algoEl.dispatchEvent(new Event('change', {bubbles:true})); }
+    if (decoGasEl) decoGasEl.value = prevDecoGasVal;
+    prevDGVals.forEach(({ id, val }) => { const el = document.getElementById(id); if (el) el.value = val; });
+
+    if (!lp) return { error: 'No plan generated', stops: [], plan: [], totalRuntime: 0 };
+
+    // ── Map _lastPlan to VPMEngine-compatible result interface ────────────────
+    const stops = (lp.stops || []).map(s => ({
+      depth: s.depth, time: s.dur, gas: s.gas, type: 'stop'
+    }));
+    const plan = (lp.steps || []).map(s => ({
+      type: s.type === 'deco' ? 'stop' : s.type === 'safety' ? 'stop' : s.type,
+      depth: s.type === 'ascent' ? s.to : s.depth,
+      time:  s.dur,
+      run:   null,   // not tracked by Bühlmann steps
+      gas:   s.gas,
+      o2:    Math.round((s.fN2 !== undefined ? (1 - s.fN2 - (s.fHe||0)) : fO2bot) * 100),
+      he:    Math.round((s.fHe || 0) * 100)
+    }));
+    // Inject descent and bottom segments at front if missing
+    if (plan.length > 0 && plan[0].type !== 'descent') {
+      plan.unshift({ type: 'bottom', depth: level.depth, time: level.time, run: null, gas: plan[0].gas || 'bottom' });
+      plan.unshift({ type: 'descent', depth: level.depth, time: level.depth / (s.descentRate||20), run: null, gas: plan[0].gas || 'bottom' });
+    }
+
+    return {
+      plan,
+      stops,
+      totalRuntime: lp.rt || 0,
+      totalOTU: lp.totalOTU || 0,
+      totalCNS: lp.totalCNS || 0,
+      depthUnit: isMetric ? 'm' : 'ft',
+      error: null
+    };
+  }
+
+  return { calculate, MODEL: 'ZHLC_GF' };
+})();
+if (typeof window !== 'undefined') window.ZHLEngine = ZHLEngine; // expose for test harnesses
+
 // ═══════════════════════════════════════════════
 // MULTI DIVE
 // ═══════════════════════════════════════════════
