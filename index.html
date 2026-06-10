@@ -10744,8 +10744,22 @@ function calcGasPlan() {
   const botRes  = gpPresBar('gpBot_reserve');
   const botFracs = getBottomGasFractions();
   const botLabel = getGasLabel(botFracs.fO2, botFracs.fHe) || 'Bottom';
+
+  // Check if travel gas has same mix — if so, pool its usable litres into bottom total
+  let travelPooledL = 0;
+  if (travelConfigured) {
+    const tLabel = getDecoGasLabel('travelGasMix', 'travelGasCustomO2')
+                 || getGasLabel(0.21, 0);
+    if (tLabel === botLabel) {
+      const tSize = gpSizeL('gpTravel_size');
+      const tFill = gpPresBar('gpTravel_fill');
+      const tRes  = gpPresBar('gpTravel_reserve');
+      if (tSize > 0 && tFill > tRes) travelPooledL = (tFill - tRes) * tSize;
+    }
+  }
+
   if (botSize > 0 && botFill > botRes) {
-    const usableL  = (botFill - botRes) * botSize;
+    const usableL  = (botFill - botRes) * botSize + travelPooledL;
     const fraction = _gasRule === 'half' ? 0.5 : (1 / 3);
     const portionL = usableL * fraction;
     const turnBar  = botFill - portionL / botSize;
@@ -10773,7 +10787,7 @@ function calcGasPlan() {
 
     rows.push({
       kind:       'bottom',
-      label:      botLabel,
+      label:      travelPooledL > 0 ? `${botLabel} (+Travel)` : botLabel,
       totalL:     usableL,
       portionL,
       turnBar,
@@ -10801,8 +10815,13 @@ function calcGasPlan() {
     oneWay.push({ name: 'Deco 2', label: l, sizeId: 'gpDg2_size', fillId: 'gpDg2_fill', resId: 'gpDg2_reserve' });
   }
 
+  // Remove travel from one-way list if it was pooled into bottom
+  const oneWayFiltered = travelPooledL > 0
+    ? oneWay.filter(g => g.name !== 'Travel')
+    : oneWay;
+
   let needPlan = false;
-  oneWay.forEach(g => {
+  oneWayFiltered.forEach(g => {
     const size = gpSizeL(g.sizeId);
     const fill = gpPresBar(g.fillId);
     const res  = gpPresBar(g.resId);
@@ -14331,6 +14350,7 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
+
 
 
 
