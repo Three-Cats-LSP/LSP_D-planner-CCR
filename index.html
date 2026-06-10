@@ -1534,6 +1534,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <button class="tab-btn" id="tab-multi" onclick="switchTab('multi',this)">Multi Dive</button>
   <button class="tab-btn" id="tab-cns" onclick="switchTab('cns',this)">CNS O₂</button>
   <button class="tab-btn" id="tab-ndlref" onclick="switchTab('ndlref',this)">NDL Tables</button>
+  <button class="tab-btn" id="tab-avgdepth" onclick="switchTab('avgdepth',this)">Avg Depth</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1636,6 +1637,59 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
   </div>
 </div>
+
+<div class="panel" id="avgdepth">
+  <div class="card">
+    <div class="card-title">Average Depth — Planning Converter</div>
+    <div class="info-box">
+      <strong>Can you use average depth to plan a dive?</strong> Yes — with caveats.
+      RDP tables assume a square profile (max depth the whole dive), so average depth gives you <em>more</em> credit than you actually used — safer for planning a single dive.
+      However for <strong>repetitive dives</strong>, fast compartments are driven by your <em>actual maximum depth</em>, not the average — so using average depth to calculate surface intervals can be <strong>unconservative</strong>.
+      This tool converts your log-book average depth to a recommended planning depth that balances both effects.
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Max Depth</label>
+        <span id="avgMaxDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="avgMaxSlider" class="lsp-slider" min="5" max="60" value="30" step="1"
+          oninput="updateSliderFill(this);calcAvgDepth()">
+        <div class="slider-ticks"><span>5m</span><span>15m</span><span>25m</span><span>40m</span><span>50m</span><span>60m</span></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Average Depth (from your log)</label>
+        <span id="avgAvgDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">18 m</span>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="avgAvgSlider" class="lsp-slider" min="3" max="55" value="18" step="1"
+          oninput="updateSliderFill(this);calcAvgDepth()">
+        <div class="slider-ticks"><span>3m</span><span>10m</span><span>20m</span><span>35m</span><span>45m</span><span>55m</span></div>
+      </div>
+    </div>
+
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;" id="avgDepthStats">
+      <div class="stat"><div class="stat-val" id="avgPlanDepth" style="color:var(--accent);">—</div><div class="stat-lbl">Recommended Planning Depth</div></div>
+      <div class="stat"><div class="stat-val" id="avgRatio" style="color:var(--muted);">—</div><div class="stat-lbl">Avg / Max ratio</div></div>
+      <div class="stat"><div class="stat-val" id="avgPlanDepthFt" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">Planning Depth (ft)</div></div>
+      <div class="stat"><div class="stat-val" id="avgConservatism" style="font-size:14px;">—</div><div class="stat-lbl">Profile Classification</div></div>
+    </div>
+
+    <div id="avgDepthAdvice" class="info-box" style="margin-top:16px;border-left:3px solid var(--accent);"></div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Why not just use max depth?</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        Using max depth for every dive is conservative but over-penalises multi-level dives — e.g. a 40m dive that spent 3 min at depth and the rest at 15m. The RDP penalises you as if you spent the full dive at 40m, which can make surface intervals seem unnecessarily long.<br><br>
+        The <strong>planning depth formula: avg + 75% × (max − avg)</strong> is a widely used approximation. It acknowledges the brief time at max depth while not ignoring it. Always validate against your dive computer's actual tissue loading.
+      </div>
+    </div>
+  </div>
+  </div>
 
 <!-- ══ SURF INT TAB (shared REC/TEC) ══ -->
 <!-- ══════════════════════════════════════
@@ -2515,7 +2569,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <button class="tab-btn"        id="tool-eadtable"  onclick="switchTool('eadtable',this)">EAD Table</button>
     <button class="tab-btn"        id="tool-gastable"  onclick="switchTool('gastable',this)">Gas Table</button>
     <button class="tab-btn"        id="tool-converter" onclick="switchTool('converter',this)">Unit Converter</button>
-    <button class="tab-btn"        id="tool-avgdepth"  onclick="switchTool('avgdepth',this)">Avg Depth</button>
     <button class="tab-btn"        id="tool-knowledge" onclick="switchTool('knowledge',this)">Knowledge</button>
   </div>
 
@@ -2640,58 +2693,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
 
   <!-- ── Average Depth Converter ── -->
-  <div id="tool-panel-avgdepth" style="display:none;">
-  <div class="card">
-    <div class="card-title">Average Depth — Planning Converter</div>
-    <div class="info-box">
-      <strong>Can you use average depth to plan a dive?</strong> Yes — with caveats.
-      RDP tables assume a square profile (max depth the whole dive), so average depth gives you <em>more</em> credit than you actually used — safer for planning a single dive.
-      However for <strong>repetitive dives</strong>, fast compartments are driven by your <em>actual maximum depth</em>, not the average — so using average depth to calculate surface intervals can be <strong>unconservative</strong>.
-      This tool converts your log-book average depth to a recommended planning depth that balances both effects.
-    </div>
 
-    <div style="margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Max Depth</label>
-        <span id="avgMaxDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
-      </div>
-      <div class="slider-wrap">
-        <input type="range" id="avgMaxSlider" class="lsp-slider" min="5" max="60" value="30" step="1"
-          oninput="updateSliderFill(this);calcAvgDepth()">
-        <div class="slider-ticks"><span>5m</span><span>15m</span><span>25m</span><span>40m</span><span>50m</span><span>60m</span></div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Average Depth (from your log)</label>
-        <span id="avgAvgDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">18 m</span>
-      </div>
-      <div class="slider-wrap">
-        <input type="range" id="avgAvgSlider" class="lsp-slider" min="3" max="55" value="18" step="1"
-          oninput="updateSliderFill(this);calcAvgDepth()">
-        <div class="slider-ticks"><span>3m</span><span>10m</span><span>20m</span><span>35m</span><span>45m</span><span>55m</span></div>
-      </div>
-    </div>
-
-    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;" id="avgDepthStats">
-      <div class="stat"><div class="stat-val" id="avgPlanDepth" style="color:var(--accent);">—</div><div class="stat-lbl">Recommended Planning Depth</div></div>
-      <div class="stat"><div class="stat-val" id="avgRatio" style="color:var(--muted);">—</div><div class="stat-lbl">Avg / Max ratio</div></div>
-      <div class="stat"><div class="stat-val" id="avgPlanDepthFt" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">Planning Depth (ft)</div></div>
-      <div class="stat"><div class="stat-val" id="avgConservatism" style="font-size:14px;">—</div><div class="stat-lbl">Profile Classification</div></div>
-    </div>
-
-    <div id="avgDepthAdvice" class="info-box" style="margin-top:16px;border-left:3px solid var(--accent);"></div>
-
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Why not just use max depth?</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
-        Using max depth for every dive is conservative but over-penalises multi-level dives — e.g. a 40m dive that spent 3 min at depth and the rest at 15m. The RDP penalises you as if you spent the full dive at 40m, which can make surface intervals seem unnecessarily long.<br><br>
-        The <strong>planning depth formula: avg + 75% × (max − avg)</strong> is a widely used approximation. It acknowledges the brief time at max depth while not ignoring it. Always validate against your dive computer's actual tissue loading.
-      </div>
-    </div>
-  </div>
-  </div>
 
   <!-- ── Unit Converter ── -->
   <div id="tool-panel-converter" style="display:none;">
@@ -4428,6 +4430,7 @@ function switchTab(name, btn) {
   if (name === 'cns')          setTimeout(calcCNS, 50);
   if (name === 'tools')         setTimeout(initTools, 50);
   if (name === 'gasplan')       setTimeout(calcGasPlan, 50);
+  if (name === 'avgdepth')      setTimeout(calcAvgDepth, 50);
   if (name === 'bestmix-tec')   setTimeout(() => { document.querySelectorAll('#bestmix-tec .lsp-slider').forEach(s => updateSliderFill(s)); calcBestMixTec(); }, 50);
   if (name === 'surfint') {
     const c = document.getElementById('mainSurfIntContainer');
@@ -11283,14 +11286,13 @@ function toggleSurfIntPanel(prefix) {
 
 // Init tools on tab open
 function switchTool(name, btn) {
-  ['bestmix','mod','endcalc','eadtable','gastable','converter','avgdepth','knowledge'].forEach(t => {
+  ['bestmix','mod','endcalc','eadtable','gastable','converter','knowledge'].forEach(t => {
     document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
   document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
   if (name === 'mod')       { calcMOD(); renderModRefTable(); }
   if (name === 'bestmix')   { calcBestMix(); renderToolsBmtRefTable(); }
-  if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'endcalc')   calcEND_tool();
   if (name === 'eadtable')  renderEADTable();
   if (name === 'gastable')  renderGasTable();
