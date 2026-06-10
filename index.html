@@ -2509,13 +2509,13 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
   <!-- ── Tools Sub-nav ── -->
   <div class="tabs-nav" id="toolsSubNav" style="margin-bottom:16px;">
-    <button class="tab-btn active" id="tool-mod"       onclick="switchTool('mod',this)">MOD</button>
-    <button class="tab-btn"        id="tool-bestmix"   onclick="switchTool('bestmix',this)">Best Mix</button>
-    <button class="tab-btn"        id="tool-avgdepth"  onclick="switchTool('avgdepth',this)">Avg Depth</button>
+    <button class="tab-btn active" id="tool-bestmix"   onclick="switchTool('bestmix',this)">Best Mix</button>
+    <button class="tab-btn"        id="tool-mod"       onclick="switchTool('mod',this)">MOD</button>
     <button class="tab-btn"        id="tool-endcalc"   onclick="switchTool('endcalc',this)">END Calc</button>
     <button class="tab-btn"        id="tool-eadtable"  onclick="switchTool('eadtable',this)">EAD Table</button>
     <button class="tab-btn"        id="tool-gastable"  onclick="switchTool('gastable',this)">Gas Table</button>
     <button class="tab-btn"        id="tool-converter" onclick="switchTool('converter',this)">Unit Converter</button>
+    <button class="tab-btn"        id="tool-avgdepth"  onclick="switchTool('avgdepth',this)">Avg Depth</button>
     <button class="tab-btn"        id="tool-knowledge" onclick="switchTool('knowledge',this)">Knowledge</button>
   </div>
 
@@ -11258,7 +11258,7 @@ function toggleSurfIntPanel(prefix) {
 
 // Init tools on tab open
 function switchTool(name, btn) {
-  ['mod','bestmix','avgdepth','endcalc','eadtable','gastable','converter','knowledge'].forEach(t => {
+  ['bestmix','mod','endcalc','eadtable','gastable','converter','avgdepth','knowledge'].forEach(t => {
     document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
@@ -11434,7 +11434,7 @@ function convertWeight(from) {
 
 function initTools() {
   document.querySelectorAll('#tools .lsp-slider').forEach(s => updateSliderFill(s));
-  switchTool('mod', document.getElementById('tool-mod'));
+  switchTool('bestmix', document.getElementById('tool-bestmix'));
 }
 
 // ═══════════════════════════════════════════════
