@@ -2594,8 +2594,36 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
   <!-- ── Best Mix Calculator ── -->
   <div id="tool-panel-bestmix" style="display:none;">
+
+  <!-- Reference table -->
   <div class="card">
-    <div class="card-title">Best Mix — Optimal O₂ for Depth</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="card-title" style="margin-bottom:0;">Best Nitrox Mix — Depth Reference</div>
+      <div style="font-size:10px;color:var(--muted);">ppO₂ limit: <span id="toolsBmtRefPPO2Label">1.4</span></div>
+    </div>
+    <p style="color:var(--muted);font-size:11px;margin-bottom:12px;">Pre-calculated optimal O₂% for each depth using the ppO₂ limit set below. MOD is the maximum operating depth for that mix. EAD is the equivalent air depth.</p>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">Depth</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">Best Mix</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">O₂ %</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">MOD</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">EAD</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">ppO₂</th>
+          </tr>
+        </thead>
+        <tbody id="toolsBmtRefTableBody">
+          <!-- filled by renderToolsBmtRefTable() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Single-depth calculator -->
+  <div class="card">
+    <div class="card-title">Best Mix — Calculator</div>
     <div class="info-box">Calculates the highest O₂ percentage that keeps ppO₂ at or below the target limit at the planned depth. Maximises O₂ exposure for off-gassing while staying within limits.</div>
     <div style="margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
@@ -2623,6 +2651,43 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       <div class="stat"><div class="stat-val" id="bestMixName" style="color:var(--muted);font-size:16px;">—</div><div class="stat-lbl">Gas Name</div></div>
     </div>
   </div>
+
+  <!-- FAQ -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">Nitrox FAQ</div>
+
+    <details class="bmt-faq" open>
+      <summary>What does "best mix" mean?</summary>
+      <p>The best nitrox mix is the blend whose O₂ fraction keeps the partial pressure of oxygen at exactly the ppO₂ limit (e.g. 1.4 bar) at your target depth. This gives you the highest possible O₂ concentration without exceeding the safe ppO₂, which in turn reduces the partial pressure of nitrogen — extending your no-deco bottom time compared to air.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Why is ppO₂ 1.4 bar the standard limit?</summary>
+      <p>At ppO₂ values above 1.6 bar the risk of central nervous system (CNS) oxygen toxicity rises sharply — convulsions can occur with little warning, which is fatal underwater. PADI, NAUI and most training agencies recommend a working limit of 1.4 bar for bottom gas (leaving a safety margin) and up to 1.6 bar only for short deco stops at shallow depths.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>What is EAD (Equivalent Air Depth)?</summary>
+      <p>EAD is the air depth that has the same partial pressure of nitrogen as your nitrox mix at a given depth. Because nitrox has more O₂ and less N₂ than air, the EAD is always shallower than the actual depth — meaning you accumulate nitrogen as if you were diving shallower. You can use the EAD with standard air tables or a dive computer set to "air" mode.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>What is MOD (Maximum Operating Depth)?</summary>
+      <p>MOD is the deepest depth at which a given mix may be used without exceeding the ppO₂ limit. Going deeper than MOD risks oxygen toxicity. Always label your cylinder with its MOD and verify it before every dive. MOD = (ppO₂ limit ÷ O₂ fraction − 1) × 10 metres at sea level.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Can I use these mixes on a standard recreational dive computer?</summary>
+      <p>Yes — most modern dive computers support nitrox. Set the O₂% in your computer to match the analysed fill percentage (always analyse your cylinder), and confirm the ppO₂ limit matches your training. The computer will then apply the EAD to its NDL calculations automatically.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Why does the O₂% stay the same across several depths?</summary>
+      <p>Best mix is rounded down to the nearest whole percent. At shallower depths the ppO₂ limit allows up to 40% O₂, which is the practical ceiling for recreational nitrox blends (many dive shops only fill to EAN40). So EAN40 appears optimal across multiple shallow depths until the depth is great enough to require a lower O₂ fraction to stay under the ppO₂ ceiling.</p>
+    </details>
+
+  </div>
+
   </div>
 
   <!-- ── Max Depth Calculator ── -->
@@ -10609,6 +10674,51 @@ function calcBestMix() {
   document.getElementById('bestMixResult').style.color    = col;
   document.getElementById('bestMixActualPPO2').textContent = actualPPO2;
   document.getElementById('bestMixName').textContent       = name;
+  renderToolsBmtRefTable();
+}
+
+function renderToolsBmtRefTable() {
+  const tbody = document.getElementById('toolsBmtRefTableBody');
+  const ppO2Label = document.getElementById('toolsBmtRefPPO2Label');
+  if (!tbody) return;
+
+  const du      = units === 'metric';
+  const dUnit   = du ? 'm' : 'ft';
+  const ppO2Lim = (parseFloat(document.getElementById('bestMixPPO2')?.value) || 14) / 10;
+  if (ppO2Label) ppO2Label.textContent = ppO2Lim.toFixed(1);
+
+  // Highlight row matching current slider depth
+  const currentDepthM = parseFloat(document.getElementById('bestMixDepth')?.value) || 0;
+
+  const rows = [];
+  for (let dM = 10; dM <= 42; dM++) {
+    const pAmb   = (altSurfaceP || 1.0) + dM * (BAR_PER_METRE || 0.1);
+    const o2Raw  = (ppO2Lim / pAmb) * 100;
+    const o2Pct  = Math.min(100, Math.max(1, Math.floor(o2Raw)));
+    const fO2    = o2Pct / 100;
+    const fN2    = 1 - fO2;
+    const pN2    = fN2 * pAmb;
+    const eadM   = Math.max(0, (pN2 / 0.79) - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1);
+    const modM   = Math.floor((ppO2Lim / fO2 - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1));
+    const actPPO2 = (fO2 * pAmb).toFixed(2);
+    const mixName = o2Pct === 21 ? 'Air' : 'EAN' + o2Pct + ' (' + o2Pct + '%)';
+    const depthDisp = du ? dM + ' m' : Math.round(dM * 3.28084) + ' ft';
+    const eadDisp   = du ? Math.round(eadM) + ' m' : Math.round(eadM * 3.28084) + ' ft';
+    const modDisp   = du ? modM + ' m' : Math.round(modM * 3.28084) + ' ft';
+    const isHighlight = currentDepthM > 0 && Math.abs(dM - currentDepthM) < 0.5;
+    const o2Col = o2Pct >= 32 ? 'var(--green)' : o2Pct >= 22 ? 'var(--accent)' : 'var(--muted)';
+    rows.push(
+      `<tr class="bmt-ref-row${isHighlight ? ' bmt-ref-highlight' : ''}">` +
+      `<td style="color:var(--text);">${depthDisp}</td>` +
+      `<td style="color:${o2Col};font-weight:600;">${mixName}</td>` +
+      `<td style="color:${o2Col};">${o2Pct}%</td>` +
+      `<td style="color:var(--muted);">${modDisp}</td>` +
+      `<td style="color:var(--muted);">${eadDisp}</td>` +
+      `<td style="color:var(--muted);">${actPPO2}</td>` +
+      `</tr>`
+    );
+  }
+  tbody.innerHTML = rows.join('');
 }
 
 function calcMaxDepth() {
@@ -10892,7 +11002,7 @@ function switchTool(name, btn) {
   });
   document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
   if (name === 'mod')       calcMOD();
-  if (name === 'bestmix')   calcBestMix();
+  if (name === 'bestmix')   { calcBestMix(); renderToolsBmtRefTable(); }
   if (name === 'maxdepth')  calcMaxDepth();
   if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'gastable')  renderGasTable();
