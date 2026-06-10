@@ -5432,14 +5432,18 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       // gasLabel → [sizeId, fillId, reserveId]
     };
     const gasLabels = Object.keys(gasConsVPM);
-    const cylInputIds = [
-      ['cylBot_size','cylBot_pres','cylBot_reserve'],
-      ['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],
-      ['cylDg1_size','cylDg1_pres','cylDg1_reserve'],
-      ['cylDg2_size','cylDg2_pres','cylDg2_reserve'],
+    // Build label→cylinders map (same-mix cylinders pool their capacity)
+    const _cylDefsVPM = [
+      { ids:['cylBot_size','cylBot_pres','cylBot_reserve'],                   label: gasLabels[0] || null,                                              isBottom: true  },
+      { ids:['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'], label: (getTravelGasInfo()?.label || null),                                isBottom: false },
+      { ids:['cylDg1_size','cylDg1_pres','cylDg1_reserve'],                   label: (getDecoGasLabel('decoGas1Mix','decoGas1Custom') || null),           isBottom: false },
+      { ids:['cylDg2_size','cylDg2_pres','cylDg2_reserve'],                   label: (getDecoGasLabel('decoGas2Mix','decoGas2Custom') || null),           isBottom: false },
     ];
-    gasLabels.forEach((label, i) => {
-      if (cylInputIds[i]) cylMap[label] = cylInputIds[i];
+    const _cylByLabelVPM = {};
+    _cylDefsVPM.forEach(cyl => {
+      if (!cyl.label) return;
+      if (!_cylByLabelVPM[cyl.label]) _cylByLabelVPM[cyl.label] = [];
+      _cylByLabelVPM[cyl.label].push(cyl);
     });
 
     let tableRows = '';
@@ -5447,19 +5451,30 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     let hasAnyTurn = false;
 
     for (const [gas, reqL] of Object.entries(gasConsVPM)) {
-      const ids = cylMap[gas];
-      const sizeRaw = ids ? parseFloat(document.getElementById(ids[0])?.value) || 0 : 0;
-      const fillRaw = ids ? parseFloat(document.getElementById(ids[1])?.value) || 0 : 0;
-      const resRaw  = ids ? parseFloat(document.getElementById(ids[2])?.value) || 0 : 0;
+      const cylsVPM = _cylByLabelVPM[gas] || [];
+      let sizeRaw = 0, fillRaw = 0, resRaw = 0;
+      let usableLVPM = null;
+      let hasCylVPM  = false;
+      cylsVPM.forEach(cyl => {
+        const ids = cyl.ids;
+        const sr = parseFloat(document.getElementById(ids[0])?.value) || 0;
+        const fr = parseFloat(document.getElementById(ids[1])?.value) || 0;
+        const rr = parseFloat(document.getElementById(ids[2])?.value) || 0;
+        const sL  = units === 'imperial' ? sr * 28.3168 : sr;
+        const fB  = units === 'imperial' ? fr / 14.5038 : fr;
+        const rB  = units === 'imperial' ? rr / 14.5038 : rr;
+        if (sL > 0 && fB > rB) { usableLVPM = (usableLVPM || 0) + (fB - rB) * sL; hasCylVPM = true; }
+        if (cyl.isBottom) { sizeRaw = sr; fillRaw = fr; resRaw = rr; }
+      });
       const sizeL = units === 'imperial' ? sizeRaw * 28.3168 : sizeRaw;
       const fillBar = units === 'imperial' ? fillRaw / 14.5038 : fillRaw;
       const resBar  = units === 'imperial' ? resRaw  / 14.5038 : resRaw;
 
-      const hasCyl = sizeL > 0 && fillBar > resBar;
-      const usableL = hasCyl ? (fillBar - resBar) * sizeL : null;
+      const hasCyl = hasCylVPM || (sizeL > 0 && fillBar > resBar);
+      const usableL = usableLVPM !== null ? usableLVPM : (hasCyl ? (fillBar - resBar) * sizeL : null);
       const isBottom = gas === gasLabels[0]; // first gas = bottom gas
       const portionL = usableL != null ? usableL * fraction : null;
-      const turnBar  = (hasCyl && isBottom) ? fillBar - portionL / sizeL : null;
+      const turnBar  = (hasCyl && isBottom && sizeL > 0) ? fillBar - (portionL / sizeL) : null;
 
       const reqDisp  = Math.round(reqL);
       const availDisp = usableL != null ? Math.round(usableL) : null;
@@ -8368,28 +8383,60 @@ function runDecoSchedule() {
     const fracBHL   = (_gasRule === 'half') ? 0.5 : (1/3);
     const ruleLblBHL = (_gasRule === 'half') ? 'HALF' : 'THIRDS';
     const gasLabelsBHL = Object.keys(gasConsumed);
-    const cylIdsBHL = [
-      ['cylBot_size','cylBot_pres','cylBot_reserve'],
-      ['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],
-      ['cylDg1_size','cylDg1_pres','cylDg1_reserve'],
-      ['cylDg2_size','cylDg2_pres','cylDg2_reserve'],
+    // Build label→cylinders map so same-mix cylinders (e.g. travel=Air + bottom=Air) pool their capacity
+    const _cylDefsBHL = [
+      { ids:['cylBot_size','cylBot_pres','cylBot_reserve'],     label: bottomMixLabel,                                                               isBottom: true  },
+      { ids:['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'], label: (getTravelGasInfo()?.label || null),                           isBottom: false },
+      { ids:['cylDg1_size','cylDg1_pres','cylDg1_reserve'],     label: (getDecoGasLabel('decoGas1Mix','decoGas1Custom') || null),                  isBottom: false },
+      { ids:['cylDg2_size','cylDg2_pres','cylDg2_reserve'],     label: (getDecoGasLabel('decoGas2Mix','decoGas2Custom') || null),                  isBottom: false },
     ];
+    // For each gas label aggregate all cylinders carrying that mix
+    const _cylByLabel = {};
+    _cylDefsBHL.forEach(cyl => {
+      if (!cyl.label) return;
+      if (!_cylByLabel[cyl.label]) _cylByLabel[cyl.label] = [];
+      _cylByLabel[cyl.label].push(cyl);
+    });
     let tableRowsBHL = '';
     let warningsBHL  = '';
     gasLabelsBHL.forEach((gas, gi) => {
       const reqL  = gasConsumed[gas];
-      const ids   = cylIdsBHL[gi];
-      const sizeRaw = ids ? parseFloat(document.getElementById(ids[0])?.value) || 0 : 0;
-      const fillRaw = ids ? parseFloat(document.getElementById(ids[1])?.value) || 0 : 0;
-      const resRaw  = ids ? parseFloat(document.getElementById(ids[2])?.value) || 0 : 0;
+      const cyls  = _cylByLabel[gas] || [];
+      // Aggregate usable litres across all cylinders for this gas
+      let usableLBHL = null;
+      let hasCylBHL  = false;
+      let sizeRaw = 0, fillRaw = 0, resRaw = 0; // kept for turn-pressure calc (use first/bottom cyl)
+      let isBot = false;
+      cyls.forEach(cyl => {
+        const ids = cyl.ids;
+        const sr = parseFloat(document.getElementById(ids[0])?.value) || 0;
+        const fr = parseFloat(document.getElementById(ids[1])?.value) || 0;
+        const rr = parseFloat(document.getElementById(ids[2])?.value) || 0;
+        const sL  = units === 'imperial' ? sr * 28.3168 : sr;
+        const fB  = units === 'imperial' ? fr / 14.5038 : fr;
+        const rB  = units === 'imperial' ? rr / 14.5038 : rr;
+        if (sL > 0 && fB > rB) {
+          usableLBHL = (usableLBHL || 0) + (fB - rB) * sL;
+          hasCylBHL  = true;
+        }
+        if (cyl.isBottom) { sizeRaw = sr; fillRaw = fr; resRaw = rr; isBot = true; }
+      });
+      // Fallback to positional if no label match found
+      if (cyls.length === 0) {
+        const ids = [['cylBot_size','cylBot_pres','cylBot_reserve'],['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],['cylDg1_size','cylDg1_pres','cylDg1_reserve'],['cylDg2_size','cylDg2_pres','cylDg2_reserve']][gi];
+        if (ids) { sizeRaw = parseFloat(document.getElementById(ids[0])?.value)||0; fillRaw = parseFloat(document.getElementById(ids[1])?.value)||0; resRaw = parseFloat(document.getElementById(ids[2])?.value)||0; isBot = gi===0; }
+      }
+      const ids = null; // replaced by aggregation above
+      const sizeRawOld = sizeRaw, fillRawOld = fillRaw, resRawOld = resRaw;
+      // Use aggregated values from label-based lookup above
       const sizeL   = units === 'imperial' ? sizeRaw * 28.3168 : sizeRaw;
       const fillBar = units === 'imperial' ? fillRaw / 14.5038 : fillRaw;
       const resBar  = units === 'imperial' ? resRaw  / 14.5038 : resRaw;
-      const hasCyl  = sizeL > 0 && fillBar > resBar;
-      const usableL = hasCyl ? (fillBar - resBar) * sizeL : null;
-      const isBot   = gi === 0;
-      const portionL = (hasCyl && isBot) ? usableL * fracBHL : null;
-      const turnBar  = (hasCyl && isBot) ? fillBar - portionL / sizeL : null;
+      const hasCyl  = hasCylBHL || (sizeL > 0 && fillBar > resBar);
+      const usableL = usableLBHL !== null ? usableLBHL : (hasCyl ? (fillBar - resBar) * sizeL : null);
+      // Turn pressure uses bottom cylinder only (rule-of-thirds on bottom gas)
+      const portionL = (hasCyl && isBot) ? (usableL || 0) * fracBHL : null;
+      const turnBar  = (hasCyl && isBot && sizeL > 0) ? fillBar - (portionL / sizeL) : null;
       const turnDisp = turnBar != null ? (units === 'imperial' ? Math.round(turnBar*14.5038) : Math.round(turnBar)) : null;
       const short = usableL != null && reqL > usableL;
       const tight = usableL != null && !short && reqL > usableL * 0.90;
