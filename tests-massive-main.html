@@ -419,10 +419,14 @@ function runTest(name, model, fn, isWarn) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 // Helper: build NDL test (expects no stops)
+// For ZHLC_GF (Bühlmann), use GF 100/100 — NDL means "no tissue ceiling",
+// not "no stops with GF Lo=30 conservatism". GF Lo < 100 forces deep stops
+// even on dives well within RDP NDL limits.
 function ndlTest(depth, bt, model, o2, he) {
   const label = `${depth}m / ${bt}min — no stops expected`;
   return [label, model, function() {
-    const r = calc(lv(depth, bt, o2, he), NG, S(), model);
+    const settings = model === 'ZHLC_GF' ? S({gfLo:100, gfHi:100}) : S();
+    const r = calc(lv(depth, bt, o2, he), NG, settings, model);
     assertShape(r);
     const stops = decoStops(r);
     assert(stops.length === 0, `Expected 0 stops, got ${stops.length}. RT=${pr(r.totalRuntime)}`);
@@ -895,7 +899,8 @@ const TIER1_GROUPS = [
       // State isolation
       ['State isolation: call after deep dive still works', 'ZHLC_GF', function(){
         calc(lv(80,20), NG, S(), 'ZHLC_GF'); // potentially state-dirtying
-        const r = calc(lv(20,20), NG, S(), 'ZHLC_GF');
+        // Use GF 100/100 — 20m/20min is NDL only without GF Lo conservatism
+        const r = calc(lv(20,20), NG, S({gfLo:100, gfHi:100}), 'ZHLC_GF');
         const stops = decoStops(r);
         assert(stops.length === 0, `NDL dive got ${stops.length} stops after deep dive`);
         return 'no state leak ✓';
