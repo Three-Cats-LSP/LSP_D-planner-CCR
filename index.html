@@ -2549,6 +2549,30 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       <div class="stat"><div class="stat-val" id="modResultFt" style="color:var(--muted);">—</div><div class="stat-lbl">MOD (feet)</div></div>
     </div>
   </div>
+
+  <!-- MOD Reference Table -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="card-title" style="margin-bottom:0;">MOD Reference Table — Air &amp; EAN 22–40</div>
+      <div style="font-size:10px;color:var(--muted);">Highlighted: current O₂%</div>
+    </div>
+    <p style="color:var(--muted);font-size:11px;margin-bottom:12px;">Maximum Operating Depth for common nitrox mixes at ppO₂ 1.4 bar (working) and 1.6 bar (deco). The row matching your O₂% slider is highlighted.</p>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">Mix</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">O₂ %</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">MOD @ 1.4</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">MOD @ 1.6</th>
+          </tr>
+        </thead>
+        <tbody id="modRefTableBody">
+          <!-- filled by renderModRefTable() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
   </div>
 
   <!-- ── Best Mix Calculator ── -->
@@ -10376,6 +10400,7 @@ function calcMOD() {
   document.getElementById('modResult').textContent  = modM + ' m';
   document.getElementById('modResult').style.color  = col;
   document.getElementById('modResultFt').textContent = modFt + ' ft';
+  renderModRefTable();
 }
 
 // ═══════════════════════════════════════════════
@@ -10391,6 +10416,33 @@ function setBmtMode(mode) {
   document.getElementById('bmtTrimixStatsRow').style.display   = mode === 'trimix' ? 'grid'  : 'none';
   document.getElementById('bmtCardTitle').textContent = mode === 'trimix' ? 'Best Mix — Trimix' : 'Best Mix — Nitrox';
   calcBestMixTec();
+}
+
+function renderModRefTable() {
+  const tbody = document.getElementById('modRefTableBody');
+  if (!tbody) return;
+  const du = units === 'metric';
+  const currentO2 = parseFloat(document.getElementById('modO2')?.value) || 0;
+  const mixes = [
+    { name: 'Air', o2: 21 },
+    ...Array.from({length: 19}, (_, i) => ({ name: 'EAN ' + (22 + i), o2: 22 + i }))
+  ];
+  const rows = mixes.map(m => {
+    const fO2   = m.o2 / 100;
+    const mod14 = Math.floor((1.4 / fO2 - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1));
+    const mod16 = Math.floor((1.6 / fO2 - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1));
+    const mod14d = du ? mod14 + ' m' : Math.round(mod14 * 3.28084) + ' ft';
+    const mod16d = du ? mod16 + ' m' : Math.round(mod16 * 3.28084) + ' ft';
+    const isHL  = currentO2 > 0 && m.o2 === Math.round(currentO2);
+    const nameCol = m.o2 >= 32 ? 'var(--green)' : m.o2 >= 22 ? 'var(--accent)' : 'var(--muted)';
+    return `<tr class="bmt-ref-row${isHL ? ' bmt-ref-highlight' : ''}">` +
+      `<td style="color:${nameCol};font-weight:600;">${m.name}</td>` +
+      `<td style="color:${nameCol};">${m.o2}%</td>` +
+      `<td style="color:var(--green);">${mod14d}</td>` +
+      `<td style="color:var(--muted);">${mod16d}</td>` +
+      `</tr>`;
+  });
+  tbody.innerHTML = rows.join('');
 }
 
 function calcBestMixTec() {
@@ -10920,7 +10972,7 @@ function switchTool(name, btn) {
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
   document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
-  if (name === 'mod')       calcMOD();
+  if (name === 'mod')       { calcMOD(); renderModRefTable(); }
   if (name === 'bestmix')   { calcBestMix(); renderToolsBmtRefTable(); }
   if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'gastable')  renderGasTable();
