@@ -180,7 +180,8 @@ iframe { display: none; }
       <p>Massive regression suite v2.8.7 · 300+ engine plans · UI integration · gas table · slate · surf int · presets · END column · GF UI validation</p>
     </div>
     <div class="controls">
-      <button id="run-btn" onclick="startTests()">▶ Run All Tests</button>
+      <button id="run-btn" onclick="startTests(false)">▶ Run All Tests</button>
+      <button id="run-ui-btn" class="secondary-btn" onclick="startTests(true)" title="Skip Tier 1 engine tests — faster on mobile">▶ UI Only (skip engine)</button>
       <button class="secondary-btn" onclick="toggleFailOnly()" id="fail-toggle">Failures Only: Off</button>
       <button class="secondary-btn" onclick="collapseAll()">Collapse All</button>
       <button class="secondary-btn" onclick="expandAll()">Expand All</button>
@@ -3134,7 +3135,7 @@ async function runGroupsAsync(groups) {
       const pct = Math.round(done / total * 100);
       pb.style.width = pct + '%';
       pl.textContent = `${done} / ${total} — ${g.name}`;
-      if (done % 5 === 0) await new Promise(r => setTimeout(r, 0)); // yield
+      await new Promise(r => setTimeout(r, 0)); // yield after every test (keeps mobile browser responsive)
     }
     results.push(groupResult);
   }
@@ -3145,7 +3146,7 @@ async function runGroupsAsync(groups) {
 // ══════════════════════════════════════════════════════════════════════════════
 // START
 // ══════════════════════════════════════════════════════════════════════════════
-async function startTests() {
+async function startTests(skipTier1 = false) {
   TOTAL_ENGINE_CALLS = 0;
   const btn = document.getElementById('run-btn');
   const statusEl = document.getElementById('status');
@@ -3180,7 +3181,9 @@ async function startTests() {
     statusEl.textContent = '▶ Engine ready — running massive suite…';
 
     const t0 = performance.now();
-    const groups = await runGroupsAsync(ALL_GROUPS);
+    const activeGroups = skipTier1 ? ALL_GROUPS.filter(g => g.tier !== 1) : ALL_GROUPS;
+    if (skipTier1) statusEl.textContent = '▶ Engine ready — running UI/Scenario tests (Tier 1 skipped)…';
+    const groups = await runGroupsAsync(activeGroups);
     const elapsed = Math.round(performance.now() - t0);
 
     document.getElementById('sum-time').textContent = elapsed + 'ms';
