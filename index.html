@@ -1297,8 +1297,8 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <!-- Mode (Right side) -->
     <div style="display:flex;align-items:center;gap:8px;padding-right:14px;flex-shrink:0;">
       <div class="algo-toggle" style="display:flex;align-items:center;gap:4px;">
-        <button class="algo-btn active" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
-        <button class="algo-btn" id="algoBUH" onclick="setAlgo('buh')">Tec</button>
+        <button class="algo-btn" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
+        <button class="algo-btn active" id="algoBUH" onclick="setAlgo('buh')">Tec</button>
         <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
         <button class="algo-btn" id="algoTools" onclick="setAlgo('tools')" style="color:var(--muted);">🔧 Tools</button>
         <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
@@ -14345,7 +14345,7 @@ document.addEventListener('DOMContentLoaded', function() {
   calcCNS();
   
   // Initialize algorithm (REC mode by default)
-  setAlgo('padi');
+  setAlgo('buh');
 
   // Sync mGF to whichever preset the select shows on first load
   // (mGF default and select default must always match — this is the safety net)
