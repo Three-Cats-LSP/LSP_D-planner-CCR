@@ -1646,20 +1646,23 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
   </div>
 
-  <!-- Target END selector + result -->
+  <!-- Best Mix Calculator -->
   <div class="card">
-    <div class="card-title">Optimal Trimix Calculator</div>
-    <div style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:14px;">
-      Calculates the minimum He% to keep END at or below the target, then finds the best O₂% at your ppO₂ limit.
+    <!-- Title + Nitrox/Trimix toggle -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;" id="bmtCardTitle">Best Mix Calculator</div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <span style="font-size:10px;color:var(--muted);margin-right:4px;">Mode:</span>
+        <button class="btn-export active" id="bmtModeNitrox" style="padding:3px 8px;font-size:11px;" onclick="setBmtMode('nitrox')">Nitrox</button>
+        <button class="btn-export"        id="bmtModeTrimix" style="padding:3px 8px;font-size:11px;" onclick="setBmtMode('trimix')">Trimix</button>
+      </div>
     </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:18px;margin-bottom:18px;">
-      <!-- Target END -->
-      <div style="flex:1;min-width:180px;">
+      <!-- Target END (Trimix only) -->
+      <div id="bmtEndSliderWrap" style="flex:1;min-width:180px;display:none;">
         <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Target END</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="bmtTargetENDDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
-        </div>
+        <span id="bmtTargetENDDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">30 m</span>
         <input type="range" id="bmtTargetEND" class="lsp-slider" min="10" max="45" value="30" step="1"
           oninput="updateSliderFill(this);document.getElementById('bmtTargetENDDisplay').textContent=this.value+(units==='metric'?' m':' ft');calcBestMixTec()">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px;"><span>10 m</span><span>45 m</span></div>
@@ -1667,9 +1670,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       <!-- ppO2 limit -->
       <div style="flex:1;min-width:180px;">
         <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">ppO₂ Limit</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="bmtPPO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">1.4</span>
-        </div>
+        <span id="bmtPPO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">1.4</span>
         <input type="range" id="bmtPPO2" class="lsp-slider" min="10" max="16" value="14" step="1"
           oninput="updateSliderFill(this);document.getElementById('bmtPPO2Display').textContent=(this.value/10).toFixed(1);calcBestMixTec()">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px;"><span>1.0</span><span>1.6</span></div>
@@ -1678,18 +1679,20 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
     <!-- Results -->
     <div id="bmtResults" style="display:none;">
+      <!-- Row 1: always shown -->
       <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;">
-        <div class="stat"><div class="stat-val" id="bmtHeResult" style="color:var(--accent);">—</div><div class="stat-lbl">He %</div></div>
         <div class="stat"><div class="stat-val" id="bmtO2Result" style="color:var(--green);">—</div><div class="stat-lbl">O₂ %</div></div>
-        <div class="stat"><div class="stat-val" id="bmtN2Result" style="color:var(--muted);">—</div><div class="stat-lbl">N₂ %</div></div>
-      </div>
-      <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
         <div class="stat"><div class="stat-val" id="bmtMixName" style="color:var(--accent);font-size:16px;">—</div><div class="stat-lbl">Mix Name</div></div>
-        <div class="stat"><div class="stat-val" id="bmtActualEND" style="color:var(--green);">—</div><div class="stat-lbl">Actual END</div></div>
         <div class="stat"><div class="stat-val" id="bmtMOD" style="color:var(--muted);">—</div><div class="stat-lbl">MOD @ ppO₂ limit</div></div>
       </div>
       <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
         <div class="stat"><div class="stat-val" id="bmtActualPPO2" style="color:var(--muted);">—</div><div class="stat-lbl">ppO₂ at depth</div></div>
+        <div class="stat" id="bmtActualENDStat"><div class="stat-val" id="bmtActualEND" style="color:var(--green);">—</div><div class="stat-lbl">END at depth</div></div>
+        <div class="stat"><div class="stat-val" id="bmtN2Result" style="color:var(--muted);">—</div><div class="stat-lbl">N₂ %</div></div>
+      </div>
+      <!-- Row 3: Trimix only -->
+      <div id="bmtTrimixStatsRow" class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;display:none;">
+        <div class="stat"><div class="stat-val" id="bmtHeResult" style="color:var(--accent);">—</div><div class="stat-lbl">He %</div></div>
         <div class="stat"><div class="stat-val" id="bmtENDImprove" style="color:var(--green);">—</div><div class="stat-lbl">END reduction</div></div>
         <div class="stat"><div class="stat-val" id="bmtDecoNote" style="color:var(--muted);font-size:13px;">—</div><div class="stat-lbl">Deco impact</div></div>
       </div>
@@ -10298,6 +10301,18 @@ function calcMOD() {
 // ═══════════════════════════════════════════════
 // BEST MIX TAB — Tec trimix optimizer
 // ═══════════════════════════════════════════════
+let _bmtMode = 'nitrox'; // 'nitrox' | 'trimix'
+
+function setBmtMode(mode) {
+  _bmtMode = mode;
+  document.getElementById('bmtModeNitrox').classList.toggle('active', mode === 'nitrox');
+  document.getElementById('bmtModeTrimix').classList.toggle('active', mode === 'trimix');
+  document.getElementById('bmtEndSliderWrap').style.display    = mode === 'trimix' ? 'block' : 'none';
+  document.getElementById('bmtTrimixStatsRow').style.display   = mode === 'trimix' ? 'grid'  : 'none';
+  document.getElementById('bmtCardTitle').textContent = mode === 'trimix' ? 'Best Mix — Trimix' : 'Best Mix — Nitrox';
+  calcBestMixTec();
+}
+
 function calcBestMixTec() {
   const du    = units === 'metric';
   const dUnit = du ? 'm' : 'ft';
@@ -10338,105 +10353,85 @@ function calcBestMixTec() {
   }
 
   // ── Calculator ──
+  const isTrimix    = _bmtMode === 'trimix';
   const targetENDm_raw = parseFloat(document.getElementById('bmtTargetEND')?.value) || 30;
-  const targetENDm     = du ? targetENDm_raw : targetENDm_raw / 3.28084;
-  const ppO2Limit      = (parseFloat(document.getElementById('bmtPPO2')?.value) || 14) / 10;
+  const targetENDm  = du ? targetENDm_raw : targetENDm_raw / 3.28084;
+  const ppO2Limit   = (parseFloat(document.getElementById('bmtPPO2')?.value) || 14) / 10;
 
-  document.getElementById('bmtResults').style.display   = depthM > 0 ? 'block' : 'none';
-  document.getElementById('bmtNeedDepth').style.display  = depthM > 0 ? 'none' : 'block';
+  document.getElementById('bmtResults').style.display  = depthM > 0 ? 'block' : 'none';
+  document.getElementById('bmtNeedDepth').style.display = depthM > 0 ? 'none'  : 'block';
   if (!depthM || depthM <= 0) return;
 
   const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
 
-  // Narcotic fraction of air at surface (reference for END calc)
-  const fN2air = 0.79, fO2air = 0.21;
-  const narcoFracAir = (narcoticN2 ? fN2air : 0) + (narcoticO2 ? fO2air : 0);
-
-  // Target narcotic partial pressure = what air at targetENDm would give
-  const pSurf   = altSurfaceP;
-  const pTarget = (pSurf + targetENDm * BAR_PER_METRE) * narcoFracAir;
-
   // Best O2% for ppO2 limit at depth (rounded down, clamped)
-  const o2Raw    = (ppO2Limit / pAmb) * 100;
-  const o2Pct    = Math.min(100, Math.max(1, Math.floor(o2Raw)));
-  const fO2      = o2Pct / 100;
+  const o2Raw  = (ppO2Limit / pAmb) * 100;
+  const o2Pct  = Math.min(100, Math.max(1, Math.floor(o2Raw)));
+  const fO2    = o2Pct / 100;
 
-  // Required He: solve for fHe so narcotic pp = pTarget
-  // pNarc = pAmb * (fO2_narc + fN2_narc)
-  // fN2   = 1 - fO2 - fHe
-  // narcoticPP = pAmb * ((narcoticN2?(1-fO2-fHe):0) + (narcoticO2?fO2:0))
-  // = pTarget  →  solve for fHe
-  // pAmb*(narcoticO2?fO2:0) + pAmb*narcoticN2*(1-fO2-fHe) = pTarget
-  // pAmb*narcoticN2*(1-fO2) - pAmb*narcoticN2*fHe + pAmb*(narcoticO2?fO2:0) = pTarget
-  // fHe = [pAmb*narcoticN2*(1-fO2) + pAmb*(narcoticO2?fO2:0) - pTarget] / (pAmb * narcoticN2)
+  // He calculation (Trimix mode only)
   let fHeNeeded = 0;
-  if (narcoticN2) {
-    const numerator = pAmb * (narcoticN2 ? (1 - fO2) : 0) + pAmb * (narcoticO2 ? fO2 : 0) - pTarget;
-    fHeNeeded = numerator / (pAmb * 1); // narcoticN2 is always true in this branch
-    fHeNeeded = Math.max(0, fHeNeeded);
+  if (isTrimix && narcoticN2) {
+    const fN2air = 0.79, fO2air = 0.21;
+    const narcoFracAir = (narcoticN2 ? fN2air : 0) + (narcoticO2 ? fO2air : 0);
+    const pTarget = (altSurfaceP + targetENDm * BAR_PER_METRE) * narcoFracAir;
+    const numerator = pAmb * (1 - fO2) + pAmb * (narcoticO2 ? fO2 : 0) - pTarget;
+    fHeNeeded = Math.max(0, Math.min(numerator / pAmb, 1 - fO2));
   }
-  // If N2 not narcotic, can't reduce END via He (END irrelevant)
-  // Cap He so O2+He <= 1
-  fHeNeeded = Math.min(fHeNeeded, 1 - fO2);
-  const fN2     = Math.max(0, 1 - fO2 - fHeNeeded);
 
-  const hePct   = Math.round(fHeNeeded * 100);
-  const n2Pct   = Math.round(fN2 * 100);
-  // Re-round so O2+He+N2 = 100
-  const n2Adj   = 100 - o2Pct - hePct;
+  const fN2    = Math.max(0, 1 - fO2 - fHeNeeded);
+  const hePct  = Math.round(fHeNeeded * 100);
+  const n2Adj  = 100 - o2Pct - hePct;
 
-  // Actual END with this mix
-  const actualEND = calcEND ? calcEND(depthM, fN2, fHeNeeded) : ((depthM + 10) * fN2 / 0.79) - 10;
+  // END with this mix
+  const actualEND     = calcEND ? calcEND(depthM, fN2, fHeNeeded) : ((depthM + 10) * fN2 / 0.79) - 10;
   const actualENDdisp = du ? Math.round(actualEND) : Math.round(actualEND * 3.28084);
 
   // MOD at ppO2 limit
   const modM    = Math.floor((ppO2Limit / fO2 - altSurfaceP) / BAR_PER_METRE);
   const modDisp = du ? modM + ' m' : Math.round(modM * 3.28084) + ' ft';
 
-  // ppO2 at actual dive depth
+  // ppO2 at dive depth
   const actualPPO2 = (fO2 * pAmb).toFixed(2);
 
-  // Mix name: O2/He trimix notation
+  // Mix name
   const mixName = hePct > 0
     ? (o2Pct + '/' + hePct)
     : (o2Pct === 21 ? 'Air' : o2Pct + '/00');
 
-  // Current END (for improvement calc)
+  // END improvement vs current plan gas (trimix only)
   const curFracs   = getBottomGasFractions ? getBottomGasFractions() : { fN2: 0.79, fHe: 0, fO2: 0.21 };
   const currentEND = calcEND ? calcEND(depthM, curFracs.fN2, curFracs.fHe) : ((depthM + 10) * curFracs.fN2 / 0.79) - 10;
   const improve    = currentEND - actualEND;
   const improveDisp = (du ? Math.round(improve) : Math.round(improve * 3.28084)) + ' ' + dUnit;
-
-  // Deco impact note
-  const decoNote = hePct > 0
-    ? (hePct > 40 ? 'Heavier deco' : hePct > 20 ? 'Moderate deco' : 'Light deco↑')
-    : 'No deco change';
+  const decoNote   = hePct > 40 ? 'Heavier deco' : hePct > 20 ? 'Moderate deco' : hePct > 0 ? 'Light deco↑' : 'No deco change';
 
   // Colors
-  const endCol2   = actualEND > 40 ? 'var(--red)' : actualEND > 30 ? 'var(--orange)' : 'var(--green)';
-  const ppO2Col   = parseFloat(actualPPO2) > 1.5 ? 'var(--orange)' : parseFloat(actualPPO2) > 1.6 ? 'var(--red)' : 'var(--muted)';
+  const endCol2  = actualEND > 40 ? 'var(--red)' : actualEND > 30 ? 'var(--orange)' : 'var(--green)';
+  const ppO2Col  = parseFloat(actualPPO2) > 1.6 ? 'var(--red)' : parseFloat(actualPPO2) > 1.5 ? 'var(--orange)' : 'var(--muted)';
 
   // Update UI
-  document.getElementById('bmtHeResult').textContent  = hePct + '%';
-  document.getElementById('bmtO2Result').textContent  = o2Pct + '%';
-  document.getElementById('bmtN2Result').textContent  = Math.max(0, n2Adj) + '%';
-  document.getElementById('bmtMixName').textContent   = mixName;
-  document.getElementById('bmtActualEND').textContent = actualENDdisp + ' ' + dUnit;
-  document.getElementById('bmtActualEND').style.color = endCol2;
-  document.getElementById('bmtMOD').textContent       = modDisp;
+  document.getElementById('bmtO2Result').textContent   = o2Pct + '%';
+  document.getElementById('bmtN2Result').textContent   = Math.max(0, n2Adj) + '%';
+  document.getElementById('bmtMixName').textContent    = mixName;
+  document.getElementById('bmtActualEND').textContent  = actualENDdisp + ' ' + dUnit;
+  document.getElementById('bmtActualEND').style.color  = endCol2;
+  document.getElementById('bmtMOD').textContent        = modDisp;
   document.getElementById('bmtActualPPO2').textContent = actualPPO2 + ' bar';
   document.getElementById('bmtActualPPO2').style.color = ppO2Col;
-  document.getElementById('bmtENDImprove').textContent = improve > 0 ? '−' + improveDisp : '—';
-  document.getElementById('bmtDecoNote').textContent  = decoNote;
+  // Trimix-only fields
+  document.getElementById('bmtHeResult').textContent   = hePct + '%';
+  document.getElementById('bmtENDImprove').textContent = isTrimix && improve > 0 ? '−' + improveDisp : '—';
+  document.getElementById('bmtDecoNote').textContent   = isTrimix ? decoNote : '—';
 
-  // Alert if He needed is 0 but END already fine, or if ppO2 is elevated
+  // Alerts
   const alertEl2 = document.getElementById('bmtMixAlert');
   let alerts = '';
-  if (hePct === 0 && actualEND <= targetENDm) {
-    alerts += `<div class="info-box" style="margin-bottom:8px;">Current gas already achieves END ≤ ${targetENDm_raw} ${dUnit} — no helium needed.</div>`;
+  if (isTrimix && hePct === 0 && actualEND <= targetENDm) {
+    alerts += `<div class="info-box" style="margin-bottom:8px;">END already ≤ ${targetENDm_raw} ${dUnit} — no helium needed.</div>`;
   }
   if (parseFloat(actualPPO2) > 1.4) {
-    alerts += `<div class="alert" style="margin-top:6px;"><span>⚠</span><div>ppO₂ ${actualPPO2} bar at depth. Verify MOD and switch depths for your deco gases.</div></div>`;
+    alerts += `<div class="alert" style="margin-top:6px;"><span>⚠</span><div>ppO₂ ${actualPPO2} bar at depth — verify MOD and deco gas switch depths.</div></div>`;
   }
   if (modM < depthM) {
     alerts += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>MOD ${modDisp} is shallower than dive depth.</strong> Increase ppO₂ limit or reduce O₂%.</div></div>`;
