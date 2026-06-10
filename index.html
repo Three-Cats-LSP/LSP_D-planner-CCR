@@ -5470,12 +5470,15 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         : `<td style="color:var(--muted);">one-way</td>`;
       if (isBottom && turnBar != null) hasAnyTurn = true;
 
-      tableRows += `<tr>
-        <td style="font-family:'JetBrains Mono',monospace;">${gas}</td>
-        <td style="font-family:'JetBrains Mono',monospace;">${reqDisp} ${volUnitV}</td>
-        <td style="font-family:'JetBrains Mono',monospace;">${availDisp != null ? availDisp + ' ' + volUnitV : '—'}</td>
+      const rowBgV = short ? 'rgba(220,50,50,0.07)' : tight ? 'rgba(255,180,0,0.07)' : '';
+      const reqColorV   = short ? 'var(--red)'  : 'var(--text)';
+      const availColorV = short ? 'var(--red)'  : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
+      tableRows += `<tr style="background:${rowBgV};border-bottom:1px solid var(--border);">
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;font-weight:600;">${gas}</td>
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${reqColorV};font-weight:${short?'700':'400'};">${reqDisp} ${volUnitV}</td>
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${availColorV};font-weight:${(!short&&hasCyl)?'700':'400'};">${availDisp != null ? availDisp+' '+volUnitV : '—'}</td>
         ${turnCell}
-        <td><span style="color:${sufCol};font-weight:700;">${sufIcon}</span> <span style="font-size:11px;color:${sufCol};">${sufTxt}</span></td>
+        <td style="padding:5px 6px;"><span style="color:${sufCol};font-weight:700;">${sufIcon}</span> <span style="font-size:11px;color:${sufCol};">${sufTxt}</span></td>
       </tr>`;
 
       if (short) {
@@ -8386,14 +8389,17 @@ function runDecoSchedule() {
       const sufIcon = !hasCyl ? '—' : short ? '✗' : tight ? '⚠' : '✓';
       const sufTxt  = !hasCyl ? '—' : short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : 'OK';
       const turnCell = (isBot && turnDisp != null)
-        ? `<td style="color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDisp} ${presUnitV}</td>`
-        : `<td style="color:var(--muted);font-size:11px;">one-way</td>`;
-      tableRowsBHL += `<tr>
-        <td style="font-family:'JetBrains Mono',monospace;">${gas}</td>
-        <td style="font-family:'JetBrains Mono',monospace;">${Math.round(reqL)} ${volUnitV}</td>
-        <td style="font-family:'JetBrains Mono',monospace;">${usableL != null ? Math.round(usableL)+' '+volUnitV : '—'}</td>
+        ? `<td style="padding:5px 6px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDisp} ${presUnitV}</td>`
+        : `<td style="padding:5px 6px;color:var(--muted);font-size:11px;">one-way</td>`;
+      const rowBg = short ? 'rgba(220,50,50,0.07)' : tight ? 'rgba(255,180,0,0.07)' : '';
+      const reqColor  = short ? 'var(--red)'    : 'var(--text)';
+      const availColor = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
+      tableRowsBHL += `<tr style="background:${rowBg};border-bottom:1px solid var(--border);">
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;font-weight:600;">${gas}</td>
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${reqColor};font-weight:${short?'700':'400'};">${Math.round(reqL)} ${volUnitV}</td>
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${availColor};font-weight:${(!short&&hasCyl)?'700':'400'};">${usableL != null ? Math.round(usableL)+' '+volUnitV : '—'}</td>
         ${turnCell}
-        <td><span style="color:${sufCol};font-weight:700;">${sufIcon}</span> <span style="font-size:11px;color:${sufCol};">${sufTxt}</span></td>
+        <td style="padding:5px 6px;"><span style="color:${sufCol};font-weight:700;">${sufIcon}</span> <span style="font-size:11px;color:${sufCol};">${sufTxt}</span></td>
       </tr>`;
       if (short) {
         const bt = parseFloat(document.getElementById('decoBT')?.value) || 0;
