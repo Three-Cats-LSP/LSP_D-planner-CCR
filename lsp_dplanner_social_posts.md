@@ -5,11 +5,11 @@
 ## Reddit — r/scuba
 
 **Title:**
-I built a free Android dive planner that works offline — no subscriptions, no account, just real deco planning (Bühlmann + VPM-B)
+I built a free dive planner that works offline — no subscriptions, no account, real deco planning (Bühlmann + VPM-B) + a full Tools section for gas and narcosis calculations
 
 **Body:**
 
-Hey r/scuba — sharing something we've been building for a while, just pushed a big update and wanted to get it in front of more divers.
+Hey r/scuba — sharing something we've been building for a while. Just pushed a big update and wanted to get it in front of more divers.
 
 **LSP D-Planner** is a free dive planning app made by [Three Cats LSP](https://github.com/Three-Cats-LSP/LSP_D-planner). It runs as a native Android APK and also works in any browser — completely offline, no account required, no subscription, no ads.
 
@@ -17,31 +17,48 @@ Hey r/scuba — sharing something we've been building for a while, just pushed a
 
 - Recreational NDL tables and full decompression planning with **Bühlmann ZHL-16C + Gradient Factors** (configurable GF Low/High)
 - **VPM-B** and **VPM-B/GFS** (hybrid) algorithm support
-- Multi-dive day planning — surface interval off-gassing is tracked and available NDL updates for each subsequent dive
-- **Surface Interval calculator** — shows tissue saturation state after any surface interval, directly in the planner
-- CNS O₂ and OTU tracking throughout the profile
-- **Gas Consumption card** — now integrated directly in the Deco Schedule. Shows Rule of Thirds or Half Tank turn pressure, total volume, reserve, and whether you have enough gas for your planned dive. Travel gas is automatically pooled with bottom gas when they share the same mix.
-- Travel gas support (automatic MOD-based switch depths)
-- **Gas Table** — MOD and MND (narcotic depth) for all configured mixes at a glance
-- **Deco Slate export** — compact waterproof dive slate format, exportable alongside PDF and TXT
-- **Named Presets** — save and reload your dive configurations (up to 20 presets, stored locally)
-- Full metric/imperial switching
-- Altitude diving support
+- Full metric/imperial switching, altitude diving support
+
+**Planning tabs (Rec mode):**
+- Dive Planner, Surface Interval calculator, Average Depth converter, Multi-Dive planner, CNS O₂ tracker, NDL Tables
+
+**Planning tabs (Tec mode):**
+- Deco Schedule with END column, Best Mix optimizer (Nitrox/Trimix toggle), Surf Int, Dive Planner, Multi Dive, CNS O₂, NDL Tables
+
+**Gas management (integrated into Deco Schedule):**
+- Gas Consumption card shows: GAS · TOTAL VOL · THIRDS · TURN PRESSURE · RESERVE · SUFFICIENT · MARGIN
+- Rule of Thirds or Half Tank toggle — live update
+- Travel gas auto-pools with bottom gas if same mix
+- Color-coded sufficiency: green = OK, red = SHORT
+
+**Tools section:**
+- Best Mix calculator with nitrox reference table (depths 10–40 m at your ppO₂ limit)
+- MOD calculator with full reference table (Air + EAN22–40 at 1.4 and 1.6 bar)
+- END Calculator — narcotic depth, ppN₂/ppO₂/ppHe, risk level, narcosis toggle
+- EAD Table — Equivalent Air Depth for EAN22–40 across 12–38 m
+- Gas Table — MOD + MND for all common mixes at a glance
+- Unit Converter (pressure, volume, depth, temp, weight)
+- Average Depth planning converter
+- Knowledge Base — 18 reference PDFs
+
+**Export:**
+- Deco Slate — compact waterproof slate format
+- Copy / TXT / PDF — full deco schedule + gas consumption table
 
 It's not trying to replace your dive computer — there's a clear disclaimer about that. But as a pre-dive planning tool it's genuinely capable.
 
 **Try it in your browser:** https://three-cats-lsp.github.io/LSP_D-planner/
-**Android APK (direct download):** https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
+**Android APK:** https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
 **Source code:** https://github.com/Three-Cats-LSP/LSP_D-planner
 
-It's open source and completely free. Happy to answer questions about how any of it works.
+Open source and completely free. Happy to answer questions about how any of it works.
 
 ---
 
 ## Reddit — r/diving
 
 **Title:**
-Made a free dive planner app for Android — offline, no sign-up, does deco and NDLs. Here's what's in it.
+Free dive planner for Android and browser — offline, no sign-up, deco + NDL + gas planning + narcosis tools
 
 **Body:**
 
@@ -49,108 +66,125 @@ Hey everyone — sharing something we've been heads-down on for a while.
 
 **LSP D-Planner** is a free Android app (also a browser-based web app) for dive planning. No account, no subscription, works completely offline once installed.
 
-Here's the honest summary of what it covers:
-
 **Recreational divers:**
 - No-decompression limit (NDL) tables
-- Multi-dive day planning with residual nitrogen tracked across dives and surface intervals
-- **Surface Interval calculator** — see your tissue loading drop in real time across any interval
-- CNS oxygen toxicity tracker
-- MOD calculator for nitrox
+- Dive Planner with CNS O₂ tracking
+- Multi-dive day planning — residual nitrogen tracked across dives and surface intervals
+- Surface Interval calculator — see your tissue loading in real time
+- Average Depth converter — enter your log-book average depth, get a recommended planning depth (avg + 75% × (max − avg) formula explained with tooltip)
+- MOD calculator for nitrox with full reference table
 
 **Decompression divers:**
 - Bühlmann ZHL-16C with configurable Gradient Factors
 - VPM-B and VPM-B/GFS hybrid
 - Full trimix support (O₂/He/N₂)
-- Travel gas, deco gas, **Gas Consumption card** — turn pressure (Rule of Thirds or Half Tank), total volume, sufficiency check, all in the Deco Schedule. Travel gas pools with bottom gas automatically if the mix is the same.
-- **Gas Table** — instant MOD and narcotic depth (MND) for all configured mixes
-- **Deco Slate** — export your plan as a compact waterproof slate (Copy / SLATE / TXT / PDF)
-- **Named Presets** — save your favorite dive configs with a name, reload them instantly
-- END (Equivalent Narcotic Depth) column always visible in the deco schedule
-- Altitude diving with corrected surface pressure
+- Best Mix optimizer — Nitrox and Trimix modes, calculates optimal O₂% (and He% for target END)
+- Gas Consumption card — turn pressure (Rule of Thirds or Half Tank), total volume, sufficiency check, MARGIN, all in the Deco Schedule
+- END and EAD calculators with narcosis toggle
 
-The web version runs in any browser so you can try it right now without installing anything:
+**Tools:**
+- Best Mix, MOD, END Calc, EAD Table, Gas Table, Unit Converter, Avg Depth, Knowledge Base
+
+**Export:**
+- Deco Slate (waterproof slate format), Copy, TXT, PDF — gas consumption included in all formats
+
+The web version runs in any browser so you can try it now without installing anything:
 👉 https://three-cats-lsp.github.io/LSP_D-planner/
 
-Android APK download: https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
+Android APK: https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
 
-It's open source: https://github.com/Three-Cats-LSP/LSP_D-planner
+Open source: https://github.com/Three-Cats-LSP/LSP_D-planner
 
-We built this because we wanted a proper planning tool we actually trusted. Would love feedback from anyone who tries it.
+Built because we wanted a proper planning tool we actually trusted. Would love feedback from anyone who tries it.
 
 ---
 
 ## Reddit — r/techscuba
 
 **Title:**
-LSP D-Planner v2.8.9 — free open-source Android deco planner, Bühlmann ZHL-16C + VPM-B + full trimix, integrated Gas Consumption card with Rule of Thirds / Half Tank, 147-check audit suite
+LSP D-Planner v2.8.9 — free open-source deco planner, Bühlmann ZHL-16C + VPM-B + full trimix, integrated gas management, END/EAD/MOD tools, 147-check audit suite
 
 **Body:**
 
 Sharing a project we're genuinely proud of: **LSP D-Planner**, a free open-source technical dive planner — native Android APK and browser-based web app.
 
-**Algorithms implemented:**
+**Algorithms:**
 
-- **Bühlmann ZHL-16C + Gradient Factors** — industry-standard tissue model with configurable GF Low/High (presets or custom entry), standard 0.0577 bar water vapour correction
+- **Bühlmann ZHL-16C + Gradient Factors** — configurable GF Low/High (presets or custom), standard 0.0577 bar water vapour correction
 - **VPM-B** — full Varying Permeability Model with configurable conservatism margin
-- **VPM-B/GFS hybrid** — VPM-B bubble mechanics determine deep stop depth; GF High applies at shallow/surface stops (configurable via presets or custom entry)
+- **VPM-B/GFS hybrid** — VPM-B bubble mechanics for deep stops; GF High applied at shallow/surface stops
 
-**Trimix / helium support:**
+**Trimix / helium:**
 
 - Full O₂/He/N₂ entry for bottom gas and all deco gases
 - Helium half-time selector: **Bühlmann 2003 (1.51 min)** or **Baker (1.88 min)**
-- **END (Equivalent Narcotic Depth)** column always visible throughout the profile
-- He-aware ppO₂ checks and MOD calculations wired through both Bühlmann and VPM-B engines
+- END column always visible throughout the deco schedule
+- He-aware ppO₂ checks and MOD calculations in both Bühlmann and VPM-B engines
+
+**Best Mix optimizer (Tec mode tab):**
+
+- Nitrox mode — calculates best O₂% for target ppO₂ at planned depth, live nitrox reference table (depths 10–42 m)
+- Trimix mode — adds He% slider for target END; shows O₂%, He%, N₂%, END, MOD @ 1.4/1.6 bar, ppO₂
+- Reads current dive plan depth and gas automatically; narcotic depth warning banner with tooltip explanation
+
+**Narcosis tools:**
+
+- **END Calculator** — depth + O₂% + He% sliders → END, risk level, ppN₂/ppO₂/ppHe, MOD @ 1.4/1.6, alert banners; narcosis toggle (N₂ only vs N₂+O₂)
+- **EAD Table** — Equivalent Air Depth for EAN22–40 across 12–38 m, live-computed
+- Narcotic depth warning banners throughout (VPM-B, Bühlmann, Best Mix) — all wired to tooltip explaining why 30 m is the conventional narcosis limit
+
+**Gas management:**
+
+- Gas Consumption card integrated into Deco Schedule — GAS · TOTAL VOL · THIRDS · TURN PRESS · RESERVE · SUFFICIENT · MARGIN
+- Rule of Thirds and Half Tank toggle — live update
+- Travel gas pools with bottom gas automatically if same mix; label shows `Air (+Travel)` to confirm
+- Warning rows: red `#FF4433` banner for BT limit and tight margin gas; green = OK, red = SHORT
+- MARGIN column — `+/−X L` in green/red matching text export
+- Info `?` button on card title with full explanation of both rules
+
+**MOD reference:**
+
+- MOD tab: full Air + EAN22–40 reference table at 1.4 and 1.6 bar ppO₂, with row highlight for current O₂%; tooltip with formula, examples, safety context
+- Gas Table: MOD + MND (narcotic depth) for all common mixes, ppO₂ limit slider adjusts MOD column live
 
 **Repetitive diving:**
 
 - Multi-dive with surface interval tissue loading (Haldane N₂/He off-gassing)
-- **Surface Interval calculator** — dedicated sub-tab showing tissue saturation state after any given interval
-- VPM-B bubble state carry across dives — critical radii regenerate during surface interval using `r(t) = r_init + (r_end − r_init) × exp(−t / REGEN_TIME)` with a 14-day regeneration constant
+- Surface Interval calculator — tissue saturation state across any interval
+- VPM-B bubble state carry: `r(t) = r_init + (r_end − r_init) × exp(−t / REGEN_TIME)`, 14-day regeneration constant
 
-**Altitude diving:**
+**Altitude:**
 
-- Altitude presets from sea level to 3000 m + custom input
-- Acclimatization toggle for effective surface pressure correction
+- Presets sea level to 3000 m + custom input; acclimatization toggle
 - VPM-B altitude-adjusted critical radii: `r_alt = r₀ × (P_SL / P_alt)^(1/3)`
 
-**Gas management (new in v2.8.9):**
+**Export:**
 
-- **Gas Consumption card merged into Deco Schedule** — no separate Gas Plan tab. The card sits directly below the deco table and shows: GAS | TOTAL VOL | THIRDS | TURN PRESS | RESERVE | SUFFICIENT
-- **Rule of Thirds and Half Tank** — toggle between rules live; turn pressure and sufficiency update instantly
-- **Travel gas pooling** — if travel gas shares the same mix as bottom gas, its usable litres are added to the bottom total automatically. Label shows `Air (+Travel)` to confirm. No double-counting.
-- **Warning rows** — gas short: red ✗ with volume deficit. BT suggestion (max bottom time for current cylinder): solid red `#FF4433` banner with white/black text depending on theme. Tight (<10% margin): same red banner treatment.
-- **Info button** — `?` next to card title opens a popup explaining both rules, one-way deco gas logic, and the Short/Tight/OK status definitions
-- SAC-based gas consumption in litres or cu ft, converting correctly on unit switch
-
-**Export (all three updated in v2.8.9):**
-
-- Copy / TXT / PDF all reflect the pooled travel gas label and correct totals
-- PDF now correctly shows SHORT status on the bottom gas row when insufficient (was showing TURN)
-- PDF renders the BT suggestion as a red banner row matching the on-screen style
-- Text export uses `BOTTOM GAS: Air + Travel cyl` format when pooled
+- Copy / TXT / PDF — full deco schedule + gas consumption table with correct pooled totals and MARGIN
+- Deco Slate — compact waterproof slate format
+- PDF gas table: 7-column jsPDF table with color-coded rows, dark header, matching on-screen style
 
 **Quality assurance:**
 
-- **147-check static audit** (`audit.py`) across 20+ code groups — run before every commit
-- HTML regression test suite (`tests-massive.html`) covering algorithm switching, VPM-B/GFS GF UI, SAC unit conversion, gas volume display, Gas Table formulas, Slate output, Preset persistence, END column correctness, and more
-- Knowledge Base of 18 reference PDFs including Baker's original VPM FORTRAN source, EUBS proceedings, and published Bühlmann/VPM comparisons
+- 147-check static audit (`audit.py`) across 20+ code groups
+- HTML regression test suite (`tests-massive.html`) — algorithm switching, VPM-B/GFS GF UI, SAC unit conversion, gas volume, Gas Table formulas, Slate output, Preset persistence, END column correctness
+- Knowledge Base of 18 reference PDFs (Baker FORTRAN source, EUBS proceedings, published Bühlmann/VPM comparisons)
 
 **Links:**
 
-- Web version (try now, no install): https://three-cats-lsp.github.io/LSP_D-planner/
+- Web version (no install): https://three-cats-lsp.github.io/LSP_D-planner/
 - Android APK: https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
-- GitHub (open source): https://github.com/Three-Cats-LSP/LSP_D-planner
+- GitHub: https://github.com/Three-Cats-LSP/LSP_D-planner
 
-It's free, open source, and runs entirely offline once installed. Happy to go deep on the algorithm implementation or answer any questions about the methodology.
+Free, open source, runs entirely offline. Happy to go deep on algorithm implementation or methodology.
 
 ---
 
 ## Instagram Caption
 
-A proper deco planner. No subscriptions. No account. Just your dive. 🌊
+A proper dive planner. No subscriptions. No account. Just your dive. 🌊
 
-LSP D-Planner v2.8.9 is out — a free Android app (and web app) for real dive planning, built by @threecats_lsp for divers who actually care about their deco.
+LSP D-Planner v2.8.9 — free Android app and web app for real dive planning, built by @threecats_lsp for divers who care about their deco.
 
 ─────────────────────
 
@@ -159,24 +193,28 @@ Bühlmann ZHL-16C + Gradient Factors
 VPM-B and VPM-B/GFS hybrid
 Full trimix support (O₂/He/N₂)
 
-⛽ GAS MANAGEMENT (new in 2.8.9)
+⛽ GAS MANAGEMENT
 Gas Consumption card — right in the Deco Schedule
-Rule of Thirds / Half Tank toggle — live updates
-Turn pressure, total volume, reserve, sufficiency check
+Rule of Thirds / Half Tank toggle — live update
+Turn pressure · total volume · reserve · margin
 Travel gas auto-pools with bottom gas if same mix
-BT suggestion shown as red banner when cylinder is too small
+Color-coded: green = OK · red = SHORT
 
-📊 PLANNING TOOLS
-Multi-dive day planner — residual N₂ tracked
-Surface Interval calculator — tissue off-gassing in real time
-CNS + OTU oxygen toxicity tracking
-Gas Table — MOD + narcotic depth for all mixes
-Altitude diving support
+🔬 NARCOSIS & GAS TOOLS
+Best Mix calculator — Nitrox and Trimix modes
+MOD reference table — Air + EAN22–40 at 1.4 and 1.6 bar
+END Calculator — narcotic depth, risk level, narcosis toggle
+EAD Table — Equivalent Air Depth for all nitrox mixes
+Narcotic depth warnings with explanation tooltips
+
+📊 PLANNING TABS
+Rec: Dive Planner · Surf Int · Avg Depth · Multi Dive · CNS O₂ · NDL Tables
+Tec: Deco Schedule · Best Mix · Surf Int · Multi Dive · CNS O₂ · NDL Tables
 
 📋 EXPORT
 Deco Slate — compact waterproof slate format
-Copy / TXT / PDF — full deco schedule export
-Gas consumption in all exports — pooled travel gas included
+Copy / TXT / PDF — full schedule + gas table
+PDF gas consumption: 7-column table, color-coded
 
 ⭐ PRESETS
 Save up to 20 named dive configs
@@ -184,7 +222,7 @@ Reload with one tap — stored locally, works offline
 
 📱 THE APP
 Native Android APK — works completely offline
-No account, no subscription, always free
+No account · no subscription · always free
 Open source on GitHub
 
 ─────────────────────
@@ -192,39 +230,47 @@ Open source on GitHub
 Try it in your browser right now 👇
 🔗 three-cats-lsp.github.io/LSP_D-planner
 
-Download the Android APK from our GitHub (link in bio)
+Android APK on GitHub (link in bio)
 
 Built by divers, for divers. 🤿
 
 ─────────────────────
 
-#scuba #diveplanning #technicaldiving #decompression #trimix #deco #scubadiving #techscuba #underwaterworld #diver #nitrox #openwater #diverlife #scubagear #decoplanning #buehlmann #vpmb #gasmixture #divecomputer #freediving
+#scuba #diveplanning #technicaldiving #decompression #trimix #deco #scubadiving #techscuba #diver #nitrox #openwater #diverlife #decoplanning #buehlmann #vpmb #narcosis #gasmixture #divecomputer #endcalculator #nitroxplanning
 
 ---
 
 ## Facebook Post
 
-We just released LSP D-Planner v2.8.9 — a free dive planning app for Android, and we wanted to share what's new.
+We just pushed a major update to LSP D-Planner v2.8.9 — a free dive planning app for Android and browser, and we wanted to share what's changed.
 
-It started as a tool we built for ourselves because we wanted something we actually trusted for planning deco dives. v2.8.9 brings a major overhaul to gas management planning.
+It started as a tool we built for ourselves because we wanted something we actually trusted for planning deco dives. This update brings a fully overhauled Tools section alongside the gas management improvements from earlier in the cycle.
 
-**What's new in v2.8.9 — Gas Consumption card:**
+**What's new in v2.8.9:**
 
-The standalone Gas Plan tab is gone. Instead, the full gas consumption table now lives directly in the Deco Schedule, right below your deco table where it belongs. It shows every gas you're planning to breathe — GAS, TOTAL VOLUME, THIRDS (turn pressure), RESERVE, and whether you have enough.
+**Gas Consumption (Deco Schedule)**
+The gas table now lives directly in the Deco Schedule — GAS · TOTAL VOLUME · THIRDS · TURN PRESSURE · RESERVE · SUFFICIENT · MARGIN. Rule of Thirds and Half Tank toggle with live update. Travel gas auto-pools with bottom gas if same mix. MARGIN column shows `+/−X L` in green/red. Color-coded sufficiency throughout.
 
-A few details worth highlighting:
+**Best Mix — Nitrox and Trimix modes**
+The Best Mix tab in Tec mode now has a Nitrox/Trimix toggle. Nitrox mode calculates optimal O₂% and shows a live depth reference table (10–42 m). Trimix mode adds He% for a target END and shows full gas breakdown. Reads depth and gas directly from your current dive plan.
 
-→ **Rule of Thirds / Half Tank toggle** — switch between rules and watch the turn pressure and sufficiency update instantly, no recalculation needed
-→ **Travel gas pooling** — if your travel gas is the same mix as your bottom gas (e.g. both Air), the volumes are pooled automatically. The card shows `Air (+Travel)` so you can see both cylinders were counted
-→ **Warning rows** — if your cylinder is too small for the planned dive, a red banner tells you the maximum bottom time and turn pressure for your current cylinder. Same red treatment for one-way gases that are tight on margin
-→ **Info button** — `?` next to the card title explains both gas rules, how one-way deco gas planning works, and what Short / Tight / OK mean
-→ **Exports updated** — Copy, TXT, and PDF all reflect the pooled totals and correct labels. The PDF now correctly shows SHORT on the bottom gas row when gas is insufficient, and renders the BT suggestion as a red banner
+**Narcosis tools (Tools section)**
+→ **END Calculator** — depth + O₂% + He% → narcotic depth, risk level, ppN₂/ppO₂/ppHe, MOD at 1.4 and 1.6 bar. Narcosis toggle (N₂ only vs N₂+O₂)
+→ **EAD Table** — Equivalent Air Depth for EAN22–40 across 12–38 m, live-computed
+→ **MOD reference table** — Air + EAN22–40 at both 1.4 and 1.6 bar, row highlight for your current O₂%
+→ Narcotic depth warning banners across all relevant tabs, all wired to a tooltip explaining the 30 m convention
 
-The rest of the planner is unchanged: Bühlmann ZHL-16C with GF, VPM-B, VPM-B/GFS hybrid, full trimix, altitude diving, multi-dive planning, Surface Interval calculator, Deco Slate export, Named Presets.
+**Rec mode navigation**
+New sub-menu: Dive Planner · Surf Int · Avg Depth · Multi Dive · CNS O₂ · NDL Tables. Average Depth moved from Tools into Rec — it's a planning tool for rec divers and belongs here.
+
+**PDF export**
+Gas consumption renders as a proper 7-column table in the PDF — dark header, color-coded rows, MARGIN column — matching the on-screen view exactly.
+
+Everything else is unchanged: Bühlmann ZHL-16C with GF, VPM-B, VPM-B/GFS hybrid, altitude diving, Named Presets, Deco Slate export.
 
 Try it in your browser: https://three-cats-lsp.github.io/LSP_D-planner/
 Download the Android APK: https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk
-Source code and full changelog: https://github.com/Three-Cats-LSP/LSP_D-planner
+Source code: https://github.com/Three-Cats-LSP/LSP_D-planner
 
 Free, open source, offline. Always will be.
 
