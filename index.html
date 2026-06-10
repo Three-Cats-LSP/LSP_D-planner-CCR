@@ -172,14 +172,14 @@ body.light-theme .ok,   body.light-theme .ok *   { color:#116622 !important; }
 body.light-theme .info, body.light-theme .info *  { color:#0077aa !important; }
 
 /* Gas consumption — BT suggestion banner row */
-.gas-bt-cell { background:#FF4433 !important; color:#fff !important; font-weight:700; font-size:11px; padding:6px 10px; border-bottom:2px solid #cc2200; }
+.gas-bt-cell { background:#FF4433 !important; color:#fff !important; font-weight:700; font-size:11px; padding:6px 10px; border-bottom:1px solid var(--border) !important; }
 .gas-bt-cell span, .gas-bt-cell strong, .gas-bt-cell * { color:#fff !important; }
 body.light-theme .gas-bt-cell { color:#000 !important; }
 body.light-theme .gas-bt-cell span, body.light-theme .gas-bt-cell strong, body.light-theme .gas-bt-cell * { color:#000 !important; }
 
 /* Gas consumption — tight warning row */
 body .deco-table tr.gas-tight-row td,
-body .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
+body .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:1px solid var(--border) !important; }
 body .deco-table tr.gas-tight-row td span,
 body .deco-table tr.gas-tight-row td * { color:#fff !important; }
 body.light-theme .deco-table tr.gas-tight-row td,
@@ -1117,7 +1117,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   body.light-theme .gas-bt-cell *, body.light-theme .gas-bt-cell strong, body.light-theme .gas-bt-cell span { color:#000 !important; }
 
   .deco-table tr.gas-tight-row td,
-  .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
+  .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:1px solid var(--border) !important; }
   .deco-table tr.gas-tight-row td span,
   .deco-table tr.gas-tight-row td * { color:#fff !important; }
   body.light-theme .deco-table tr.gas-tight-row td,
@@ -1682,7 +1682,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <table class="deco-table table-view">
         <thead><tr>
-          <th>GAS</th><th>TOTAL VOL</th><th>RULE OF 3RDS</th><th>TURN PRESS</th><th>RESERVE</th><th>SUFFICIENT</th>
+          <th>GAS</th><th>TOTAL VOL</th><th>THIRDS</th><th>TURN PRESS</th><th>RESERVE</th><th>SUFFICIENT</th>
         </tr></thead>
         <tbody id="gpResultBody"></tbody>
       </table>
@@ -2818,6 +2818,42 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 <!-- ══════════════════════════════════════
      INFO TIP MODAL (click/tap tooltips)
 ══════════════════════════════════════ -->
+<!-- Gas Rule Info Modal -->
+<div id="gasRuleModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:rgba(0,0,0,0.72);padding:16px;align-items:flex-start;justify-content:center;overflow-y:auto;" onclick="if(event.target===this)closeGasRuleInfo()">
+  <div style="max-width:460px;width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:20px 22px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.5);margin-top:40px;">
+    <div style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;">⛽ Gas Management Rules</div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);line-height:1.8;">
+
+      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:1px;">RULE OF THIRDS (Thirds)</div>
+      <div style="margin-bottom:12px;">The standard tec diving gas rule. Divide your bottom gas into three equal thirds:
+        <div style="margin:8px 0 4px 12px;">• <span style="color:var(--accent);">1st third</span> — used on the way out / descent</div>
+        <div style="margin:0 0 4px 12px;">• <span style="color:var(--accent);">2nd third</span> — used on the way back / ascent</div>
+        <div style="margin:0 0 0 12px;">• <span style="color:var(--red);">3rd third</span> — held as reserve for emergencies</div>
+        <div style="margin-top:8px;color:var(--muted);">Turn pressure = fill − (fill − reserve) × ⅓<br>Designed for out-and-back penetration dives. Standard for cave, wreck, and deep technical dives.</div>
+      </div>
+
+      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:1px;">HALF TANK (Half)</div>
+      <div style="margin-bottom:12px;">A more conservative rule — turn at half the usable gas:
+        <div style="margin:8px 0 4px 12px;">• <span style="color:var(--accent);">First half</span> — used for the dive</div>
+        <div style="margin:0 0 0 12px;">• <span style="color:var(--red);">Second half</span> — held as reserve</div>
+        <div style="margin-top:8px;color:var(--muted);">Turn pressure = fill − (fill − reserve) × ½<br>Common for open-water deco dives and as a more conservative margin for new tec divers.</div>
+      </div>
+
+      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:1px;">DECO &amp; TRAVEL GASES</div>
+      <div style="color:var(--muted);">Deco and travel gases are one-way — there is no turn pressure. The full usable volume is compared against the requirement from the last deco plan run.</div>
+
+      <div style="margin-top:12px;padding:8px 12px;background:rgba(255,68,51,0.08);border-left:3px solid var(--red);border-radius:4px;font-size:10px;color:var(--muted);">
+        <span style="color:var(--red);font-weight:700;">⚠ Short</span> — insufficient gas for the plan.<br>
+        <span style="color:#FF4433;font-weight:700;">⚠ Tight</span> — just enough; no margin for error.<br>
+        <span style="color:var(--green);font-weight:700;">✓ OK</span> — &gt;10% margin above requirement.
+      </div>
+    </div>
+
+    <button onclick="closeGasRuleInfo()" style="margin-top:16px;width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;">✕ Close</button>
+  </div>
+</div>
+
 <div id="tipModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:rgba(0,0,0,0.72);padding:20px;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTip()">
   <div style="max-width:420px;width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px 20px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
     <div id="tipModalTitle" style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;"></div>
@@ -3706,6 +3742,14 @@ function showTip(title, text) {
 }
 function closeTip() {
   document.getElementById('tipModal').style.display = 'none';
+}
+
+function showGasRuleInfo() {
+  const m = document.getElementById('gasRuleModal');
+  m.style.display = 'flex';
+}
+function closeGasRuleInfo() {
+  document.getElementById('gasRuleModal').style.display = 'none';
 }
 
 function toggleWarningModal() {
@@ -5577,11 +5621,14 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     calcGasPlan();
     const gpBodyVPM = document.getElementById('gpResultBody');
     const gpNoteVPM = document.getElementById('gpResultNote');
-    const ruleLblVPM = (_gasRule === 'half') ? 'HALF' : 'RULE OF 3RDS';
+    const ruleLblVPM = (_gasRule === 'half') ? 'HALF' : 'THIRDS';
     const sacUnitVPM2 = units === 'imperial' ? 'cu ft/min' : 'L/min';
     let ghtml = `<div class="card" style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="card-title" style="margin-bottom:0;">Gas Consumption</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="card-title" style="margin-bottom:0;">Gas Consumption</div>
+          <button onclick="showGasRuleInfo()" style="background:none;border:1px solid var(--border);border-radius:50%;width:16px;height:16px;font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;" title="About gas rules">?</button>
+        </div>
         <div style="display:flex;gap:4px;align-items:center;">
           <span style="font-size:10px;color:var(--muted);margin-right:4px;">Rule:</span>
           <button class="btn-export${_gasRule!=='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('thirds')" id="gasRuleTBtn">Thirds</button>
@@ -8452,11 +8499,14 @@ function runDecoSchedule() {
       calcGasPlan();
       const gpBody = document.getElementById('gpResultBody');
       const gpNote = document.getElementById('gpResultNote');
-      const ruleLblCard = (_gasRule === 'half') ? 'HALF' : 'RULE OF 3RDS';
+      const ruleLblCard = (_gasRule === 'half') ? 'HALF' : 'THIRDS';
       const sacUnitBHL2 = units === 'imperial' ? 'cu ft/min' : 'L/min';
       const html = `<div class="card" style="margin-top:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div class="card-title" style="margin-bottom:0;">${cardTitle}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="card-title" style="margin-bottom:0;">${cardTitle}</div>
+            <button onclick="showGasRuleInfo()" style="background:none;border:1px solid var(--border);border-radius:50%;width:16px;height:16px;font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;" title="About gas rules">?</button>
+          </div>
           <div style="display:flex;gap:4px;align-items:center;">
             <span style="font-size:10px;color:var(--muted);margin-right:4px;">Rule:</span>
             <button class="btn-export${_gasRule!=='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('thirds')">Thirds</button>
@@ -10657,14 +10707,14 @@ function _applyGasWarningStyles(container) {
     td.style.setProperty('font-weight', '700', 'important');
     td.style.setProperty('font-size', '11px', 'important');
     td.style.setProperty('padding', '6px 10px', 'important');
-    td.style.setProperty('border-bottom', '2px solid #cc2200', 'important');
+    td.style.setProperty('border-bottom', '1px solid rgba(0,0,0,0.15)', 'important');
     td.querySelectorAll('*').forEach(el => el.style.setProperty('color', textCol, 'important'));
   });
   container.querySelectorAll('tr.gas-tight-row td').forEach(td => {
     td.style.setProperty('background', '#FF4433', 'important');
     td.style.setProperty('color', textCol, 'important');
     td.style.setProperty('font-weight', '600', 'important');
-    td.style.setProperty('border-bottom', '2px solid #cc2200', 'important');
+    td.style.setProperty('border-bottom', '1px solid rgba(0,0,0,0.15)', 'important');
     td.querySelectorAll('*').forEach(el => el.style.setProperty('color', textCol, 'important'));
   });
 }
@@ -10968,7 +11018,7 @@ async function buildGasPlanPDF() {
   doc.setTextColor(0,0,0); y+=16;
 
   // Table header
-  const headers=['GAS','TOTAL VOL','RULE OF 3RDS','TURN PRESS','RESERVE','SUFFICIENT'];
+  const headers=['GAS','TOTAL VOL','THIRDS','TURN PRESS','RESERVE','SUFFICIENT'];
   const colW=[40,30,34,28,24,26];
   const colX=[ML]; colW.forEach((w,i)=>{ if(i<colW.length-1) colX.push(colX[i]+colW[i]); });
   doc.setFillColor(0,90,140); doc.rect(ML,y,CW,6,'F');
