@@ -171,6 +171,10 @@ body.light-theme .warn, body.light-theme .warn * { color:#884400 !important; }
 body.light-theme .ok,   body.light-theme .ok *   { color:#116622 !important; }
 body.light-theme .info, body.light-theme .info *  { color:#0077aa !important; }
 
+/* Gas consumption — tight warning row */
+.gas-tight-row td { background:#FF4433 !important; color:#fff !important; font-weight:600; }
+body.light-theme .gas-tight-row td { background:#FF4433 !important; color:#000 !important; }
+
 /* Keep algo-label bright cyan in light theme */
 body.light-theme .algo-label {
   color: #00d9ff !important;
@@ -10758,12 +10762,11 @@ function calcGasPlan() {
         }
         const reqTxt = r.reqL == null ? '—' : `${gpVolDisp(r.reqL)} ${volU}`;
         const isTight = r.reqL != null && r.totalL >= r.reqL && r.totalL < r.reqL * 1.10;
-        const rowStyle = isTight ? 'background:#FF4433;color:#fff;' : '';
-        html += `<tr style="${rowStyle}">
+        html += `<tr class="${isTight ? 'gas-tight-row' : ''}">
           <td>${r.label}</td>
-          <td style="color:${isTight ? '#fff' : statusCol + ' !important'};font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
-          <td style="color:${isTight ? '#fff' : 'var(--muted)'};">${isTight ? '' : 'req '}${reqTxt}</td>
-          <td style="color:${isTight ? '#fff' : 'var(--muted)'};">${isTight ? 'tight' : 'one-way'}</td>
+          <td style="${isTight ? '' : 'color:' + statusCol + ' !important;'}font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
+          <td>${isTight ? '' : 'req '}${reqTxt}</td>
+          <td>${isTight ? 'tight' : 'one-way'}</td>
           <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
           <td>${suffCell}</td>
         </tr>`;
