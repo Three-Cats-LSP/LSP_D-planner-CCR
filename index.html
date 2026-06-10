@@ -172,12 +172,14 @@ body.light-theme .ok,   body.light-theme .ok *   { color:#116622 !important; }
 body.light-theme .info, body.light-theme .info *  { color:#0077aa !important; }
 
 /* Gas consumption — tight warning row */
-.gas-tight-row td,
-.deco-table.table-view tr.gas-tight-row td,
-.deco-table.table-view tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600; border-bottom:2px solid #cc2200 !important; }
-body.light-theme .gas-tight-row td,
-body.light-theme .deco-table.table-view tr.gas-tight-row td,
-body.light-theme .deco-table.table-view tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#000 !important; }
+body .deco-table tr.gas-tight-row td,
+body .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
+body .deco-table tr.gas-tight-row td span,
+body .deco-table tr.gas-tight-row td * { color:#fff !important; }
+body.light-theme .deco-table tr.gas-tight-row td,
+body.light-theme .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#000 !important; }
+body.light-theme .deco-table tr.gas-tight-row td span,
+body.light-theme .deco-table tr.gas-tight-row td * { color:#000 !important; }
 
 /* Keep algo-label bright cyan in light theme */
 body.light-theme .algo-label {
@@ -1101,6 +1103,16 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   .deco-table.table-view td::before { display:none !important; }
   .deco-table.table-view th { display:table-cell !important; padding:5px 6px !important; font-size:8px !important; }
   .deco-table.table-view thead tr { display:table-row !important; background:none !important; }
+
+  /* Tight gas warning row — must come AFTER background:none rules above to win */
+  .deco-table tr.gas-tight-row td,
+  .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600 !important; border-bottom:2px solid #cc2200 !important; }
+  .deco-table tr.gas-tight-row td span,
+  .deco-table tr.gas-tight-row td * { color:#fff !important; }
+  body.light-theme .deco-table tr.gas-tight-row td,
+  body.light-theme .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#000 !important; }
+  body.light-theme .deco-table tr.gas-tight-row td span,
+  body.light-theme .deco-table tr.gas-tight-row td * { color:#000 !important; }
 }
 
 /* ── LSP SLIDER ── */
