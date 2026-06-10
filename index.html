@@ -11423,31 +11423,48 @@ function buildExportText(mode) {
 
     // ── Gas Consumption ──
     const _gcEl = document.getElementById('gasConsumptionSummary');
-    if (_gcEl && _gcEl.style.display !== 'none' && _gcEl.innerHTML.trim()) {
-      lines.push('GAS CONSUMPTION');
-      lines.push('-'.repeat(40));
-      // New table format: read tbody rows
-      _gcEl.querySelectorAll('tbody tr').forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        if (cells.length < 5) return;
-        const gas    = clean(cells[0].textContent).trim();
-        const req    = clean(cells[1].textContent).trim();
-        const avail  = clean(cells[2].textContent).trim();
-        const turn   = clean(cells[3].textContent).trim();
-        const status = clean(cells[4].textContent).trim().replace(/\s+/g,' ');
-        if (!gas) return;
-        lines.push(`  ${gas.padEnd(10)} need: ${req.padEnd(10)} avail: ${avail.padEnd(10)} turn: ${turn.padEnd(10)} ${status}`);
-      });
-      // Warning alerts
-      _gcEl.querySelectorAll('.alert').forEach(a => {
-        const t = clean(a.textContent).replace(/\s+/g,' ').trim();
-        if (t) lines.push(`  ! ${t}`);
-      });
-      // SAC footer
-      const _sacFooter = Array.from(_gcEl.querySelectorAll('div'))
-        .find(d => /SAC bottom/i.test(d.textContent));
-      if (_sacFooter) lines.push(`  ${clean(_sacFooter.textContent).trim()}`);
-      lines.push('');
+    if (_gcEl && _gcEl.style.display !== 'none') {
+      calcGasPlan();
+      const _gp = window._lastGasPlan;
+      if (_gp && _gp.rows && _gp.rows.length) {
+        const volU2  = units === 'imperial' ? 'cu ft' : 'L';
+        const presU2 = units === 'imperial' ? 'psi'   : 'bar';
+        const sacBot2 = document.getElementById('sacBottom')?.value || '20';
+        const sacDec2 = document.getElementById('sacDeco')?.value   || '15';
+        const ruleName2 = _gp.rule === 'half' ? 'Half Tank' : 'Thirds';
+        lines.push('GAS CONSUMPTION');
+        lines.push(`Rule: ${ruleName2}  SAC: bottom ${sacBot2} L/min, deco ${sacDec2} L/min`);
+        lines.push('-'.repeat(48));
+        _gp.rows.forEach(r => {
+          if (r.kind === 'bottom') {
+            const ruleTxt = _gp.rule === 'half' ? '1/2' : '1/3';
+            const lbl = r.label.includes('(+Travel)') ? r.label.replace('(+Travel)', '+ Travel') : r.label;
+            lines.push(`  ${lbl.toUpperCase().padEnd(14)} ${gpVolDisp(r.totalL)} ${volU2} avail   reserve: ${gpPresDisp(r.reserveBar)} ${presU2}`);
+            if (r.shortL != null && r.shortL > 0) {
+              lines.push(`    STATUS : INSUFFICIENT — need ${gpVolDisp(r.reqL)} ${volU2}, have ${gpVolDisp(r.totalL)} ${volU2} (short ${gpVolDisp(r.shortL)} ${volU2})`);
+              if (r.maxBTmin != null) {
+                lines.push(`    FIX    : Shorten BT to ${r.maxBTmin} min, turn at ${gpPresDisp(r.maxTurnBar)} ${presU2}`);
+                lines.push(`           : Or use a larger cylinder / add a stage`);
+              }
+            } else {
+              lines.push(`    TURN   : ${gpPresDisp(r.turnBar)} ${presU2}  (${ruleTxt} of ${gpVolDisp(r.portionL)} ${volU2})`);
+              if (r.reqL != null) lines.push(`    PLAN   : needs ${gpVolDisp(r.reqL)} ${volU2}  ✓ OK`);
+            }
+          } else {
+            lines.push(`  ${r.label.toUpperCase().padEnd(14)} ${gpVolDisp(r.totalL)} ${volU2} avail   reserve: ${gpPresDisp(r.reserveBar)} ${presU2}`);
+            if (r.reqL == null) {
+              lines.push(`    STATUS : run deco plan first`);
+            } else {
+              const margin2 = r.totalL - r.reqL;
+              const status2 = r.totalL >= r.reqL * 1.10 ? 'OK' : r.totalL >= r.reqL ? 'TIGHT' : 'INSUFFICIENT';
+              lines.push(`    NEED   : ${gpVolDisp(r.reqL)} ${volU2}   MARGIN: ${gpVolDisp(margin2)} ${volU2}   STATUS: ${status2}`);
+              if (status2 === 'INSUFFICIENT') lines.push(`    FIX    : Add more gas or reduce deco obligation`);
+            }
+          }
+        });
+        lines.push('-'.repeat(48));
+        lines.push('');
+      }
     }
 
     lines.push('!! SAFETY REMINDERS');
@@ -13777,40 +13794,63 @@ async function exportPDF() {
 
   const gasConsEl=document.getElementById('gasConsumptionSummary');
   if(gasConsEl&&gasConsEl.style.display!=='none'){
-    doc.addPage(); drawHeader();
-    const sacBot=document.getElementById('sacBottom')?.value||'20';
-    const sacDec=document.getElementById('sacDeco')?.value||'15';
-    sectionTitle('GAS CONSUMPTION',`SAC bottom: ${sacBot} ${_pdfSacUnit}  deco: ${sacDec} ${_pdfSacUnit}`);
-    // New table layout: read tbody rows
-    const cols=['GAS','REQUIRED','AVAILABLE','TURN PRESS','STATUS'];
-    const colW=[30,35,35,35,CW-135];
-    // Header row
-    doc.setFontSize(7);doc.setFont('NotoSans','bold');doc.setTextColor(120,120,140);
-    let cx=ML; cols.forEach((c,i)=>{doc.text(c,cx,y);cx+=colW[i];}); y+=5;
-    doc.setDrawColor(200,200,210);doc.line(ML,y,ML+CW,y);y+=3;
-    gasConsEl.querySelectorAll('tbody tr').forEach(tr=>{
-      const cells=tr.querySelectorAll('td');
-      if(cells.length<5)return;
-      checkY(7);
-      const vals=[cells[0],cells[1],cells[2],cells[3],cells[4]].map(c=>cleanPDF(c.textContent));
-      const over=vals[4].includes('Short')||vals[4].includes('✗');
-      doc.setFont('NotoSans','normal');doc.setFontSize(8);
-      doc.setTextColor(over?180:0,over?0:0,0);
-      cx=ML; vals.forEach((v,i)=>{
-        const ls=doc.splitTextToSize(v,colW[i]-2);
-        doc.text(ls,cx,y);cx+=colW[i];
-      }); y+=6;
-    });
-    y+=4;
-    gasConsEl.querySelectorAll('.alert').forEach(w=>{
-      checkY(8); const t=cleanPDF(w.textContent);
-      if(!t) return;
-      const ls2=doc.splitTextToSize('[!] '+t, CW-4);
-      const lh2=5.5*ls2.length;
-      doc.setFillColor(255,240,240);doc.roundedRect(ML,y,CW,lh2+2,1.5,1.5,'F');
-      doc.setFontSize(7.5);doc.setFont('NotoSans','bold');doc.setTextColor(180,0,0);
-      doc.text(ls2,ML+2,y+4);doc.setTextColor(0,0,0);y+=lh2+4;
-    });
+    calcGasPlan();
+    const _gpPDF=window._lastGasPlan;
+    if(_gpPDF&&_gpPDF.rows&&_gpPDF.rows.length){
+      doc.addPage(); drawHeader();
+      const sacBot=document.getElementById('sacBottom')?.value||'20';
+      const sacDec=document.getElementById('sacDeco')?.value||'15';
+      const pdfVolU=units==='imperial'?'cu ft':'L';
+      const pdfPresU=units==='imperial'?'psi':'bar';
+      const pdfRuleName=_gpPDF.rule==='half'?'Half Tank':'Thirds';
+      sectionTitle('GAS CONSUMPTION',`${pdfRuleName} rule  •  SAC bottom: ${sacBot} ${_pdfSacUnit}  deco: ${sacDec} ${_pdfSacUnit}`);
+      _gpPDF.rows.forEach(r=>{
+        checkY(20);
+        const lbl=cleanPDF(r.label);
+        // Gas name (bold) + available/reserve on same line
+        doc.setFontSize(8.5);doc.setFont('NotoSans','bold');doc.setTextColor(40,40,40);
+        doc.text(lbl,ML,y);
+        doc.setFont('NotoSans','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
+        doc.text(`${gpVolDisp(r.totalL)} ${pdfVolU} available   reserve: ${gpPresDisp(r.reserveBar)} ${pdfPresU}`,ML+50,y);
+        y+=5;
+        if(r.kind==='bottom'){
+          const ruleTxt=_gpPDF.rule==='half'?'1/2':'1/3';
+          if(r.shortL!=null&&r.shortL>0){
+            doc.setFont('NotoSans','bold');doc.setFontSize(8);doc.setTextColor(180,0,0);
+            const shortMsg=`INSUFFICIENT: need ${gpVolDisp(r.reqL)} ${pdfVolU}, have ${gpVolDisp(r.totalL)} ${pdfVolU} (short ${gpVolDisp(r.shortL)} ${pdfVolU})`;
+            const shortLines=doc.splitTextToSize(shortMsg,CW-8);
+            doc.text(shortLines,ML+4,y); y+=shortLines.length*4.5;
+            if(r.maxBTmin!=null){
+              doc.setFont('NotoSans','normal');doc.setFontSize(7.5);doc.setTextColor(120,0,0);
+              doc.text(`Shorten BT to ${r.maxBTmin} min, turn at ${gpPresDisp(r.maxTurnBar)} ${pdfPresU}  •  or use a larger cylinder`,ML+4,y); y+=4;
+            }
+          } else {
+            doc.setFont('NotoSans','normal');doc.setFontSize(8);doc.setTextColor(0,120,60);
+            const turnTxt=`Turn: ${gpPresDisp(r.turnBar)} ${pdfPresU}  (${ruleTxt} of ${gpVolDisp(r.portionL)} ${pdfVolU})`;
+            const planTxt=r.reqL!=null?`  •  plan needs ${gpVolDisp(r.reqL)} ${pdfVolU}  ✓`:'';
+            doc.text(turnTxt+planTxt,ML+4,y); y+=4.5;
+          }
+        } else {
+          if(r.reqL==null){
+            doc.setFont('NotoSans','normal');doc.setFontSize(7.5);doc.setTextColor(140,140,140);
+            doc.text('One-way — run deco plan first to check sufficiency',ML+4,y); y+=4;
+          } else {
+            const margin3=r.totalL-r.reqL;
+            const stat3=r.totalL>=r.reqL*1.10?'OK':r.totalL>=r.reqL?'TIGHT':'INSUFFICIENT';
+            const tc3=stat3==='OK'?[0,120,60]:stat3==='TIGHT'?[180,80,0]:[180,0,0];
+            doc.setFont('NotoSans','normal');doc.setFontSize(8);
+            doc.setTextColor(...tc3);
+            const oneWayMsg=`One-way  •  need ${gpVolDisp(r.reqL)} ${pdfVolU}  •  margin ${gpVolDisp(margin3)} ${pdfVolU}  •  ${stat3}`;
+            doc.text(oneWayMsg,ML+4,y); y+=4.5;
+            if(stat3==='INSUFFICIENT'){
+              doc.setFont('NotoSans','bold');doc.setFontSize(7.5);
+              doc.text('Add more gas or reduce deco obligation',ML+4,y); y+=4;
+            }
+          }
+        }
+        doc.setDrawColor(220,220,220);doc.line(ML,y,ML+CW,y);y+=4;
+      });
+    }
   }
 
   drawDecoProfile();
@@ -14389,6 +14429,7 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
+
 
 
 
