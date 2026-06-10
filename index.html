@@ -980,6 +980,19 @@ body.light-theme .ok   { background:#f0fff4; border-color:#116622; color:#116622
 .gas-plan-table col:nth-child(7) { width:16%; }
 .gas-plan-table th { padding:8px 10px; text-align:left; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.05); vertical-align:middle; white-space:nowrap; overflow:hidden; }
 .gas-plan-table td { padding:7px 10px; text-align:left; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; overflow:hidden; }
+/* Best Mix reference table */
+.bmt-ref-row td { padding:5px 6px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.bmt-ref-row:last-child td { border-bottom:none; }
+.bmt-ref-row.bmt-ref-highlight { background:rgba(255,255,255,0.04); }
+.bmt-ref-row.bmt-ref-highlight td:first-child { border-left:2px solid var(--accent); padding-left:4px; }
+/* FAQ accordion */
+.bmt-faq { border-bottom:1px solid var(--border); padding:10px 0; }
+.bmt-faq:last-child { border-bottom:none; }
+.bmt-faq summary { cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+.bmt-faq summary::-webkit-details-marker { display:none; }
+.bmt-faq summary::after { content:'+'; font-size:16px; color:var(--muted); flex-shrink:0; margin-left:8px; }
+.bmt-faq[open] summary::after { content:'−'; }
+.bmt-faq p { margin:8px 0 4px 0; font-size:12px; color:var(--muted); line-height:1.6; }
 /* Right-align numeric columns: Depth(2), Stop(3), Run(4), EAD(6), END(7), PPO2(8), CNS%(9) */
 .deco-table th:nth-child(2), .deco-table td:nth-child(2),
 .deco-table th:nth-child(3), .deco-table td:nth-child(3),
@@ -1646,6 +1659,32 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
   </div>
 
+  <!-- ── Nitrox Reference Table ── -->
+  <div class="card" id="bmtRefCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="card-title" style="margin-bottom:0;">Best Nitrox Mix — Depth Reference</div>
+      <div style="font-size:10px;color:var(--muted);">ppO₂ limit: <span id="bmtRefPPO2Label">1.4</span></div>
+    </div>
+    <p style="color:var(--muted);font-size:11px;margin-bottom:12px;">Pre-calculated optimal O₂% for each depth using ppO₂ limit set below. Best mix maximises bottom time while staying within safe oxygen exposure. MOD is the maximum operating depth for that mix.</p>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table id="bmtRefTable" style="width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">Depth</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">Best Mix</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">O₂ %</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">MOD</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">EAD</th>
+            <th style="text-align:left;padding:5px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:400;">ppO₂</th>
+          </tr>
+        </thead>
+        <tbody id="bmtRefTableBody">
+          <!-- filled by renderBmtRefTable() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Best Mix Calculator -->
   <div class="card">
     <!-- Title + Nitrox/Trimix toggle -->
@@ -1702,6 +1741,48 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
       No depth set — configure a dive on the Deco Schedule tab first.
     </div>
   </div>
+
+
+  <!-- FAQ Accordion -->
+  <div class="card" id="bmtFAQCard">
+    <div class="card-title" style="margin-bottom:14px;">Nitrox FAQ</div>
+
+    <details class="bmt-faq" open>
+      <summary>What does "best mix" mean?</summary>
+      <p>The best nitrox mix is the blend whose O₂ fraction keeps the partial pressure of oxygen at exactly the ppO₂ limit (e.g. 1.4 bar) at your target depth. This gives you the highest possible O₂ concentration without exceeding the safe ppO₂, which in turn reduces the partial pressure of nitrogen — extending your no-deco bottom time compared to air.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Why is ppO₂ 1.4 bar the standard limit?</summary>
+      <p>At ppO₂ values above 1.6 bar the risk of central nervous system (CNS) oxygen toxicity rises sharply — convulsions can occur with little warning, which is fatal underwater. PADI, NAUI and most training agencies recommend a working limit of 1.4 bar for bottom gas (leaving a safety margin) and up to 1.6 bar only for short deco stops at shallow depths.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>What is EAD (Equivalent Air Depth)?</summary>
+      <p>EAD is the air depth that has the same partial pressure of nitrogen as your nitrox mix at a given depth. Because nitrox has more O₂ and less N₂ than air, the EAD is always shallower than the actual depth — meaning you accumulate nitrogen as if you were diving shallower. You can use the EAD with standard air tables or a dive computer set to "air" mode.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>What is MOD (Maximum Operating Depth)?</summary>
+      <p>MOD is the deepest depth at which a given mix may be used without exceeding the ppO₂ limit. Going deeper than MOD risks oxygen toxicity. Always label your cylinder with its MOD and verify it before every dive. MOD = (ppO₂ limit ÷ O₂ fraction − 1) × 10 metres at sea level.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Can I use these mixes on a standard recreational dive computer?</summary>
+      <p>Yes — most modern dive computers support nitrox. Set the O₂% in your computer to match the analysed fill percentage (always analyse your cylinder), and confirm the ppO₂ limit matches your training. The computer will then apply the EAD to its NDL calculations automatically.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>When should I consider Trimix instead of Nitrox?</summary>
+      <p>Beyond about 30 m the narcotic effect of nitrogen (and, according to some models, oxygen) can impair judgment. Adding helium reduces the Equivalent Narcotic Depth (END), keeping cognitive performance closer to a shallower air dive. Trimix is standard practice for dives below 40–50 m. Use the Trimix mode in the calculator above to find a helium fraction that brings END within your comfort zone.</p>
+    </details>
+
+    <details class="bmt-faq">
+      <summary>Why does the O₂% sometimes stay the same across several depths?</summary>
+      <p>Best mix is rounded down to the nearest whole percent. At shallower depths the ppO₂ limit allows up to 40 % O₂, which is the practical ceiling for recreational nitrox blends (many dive shops only fill to EAN40). So EAN40 appears optimal across multiple shallow depths until the depth is great enough to require a lower O₂ fraction to stay under the ppO₂ ceiling.</p>
+    </details>
+
+  </div><!-- /bmtFAQCard -->
 
 </div><!-- /bestmix-tec -->
 
@@ -5924,7 +6005,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       ${hasDeco
         ? '<div class="alert deco" style="margin-top:10px;background:#ffffff;border-color:#cc0000;border-width:1px;color:#111111;"><span>🔴</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
         : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong></div></div>'}
-      ${endMvpm > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>' : endMvpm > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>' : ''}`;
+      ${endMvpm > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endMvpm > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
 
     // CNS warning goes to decoAlerts (after table) — handled by alertsContainer below
   }
@@ -8282,7 +8363,7 @@ function runDecoSchedule() {
     ${hasDeco
       ? '<div class="alert deco" style="margin-top:10px;background:#ffffff;border-color:#cc0000;border-width:1px;color:#111111;"><span>🔴</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
       : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}
-    ${endM > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>' : endM > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>' : ''}`;
+    ${endM > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endM > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
 
   const tbody = document.getElementById('decoTableBody');
   const descentTimeMin = Math.round((depthM / descentRate) * 10) / 10;
@@ -10358,10 +10439,10 @@ function calcBestMixTec() {
     const alertEl = document.getElementById('bmtENDAlert');
     if (currentEND > 40) {
       alertEl.style.display = 'block';
-      alertEl.innerHTML = `<div class="alert" style="background:#FF4433;border-color:#111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END ${endDisp} ${dUnit} exceeds 40 m equivalent. Add helium to reduce narcosis.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>`;
+      alertEl.innerHTML = `<div class="alert" style="background:#FF4433;border-color:#111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END ${endDisp} ${dUnit} exceeds 40 m equivalent. Add helium to reduce narcosis.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>`;
     } else if (currentEND > 30) {
       alertEl.style.display = 'block';
-      alertEl.innerHTML = `<div class="alert" style="background:#FF4433;border-color:#111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END ${endDisp} ${dUnit} exceeds 30 m equivalent. Consider adding helium.<span onclick="showTip(_narcoticTipTitle,_narcoticTipText)" style="cursor:pointer;margin-left:6px;font-size:11px;opacity:0.85;border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;">ⓘ</span></div></div>`;
+      alertEl.innerHTML = `<div class="alert" style="background:#FF4433;border-color:#111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END ${endDisp} ${dUnit} exceeds 30 m equivalent. Consider adding helium.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>`;
     } else {
       alertEl.style.display = 'none';
     }
@@ -10452,6 +10533,62 @@ function calcBestMixTec() {
     alerts += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>MOD ${modDisp} is shallower than dive depth.</strong> Increase ppO₂ limit or reduce O₂%.</div></div>`;
   }
   alertEl2.innerHTML = alerts;
+
+  // Re-render reference table (ppO2 may have changed)
+  renderBmtRefTable();
+}
+
+// ── Nitrox Reference Table renderer ──
+function renderBmtRefTable() {
+  const tbody = document.getElementById('bmtRefTableBody');
+  const ppO2Label = document.getElementById('bmtRefPPO2Label');
+  if (!tbody) return;
+
+  const du       = units === 'metric';
+  const dUnit    = du ? 'm' : 'ft';
+  const ppO2Lim  = (parseFloat(document.getElementById('bmtPPO2')?.value) || 14) / 10;
+  if (ppO2Label) ppO2Label.textContent = ppO2Lim.toFixed(1);
+
+  // Current dive depth for highlighting
+  const depthRaw = parseFloat(document.getElementById('decoDepth')?.value) || 0;
+  const currentDepthM = du ? depthRaw : depthRaw / 3.28084;
+
+  const rows = [];
+  for (let dM = 10; dM <= 42; dM++) {
+    const pAmb   = (altSurfaceP || 1.0) + dM * (BAR_PER_METRE || 0.1);
+    const o2Raw  = (ppO2Lim / pAmb) * 100;
+    const o2Pct  = Math.min(100, Math.max(1, Math.floor(o2Raw)));
+    const fO2    = o2Pct / 100;
+    const fN2    = 1 - fO2;
+    // EAD: depth at which air has same N2 ppressure
+    const pN2    = fN2 * pAmb;
+    const eadM   = Math.max(0, (pN2 / 0.79) - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1);
+    // MOD at ppO2 limit
+    const modM   = Math.floor((ppO2Lim / fO2 - (altSurfaceP || 1.0)) / (BAR_PER_METRE || 0.1));
+    // ppO2 at this depth
+    const actPPO2 = (fO2 * pAmb).toFixed(2);
+    // Mix name
+    const mixName = o2Pct === 21 ? 'Air' : 'EAN' + o2Pct + ' (' + o2Pct + '%)';
+    // Display values
+    const depthDisp = du ? dM + ' m' : Math.round(dM * 3.28084) + ' ft';
+    const eadDisp   = du ? Math.round(eadM) + ' m' : Math.round(eadM * 3.28084) + ' ft';
+    const modDisp   = du ? modM + ' m' : Math.round(modM * 3.28084) + ' ft';
+    // Highlight row closest to current dive depth
+    const isHighlight = currentDepthM > 0 && Math.abs(dM - currentDepthM) < 0.5;
+    // O2 colour: ≥40% nitrox = green, 21-39% = accent, air = muted
+    const o2Col = o2Pct >= 32 ? 'var(--green)' : o2Pct >= 22 ? 'var(--accent)' : 'var(--muted)';
+    rows.push(
+      `<tr class="bmt-ref-row${isHighlight ? ' bmt-ref-highlight' : ''}">`+
+      `<td style="color:var(--text);">${depthDisp}</td>`+
+      `<td style="color:${o2Col};font-weight:600;">${mixName}</td>`+
+      `<td style="color:${o2Col};">${o2Pct}%</td>`+
+      `<td style="color:var(--muted);">${modDisp}</td>`+
+      `<td style="color:var(--muted);">${eadDisp}</td>`+
+      `<td style="color:var(--muted);">${actPPO2}</td>`+
+      `</tr>`
+    );
+  }
+  tbody.innerHTML = rows.join('');
 }
 
 function calcBestMix() {
