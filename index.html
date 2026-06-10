@@ -3457,13 +3457,24 @@ Helium is non-narcotic. Adding helium to a mix displaces nitrogen and reduces th
 N₂ narcotic setting: whether O₂ counts toward END is configurable on the Deco Schedule tab (N₂ Narcotic / O₂ Narcotic toggles). NOAA/IANTD count both; some agencies exclude O₂.`;
 
 const _toolsBmtFaqTitle = 'Nitrox Best Mix — FAQ';
-const _toolsBmtFaqText  = `❓ What does "best mix" mean?
-The best nitrox mix is the blend whose O₂ fraction keeps the partial pressure of oxygen at exactly the ppO₂ limit (e.g. 1.4 bar) at your target depth. This gives you the highest possible O₂ concentration without exceeding the safe ppO₂, which in turn reduces the partial pressure of nitrogen — extending your no-deco bottom time compared to air.\\n\\n❓ Why is ppO₂ 1.4 bar the standard limit?
-At ppO₂ values above 1.6 bar the risk of central nervous system (CNS) oxygen toxicity rises sharply — convulsions can occur with little warning, which is fatal underwater. PADI, NAUI and most training agencies recommend a working limit of 1.4 bar for bottom gas (leaving a safety margin) and up to 1.6 bar only for short deco stops at shallow depths.\\n\\n❓ What is EAD (Equivalent Air Depth)?
-EAD is the air depth that has the same partial pressure of nitrogen as your nitrox mix at a given depth. Because nitrox has more O₂ and less N₂ than air, the EAD is always shallower than the actual depth — meaning you accumulate nitrogen as if you were diving shallower. You can use the EAD with standard air tables or a dive computer set to "air" mode.\\n\\n❓ What is MOD (Maximum Operating Depth)?
-MOD is the deepest depth at which a given mix may be used without exceeding the ppO₂ limit. Going deeper than MOD risks oxygen toxicity. Always label your cylinder with its MOD and verify it before every dive. MOD = (ppO₂ limit ÷ O₂ fraction − 1) × 10 metres at sea level.\\n\\n❓ Can I use these mixes on a standard recreational dive computer?
-Yes — most modern dive computers support nitrox. Set the O₂% in your computer to match the analysed fill percentage (always analyse your cylinder), and confirm the ppO₂ limit matches your training. The computer will then apply the EAD to its NDL calculations automatically.\\n\\n❓ Why does the O₂% stay the same across several depths?
-Best mix is rounded down to the nearest whole percent. At shallower depths the ppO₂ limit allows up to 40% O₂, which is the practical ceiling for recreational nitrox blends (many dive shops only fill to EAN40). So EAN40 appears optimal across multiple shallow depths until the depth is great enough to require a lower O₂ fraction to stay under the ppO₂ ceiling.`;
+const _toolsBmtFaqText  =
+`❓  What does "best mix" mean?
+The best nitrox mix is the blend whose O₂ fraction keeps ppO₂ at exactly the limit (e.g. 1.4 bar) at your target depth — highest O₂ without exceeding the safe ppO₂, reducing nitrogen and extending no-deco bottom time vs. air.
+
+❓  Why is ppO₂ 1.4 bar the standard limit?
+Above 1.6 bar the risk of CNS oxygen toxicity rises sharply — convulsions can occur with little warning, which is fatal underwater. Most agencies recommend 1.4 bar for bottom gas and up to 1.6 bar only for brief shallow deco stops.
+
+❓  What is EAD (Equivalent Air Depth)?
+EAD is the air depth with the same nitrogen partial pressure as your nitrox at a given depth. Because nitrox has less N₂ than air, EAD is always shallower — you accumulate nitrogen as if diving shallower, extending NDL limits.
+
+❓  What is MOD (Maximum Operating Depth)?
+MOD is the deepest depth at which a mix can be used without exceeding the ppO₂ limit. Going deeper risks oxygen toxicity. Formula: MOD = (ppO₂ ÷ O₂ fraction − 1) × 10 m at sea level.
+
+❓  Can I use these mixes on a standard dive computer?
+Yes — set the O₂% to match the analysed cylinder fill. The computer applies the EAD automatically for NDL calculations. Always analyse your cylinder before every dive.
+
+❓  Why does the O₂% stay the same across several depths?
+Best mix is rounded down to the nearest whole %. At shallow depths the limit allows up to 40% O₂, so EAN40 appears optimal across multiple rows until depth is great enough to require a lower fraction.`;
 
 
 
