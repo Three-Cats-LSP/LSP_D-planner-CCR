@@ -3738,6 +3738,12 @@ function toggleTheme() {
   
   console.log('[LSP] Theme switched to:', isLight ? 'LIGHT' : 'DARK');
 
+  // Re-apply JS-forced warning row colors for new theme
+  ['gasConsumptionSummary','emergencyGasConsumption'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.style.display !== 'none') _applyGasWarningStyles(el);
+  });
+
   // Redraw canvases for new theme
   setTimeout(() => {
     drawPlannerProfile();
