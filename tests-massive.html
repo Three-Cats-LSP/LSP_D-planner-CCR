@@ -1250,7 +1250,7 @@ function fastRDS() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // safeSetUnits: calls WIN.setUnits() but suppresses heavy recalcs that would
-// freeze the JS thread on mobile (renderNDLTable, buildUnifiedPlan, runPlanner).
+// freeze the JS thread on mobile (renderNDLTable, buildUnifiedPlan, runPlanner, etc.).
 function safeSetUnits(u) {
   const d = getDoc();
   // Blank output containers so setUnits' conditional recalcs don't fire
@@ -1260,13 +1260,16 @@ function safeSetUnits(u) {
   const origPlanner = plannerEl ? plannerEl.innerHTML : null;
   if (decoEl)    decoEl.innerHTML    = '';
   if (plannerEl) plannerEl.innerHTML = '';
-  // Suppress renderNDLTable (heavy synchronous table build) during unit flip
-  const origNDL = WIN.renderNDLTable;
-  WIN.renderNDLTable = function(){};
+  // Stub out all heavy synchronous functions called by setUnits
+  const stubs = ['renderNDLTable','buildUnifiedPlan','runPlanner','renderGasTable',
+                 'calcBestMix','calcEND_tool','calcSurfInt','calcAvgDepth','calcMOD',
+                 'renderModRefTable','renderEADTable','updateGasMODDisplays','updateTravelGasMOD'];
+  const origFns = {};
+  stubs.forEach(fn => { origFns[fn] = WIN[fn]; WIN[fn] = function(){}; });
   try {
     WIN.setUnits(u);
   } finally {
-    WIN.renderNDLTable = origNDL;
+    stubs.forEach(fn => { WIN[fn] = origFns[fn]; });
     if (decoEl    && origDeco    !== null) decoEl.innerHTML    = origDeco;
     if (plannerEl && origPlanner !== null) plannerEl.innerHTML = origPlanner;
   }
