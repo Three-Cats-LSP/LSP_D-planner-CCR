@@ -1468,7 +1468,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 <!-- ══ TABS ══ -->
 <div class="tabs-nav">
   <button class="tab-btn buh-only active" id="tab-deco" onclick="switchTab('deco',this)">Deco Schedule</button>
-  <button class="tab-btn" id="tab-gasplan" onclick="switchTab('gasplan',this)">Gas Plan</button>
+
   <button class="tab-btn" id="tab-surfint" onclick="switchTab('surfint',this)">Surf Int</button>
   <button class="tab-btn" id="tab-planner" onclick="switchTab('planner',this)">Dive Planner</button>
   <button class="tab-btn" id="tab-multi" onclick="switchTab('multi',this)">Multi Dive</button>
@@ -1585,7 +1585,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 <!-- ══════════════════════════════════════
      GAS PLAN TAB
 ══════════════════════════════════════ -->
-<div class="panel" id="gasplan">
+<div class="panel" id="gasplan" style="display:none;">
 
   <!-- Card 1: Cylinder Configuration -->
   <div class="card">
@@ -5487,11 +5487,17 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
       const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : 'No cyl data';
 
-      // Turn pressure cell (bottom gas only)
-      const turnCell = (isBottom && turnBar != null)
-        ? `<td style="color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${units==='imperial'?Math.round(turnBar*14.5038):Math.round(turnBar)} ${presUnitV}</td>`
-        : `<td style="color:var(--muted);">one-way</td>`;
-      if (isBottom && turnBar != null) hasAnyTurn = true;
+      // Thirds/Half portion in litres (bottom only)
+      const portionDispV = (isBottom && portionL != null) ? `${Math.round(portionL)} ${volUnitV}` : '—';
+      const portionColorV = (isBottom && portionL != null) ? 'var(--accent)' : 'var(--muted)';
+      // Turn pressure (bottom only)
+      const turnDispV = (isBottom && turnBar != null) ? (units==='imperial'?Math.round(turnBar*14.5038):Math.round(turnBar)) : null;
+      const turnCellV = (isBottom && turnDispV != null)
+        ? `<td style="padding:5px 6px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDispV} ${presUnitV}</td>`
+        : `<td style="padding:5px 6px;color:var(--muted);font-size:10px;">one-way</td>`;
+      if (isBottom && turnDispV != null) hasAnyTurn = true;
+      // Reserve (bottom cyl)
+      const resDispV = resBar > 0 ? `${units==='imperial'?Math.round(resBar*14.5038):Math.round(resBar)} ${presUnitV}` : '—';
 
       const rowBgV = short ? 'rgba(220,50,50,0.07)' : tight ? 'rgba(255,180,0,0.07)' : '';
       const reqColorV   = short ? 'var(--red)'  : 'var(--text)';
@@ -5500,7 +5506,9 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;font-weight:600;">${gas}</td>
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${reqColorV};font-weight:${short?'700':'400'};">${reqDisp} ${volUnitV}</td>
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${availColorV};font-weight:${(!short&&hasCyl)?'700':'400'};">${availDisp != null ? availDisp+' '+volUnitV : '—'}</td>
-        ${turnCell}
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${portionColorV};">${portionDispV}</td>
+        ${turnCellV}
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:var(--muted);">${resDispV}</td>
         <td style="padding:5px 6px;color:${sufCol};font-weight:700;">${sufIcon} ${sufTxt}</td>
       </tr>`;
 
@@ -5536,6 +5544,8 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
             <th style="text-align:left;padding:4px 6px;">REQUIRED</th>
             <th style="text-align:left;padding:4px 6px;">AVAILABLE</th>
             <th style="text-align:left;padding:4px 6px;">${_gasRule==='half'?'HALF':'THIRDS'}</th>
+            <th style="text-align:left;padding:4px 6px;">TURN</th>
+            <th style="text-align:left;padding:4px 6px;">RESERVE</th>
             <th style="text-align:left;padding:4px 6px;">STATUS</th>
           </tr></thead>
           <tbody style="font-size:12px;">${tableRows}</tbody>
@@ -8443,17 +8453,25 @@ function runDecoSchedule() {
       const sufCol  = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
       const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
       const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : '—';
-      const turnCell = (isBot && turnDisp != null)
-        ? `<td style="padding:5px 6px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDisp} ${presUnitV}</td>`
-        : `<td style="padding:5px 6px;color:var(--muted);font-size:11px;">one-way</td>`;
       const rowBg = short ? 'rgba(220,50,50,0.07)' : tight ? 'rgba(255,180,0,0.07)' : '';
-      const reqColor  = short ? 'var(--red)'    : 'var(--text)';
+      const reqColor   = short ? 'var(--red)' : 'var(--text)';
       const availColor = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
+      // Thirds/Half portion (bottom only) in litres
+      const portionDisp = (isBot && portionL != null) ? `${Math.round(portionL)} ${volUnitV}` : '—';
+      const portionColor = (isBot && portionL != null) ? 'var(--accent)' : 'var(--muted)';
+      // Turn pressure (bottom only)
+      const turnCellBHL = (isBot && turnDisp != null)
+        ? `<td style="padding:5px 6px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${turnDisp} ${presUnitV}</td>`
+        : `<td style="padding:5px 6px;color:var(--muted);font-size:10px;">one-way</td>`;
+      // Reserve bar (bottom only — cyl.isBottom sizeRaw/fillRaw/resRaw kept for this)
+      const resDisp = resBar > 0 ? `${units === 'imperial' ? Math.round(resBar*14.5038) : Math.round(resBar)} ${presUnitV}` : '—';
       tableRowsBHL += `<tr style="background:${rowBg};border-bottom:1px solid var(--border);">
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;font-weight:600;">${gas}</td>
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${reqColor};font-weight:${short?'700':'400'};">${Math.round(reqL)} ${volUnitV}</td>
         <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${availColor};font-weight:${(!short&&hasCyl)?'700':'400'};">${usableL != null ? Math.round(usableL)+' '+volUnitV : '—'}</td>
-        ${turnCell}
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:${portionColor};">${portionDisp}</td>
+        ${turnCellBHL}
+        <td style="padding:5px 6px;font-family:'JetBrains Mono',monospace;color:var(--muted);">${resDisp}</td>
         <td style="padding:5px 6px;color:${sufCol};font-weight:700;">${sufIcon} ${sufTxt}</td>
       </tr>`;
       if (short) {
@@ -8487,6 +8505,8 @@ function runDecoSchedule() {
             <th style="text-align:left;padding:4px 6px;">REQUIRED</th>
             <th style="text-align:left;padding:4px 6px;">AVAILABLE</th>
             <th style="text-align:left;padding:4px 6px;">${ruleLblBHL}</th>
+            <th style="text-align:left;padding:4px 6px;">TURN</th>
+            <th style="text-align:left;padding:4px 6px;">RESERVE</th>
             <th style="text-align:left;padding:4px 6px;">STATUS</th>
           </tr></thead>
           <tbody>${tableRowsBHL}</tbody>
