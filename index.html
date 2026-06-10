@@ -3434,6 +3434,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 })();
 
 const APP_VERSION = '2.8.9';
+window.APP_VERSION = APP_VERSION;
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
@@ -3530,6 +3531,7 @@ const WATER_DENSITY = {
 // BAR_PER_METRE init = 1/10.078 = 0.09922 (ApexDeco default before setWater() is called).
 // Do NOT compare BAR_PER_METRE to strict SI range before setWater('salt') is called.
 let BAR_PER_METRE = 1/10.078; // ApexDeco init default (= 0.09922); updated by setWater()
+window.BAR_PER_METRE = BAR_PER_METRE;
 
 // ── Narcosis settings ──
 let narcoticN2 = true;   // N₂ always narcotic by default
@@ -3537,6 +3539,7 @@ let narcoticO2 = true;   // O₂ narcotic by default (NOAA/IANTD standard)
 
 // Shared narcotic depth tooltip content
 const _narcoticTipTitle = 'Narcotic Depth (END)';
+window._narcoticTipTitle = _narcoticTipTitle;
 const _narcoticTipText  =
 `Equivalent Narcotic Depth (END) measures the narcotic effect of a gas mix by comparing it to the depth at which breathing air would produce the same narcotic partial pressure.
 
@@ -3549,6 +3552,7 @@ Why 40 m?
 Helium is non-narcotic. Adding helium to a mix displaces nitrogen and reduces the narcotic partial pressure, lowering END. For example, a 21/35 trimix at 60 m has an END of roughly 35 m — equivalent to an air dive to 35 m.
 
 N₂ narcotic setting: whether O₂ counts toward END is configurable on the Deco Schedule tab (N₂ Narcotic / O₂ Narcotic toggles). NOAA/IANTD count both; some agencies exclude O₂.`;
+window._narcoticTipText = _narcoticTipText;
 
 const _toolsBmtFaqTitle = 'Nitrox Best Mix — FAQ';
 const _toolsBmtFaqText  =
@@ -3696,6 +3700,7 @@ function setWaterDensity(type, customKgM3) {
   } else {
     BAR_PER_METRE = WATER_DENSITY[type] || WATER_DENSITY.salt;
   }
+  window.BAR_PER_METRE = BAR_PER_METRE; // keep window reference in sync
   // Sync both selects
   ['waterDensitySelect','waterDensitySelectRec'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = type;
@@ -10541,6 +10546,7 @@ function setBmtMode(mode) {
 }
 
 const _modTipTitle = 'Maximum Operating Depth (MOD)';
+window._modTipTitle = _modTipTitle;
 const _modTipText  =
 `What is MOD?
 MOD is the deepest depth at which a breathing gas can be safely used without exceeding the recommended oxygen partial pressure (ppO₂) limit. Exceeding MOD risks CNS oxygen toxicity — which can cause seizures underwater with little or no warning.
@@ -10561,6 +10567,7 @@ The 1.4 bar limit provides a safety margin for bottom gas where the diver may be
 
 Always label your cylinder
 Mark the MOD clearly on every nitrox cylinder. Verify the O₂% with an analyser before every dive and confirm your computer is set to match.`;
+window._modTipText = _modTipText;
 
 function renderModRefTable() {
   const tbody = document.getElementById('modRefTableBody');
@@ -10856,6 +10863,7 @@ function calcMaxDepth() {
 // GAS TABLE — MOD / MND reference for common mixes
 // ═══════════════════════════════════════════════
 const _endTipTitle = 'Equivalent Narcotic Depth (END)';
+window._endTipTitle = _endTipTitle;
 const _endTipText  =
 `What is END?
 END (Equivalent Narcotic Depth) expresses the narcotic effect of a breathing gas as the depth at which breathing air would feel equally narcotic. A lower END means less impairment at the same actual depth.
@@ -10875,6 +10883,7 @@ Narcosis risk levels
 
 Practical guidance
 Most recreational agencies recommend keeping END ≤ 30 m. Technical divers typically plan for END ≤ 30–35 m even on deep trimix dives. Exertion, cold, stress, and CO₂ build-up can all worsen narcosis beyond what END predicts.`;
+window._endTipText = _endTipText;
 
 function calcEND_tool() {
   const du     = units === 'metric';
@@ -10964,6 +10973,7 @@ function calcEND_tool() {
 }
 
 const _eadTipTitle = 'Equivalent Air Depth (EAD)';
+window._eadTipTitle = _eadTipTitle;
 const _eadTipText  =
 `What is EAD?
 EAD (Equivalent Air Depth) is the depth at which air would have the same partial pressure of nitrogen as your nitrox mix at the actual depth. Because nitrox has less N₂ than air, EAD is always shallower — meaning you absorb nitrogen as if you were at a shallower depth.
@@ -10983,8 +10993,10 @@ EAD = (0.68 × 40 / 0.79) − 10 = 24.4 m
 
 Limits
 EAD only addresses nitrogen narcosis and NDL. You must still respect the ppO₂ MOD for your mix — nitrox does not reduce oxygen toxicity risk.`;
+window._eadTipText = _eadTipText;
 
 const _avgDepthTipTitle = 'Why Not Just Use Max Depth?';
+window._avgDepthTipTitle = _avgDepthTipTitle;
 const _avgDepthTipText =
 `Using max depth is conservative but over-penalises multi-level dives.
 
@@ -10996,6 +11008,7 @@ avg + 75% × (max − avg)
 This widely used approximation acknowledges the brief time at max depth without ignoring it. It gives a planning depth between your average and max, weighted toward the max.
 
 Always validate against your dive computer's actual tissue loading — especially for repetitive dives, where fast compartments are driven by your actual maximum depth, not the average.`;
+window._avgDepthTipText = _avgDepthTipText;
 
 function renderEADTable() {
   const table = document.getElementById('eadRefTable');
