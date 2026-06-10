@@ -5412,20 +5412,112 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const pr = units === 'imperial' ? prRaw / 14.5038 : prRaw;
       if (sz > 0 && pr > 0) cylCapVPM[label] = sz * pr;
     });
-    let ghtml = `<div class="card" style="margin-top:8px;"><div class="card-title">Gas Consumption</div><div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-top:0;">`;
-    let gwarn = '';
-    for (const [gas, litres] of Object.entries(gasConsVPM)) {
-      const volUnitV = units === 'imperial' ? 'cu ft' : 'L';
-      const avail = cylCapVPM[gas];
-      const hasInfo = avail > 0;
-      const pct = hasInfo ? Math.min(100, Math.round((litres / avail) * 100)) : null;
-      const over = hasInfo && litres > avail;
-      const col = over ? 'var(--red)' : pct > 80 ? 'var(--yellow)' : 'var(--green)';
-      ghtml += `<div class="stat"><div class="stat-val" style="font-size:18px;color:${over?'var(--red)':'var(--text)'};">${Math.round(litres)} ${volUnitV}</div><div class="stat-lbl">${gas.toUpperCase()}</div>${hasInfo?`<div style="margin-top:4px;background:var(--bg-alt);border-radius:3px;height:6px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${col};border-radius:3px;"></div></div><div style="font-size:10px;color:${col};margin-top:2px;font-family:'JetBrains Mono',monospace;">${over?'⚠ SHORT':'✓'} ${Math.round(avail)} ${volUnitV} avail</div>`:''}</div>`;
-      if (over) gwarn += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas.toUpperCase()} runs out</strong> — need ${Math.round(litres)} ${volUnitV}, have ${Math.round(avail)} ${volUnitV}. Short by <strong>${Math.round(litres-avail)} ${volUnitV}</strong>. Reduce BT or add more gas.</div></div>`;
-    }
+    // ── Build rule-of-thirds table ──
+    const volUnitV = units === 'imperial' ? 'cu ft' : 'L';
+    const presUnitV = units === 'imperial' ? 'psi' : 'bar';
     const sacUnitVPM = units === 'imperial' ? 'cu ft/min' : 'L/min';
-    ghtml += `</div>${gwarn}<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">Bottom SAC: ${sacBotVPM} ${sacUnitVPM} · Deco SAC: ${sacDecoVPM} ${sacUnitVPM}</div></div>`;
+    const ruleName = (_gasRule === 'half') ? 'Half Tank (1/2)' : 'Rule of Thirds (1/3)';
+    const fraction = (_gasRule === 'half') ? 0.5 : (1/3);
+
+    // Helper: get cylinder info from Deco Schedule inputs
+    const cylMap = {
+      // gasLabel → [sizeId, fillId, reserveId]
+    };
+    const gasLabels = Object.keys(gasConsVPM);
+    const cylInputIds = [
+      ['cylBot_size','cylBot_pres','cylBot_reserve'],
+      ['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],
+      ['cylDg1_size','cylDg1_pres','cylDg1_reserve'],
+      ['cylDg2_size','cylDg2_pres','cylDg2_reserve'],
+    ];
+    gasLabels.forEach((label, i) => {
+      if (cylInputIds[i]) cylMap[label] = cylInputIds[i];
+    });
+
+    let tableRows = '';
+    let warnings = '';
+    let hasAnyTurn = false;
+
+    for (const [gas, reqL] of Object.entries(gasConsVPM)) {
+      const ids = cylMap[gas];
+      const sizeRaw = ids ? parseFloat(document.getElementById(ids[0])?.value) || 0 : 0;
+      const fillRaw = ids ? parseFloat(document.getElementById(ids[1])?.value) || 0 : 0;
+      const resRaw  = ids ? parseFloat(document.getElementById(ids[2])?.value) || 0 : 0;
+      const sizeL = units === 'imperial' ? sizeRaw * 28.3168 : sizeRaw;
+      const fillBar = units === 'imperial' ? fillRaw / 14.5038 : fillRaw;
+      const resBar  = units === 'imperial' ? resRaw  / 14.5038 : resRaw;
+
+      const hasCyl = sizeL > 0 && fillBar > resBar;
+      const usableL = hasCyl ? (fillBar - resBar) * sizeL : null;
+      const isBottom = gas === gasLabels[0]; // first gas = bottom gas
+      const portionL = usableL != null ? usableL * fraction : null;
+      const turnBar  = (hasCyl && isBottom) ? fillBar - portionL / sizeL : null;
+
+      const reqDisp  = Math.round(reqL);
+      const availDisp = usableL != null ? Math.round(usableL) : null;
+      const short = usableL != null && reqL > usableL;
+      const tight = usableL != null && !short && reqL > usableL * 0.90;
+      const sufficient = usableL != null && !short;
+
+      // Sufficiency colour
+      const sufCol = !hasCyl ? 'var(--muted)' : short ? 'var(--red)' : tight ? 'var(--yellow)' : 'var(--green)';
+      const sufIcon = !hasCyl ? '—' : short ? '✗' : tight ? '⚠' : '✓';
+      const sufTxt  = !hasCyl ? 'No cyl data' : short ? `Short ${Math.round(reqL-usableL)} ${volUnitV}` : tight ? 'Tight' : 'OK';
+
+      // Turn pressure cell (bottom gas only)
+      const turnCell = (isBottom && turnBar != null)
+        ? `<td style="color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;">${units==='imperial'?Math.round(turnBar*14.5038):Math.round(turnBar)} ${presUnitV}</td>`
+        : `<td style="color:var(--muted);">one-way</td>`;
+      if (isBottom && turnBar != null) hasAnyTurn = true;
+
+      tableRows += `<tr>
+        <td style="font-family:'JetBrains Mono',monospace;">${gas}</td>
+        <td style="font-family:'JetBrains Mono',monospace;">${reqDisp} ${volUnitV}</td>
+        <td style="font-family:'JetBrains Mono',monospace;">${availDisp != null ? availDisp + ' ' + volUnitV : '—'}</td>
+        ${turnCell}
+        <td><span style="color:${sufCol};font-weight:700;">${sufIcon}</span> <span style="font-size:11px;color:${sufCol};">${sufTxt}</span></td>
+      </tr>`;
+
+      if (short) {
+        // Compute max BT suggestion
+        const bt = parseFloat(document.getElementById('decoBT')?.value) || 0;
+        let btSuggest = '';
+        if (bt > 0 && reqL > 0 && usableL != null) {
+          const rate = reqL / bt;
+          const maxBT = Math.max(1, Math.floor(usableL / rate));
+          const maxPortionL = usableL * fraction;
+          const maxTurnBar = fillBar - maxPortionL / sizeL;
+          const maxTurnDisp = units === 'imperial' ? Math.round(maxTurnBar*14.5038) : Math.round(maxTurnBar);
+          btSuggest = `Shorten BT to <strong>${maxBT} min</strong> and turn at <strong>${maxTurnDisp} ${presUnitV}</strong>, or use a larger cylinder / add a stage.`;
+        }
+        warnings += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${reqDisp} ${volUnitV}, have ${availDisp} ${volUnitV}. Short by <strong>${Math.round(reqL-usableL)} ${volUnitV}</strong>.${btSuggest ? '<br>' + btSuggest : ''}</div></div>`;
+      }
+    }
+
+    let ghtml = `<div class="card" style="margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="card-title" style="margin-bottom:0;">Gas Consumption</div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:10px;color:var(--muted);margin-right:4px;">Rule:</span>
+          <button class="btn-export${_gasRule!=='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('thirds')" id="gasRuleTBtn">Thirds</button>
+          <button class="btn-export${_gasRule==='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('half')" id="gasRuleHBtn">Half</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:4px 6px;">GAS</th>
+            <th style="text-align:left;padding:4px 6px;">REQUIRED</th>
+            <th style="text-align:left;padding:4px 6px;">AVAILABLE</th>
+            <th style="text-align:left;padding:4px 6px;">${_gasRule==='half'?'HALF TURN':'⅓ TURN'}</th>
+            <th style="text-align:left;padding:4px 6px;">STATUS</th>
+          </tr></thead>
+          <tbody style="font-size:12px;">${tableRows}</tbody>
+        </table>
+      </div>
+      ${warnings}
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBotVPM} ${sacUnitVPM} · deco: ${sacDecoVPM} ${sacUnitVPM}</div>
+    </div>`;
     gasElVPM.innerHTML = ghtml;
     gasElVPM.style.display = 'block';
   }
@@ -10380,11 +10472,15 @@ let _gasRule = 'thirds';
 
 function setGasRule(rule) {
   _gasRule = rule === 'half' ? 'half' : 'thirds';
+  // Sync Gas Plan tab toggles
   const t = document.getElementById('gpRuleThirds');
   const h = document.getElementById('gpRuleHalf');
   if (t) t.classList.toggle('active', _gasRule === 'thirds');
   if (h) h.classList.toggle('active', _gasRule === 'half');
   calcGasPlan();
+  // Also refresh the Gas Consumption card on Deco Schedule if it is visible
+  const gasEl = document.getElementById('gasConsumptionSummary');
+  if (gasEl && gasEl.style.display !== 'none') runDecoSchedule();
 }
 
 // Read a Gas Plan pressure input, returning bar regardless of unit system.
