@@ -10720,25 +10720,25 @@ function calcGasPlan() {
             : '';
           html += `<tr>
             <td>${r.label}</td>
-            <td style="color:var(--red);font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
-            <td style="color:var(--red);">need ${gpVolDisp(r.reqL)} ${volU}</td>
+            <td style="color:var(--red) !important;font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
+            <td style="color:var(--red) !important;">need ${gpVolDisp(r.reqL)} ${volU}</td>
             <td style="color:var(--muted);font-size:10px;">(${ruleTxt} rule)</td>
             <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
-            <td><span style="color:var(--red);">✗ short ${gpVolDisp(r.shortL)} ${volU}</span></td>
+            <td><span style="color:var(--red) !important;font-weight:700;">✗ short ${gpVolDisp(r.shortL)} ${volU}</span></td>
           </tr>`;
-          if (btSuggest) html += `<tr><td colspan="6" style="color:var(--yellow);font-size:11px;padding:4px 8px;border-bottom:1px solid var(--border);">⚠ ${btSuggest} — or use a larger cylinder.</td></tr>`;
+          if (btSuggest) html += `<tr><td colspan="6" style="background:#FF4433;border-bottom:2px solid #cc2200;color:#fff;font-weight:700;font-size:11px;padding:6px 10px;">⚠ ${btSuggest} — or use a larger cylinder.</td></tr>`;
         } else {
           // Sufficient — normal turn pressure row with plan check
           const suffNote = r.reqL != null
-            ? ` <span style="color:var(--green);font-size:10px;">✓ ${gpVolDisp(r.reqL)} ${volU} needed</span>`
+            ? ` <span style="color:var(--green) !important;font-size:10px;">✓ ${gpVolDisp(r.reqL)} ${volU} needed</span>`
             : '';
           html += `<tr>
             <td>${r.label}</td>
             <td>${gpVolDisp(r.totalL)} ${volU}</td>
             <td>${gpVolDisp(r.portionL)} ${volU} <span style="color:var(--muted);">(${ruleTxt})</span></td>
-            <td style="color:var(--accent);font-weight:700;">${gpPresDisp(r.turnBar)} ${presU}</td>
+            <td style="color:var(--accent) !important;font-weight:700;">${gpPresDisp(r.turnBar)} ${presU}</td>
             <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
-            <td><span style="color:var(--accent);">⟳ turn</span>${suffNote}</td>
+            <td><span style="color:var(--accent) !important;font-weight:700;">⟳ turn</span>${suffNote}</td>
           </tr>`;
         }
       } else {
@@ -10747,19 +10747,19 @@ function calcGasPlan() {
           suffCell = '<span style="color:var(--muted);">run plan</span>';
           statusCol = 'var(--muted)';
         } else if (r.totalL >= r.reqL * 1.10) {
-          suffCell = '<span style="color:var(--green);">✓ ok</span>';
+          suffCell = '<span style="color:var(--green) !important;font-weight:700;">✓ ok</span>';
           statusCol = 'var(--green)';
         } else if (r.totalL >= r.reqL) {
-          suffCell = '<span style="color:var(--yellow);">⚠ tight</span>';
+          suffCell = '<span style="color:var(--yellow) !important;font-weight:700;">⚠ tight</span>';
           statusCol = 'var(--yellow)';
         } else {
-          suffCell = '<span style="color:var(--red);">✗ short</span>';
+          suffCell = '<span style="color:var(--red) !important;font-weight:700;">✗ short</span>';
           statusCol = 'var(--red)';
         }
         const reqTxt = r.reqL == null ? '—' : `${gpVolDisp(r.reqL)} ${volU}`;
         html += `<tr>
           <td>${r.label}</td>
-          <td style="color:${statusCol};">${gpVolDisp(r.totalL)} ${volU} avail</td>
+          <td style="color:${statusCol} !important;font-weight:700;">${gpVolDisp(r.totalL)} ${volU} avail</td>
           <td style="color:var(--muted);">req ${reqTxt}</td>
           <td style="color:var(--muted);">one-way</td>
           <td>${gpPresDisp(r.reserveBar)} ${presU}</td>
