@@ -5535,6 +5535,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       }
     }
 
+    // ── Gas Consumption card (VPM) — rendered via calcGasPlan() ──
+    window._lastGasConsumed = Object.assign({}, gasConsVPM);
+    calcGasPlan();
+    const gpBodyVPM = document.getElementById('gpResultBody');
+    const gpNoteVPM = document.getElementById('gpResultNote');
+    const ruleLblVPM = (_gasRule === 'half') ? 'HALF' : 'RULE OF 3RDS';
+    const sacUnitVPM2 = units === 'imperial' ? 'cu ft/min' : 'L/min';
     let ghtml = `<div class="card" style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div class="card-title" style="margin-bottom:0;">Gas Consumption</div>
@@ -5544,22 +5551,21 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
           <button class="btn-export${_gasRule==='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('half')" id="gasRuleHBtn">Half</button>
         </div>
       </div>
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table class="deco-table table-view" style="margin-top:0;">
           <thead><tr>
             <th style="text-align:left;">GAS</th>
-            <th style="text-align:left;">REQUIRED</th>
-            <th style="text-align:left;">AVAILABLE</th>
-            <th style="text-align:left;">${_gasRule==='half'?'HALF':'THIRDS'}</th>
-            <th style="text-align:left;">TURN</th>
+            <th style="text-align:left;">TOTAL VOL</th>
+            <th style="text-align:left;">${ruleLblVPM}</th>
+            <th style="text-align:left;">TURN PRESS</th>
             <th style="text-align:left;">RESERVE</th>
-            <th style="text-align:left;">STATUS</th>
+            <th style="text-align:left;">SUFFICIENT</th>
           </tr></thead>
-          <tbody>${tableRows}</tbody>
+          <tbody>${gpBodyVPM ? gpBodyVPM.innerHTML : ''}</tbody>
         </table>
       </div>
-      ${warnings}
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBotVPM} ${sacUnitVPM} · deco: ${sacDecoVPM} ${sacUnitVPM}</div>
+      ${gpNoteVPM?.innerHTML ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;">${gpNoteVPM.innerHTML}</div>` : ''}
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitVPM2} · deco: ${sacDeco} ${sacUnitVPM2}</div>
     </div>`;
     gasElVPM.innerHTML = ghtml;
     gasElVPM.style.display = 'block';
@@ -8399,141 +8405,80 @@ function runDecoSchedule() {
     const sacUnitBHL = units === 'imperial' ? 'cu ft/min' : 'L/min';
     const fracBHL   = (_gasRule === 'half') ? 0.5 : (1/3);
     const ruleLblBHL = (_gasRule === 'half') ? 'HALF' : 'THIRDS';
-    const gasLabelsBHL = Object.keys(gasConsumed);
-    // Build label→cylinders map so same-mix cylinders (e.g. travel=Air + bottom=Air) pool their capacity
-    const _cylDefsBHL = [
-      { ids:['cylBot_size','cylBot_pres','cylBot_reserve'],     label: bottomMixLabel,                                                               isBottom: true  },
-      { ids:['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'], label: (getTravelGasInfo()?.label || null),                           isBottom: false },
-      { ids:['cylDg1_size','cylDg1_pres','cylDg1_reserve'],     label: (getDecoGasLabel('decoGas1Mix','decoGas1Custom') || null),                  isBottom: false },
-      { ids:['cylDg2_size','cylDg2_pres','cylDg2_reserve'],     label: (getDecoGasLabel('decoGas2Mix','decoGas2Custom') || null),                  isBottom: false },
-    ];
-    // For each gas label aggregate all cylinders carrying that mix
-    const _cylByLabel = {};
-    _cylDefsBHL.forEach(cyl => {
-      if (!cyl.label) return;
-      if (!_cylByLabel[cyl.label]) _cylByLabel[cyl.label] = [];
-      _cylByLabel[cyl.label].push(cyl);
-    });
-    let tableRowsBHL = '';
-    let warningsBHL  = '';
-    gasLabelsBHL.forEach((gas, gi) => {
-      const reqL  = gasConsumed[gas];
-      const cyls  = _cylByLabel[gas] || [];
-      // Aggregate usable litres across all cylinders for this gas
-      let usableLBHL = null;
-      let hasCylBHL  = false;
-      let sizeRaw = 0, fillRaw = 0, resRaw = 0; // kept for turn-pressure calc (use first/bottom cyl)
-      let isBot = false;
-      cyls.forEach(cyl => {
-        const ids = cyl.ids;
-        const sr = parseFloat(document.getElementById(ids[0])?.value) || 0;
-        const fr = parseFloat(document.getElementById(ids[1])?.value) || 0;
-        const rr = parseFloat(document.getElementById(ids[2])?.value) || 0;
-        const sL  = units === 'imperial' ? sr * 28.3168 : sr;
-        const fB  = units === 'imperial' ? fr / 14.5038 : fr;
-        const rB  = units === 'imperial' ? rr / 14.5038 : rr;
-        if (sL > 0 && fB > rB) {
-          usableLBHL = (usableLBHL || 0) + (fB - rB) * sL;
-          hasCylBHL  = true;
-        }
-        if (cyl.isBottom) { sizeRaw = sr; fillRaw = fr; resRaw = rr; isBot = true; }
-      });
-      // Fallback to positional if no label match found
-      if (cyls.length === 0) {
-        const ids = [['cylBot_size','cylBot_pres','cylBot_reserve'],['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],['cylDg1_size','cylDg1_pres','cylDg1_reserve'],['cylDg2_size','cylDg2_pres','cylDg2_reserve']][gi];
-        if (ids) { sizeRaw = parseFloat(document.getElementById(ids[0])?.value)||0; fillRaw = parseFloat(document.getElementById(ids[1])?.value)||0; resRaw = parseFloat(document.getElementById(ids[2])?.value)||0; isBot = gi===0; }
-      }
-      const ids = null; // replaced by aggregation above
-      const sizeRawOld = sizeRaw, fillRawOld = fillRaw, resRawOld = resRaw;
-      // Use aggregated values from label-based lookup above
-      const sizeL   = units === 'imperial' ? sizeRaw * 28.3168 : sizeRaw;
-      const fillBar = units === 'imperial' ? fillRaw / 14.5038 : fillRaw;
-      const resBar  = units === 'imperial' ? resRaw  / 14.5038 : resRaw;
-      const hasCyl  = hasCylBHL || (sizeL > 0 && fillBar > resBar);
-      const usableL = usableLBHL !== null ? usableLBHL : (hasCyl ? (fillBar - resBar) * sizeL : null);
-      // Turn pressure uses bottom cylinder only (rule-of-thirds on bottom gas)
-      const portionL = (hasCyl && isBot) ? (usableL || 0) * fracBHL : null;
-      const turnBar  = (hasCyl && isBot && sizeL > 0) ? fillBar - (portionL / sizeL) : null;
-      const turnDisp = turnBar != null ? (units === 'imperial' ? Math.round(turnBar*14.5038) : Math.round(turnBar)) : null;
-      const short = usableL != null && reqL > usableL;
-      const tight = usableL != null && !short && reqL > usableL * 0.90;
-      const sufCol  = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
-      const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
-      const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : '—';
-      const rowBg = short ? 'rgba(220,50,50,0.07)' : tight ? 'rgba(255,180,0,0.07)' : '';
-      const reqColor   = short ? 'var(--red)' : 'var(--text)';
-      const availColor = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
-      // Thirds/Half portion (bottom only) in litres
-      const portionDisp = (isBot && portionL != null) ? `${Math.round(portionL)} ${volUnitV}` : '—';
-      const portionColor = (isBot && portionL != null) ? 'var(--accent)' : 'var(--muted)';
-      // Turn pressure (bottom only)
-      const turnCellBHL = (isBot && turnDisp != null)
-        ? `<td style="color:var(--accent);font-weight:700;">${turnDisp} ${presUnitV}</td>`
-        : `<td style="color:var(--muted);font-size:10px;">one-way</td>`;
-      // Reserve bar (bottom only — cyl.isBottom sizeRaw/fillRaw/resRaw kept for this)
-      const resDisp = resBar > 0 ? `${units === 'imperial' ? Math.round(resBar*14.5038) : Math.round(resBar)} ${presUnitV}` : '—';
-      const statusCellBHL = short
-        ? `<td style="color:var(--red);font-weight:700;">✗ short ${Math.round(reqL-(usableL||0))} ${volUnitV}</td>`
-        : tight
-          ? `<td style="color:var(--yellow);font-weight:700;">⚠ tight</td>`
-          : (isBot && turnDisp != null)
-            ? `<td style="color:var(--accent);">⟳ turn${usableL!=null?` <span style="color:var(--green);font-size:10px;">✓ ${Math.round(reqL)} ${volUnitV} needed</span>`:''}</td>`
-            : `<td style="color:${sufCol};font-weight:700;">${sufIcon} ${sufTxt}</td>`;
-      tableRowsBHL += `<tr style="background:${rowBg};">
-        <td style="font-weight:700;">${gas}</td>
-        <td style="color:${reqColor};font-weight:${short?'700':'400'};">${Math.round(reqL)} ${volUnitV}</td>
-        <td style="color:${availColor};font-weight:${(!short&&hasCyl)?'700':'400'};">${usableL != null ? Math.round(usableL)+' '+volUnitV : '—'}</td>
-        <td style="color:${portionColor};">${portionDisp}</td>
-        ${turnCellBHL}
-        <td style="color:var(--muted);">${resDisp}</td>
-        ${statusCellBHL}
-      </tr>`;
-      if (short) {
-        const bt = parseFloat(document.getElementById('decoBT')?.value) || 0;
-        let btLine = '';
-        if (bt > 0 && reqL > 0 && usableL != null) {
-          const maxBT = Math.max(1, Math.floor(usableL / (reqL / bt)));
-          const maxTurn = units === 'imperial'
-            ? Math.round((fillBar - (usableL*fracBHL/sizeL))*14.5038)
-            : Math.round(fillBar - (usableL*fracBHL/sizeL));
-          btLine = ` Shorten BT to <strong>${maxBT} min</strong>, turn at <strong>${maxTurn} ${presUnitV}</strong> — or use a larger cylinder.`;
-        }
-        warningsBHL += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${Math.round(reqL)} ${volUnitV}, have ${Math.round(usableL||0)} ${volUnitV}. Short by <strong>${Math.round(reqL-(usableL||0))} ${volUnitV}</strong>.${btLine}</div></div>`;
-      }
-    });
-
+    // ── Gas Consumption card — rendered via calcGasPlan() ──
     const cardTitle = _contingencyRunning ? 'Emergency Gas Consumption' : 'Gas Consumption';
-    let html = `<div class="card" style="margin-top:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="card-title" style="margin-bottom:0;">${cardTitle}</div>
-        ${!_contingencyRunning ? `<div style="display:flex;gap:4px;align-items:center;">
-          <span style="font-size:10px;color:var(--muted);margin-right:4px;">Rule:</span>
-          <button class="btn-export${_gasRule!=='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('thirds')">Thirds</button>
-          <button class="btn-export${_gasRule==='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('half')">Half</button>
-        </div>` : ''}
-      </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-        <table class="deco-table table-view" style="margin-top:0;">
-          <thead><tr>
-            <th style="text-align:left;">GAS</th>
-            <th style="text-align:left;">REQUIRED</th>
-            <th style="text-align:left;">AVAILABLE</th>
-            <th style="text-align:left;">${ruleLblBHL}</th>
-            <th style="text-align:left;">TURN</th>
-            <th style="text-align:left;">RESERVE</th>
-            <th style="text-align:left;">STATUS</th>
-          </tr></thead>
-          <tbody>${tableRowsBHL}</tbody>
-        </table>
-      </div>
-      ${warningsBHL}
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitBHL} · deco: ${sacDeco} ${sacUnitBHL}</div>
-    </div>`;
-    gasEl.innerHTML = html;
-    gasEl.style.display = 'block';
-  }
+    if (!_contingencyRunning) {
+      // Store consumed gas so calcGasPlan() can cross-check
+      window._lastGasConsumed = Object.assign({}, gasConsumed);
+      // Run Gas Plan render into a temp tbody, then build card
+      calcGasPlan();
+      const gpBody = document.getElementById('gpResultBody');
+      const gpNote = document.getElementById('gpResultNote');
+      const ruleLblCard = (_gasRule === 'half') ? 'HALF' : 'RULE OF 3RDS';
+      const sacUnitBHL2 = units === 'imperial' ? 'cu ft/min' : 'L/min';
+      const html = `<div class="card" style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="card-title" style="margin-bottom:0;">${cardTitle}</div>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <span style="font-size:10px;color:var(--muted);margin-right:4px;">Rule:</span>
+            <button class="btn-export${_gasRule!=='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('thirds')">Thirds</button>
+            <button class="btn-export${_gasRule==='half'?' active':''}" style="padding:3px 8px;font-size:11px;" onclick="setGasRule('half')">Half</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table class="deco-table table-view" style="margin-top:0;">
+            <thead><tr>
+              <th style="text-align:left;">GAS</th>
+              <th style="text-align:left;">TOTAL VOL</th>
+              <th style="text-align:left;">${ruleLblCard}</th>
+              <th style="text-align:left;">TURN PRESS</th>
+              <th style="text-align:left;">RESERVE</th>
+              <th style="text-align:left;">SUFFICIENT</th>
+            </tr></thead>
+            <tbody>${gpBody ? gpBody.innerHTML : ''}</tbody>
+          </table>
+        </div>
+        ${gpNote ? gpNote.innerHTML ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;">${gpNote.innerHTML}</div>` : '' : ''}
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitBHL2} · deco: ${sacDeco} ${sacUnitBHL2}</div>
+      </div>`;
+      gasEl.innerHTML = html;
+      gasEl.style.display = 'block';
+    } else {
+      // Emergency plan — keep simple sufficient/short table
+      const volUnitV2 = units === 'imperial' ? 'cu ft' : 'L';
+      const presUnitV2 = units === 'imperial' ? 'psi' : 'bar';
+      const fracE = (_gasRule === 'half') ? 0.5 : (1/3);
+      const sacUnitE = units === 'imperial' ? 'cu ft/min' : 'L/min';
+      let emergRows = '';
+      let emergWarn = '';
+      Object.entries(gasConsumed).forEach(([gas, reqL], gi) => {
+        const cylIds = [['cylBot_size','cylBot_pres','cylBot_reserve'],['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'],['cylDg1_size','cylDg1_pres','cylDg1_reserve'],['cylDg2_size','cylDg2_pres','cylDg2_reserve']][gi];
+        if (!cylIds) return;
+        const sR = parseFloat(document.getElementById(cylIds[0])?.value)||0;
+        const fR = parseFloat(document.getElementById(cylIds[1])?.value)||0;
+        const rR = parseFloat(document.getElementById(cylIds[2])?.value)||0;
+        const sL = units==='imperial'?sR*28.3168:sR;
+        const fB = units==='imperial'?fR/14.5038:fR;
+        const rB = units==='imperial'?rR/14.5038:rR;
+        const avail = sL>0&&fB>rB?(fB-rB)*sL:null;
+        const short2 = avail!=null&&reqL>avail;
+        const sufCol2 = short2?'var(--red)':avail!=null?'var(--green)':'var(--muted)';
+        const sufTxt2 = short2?`✗ short ${Math.round(reqL-(avail||0))} ${volUnitV2}`:avail!=null?'✓ OK':'—';
+        emergRows += `<tr><td style="font-weight:700;">${gas}</td><td style="color:${short2?'var(--red)':'var(--text)'};">${Math.round(reqL)} ${volUnitV2}</td><td style="color:${avail!=null?(short2?'var(--red)':'var(--green)'):'var(--muted)'};">${avail!=null?Math.round(avail)+' '+volUnitV2:'—'}</td><td style="color:${sufCol2};font-weight:700;">${sufTxt2}</td></tr>`;
+        if (short2) emergWarn += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${Math.round(reqL)} ${volUnitV2}, have ${Math.round(avail||0)} ${volUnitV2}.</div></div>`;
+      });
+      const html2 = `<div class="card" style="margin-top:8px;">
+        <div class="card-title" style="margin-bottom:8px;">${cardTitle}</div>
+        <div style="overflow-x:auto;"><table class="deco-table table-view" style="margin-top:0;">
+          <thead><tr><th style="text-align:left;">GAS</th><th style="text-align:left;">REQUIRED</th><th style="text-align:left;">AVAILABLE</th><th style="text-align:left;">STATUS</th></tr></thead>
+          <tbody>${emergRows}</tbody></table></div>
+        ${emergWarn}
+      </div>`;
+      gasEl.innerHTML = html2;
+      gasEl.style.display = 'block';
+    }
 
-  // Tissue handled by updateTissueViz via tissueInlineCard
+    // Tissue handled by updateTissueViz via tissueInlineCard
 
   if (!_contingencyRunning) {
     document.getElementById('tissueInlineCard').style.display = 'block';
