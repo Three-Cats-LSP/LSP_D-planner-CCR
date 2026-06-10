@@ -1,6 +1,6 @@
 # LSP D-Planner
 
-**Version 2.8.4**
+**Version 2.8.9**
 
 A technical dive decompression planner for mixed-gas deco diving. Runs entirely in the browser — no install, no build step, no server.
 
@@ -178,16 +178,38 @@ To deploy a new version: replace `index.html` on `main`.
 
 ## Changelog
 
-### 2.8.4 (current)
+### 2.8.9 (current)
+
+Gas Consumption card overhaul and warning row styling. Additive only — no engine changes; all audit checks pass.
+
+**Gas Consumption card (merged from Gas Plan tab)**
+- **Gas Plan tab removed** — gas consumption results are now shown directly in the Deco Schedule as a **Gas Consumption** card below the deco table. The standalone Gas Plan tab has been removed.
+- **Full table layout** — columns: GAS | TOTAL VOL | THIRDS | TURN PRESS | RESERVE | SUFFICIENT; matches the former Gas Plan Results style exactly.
+- **Rule toggle** — Thirds / Half buttons in the card header with filled-cyan active state; updates live without recalculating the dive.
+- **Travel gas pooling fix** — if travel gas has the same mix as bottom gas, its usable litres are pooled into the bottom total. Bottom row label shows `Air (+Travel)` to confirm. Travel no longer appears as a separate one-way row.
+- **Info button** — small `?` circle next to the card title opens a popup explaining Rule of Thirds, Half Tank, deco/travel one-way rules, and the Short / Tight / OK status definitions.
+
+**Warning row colours**
+- **BT suggestion row** — "Max BT with this cylinder" row now renders as a solid red `#FF4433` banner. Dark theme: white text. Light theme: black text.
+- **Tight row** — one-way gas rows where volume is sufficient but margin is <10% now also render as a red `#FF4433` banner row.
+- **Theme switch** — warning row colours update immediately on theme toggle without requiring recalculation.
+- **Root cause fixed** — `element.style.setProperty(..., 'important')` used to bypass competing `!important` stylesheet rules (mobile `@media` block `background:none !important` and light-theme `color` overrides).
+
+**Column rename**
+- `RULE OF 3RDS` renamed to `THIRDS` throughout: card header, hidden Gas Plan table, PDF export, and text/copy export.
+
+**Exports**
+- All three exports (Copy, TXT, PDF) use the same `calcGasPlan()` data source, so travel pooling and the updated label carry through automatically.
+- PDF: bottom gas row now correctly shows `SHORT` + `need X L` when gas is insufficient (was always showing `TURN`). Red BT suggestion banner row added to PDF output when applicable.
+- Text/Copy: bottom row header updated to `BOTTOM GAS: Air + Travel cyl` format when pooled.
+
+### 2.8.4
 
 UX fixes over 2.8.3. Additive only — no engine changes; all 147 `audit.py` checks pass.
 
-**Decompression table**
 - **PRESETS button restyled** — the Decompression Schedule header PRESETS control now uses the `btn-export` style with a save (floppy-disk) icon, matching the Copy/SLATE/TXT/PDF export buttons.
 - **END column always on** — the Equivalent Narcotic Depth column is now permanently visible in the deco table; the show/hide toggle was removed.
-
-**Surface Interval**
-- **Dedicated sub-tab** — Surface Interval is now a proper **Surf Int** sub-tab in the main tab bar, available at any time in both **Rec** and **Tec** modes (no calculation required first).
+- **Surface Interval dedicated sub-tab** — Surface Interval is now a proper **Surf Int** sub-tab in the main tab bar, available at any time in both **Rec** and **Tec** modes.
 
 ### 2.8.3
 
@@ -325,5 +347,6 @@ Bug fixes and UX improvements over 2.8.0. Additive only — no engine changes; a
 ---
 
 *Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
+
 
 
