@@ -172,8 +172,12 @@ body.light-theme .ok,   body.light-theme .ok *   { color:#116622 !important; }
 body.light-theme .info, body.light-theme .info *  { color:#0077aa !important; }
 
 /* Gas consumption — tight warning row */
-.gas-tight-row td { background:#FF4433 !important; color:#fff !important; font-weight:600; }
-body.light-theme .gas-tight-row td { background:#FF4433 !important; color:#000 !important; }
+.gas-tight-row td,
+.deco-table.table-view tr.gas-tight-row td,
+.deco-table.table-view tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#fff !important; font-weight:600; border-bottom:2px solid #cc2200 !important; }
+body.light-theme .gas-tight-row td,
+body.light-theme .deco-table.table-view tr.gas-tight-row td,
+body.light-theme .deco-table.table-view tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#000 !important; }
 
 /* Keep algo-label bright cyan in light theme */
 body.light-theme .algo-label {
@@ -10754,7 +10758,7 @@ function calcGasPlan() {
           suffCell = '<span style="color:var(--green) !important;font-weight:700;">✓ ok</span>';
           statusCol = 'var(--green)';
         } else if (r.totalL >= r.reqL) {
-          suffCell = '<span style="color:#fff;font-weight:700;">⚠ tight</span>';
+          suffCell = '<span>⚠ tight</span>';
           statusCol = '#FF4433';
         } else {
           suffCell = '<span style="color:var(--red) !important;font-weight:700;">✗ short</span>';
@@ -14223,6 +14227,7 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
+
 
 
 
