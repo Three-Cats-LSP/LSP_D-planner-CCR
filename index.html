@@ -2511,7 +2511,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <div class="tabs-nav" id="toolsSubNav" style="margin-bottom:16px;">
     <button class="tab-btn active" id="tool-mod"       onclick="switchTool('mod',this)">MOD</button>
     <button class="tab-btn"        id="tool-bestmix"   onclick="switchTool('bestmix',this)">Best Mix</button>
-    <button class="tab-btn"        id="tool-maxdepth"  onclick="switchTool('maxdepth',this)">Max Depth</button>
     <button class="tab-btn"        id="tool-avgdepth"  onclick="switchTool('avgdepth',this)">Avg Depth</button>
     <button class="tab-btn"        id="tool-gastable"  onclick="switchTool('gastable',this)">Gas Table</button>
     <button class="tab-btn"        id="tool-converter" onclick="switchTool('converter',this)">Unit Converter</button>
@@ -2613,31 +2612,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   </div>
   </div>
 
-  <!-- ── Max Depth Calculator ── -->
-  <div id="tool-panel-maxdepth" style="display:none;">
-  <div class="card">
-    <div class="card-title">Max Depth — For a Given Mix</div>
-    <div class="info-box">Calculates the maximum safe depth for a given gas mix at working (1.4 bar) and deco (1.6 bar) ppO₂ limits.</div>
-    <div style="margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">O₂ % in mix</label>
-        <span id="maxDepthO2Display" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;">32%</span>
-      </div>
-      <div class="slider-wrap">
-        <input type="range" id="maxDepthO2" class="lsp-slider" min="1" max="100" value="32" step="1" oninput="updateSliderFill(this);document.getElementById('maxDepthO2Display').textContent=this.value+'%';calcMaxDepth()">
-        <div class="slider-ticks-abs">
-          <span style="left:0%">1%</span><span style="left:20.2%">21%</span><span style="left:31.3%">32%</span><span style="left:49.5%">50%</span><span style="left:79.8%">80%</span><span style="left:100%">100%</span>
-        </div>
-      </div>
-    </div>
-    <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
-      <div class="stat"><div class="stat-val" id="maxDepth14" style="color:var(--green);">—</div><div class="stat-lbl">Max Depth @ ppO₂ 1.4 (m)</div></div>
-      <div class="stat"><div class="stat-val" id="maxDepth16" style="color:var(--yellow);">—</div><div class="stat-lbl">Max Depth @ ppO₂ 1.6 (m)</div></div>
-      <div class="stat"><div class="stat-val" id="maxDepth14ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.4 (feet)</div></div>
-      <div class="stat"><div class="stat-val" id="maxDepth16ft" style="color:var(--muted);font-size:18px;">—</div><div class="stat-lbl">@ 1.6 (feet)</div></div>
-    </div>
-  </div>
-  </div>
 
   <!-- ── Average Depth Converter ── -->
   <div id="tool-panel-avgdepth" style="display:none;">
@@ -10941,14 +10915,13 @@ function toggleSurfIntPanel(prefix) {
 
 // Init tools on tab open
 function switchTool(name, btn) {
-  ['mod','bestmix','maxdepth','avgdepth','gastable','converter','knowledge'].forEach(t => {
+  ['mod','bestmix','avgdepth','gastable','converter','knowledge'].forEach(t => {
     document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
     document.getElementById('tool-' + t).classList.toggle('active', t === name);
   });
   document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
   if (name === 'mod')       calcMOD();
   if (name === 'bestmix')   { calcBestMix(); renderToolsBmtRefTable(); }
-  if (name === 'maxdepth')  calcMaxDepth();
   if (name === 'avgdepth')  calcAvgDepth();
   if (name === 'gastable')  renderGasTable();
   if (name === 'converter') initConverter();
