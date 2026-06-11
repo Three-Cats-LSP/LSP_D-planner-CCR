@@ -13815,7 +13815,12 @@ async function loadPDFFonts(doc) {
     const [rBuf, bBuf] = await Promise.all([rResp.arrayBuffer(), bResp.arrayBuffer()]);
     function toBase64(buf) {
       const bytes = new Uint8Array(buf);
-      let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+      // Process in 8192-byte chunks to avoid btoa/stack limits on large TTFs
+      const CHUNK = 8192;
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+      }
       return btoa(bin);
     }
     _pdfFontCache = { regular: toBase64(rBuf), bold: toBase64(bBuf) };
@@ -13826,7 +13831,7 @@ async function loadPDFFonts(doc) {
     doc.setFont('DejaVuSans', 'normal');
     return true;
   } catch(e) {
-    console.warn('PDF font load failed, using Helvetica:', e);
+    console.error('[LSP] DejaVu font load failed — Unicode symbols will not render in PDF. Check network/CDN.', e);
     return false;
   }
 }
@@ -15004,6 +15009,7 @@ async function exportPDF(opts) {
   if (!jsPDF) { alert('PDF library not loaded. Please check your internet connection.'); return; }
 
   const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+  await loadPDFFonts(doc);
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
