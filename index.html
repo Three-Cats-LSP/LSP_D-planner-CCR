@@ -15453,7 +15453,7 @@ async function exportPDF(opts) {
             decoSteps.forEach((s,si)=>{
               const cx=startX+COMP_W+HT_W+si*stopColW;
               const depthD=Math.round(s.depth*conv);
-              const stopM=s.dur>=1?Math.round(s.dur)+"'":'<1'';
+              const stopM=s.dur>=1?Math.round(s.dur)+"'":'<1\'';
               doc.setTextColor(0,200,255);
               doc.text(`${depthD}${uLbl}`, cx+stopColW/2, y+3.5, {align:'center'});
               doc.setTextColor(120,150,180);
