@@ -3213,6 +3213,20 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 </div>
 
 <!-- ══════════════════════════════════════
+     COPY MODAL
+══════════════════════════════════════ -->
+<div id="copyModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9550;background:rgba(0,0,0,0.72);padding:20px;align-items:center;justify-content:center;" onclick="if(event.target===this)closeCopyModal()">
+  <div style="max-width:480px;width:100%;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px 20px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <div id="copyModalTitle" style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Copy Plan</div>
+    <pre id="copyModalBody" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);line-height:1.5;white-space:pre;overflow-x:auto;overflow-y:auto;max-height:60vh;background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;padding:12px;margin:0;"></pre>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button onclick="copyCopyModal()" style="flex:1;padding:8px;background:var(--accent);border:1px solid var(--accent);border-radius:6px;cursor:pointer;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.5px;">⧉ Copy</button>
+      <button onclick="closeCopyModal()" style="flex:1;padding:8px;background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      DIVE PRESETS MODAL
 ══════════════════════════════════════ -->
 <div id="presetModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9550;background:rgba(0,0,0,0.72);padding:20px;align-items:center;justify-content:center;" onclick="if(event.target===this)closePresetModal()">
@@ -13007,14 +13021,22 @@ function buildExportText(mode) {
   return lines.join('\n');
 }
 
-// ── Copy to clipboard - uses messenger-safe format ──
+// ── Copy to clipboard - shows preview modal ──
 function copyDiveProfile(mode) {
   const text = buildMessengerText(mode);
-  if (!text) return;
+  if (!text) { showToast('Run a dive plan first', 'copy'); return; }
+  const titles = { deco: 'Deco Plan', contingency: 'Emergency Plan', planner: 'Dive Plan' };
+  document.getElementById('copyModalTitle').textContent = titles[mode] || 'Copy Plan';
+  document.getElementById('copyModalBody').textContent = text;
+  document.getElementById('copyModal').style.display = 'flex';
+}
+function closeCopyModal() {
+  document.getElementById('copyModal').style.display = 'none';
+}
+function copyCopyModal() {
+  const text = document.getElementById('copyModalBody').textContent || '';
   if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(() => showCopyToast())
-      .catch(() => copyFallback(text));
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'copy')).catch(() => copyFallback(text));
   } else {
     copyFallback(text);
   }
