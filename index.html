@@ -5024,6 +5024,7 @@ function safetyStopHTML(depthM, depthFt, dur) {
 // NDL TABLE
 // ═══════════════════════════════════════════════
 function renderNDLTable() {
+  if (window._zhlHeadless) return; // skip during headless test execution
   const isM  = ndlUnits === 'metric';
   const ranges = { shallow:[0,1], moderate:[2,3], deeper:[4,6], deep:[7,10] };
   const sel = document.getElementById('ndlRange').value;
@@ -15200,6 +15201,7 @@ var appSettings = {
 
   // Save all current values
   save: function(verbose = true) {
+    if (window._zhlHeadless) return; // skip during headless tests
     const values = {};
     const fields = this.getExistingFields();
     
@@ -15290,7 +15292,7 @@ var appSettings = {
           // GF preset needs special handler to sync mGF state
           if (id === 'gfPresetSelect' && typeof handleGFSelect === 'function') {
             handleGFSelect(values[id]);
-          } else {
+          } else if (!window._zhlHeadless) {
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }
           restored++;

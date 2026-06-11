@@ -2949,7 +2949,12 @@ function waitForEngine(iframe, timeout, cb) {
 
   function check() {
     const found = tryGet();
-    if (found) return cb(null, found.engine, found.win);
+    if (found) {
+      // Wait 2s for deferred app init (appSettings.load retries, setTimeout callbacks)
+      // to complete before starting tests. This prevents mid-test DOM thrashing.
+      setTimeout(() => cb(null, found.engine, found.win), 2000);
+      return;
+    }
     if (iframeBootError) return cb(new Error('Boot error: ' + iframeBootError));
     if (Date.now() - start > timeout) return cb(new Error('Timed out waiting for engine'));
     setTimeout(check, 300);
@@ -3018,6 +3023,12 @@ async function startTests() {
     }
 
     E = engine; WIN = win;
+
+    // ── Suppress all deferred app callbacks during test execution ────────────
+    // Set _zhlHeadless immediately — this prevents appSettings.save(),
+    // renderNDLTable(), setGF() recalcs, and all deferred setTimeout callbacks
+    // from running during tests. Cleared only during explicit runDecoSchedule calls.
+    win._zhlHeadless = true;
 
     // ── Reset app state to known baseline before tests run ───────────────────
     // Clear _lastContingency FIRST — setUnits() calls calcContingency() which
