@@ -4342,7 +4342,7 @@ function setGF(low, high) {
 
   // GF FIX: re-run deco schedule with updated GF values instead of hiding result
   const decoRes = document.getElementById('decoResult');
-  if (decoRes && decoRes.style.display !== 'none' && decoRes.innerHTML.trim()) {
+  if (!window._zhlHeadless && decoRes && decoRes.style.display !== 'none' && decoRes.innerHTML.trim()) {
     if (typeof runDecoSchedule === 'function') runDecoSchedule();
   } else {
     const pr = document.getElementById('plannerResult');
@@ -4396,7 +4396,7 @@ function setCustomGF(commit) {
 
   // GF FIX: re-run deco schedule with updated GF values instead of hiding result
   const decoResC = document.getElementById('decoResult');
-  if (decoResC && decoResC.style.display !== 'none' && decoResC.innerHTML.trim()) {
+  if (!window._zhlHeadless && decoResC && decoResC.style.display !== 'none' && decoResC.innerHTML.trim()) {
     if (typeof runDecoSchedule === 'function') runDecoSchedule();
   } else {
     const pr = document.getElementById('plannerResult');
@@ -11709,7 +11709,7 @@ function setGasRule(rule) {
   calcGasPlan();
   // Also refresh the Gas Consumption card on Deco Schedule if it is visible
   const gasEl = document.getElementById('gasConsumptionSummary');
-  if (gasEl && gasEl.style.display !== 'none') runDecoSchedule();
+  if (!window._zhlHeadless && gasEl && gasEl.style.display !== 'none') runDecoSchedule();
 }
 
 // Read a Gas Plan pressure input, returning bar regardless of unit system.
@@ -15443,7 +15443,7 @@ function loadPreset(idx) {
   const values = p.values;
   const applyAndRun = () => {
     appSettings._restoreFields(values);
-    setTimeout(() => { try { runDecoSchedule(); } catch (e) {} }, 650);
+    if (!window._zhlHeadless) setTimeout(() => { try { runDecoSchedule(); } catch (e) {} }, 650);
   };
   // Switch algorithm first if needed (mirrors appSettings.load)
   const savedAlgo = values['__algo__'];
