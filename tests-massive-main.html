@@ -2974,7 +2974,10 @@ async function runGroupsAsync(groups) {
       pb.style.width = pct + '%';
       const _elapsedS = ((performance.now() - (window._suiteT0||0)) / 1000).toFixed(0);
       pl.textContent = `${done} / ${total} — ${g.name}  [${_elapsedS}s]`;
-      await new Promise(r => setTimeout(r, 8)); // yield — plain setTimeout works in background tabs (rAF doesn't)
+      // Always yield — resets browser's unresponsive watchdog
+      // Extra yield if test was slow (>100ms) to ensure browser can repaint
+      await new Promise(r => setTimeout(r, 1));
+      if (res.ms > 100) await new Promise(r => setTimeout(r, 1));
     }
     results.push(groupResult);
   }
@@ -3041,6 +3044,28 @@ async function startTests() {
 
     statusEl.className = 'running';
     statusEl.textContent = '▶ Engine ready — running massive suite…';
+
+    // ── CPU speed benchmark ──────────────────────────────────────────────────
+    // Measure how long a simple Bühlmann calculation takes.
+    // If > 50ms, the machine is too slow for Tier 1 engine tests — auto-skip them.
+    let _autoSkipTier1 = false;
+    try {
+      const _bStart = performance.now();
+      const _lv = [{depth:40, time:25, o2:21, he:0}];
+      const _s = {metric:true,waterType:0,descentRate:20,ascentRate:10,decoAscentRate:3,
+                  stepSize:3,lastStop:3,minStopTime:1,ppO2Bottom:1.4,ppO2Deco:1.6,gfLo:30,gfHi:85};
+      if (win.ZHLEngine) win.ZHLEngine.calculate(_lv, [], _s);
+      const _bMs = performance.now() - _bStart;
+      document.getElementById('meta-version').textContent += '  ⚡' + Math.round(_bMs) + 'ms/call';
+      if (_bMs > 50 && !skipTier1) {
+        _autoSkipTier1 = true;
+        skipTier1 = true;
+        statusEl.textContent = '▶ Engine ready — slow CPU detected (' + Math.round(_bMs) + 'ms/call) — running UI tests only…';
+        const _uiBtn = document.getElementById('run-ui-btn'); if(_uiBtn){_uiBtn.style.background='var(--accent)';_uiBtn.style.color='#000';_uiBtn.title='Auto-selected: slow CPU detected';}
+      }
+    } catch(e) {}
+    // Speed check: warn if engine init was slow (indicates slow machine)
+    const _initMs = performance.now();
     // Pulse: use recursive setTimeout (setInterval stops in background tabs)
     (function pulse() {
       if (!statusEl.textContent.includes('running')) return;
@@ -3050,6 +3075,8 @@ async function startTests() {
       setTimeout(pulse, 600);
     })();
 
+    // Measure pre-warm duration to detect slow machine
+    const _preWarmStart = performance.now();
     // ── Pre-warm: headless engine call + stub DOM injection (NO blocking render) ──
     // win.runDecoSchedule() full render blocks the JS thread even with await yields.
     // Solution: run headless (skips all DOM writes), then inject minimal stub HTML

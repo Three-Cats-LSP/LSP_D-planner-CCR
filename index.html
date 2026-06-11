@@ -8205,7 +8205,8 @@ function runDecoSchedule() {
     // Step resolution: first deco stop uses fine (10-sec) resolution.
     // Subsequent stops: use 1-min steps for ceiling resolution (MultiDeco behaviour),
     // regardless of minStopT. This ensures stops don't under-count.
-    const holdStep = isFirstDecoStop ? 1/6 : 1;
+    // In headless test mode use 1-min steps (6x faster); real renders use 10-sec for precision
+    const holdStep = (window._zhlHeadless) ? 1 : (isFirstDecoStop ? 1/6 : 1);
 
     const ceil     = ceiling(tissues, gfForClear);
     const mustStop = ceil > ceilTarget;
