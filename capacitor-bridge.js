@@ -6,30 +6,29 @@
  *
  * On the web / PWA this file does nothing — the normal <a download> path runs as-is.
  *
- * STRATEGY
- * --------
- * 1. Try writing to Directory.EXTERNAL (app-scoped, no permission needed):
- *    /storage/emulated/0/Android/data/com.threecats.lsp.dplanner/files/
- *    File is permanent, visible via USB/file manager.
+ * STORAGE STRATEGY
+ * ----------------
+ * Android ≤ 12 (API ≤ 32):
+ *   - Requests READ_EXTERNAL_STORAGE + WRITE_EXTERNAL_STORAGE at runtime
+ *   - Writes to Directory.DOCUMENTS (visible in Files app / Downloads)
  *
- * 2. If EXTERNAL fails (storage not mounted, etc.) fall back to Directory.CACHE.
- *    File is temporary but still accessible via Share sheet.
+ * Android 13+ (API 33+):
+ *   - Granular media permissions replace the old storage ones
+ *   - WRITE_EXTERNAL_STORAGE is ignored (maxSdkVersion=32 in manifest)
+ *   - Falls back to Directory.EXTERNAL (app-scoped, no permission needed)
+ *     which is visible via USB at Android/data/com.threecats.lsp.dplanner/files/
  *
- * 3. Open native Share sheet via @capacitor/share.
- *    Pass file:// URI — Share plugin converts to content:// via FileProvider.
- *    User can save to Downloads, Files, Drive, etc.
- *
- * 4. Show clear error toasts at every failure point so we can debug.
+ * Both paths then open the native Share sheet so the user can also send
+ * the file to Downloads, Drive, email, etc.
  */
 
 (function () {
-  // Only activate inside Capacitor (Android app)
   if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
 
   const FS = 'Filesystem';
   const SH = 'Share';
 
-  // Helper: read a blob as base64 string
+  // Helper: blob → base64 string (strip data: prefix)
   function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -39,7 +38,7 @@
     });
   }
 
-  // Show a toast — always visible, red for errors
+  // Toast — red for errors, cyan for info
   function notify(msg, isError) {
     console.log('[CapBridge]', msg);
     if (typeof window.showExportToast === 'function') {
@@ -61,8 +60,32 @@
     setTimeout(() => div.remove(), isError ? 5000 : 3500);
   }
 
-  // Try to write base64 data to a Capacitor directory.
-  // Returns the file:// URI on success, null on failure.
+  // Request storage permission via Filesystem plugin.
+  // Returns true if granted (or not needed), false if denied.
+  async function requestStoragePermission() {
+    const plugin = Capacitor.Plugins[FS];
+    if (!plugin || typeof plugin.requestPermissions !== 'function') {
+      console.log('[CapBridge] requestPermissions not available — assuming granted');
+      return true;
+    }
+    try {
+      const result = await plugin.requestPermissions();
+      console.log('[CapBridge] permission result:', JSON.stringify(result));
+      // result.publicStorage = 'granted' | 'denied' | 'prompt'
+      const status = result && result.publicStorage;
+      if (status === 'denied') {
+        notify('Storage permission denied — cannot save file', true);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      // On Android 13+ requestPermissions may throw — that's fine, EXTERNAL works without it
+      console.warn('[CapBridge] requestPermissions threw (likely API 33+):', err);
+      return true;
+    }
+  }
+
+  // Try writing to a directory. Returns file:// URI or null.
   async function tryWrite(base64Data, filename, directory) {
     try {
       const result = await Capacitor.Plugins[FS].writeFile({
@@ -71,15 +94,16 @@
         directory: directory,
         recursive: true
       });
-      console.log('[CapBridge] writeFile OK dir=' + directory + ' uri=' + result.uri);
-      return result.uri; // file:///...absolute path...
+      console.log('[CapBridge] write OK dir=' + directory + ' uri=' + result.uri);
+      return result.uri;
     } catch (err) {
-      console.warn('[CapBridge] writeFile FAILED dir=' + directory + ':', err);
+      const msg = err && err.message ? err.message : String(err);
+      console.warn('[CapBridge] write FAILED dir=' + directory + ':', msg);
       return null;
     }
   }
 
-  // Open native share sheet for a file:// URI
+  // Share sheet for a file:// URI
   async function shareFile(fileUri, filename) {
     const plugin = Capacitor.Plugins[SH];
     if (!plugin || typeof plugin.share !== 'function') {
@@ -87,56 +111,57 @@
       return;
     }
     try {
-      console.log('[CapBridge] Share.share url=' + fileUri);
-      await plugin.share({
-        title: filename,
-        url: fileUri,
-        dialogTitle: 'Save ' + filename
-      });
+      await plugin.share({ title: filename, url: fileUri, dialogTitle: 'Save ' + filename });
     } catch (err) {
-      // Dismissed or failed — file already saved, that's OK
       const msg = err && err.message ? err.message : String(err);
-      console.warn('[CapBridge] Share result:', msg);
-      // Only show error if it's not just a cancel
       if (!msg.toLowerCase().includes('cancel') && !msg.toLowerCase().includes('dismiss')) {
         notify('Share error: ' + msg, true);
       }
     }
   }
 
-  // Main handler
+  // Main export handler
   async function saveAndOpen(blob, filename) {
     let base64Data;
     try {
       base64Data = await blobToBase64(blob);
     } catch (err) {
-      notify('Export failed: cannot read blob — ' + err, true);
+      notify('Export failed: cannot read file — ' + err, true);
       return;
     }
 
-    // Try EXTERNAL first (permanent, no permission needed, USB-visible)
-    let fileUri = await tryWrite(base64Data, filename, 'EXTERNAL');
-    let savedTo = 'device storage';
+    // Request permission first (shows dialog on Android ≤ 12 if not yet granted)
+    const hasPermission = await requestStoragePermission();
+    if (!hasPermission) return;
+
+    // Try DOCUMENTS first (visible in Files/Downloads on Android ≤ 12)
+    let fileUri = await tryWrite(base64Data, filename, 'DOCUMENTS');
+    let savedTo = 'Documents';
 
     if (!fileUri) {
-      // Fallback to CACHE
-      notify('External storage unavailable, using cache…', false);
-      fileUri = await tryWrite(base64Data, filename, 'CACHE');
-      savedTo = 'app cache';
+      // Fallback: app-scoped External (no permission, always works, USB-visible)
+      fileUri = await tryWrite(base64Data, filename, 'EXTERNAL');
+      savedTo = 'device storage (Android/data/com.threecats.lsp.dplanner/files/)';
     }
 
     if (!fileUri) {
-      notify('Export failed: could not write file to device', true);
+      // Last resort: Cache
+      fileUri = await tryWrite(base64Data, filename, 'CACHE');
+      savedTo = 'app cache (use share to save permanently)';
+    }
+
+    if (!fileUri) {
+      notify('Export failed — could not write file to any location', true);
       return;
     }
 
     notify('Saved to ' + savedTo + ': ' + filename);
 
-    // Share sheet so user can also send to Downloads/Drive/etc
+    // Open share sheet — lets user also send to Downloads, Drive, etc.
     await shareFile(fileUri, filename);
   }
 
-  // Patch HTMLAnchorElement.prototype.click to intercept blob downloads
+  // Patch HTMLAnchorElement.prototype.click
   const _origClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function () {
     if (this.download && this.href && this.href.startsWith('blob:')) {
@@ -144,7 +169,7 @@
         .then(r => r.blob())
         .then(blob => saveAndOpen(blob, this.download))
         .catch(err => {
-          notify('Export failed: blob fetch error — ' + err, true);
+          notify('Export failed: ' + err, true);
           _origClick.call(this);
         });
       return;
@@ -152,5 +177,5 @@
     _origClick.call(this);
   };
 
-  console.log('[CapBridge] Bridge active — EXTERNAL→CACHE fallback + Share sheet');
+  console.log('[CapBridge] Bridge active — DOCUMENTS→EXTERNAL→CACHE, runtime permission');
 })();
