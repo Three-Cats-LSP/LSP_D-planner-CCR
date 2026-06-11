@@ -4,7 +4,7 @@ A technical dive decompression planner for recreational and mixed-gas technical 
 
 🌐 **Live App**: https://three-cats-lsp.github.io/LSP_D-planner/
 
-📱 **Android APK**: [`Android Apk/LSP_D-planner.apk`](https://github.com/Three-Cats-LSP/LSP_D-planner/raw/main/Android%20Apk/LSP_D-planner.apk)
+📱 **Android APK**: [`Android Apk/LSP_D-planner.apk`](https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk)
 
 ---
 
