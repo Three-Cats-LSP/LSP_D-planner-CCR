@@ -13533,7 +13533,7 @@ async function exportContingencyPDF(opts) {
     try {
       const saved = document.getElementById('decoTableBody').innerHTML;
       document.getElementById('decoTableBody').innerHTML = c.newRows;
-      drawDecoProfile();
+      _drawForPDF(() => drawDecoProfile());
       const pc = document.getElementById('decoProfileCanvas');
       if (pc) {
         doc.addPage(); drawHeader();
@@ -13552,7 +13552,7 @@ async function exportContingencyPDF(opts) {
   // ── SECTION: GF Gradient Factor Curve ───────────────────────────────────
   const isVPMem = (document.getElementById('algorithmSelect')?.value||'ZHLC_GF') !== 'ZHLC_GF';
   if (_incGFCurve && !isVPMem) {
-    drawGFCurve();
+    _drawForPDF(() => drawGFCurve());
     const gc2=document.getElementById('gfCurveCanvas');
     if(gc2){
       doc.addPage(); drawHeader();
@@ -14400,6 +14400,17 @@ function showPDFExportDialog() {
   document.body.appendChild(overlay);
 }
 
+// Force light theme for a canvas draw + capture, then restore original theme.
+// PDF is always a light-background document — dark canvas graphs look bad in it.
+function _drawForPDF(drawFn) {
+  const body = document.body;
+  const wasLight = body.classList.contains('light-theme');
+  if (!wasLight) body.classList.add('light-theme');
+  try { drawFn(); } finally {
+    if (!wasLight) body.classList.remove('light-theme');
+  }
+}
+
 async function exportPDF(opts) {
   opts = opts || {};
   const _incGas      = opts.gas      !== false;
@@ -14839,7 +14850,7 @@ async function exportPDF(opts) {
     }
   }
 
-  if(_incProfile) drawDecoProfile();
+  if(_incProfile) _drawForPDF(() => drawDecoProfile());
   const pc=document.getElementById('decoProfileCanvas');
   if(_incProfile&&pc){
     doc.addPage(); drawHeader();
@@ -14850,7 +14861,7 @@ async function exportPDF(opts) {
   }
 
   if(!isVPM){
-    if(_incGFCurve) drawGFCurve();
+    if(_incGFCurve) _drawForPDF(() => drawGFCurve());
     if(_incGFCurve){
     doc.addPage(); drawHeader();
     const gc=document.getElementById('gfCurveCanvas');
