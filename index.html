@@ -2389,8 +2389,32 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <div class="card collapsible card-open" id="tissueLoadInnerCard">
       <div class="card-title" onclick="toggleCard(this)">Tissue Saturation<span class="card-caret">▾</span></div>
       <div class="card-collapsible-body">
-        <div class="info-box" style="margin-top:0;">Bühlmann ZHL-16C tissue saturation at each deco stop. Bars show load relative to the GF-adjusted M-value ceiling at that depth. Red = at or over ceiling limit. Trimix-weighted a/b values applied where He is present.</div>
-        <div id="tissueLoadChart"></div>
+
+        <!-- Section 1: surface saturation bars (end-of-dive snapshot) -->
+        <div style="margin-bottom:16px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Surface Saturation — End of Dive</div>
+          <div class="info-box" style="margin-top:0;margin-bottom:10px;">All 16 compartments at surfacing. Bars show saturation vs GF-adjusted M-value at surface pressure.</div>
+          <div id="tissueGrid" style="padding:4px 0;"></div>
+        </div>
+
+        <!-- Section 2: detailed table with exact bar values -->
+        <div style="margin-bottom:16px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Compartment Detail</div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+            <table class="deco-table tissue-table table-view">
+              <thead><tr><th>#</th><th>Half-time</th><th>N&#x2082; Load (bar)</th><th>M-value (bar)</th><th>Sat %</th><th>Status</th></tr></thead>
+              <tbody id="tissueTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 3: per-stop saturation chart through the ascent -->
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Per-Stop Saturation — Ascent Profile</div>
+          <div class="info-box" style="margin-top:0;margin-bottom:10px;">Saturation at each deco stop depth. Columns = stops (depth / time), rows = compartments. Bars relative to GF-adjusted M-value at that stop depth. Trimix-weighted a/b values applied.</div>
+          <div id="tissueLoadChart"></div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2447,13 +2471,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   </div><!-- close diveGraphCard -->
 
   <!-- ── Tissue Saturation (inline) ── -->
-  <div class="card" id="tissueInlineCard" style="display:none!important;">
-    <div class="card-title">Tissue Saturation</div>
-    <div class="info-box">Bühlmann ZH-L16C models <strong>16 tissue compartments</strong> with N₂ half-times from 4 to 635 min. Bars show saturation relative to GF-adjusted M-value.</div>
-    <div id="tissueGrid" style="padding:4px 0;">
-      <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:24px;">Run a deco calculation to see tissue saturation.</div>
-    </div>
-  </div>
+  <!-- tissueInlineCard content merged into tissueLoadCard -->
   <!-- ── GF Curve (inline) ── -->
   <div class="card collapsible card-open" id="gfCurveInlineCard" style="display:none;">
     <div class="card-title" onclick="toggleCard(this)">GF Gradient Factor Curve<span class="card-caret">▾</span></div>
@@ -2486,17 +2504,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div><!-- /card-collapsible-body gfCurve -->
   </div>
 
-  <div class="card collapsible card-open" id="tissueTableCard" style="display:none;">
-    <div class="card-title" onclick="toggleCard(this)">Compartment Detail<span class="card-caret">▾</span></div>
-    <div class="card-collapsible-body">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-      <table class="deco-table tissue-table table-view">
-        <thead><tr><th>#</th><th>Half-time</th><th>N₂ Load (bar)</th><th>M-value (bar)</th><th>Sat %</th><th>Status</th></tr></thead>
-        <tbody id="tissueTableBody"></tbody>
-      </table>
-    </div><!-- /overflow-x -->
-    </div><!-- /card-collapsible-body tissueTable -->
-  </div>
+  <!-- tissueTableCard content merged into tissueLoadCard -->
 
   <div id="tecSurfIntContainer" style="display:block;"></div>
 
@@ -5172,8 +5180,11 @@ function updateTissueViz(tissues, gfH) {
       <td style="color:${tc}">${pct}%</td><td>${status}</td>
     </tr>`;
   });
-  const ttc = document.getElementById('tissueTableCard');
+  // Show unified tissue card
+  const ttc = document.getElementById('tissueLoadCard');
   if (ttc) ttc.style.display = 'block';
+  const tic = document.getElementById('tissueInlineCard');
+  if (tic) tic.style.display = 'none'; // old card suppressed
 }
 
 // ═══════════════════════════════════════════════
@@ -6080,7 +6091,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
 
   // Tissue Saturation, GF Curve, Compartment — Bühlmann-only: show notice
   const buhOnlyNote = `<div class="info-box" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"><strong>N/A for VPM-B</strong> — Tissue saturation and GF curve are Bühlmann ZH-L16C specific. Switch to Bühlmann+GF to view these.</div>`;
-  ['tissueInlineCard','tissueTableCard','gfCurveInlineCard'].forEach(id => {
+  ['gfCurveInlineCard'].forEach(id => { // tissueInlineCard/tableCard merged into tissueLoadCard
     const el = document.getElementById(id);
     if (!el) return;
     el.style.display = 'block';
@@ -9002,11 +9013,10 @@ function runDecoSchedule() {
   // Tissue handled by updateTissueViz via tissueInlineCard
 
   if (!_contingencyRunning) {
-    document.getElementById('tissueInlineCard').style.display = 'block';
-    document.getElementById('tissueTableCard').style.display = 'block';
+    document.getElementById('tissueLoadCard').style.display = 'block'; // unified tissue card
     document.getElementById('gfCurveInlineCard').style.display = 'block';
     // Clear any VPM "N/A" notices from tissue/GF cards
-    ['tissueInlineCard','tissueTableCard','gfCurveInlineCard'].forEach(id => {
+    ['gfCurveInlineCard'].forEach(id => { // tissueInlineCard/tableCard merged into tissueLoadCard
       const el = document.getElementById(id);
       if (el) el.querySelectorAll('.info-box').forEach(n => { if (n.textContent.includes('N/A for VPM')) n.remove(); });
     });
