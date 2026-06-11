@@ -8473,6 +8473,11 @@ function runDecoSchedule() {
   const narcoStr = `N₂:${narcoticN2?'✓':'✗'} O₂:${narcoticO2?'✓':'✗'}`;
 
   // Update live END display in the settings card
+  // ── Headless mode early return: skip ALL DOM writes ──────────────────────
+  // Placed here — after _lastPlan+CNS/OTU are set, before any innerHTML writes.
+  // This skips the heavy decoSummary template, tbody construction, gas card, etc.
+  if (window._zhlHeadless) return;
+
   const endLive = document.getElementById('endDisplayLive');
   if (endLive) {
     endLive.textContent = `${endDisp} m  (${narcoStr})`;
@@ -8503,12 +8508,6 @@ function runDecoSchedule() {
 
   const tbody = document.getElementById('decoTableBody');
   const descentTimeMin = Math.round((depthM / descentRate) * 10) / 10;
-
-  // ── Headless mode early return: skip all DOM rendering ─────────────────
-  // Set window._zhlHeadless = true before calling runDecoSchedule() to
-  // skip all DOM/innerHTML writes. _lastPlan is already populated above.
-  // CNS/OTU are approximated in ZHLEngine.calculate() from the steps data.
-  if (window._zhlHeadless) return;
 
   tbody.innerHTML = '';
   let prevGas = bottomMixLabel;
