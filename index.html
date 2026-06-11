@@ -681,6 +681,34 @@ body.algo-buh .buh-only { display: flex !important; }
   background: linear-gradient(90deg, var(--border-hi), transparent);
   margin-left: 4px;
 }
+/* ── COLLAPSIBLE CARDS ── */
+.card.collapsible .card-title {
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+}
+.card.collapsible .card-title .card-caret {
+  color: var(--accent);
+  font-size: 11px;
+  margin-left: 8px;
+  flex-shrink: 0;
+  display: inline-block;
+  transition: transform 0.2s;
+  vertical-align: middle;
+}
+.card.collapsible.card-open .card-title .card-caret {
+  transform: rotate(180deg);
+}
+/* collapsed state: hide everything inside card except the title */
+.card.collapsible:not(.card-open) .card-collapsible-body {
+  display: none;
+}
+.card.collapsible.card-open .card-collapsible-body {
+  display: block;
+  margin-top: 14px;
+}
+
+
 
 /* ── UNIT / SEG CONTROLS ── */
 .ctrl-row {
@@ -2319,7 +2347,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button id="tableViewToggle" onclick="toggleTableView()" style="display:none;padding:8px 12px;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Switch table view">⊞ Cards</button>
-          <button id="tissueChartToggleBtn" onclick="(function(){ const card=document.getElementById('tissueLoadCard'); const body=document.getElementById('tissueLoadBody'); if(card && card.style.display!=='none'){ if(body && body.style.display==='none'){toggleTissueChart();} card.scrollIntoView({behavior:'smooth',block:'nearest'}); } })()" style="display:none;padding:8px 12px;background:rgba(0,200,255,0.08);color:var(--accent);border:1px solid rgba(0,200,255,0.25);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Tissue saturation chart">📊 Tissue Sat</button>
+          <button id="tissueChartToggleBtn" onclick="(function(){ const card=document.getElementById('tissueLoadCard'); if(card && card.style.display!=='none'){ const inner=document.getElementById('tissueLoadInnerCard'); if(inner && !inner.classList.contains('card-open')){toggleTissueChart();} card.scrollIntoView({behavior:'smooth',block:'nearest'}); } })()" style="display:none;padding:8px 12px;background:rgba(0,200,255,0.08);color:var(--accent);border:1px solid rgba(0,200,255,0.25);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Tissue saturation chart">📊 Tissue Sat</button>
           <button id="contingencyJumpBtn" onclick="(function(){ const card=document.getElementById('contingencyCard'); if(card && card.style.display!=='none'){ card.scrollIntoView({behavior:'smooth',block:'start'}); } })()" style="display:none;padding:8px 12px;background:rgba(255,71,87,0.08);color:var(--red);border:1px solid rgba(255,71,87,0.25);border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;letter-spacing:0.5px;" title="Scroll to Contingency Plans">⚠ Contingency</button>
 
         </div>
@@ -2358,13 +2386,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
   <!-- ── Tissue Loading Chart ── -->
   <div id="tissueLoadCard" style="display:none;">
-    <div class="card">
-      <button type="button" onclick="toggleTissueChart()" id="tissueLoadToggle"
-        style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:0;cursor:pointer;color:var(--text);margin-bottom:0;">
-        <div class="card-title" style="margin:0;">Tissue Saturation</div>
-        <span id="tissueLoadCaret" style="color:var(--accent);font-size:14px;">▾</span>
-      </button>
-      <div id="tissueLoadBody" style="display:none;margin-top:12px;">
+    <div class="card collapsible card-open" id="tissueLoadInnerCard">
+      <div class="card-title" onclick="toggleCard(this)">Tissue Saturation<span class="card-caret">▾</span></div>
+      <div class="card-collapsible-body">
         <div class="info-box" style="margin-top:0;">Bühlmann ZHL-16C tissue saturation at each deco stop. Bars show load relative to the GF-adjusted M-value ceiling at that depth. Red = at or over ceiling limit. Trimix-weighted a/b values applied where He is present.</div>
         <div id="tissueLoadChart"></div>
       </div>
@@ -2375,8 +2399,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   <div id="gasConsumptionSummary" style="display:none;"></div>
 
   <!-- ── Contingency Plans ── -->
-  <div class="card" id="contingencyCard" style="display:none;">
-    <div class="card-title">⚠️ Contingency Plans</div>
+  <div class="card collapsible card-open" id="contingencyCard" style="display:none;">
+    <div class="card-title" onclick="toggleCard(this)">⚠️ Contingency Plans<span class="card-caret">▾</span></div>
+    <div class="card-collapsible-body">
     <div class="info-box">Select a gas loss scenario and/or extended bottom time to calculate a combined emergency plan.</div>
 
     <!-- Gas Loss -->
@@ -2401,12 +2426,14 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 
     <div id="contingencyResult" style="display:none;"></div>
     <div id="emergencyGasConsumption" style="display:none;margin-top:8px;"></div>
+    </div><!-- /card-collapsible-body contingency -->
   </div>
 
 
   <!-- ── Dive Graph ── -->
-  <div class="card" id="diveGraphCard" style="display:none;">
-    <div class="card-title">Dive Graph</div>
+  <div class="card collapsible card-open" id="diveGraphCard" style="display:none;">
+    <div class="card-title" onclick="toggleCard(this)">Dive Graph<span class="card-caret">▾</span></div>
+    <div class="card-collapsible-body">
     <div id="decoProfileCanvas-wrap" style="position:relative;width:100%;margin:6px 0;">
   <canvas id="decoProfileCanvas" width="700" height="420" style="width:100%;height:auto;aspect-ratio:700/420;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:block;"></canvas>
   <div id="decoProfileCanvas-overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;border-radius:10px;cursor:crosshair;"></div>
@@ -2416,10 +2443,11 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 </div>
 <div id="decoProfileCanvas-hint" style="display:block;width:100%;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);opacity:0.55;margin:3px 0 2px 0;letter-spacing:0.3px;box-sizing:border-box;padding-right:2px;"><span style="opacity:0.7;">Hint:</span> scroll·zoom &nbsp; drag·pan &nbsp; dbl-click·reset</div>
       <div id="decoProfileLegend" style="display:none;margin-top:4px;"></div>
-    </div>
+    </div><!-- /card-collapsible-body diveGraph -->
+  </div><!-- close diveGraphCard -->
 
   <!-- ── Tissue Saturation (inline) ── -->
-  <div class="card" id="tissueInlineCard" style="display:none;">
+  <div class="card" id="tissueInlineCard" style="display:none!important;">
     <div class="card-title">Tissue Saturation</div>
     <div class="info-box">Bühlmann ZH-L16C models <strong>16 tissue compartments</strong> with N₂ half-times from 4 to 635 min. Bars show saturation relative to GF-adjusted M-value.</div>
     <div id="tissueGrid" style="padding:4px 0;">
@@ -2427,8 +2455,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     </div>
   </div>
   <!-- ── GF Curve (inline) ── -->
-  <div class="card" id="gfCurveInlineCard" style="display:none;">
-    <div class="card-title">GF Gradient Factor Curve</div>
+  <div class="card collapsible card-open" id="gfCurveInlineCard" style="display:none;">
+    <div class="card-title" onclick="toggleCard(this)">GF Gradient Factor Curve<span class="card-caret">▾</span></div>
+    <div class="card-collapsible-body">
     <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Visualizes how gradient factors control the ascent ceiling at each deco stop. Interpolates linearly from GF Low (first stop) to GF High (surface).</p>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
       <div class="stat" style="min-width:80px;"><div class="stat-val" id="gfCurveGFL" style="color:var(--accent)">30</div><div class="stat-lbl">GF Low</div></div>
@@ -2454,16 +2483,19 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
         <div style="width:12px;height:12px;border-radius:50%;background:var(--red);"></div> Deco stop
       </div>
     </div>
+    </div><!-- /card-collapsible-body gfCurve -->
   </div>
 
-  <div class="card" id="tissueTableCard" style="display:none;">
-    <div class="card-title">Compartment Detail</div>
+  <div class="card collapsible card-open" id="tissueTableCard" style="display:none;">
+    <div class="card-title" onclick="toggleCard(this)">Compartment Detail<span class="card-caret">▾</span></div>
+    <div class="card-collapsible-body">
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <table class="deco-table tissue-table table-view">
         <thead><tr><th>#</th><th>Half-time</th><th>N₂ Load (bar)</th><th>M-value (bar)</th><th>Sat %</th><th>Status</th></tr></thead>
         <tbody id="tissueTableBody"></tbody>
       </table>
-    </div>
+    </div><!-- /overflow-x -->
+    </div><!-- /card-collapsible-body tissueTable -->
   </div>
 
   <div id="tecSurfIntContainer" style="display:block;"></div>
@@ -11523,6 +11555,33 @@ function renderSurfIntPanel(containerId, prefix, preDepthM, preBtMin) {
   c.style.display = 'block';
 }
 
+
+// ── Collapsible card toggle ────────────────────────────────────────────────
+// Cards with class "collapsible" have a .card-title with onclick="toggleCard(this)"
+// and a sibling .card-collapsible-body that is shown/hidden.
+function toggleCard(titleEl) {
+  const card = titleEl.closest('.card.collapsible');
+  if (!card) return;
+  const isOpen = card.classList.toggle('card-open');
+  // Persist state using card id
+  const id = card.id;
+  if (id) {
+    try { localStorage.setItem('card_open_' + id, isOpen ? '1' : '0'); } catch(e) {}
+  }
+}
+
+// Restore collapsed/open states on load for cards that have an id
+function restoreCardStates() {
+  document.querySelectorAll('.card.collapsible[id]').forEach(card => {
+    try {
+      const saved = localStorage.getItem('card_open_' + card.id);
+      // Default: open unless explicitly saved as closed
+      if (saved === '0') card.classList.remove('card-open');
+      else card.classList.add('card-open');
+    } catch(e) {}
+  });
+}
+
 function toggleSurfIntPanel(prefix) {
   const body = document.getElementById(prefix + 'Body');
   const caret = document.getElementById(prefix + 'Caret');
@@ -11542,12 +11601,9 @@ function toggleSurfIntPanel(prefix) {
 // or raw M-value for VPM-B (where GF concept doesn't apply directly).
 
 function toggleTissueChart() {
-  const body = document.getElementById('tissueLoadBody');
-  const caret = document.getElementById('tissueLoadCaret');
-  if (!body) return;
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  if (caret) caret.textContent = open ? '\u25b4' : '\u25be';
+  // Delegate to unified toggleCard — find the card-title inside tissueLoadInnerCard
+  const card = document.getElementById('tissueLoadInnerCard');
+  if (card) { const t = card.querySelector('.card-title'); if (t) toggleCard(t); }
 }
 
 function renderTissueLoadChart() {
@@ -15658,6 +15714,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadThemePreference();
   updateGasMODDisplays();
   loadTableViewPreference();
+  restoreCardStates();
   // Load water density
   const savedDensity = localStorage.getItem('waterDensity') || 'salt';
   setWaterDensity(savedDensity);
