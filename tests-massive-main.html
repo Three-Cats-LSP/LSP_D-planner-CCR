@@ -172,6 +172,27 @@ iframe { display: none; }
 </style>
 </head>
 <body>
+
+  <!-- ── file:// detection banner ─────────────────────────────────────────── -->
+  <div id="file-protocol-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+    background:#cc0000;color:#fff;font-family:monospace;font-size:15px;font-weight:700;
+    padding:18px 24px;text-align:center;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+    ⛔ CANNOT RUN VIA file:// — Iframe cross-origin blocked<br>
+    <span style="font-size:12px;font-weight:400;">
+      Open via HTTP: <strong>https://three-cats-lsp.github.io/LSP_D-planner/tests-massive.html</strong><br>
+      Or locally: <code>python3 -m http.server 8080</code> then open <strong>http://localhost:8080/tests-massive.html</strong>
+    </span>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (location.protocol === 'file:') {
+        document.getElementById('file-protocol-banner').style.display = 'block';
+        const btn = document.getElementById('run-btn');
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.title = 'Cannot run via file:// — use HTTP'; }
+      }
+    });
+  </script>
+
 <div class="container">
 
   <div class="header">
@@ -3117,7 +3138,7 @@ function exportLog() {
 
 window.LAST_RESULTS_STORE = () => LAST_RESULTS; // debug access
 
-window.addEventListener('load', () => setTimeout(startTests, 300));
+window.addEventListener('load', () => { if (location.protocol !== 'file:') setTimeout(startTests, 300); });
 </script>
 </body>
 </html>
