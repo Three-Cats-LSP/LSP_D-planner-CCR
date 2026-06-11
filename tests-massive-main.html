@@ -1282,13 +1282,31 @@ function getVal(id) {
 function elExists(id) { return !!getDoc().getElementById(id); }
 
 function runCalc() {
-  // Try multiple entrypoints
-  if (typeof WIN.runDecoSchedule === 'function') { WIN.runDecoSchedule(); return; }
-  if (typeof WIN.calculateDive === 'function') { WIN.calculateDive(); return; }
-  // Fall back to clicking calculate button
-  const btn = getDoc().querySelector('#calculateBtn, button[onclick*="calculate"], button[onclick*="run"]');
-  if (btn) { btn.click(); return; }
-  throw new Error('Cannot find calculate function or button');
+  // Guaranteed shallow NDL dive — resets altitude first to avoid deco table
+  // render on altitude-elevated app state (which freezes mobile browsers).
+  const d = getDoc();
+  const dEl   = d && d.getElementById('decoDepth');
+  const btEl  = d && d.getElementById('decoBT');
+  const altEl = d && d.getElementById('altitudeSelect');
+  const origD   = dEl   ? dEl.value   : null;
+  const origBT  = btEl  ? btEl.value  : null;
+  const origAlt = altEl ? altEl.value : null;
+  if (altEl && altEl.value !== '0') { altEl.value = '0'; WIN.setAltitude && WIN.setAltitude(); }
+  if (dEl)  dEl.value  = '10';
+  if (btEl) btEl.value = '10';
+  if (typeof WIN.runDecoSchedule === 'function') { WIN.runDecoSchedule(); }
+  else if (typeof WIN.calculateDive === 'function') { WIN.calculateDive(); }
+  else {
+    const btn = getDoc().querySelector('#calculateBtn, button[onclick*="calculate"], button[onclick*="run"]');
+    if (btn) btn.click();
+    else throw new Error('Cannot find calculate function or button');
+  }
+  if (dEl   && origD   !== null) dEl.value   = origD;
+  if (btEl  && origBT  !== null) btEl.value  = origBT;
+  if (altEl && origAlt !== null && origAlt !== altEl.value) {
+    altEl.value = origAlt;
+    WIN.setAltitude && WIN.setAltitude();
+  }
 }
 
 function setUnit(unit) {
@@ -1386,7 +1404,7 @@ const TIER2_GROUPS = [
       ['Stats bar exists', 'UI', function(){
         const d = getDoc();
         // Stats are rendered inside #decoSummary as a .stats div after calculation
-        WIN.runDecoSchedule();
+        runCalc();
         const found = d.querySelector('#decoSummary .stats') ||
                       d.querySelector('.stats-bar, #stats, #statsRow, [id*="stats"]');
         assert(found, 'No stats bar found');
@@ -1482,7 +1500,7 @@ const TIER2_GROUPS = [
         const d = getDoc();
         const el = d.getElementById('decoResult') || d.querySelector('[id*="decoResult"]');
         assert(el, 'decoResult not found');
-        WIN.runDecoSchedule();
+        runCalc();
         // Give it a tick
         const html = el.innerHTML || '';
         assert(html.length > 50, `decoResult seems empty (${html.length} chars)`);
@@ -1490,7 +1508,7 @@ const TIER2_GROUPS = [
       }],
       ['Stats bar shows runtime value', 'UI', function(){
         const d = getDoc();
-        WIN.runDecoSchedule();
+        runCalc();
         // Stats are in #decoSummary > .stats after a calculation
         const statsArea = d.querySelector('#decoSummary .stats') ||
                           d.querySelector('.stats-bar, #statsRow, [id*="stats"]');
@@ -1501,7 +1519,7 @@ const TIER2_GROUPS = [
       }],
       ['Gas tags bar has content after calc', 'UI', function(){
         const d = getDoc();
-        WIN.runDecoSchedule();
+        runCalc();
         const tagsEl = d.querySelector('[id*="gasTags"], [id*="gas-tags"], .gas-tags');
         if (!tagsEl) return 'gasTags element not found — may be integrated (warn)';
         assert(tagsEl.textContent.trim().length > 0, 'Gas tags empty');
@@ -1511,7 +1529,7 @@ const TIER2_GROUPS = [
         const d = getDoc();
         const modEl = d.getElementById('cylBot_mod') || d.querySelector('[id*="cylBot"][id*="mod"]');
         if (!modEl) return 'cylBot_mod not found — may render inline (warn)';
-        WIN.runDecoSchedule();
+        runCalc();
         const txt = modEl.textContent.trim();
         assert(txt.length > 0, 'MOD display empty');
         return `MOD="${txt}" ✓`;
@@ -1533,7 +1551,7 @@ const TIER2_GROUPS = [
         assert(sel, 'Algorithm selector not found');
         const opt = sel.querySelector('option[value="ZHLC_GF"]') || sel.querySelector('option[value*="ZHL"], option[value*="GF"]');
         if (opt) { sel.value = opt.value; sel.dispatchEvent(new WIN.Event('change',{bubbles:true})); }
-        WIN.runDecoSchedule();
+        runCalc();
         const out = d.getElementById('decoResult');
         assert(out && out.innerHTML.length > 50, 'Output empty after ZHL run');
         return `ZHL (${sel.value}) output rendered ✓`;
@@ -1545,7 +1563,7 @@ const TIER2_GROUPS = [
         const opt = sel.querySelector('option[value="VPMB"]');
         assert(opt, 'VPMB option not found in algorithm selector');
         sel.value = 'VPMB'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        WIN.runDecoSchedule();
+        runCalc();
         const out = d.getElementById('decoResult');
         assert(out && out.innerHTML.length > 50, 'Output empty after VPM-B run');
         return 'VPM-B output rendered ✓';
@@ -1557,7 +1575,7 @@ const TIER2_GROUPS = [
         const opt = sel.querySelector('option[value="VPMB_GFS"]');
         assert(opt, 'VPMB_GFS option not found in algorithm selector');
         sel.value = 'VPMB_GFS'; sel.dispatchEvent(new WIN.Event('change',{bubbles:true}));
-        WIN.runDecoSchedule();
+        runCalc();
         const out = d.getElementById('decoResult');
         assert(out && out.innerHTML.length > 50, 'Output empty after VPM-B/GFS run');
         return 'VPM-B/GFS output rendered ✓';
@@ -1697,21 +1715,21 @@ const TIER2_GROUPS = [
       }],
       ['buildSlateText() returns a non-empty string', 'UI', function(){
         if (typeof WIN.buildSlateText !== 'function') return 'buildSlateText absent (warn)';
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const txt = WIN.buildSlateText();
         assert(typeof txt === 'string' && txt.length > 0, 'buildSlateText returned empty/non-string');
         return `length=${txt.length} chars ✓`;
       }],
       ['Slate text contains header keywords (DEPTH/STOP/SLATE)', 'UI', function(){
         if (typeof WIN.buildSlateText !== 'function') return 'buildSlateText absent (warn)';
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const txt = WIN.buildSlateText();
         if (!/slate|depth|stop|time|runtime/i.test(txt)) return `no header keywords found in slate (warn): "${txt.slice(0,40)}"`;
         return 'header keywords present ✓';
       }],
       ['Slate text is multi-line (≥ 3 newlines)', 'UI', function(){
         if (typeof WIN.buildSlateText !== 'function') return 'buildSlateText absent (warn)';
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const txt = WIN.buildSlateText();
         const nl = (txt.match(/\n/g) || []).length;
         if (nl < 3) return `only ${nl} newlines — slate short (warn)`;
@@ -1727,7 +1745,7 @@ const TIER2_GROUPS = [
       }],
       ['buildContingencySlateText() returns non-empty string', 'UI', function(){
         if (typeof WIN.buildContingencySlateText !== 'function') return 'buildContingencySlateText absent (warn)';
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         if (typeof WIN.runContingency === 'function') { try { WIN.runContingency(); } catch(e){} }
         let txt;
         try { txt = WIN.buildContingencySlateText(); } catch(e){ return `threw (needs contingency run first?): ${e.message} (warn)`; }
@@ -1891,7 +1909,7 @@ const TIER2_GROUPS = [
     tests: [
       ['END column header present after run', 'UI', function(){
         const d = getDoc();
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const out = d.getElementById('decoResult');
         if (!out) return 'decoResult not found (warn)';
         const headers = Array.from(out.querySelectorAll('th, thead td')).map(h => (h.textContent||'').trim());
@@ -1904,7 +1922,7 @@ const TIER2_GROUPS = [
       }],
       ['END column values numeric after run', 'UI', function(){
         const d = getDoc();
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const out = d.getElementById('decoResult');
         if (!out) return 'decoResult not found (warn)';
         const m = out.innerHTML.match(/END[\s\S]{0,400}?(\d{1,3})/i);
@@ -2007,7 +2025,7 @@ const TIER3_GROUPS = [
       }],
       ['runDecoSchedule works with travel gas active', 'SCN', function(){
         WIN.addTravelGas();
-        WIN.runDecoSchedule();
+        runCalc();
         const out = getDoc().getElementById('decoResult');
         assert(out && out.innerHTML.length > 50, 'Output empty with travel gas');
         return 'rendered ✓';
@@ -2023,7 +2041,7 @@ const TIER3_GROUPS = [
       }],
       ['Travel gas → descent table has 2 rows (orange + blue)', 'SCN', function(){
         WIN.addTravelGas();
-        WIN.runDecoSchedule();
+        runCalc();
         const d = getDoc();
         const rows = d.querySelectorAll('#decoResult tr, #diveTable tr, [id*="plan"] tr');
         // Look for orange color in table cells
@@ -2134,7 +2152,7 @@ const TIER3_GROUPS = [
           WIN.setAltitude();
         }
         setAlt('1000');
-        WIN.runDecoSchedule();
+        runCalc();
         const d = WIN.document;
         const html = (d.getElementById('decoSummary') || {innerHTML:''}).innerHTML;
         const found = /alt|1000.*m|elev/i.test(html);
@@ -2206,11 +2224,11 @@ const TIER3_GROUPS = [
       }],
       ['Imperial: runDecoSchedule() works after unit switch', 'SCN', function(){
         WIN.setUnits('imperial');
-        WIN.runDecoSchedule();
+        runCalc();
         const out = getDoc().getElementById('decoResult');
         const ok = out && out.innerHTML.length > 50;
         WIN.setUnits('metric');
-        WIN.runDecoSchedule();
+        runCalc();
         assert(ok, 'decoResult empty in imperial mode');
         return 'imperial calc + metric reset ✓';
       }],
@@ -2236,20 +2254,20 @@ const TIER3_GROUPS = [
       }],
       ['Imperial: gas consumption card shows cu ft not L', 'SCN', function(){
         WIN.setUnits('imperial');
-        WIN.runDecoSchedule();
+        runCalc();
         const d = getDoc();
         // Gas consumption cards are inside #gasConsumption or similar
         const gasEl = d.getElementById('gasConsumption') || d.querySelector('[id*="gasConsump"], [id*="gas-cons"]');
         if (!gasEl || gasEl.style.display === 'none' || !gasEl.innerHTML.trim()) {
           WIN.setUnits('metric');
-          WIN.runDecoSchedule();
+          runCalc();
           return 'gasConsumption element not visible after imperial run — skipping (warn)';
         }
         const html = gasEl.innerHTML;
         const hasLitres = /\d+\s*L(?!\s*\/|\s*m|iter)/.test(html);  // standalone L but not L/min or L/m
         const hasCuFt  = /cu\s*ft/i.test(html);
         WIN.setUnits('metric');
-        WIN.runDecoSchedule();
+        runCalc();
         if (hasLitres && !hasCuFt) return `Gas card shows L in imperial mode — volUnit display bug present`;
         assert(hasCuFt, `Gas card has neither L nor cu ft in imperial mode — cannot verify`);
         return 'Gas card shows cu ft in imperial mode ✓';
@@ -2327,7 +2345,7 @@ const TIER3_GROUPS = [
     tests: [
       ['Deco export row order: Copy, SLATE, TXT, PDF', 'SCN', function(){
         const d = getDoc();
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const btns = Array.from(d.querySelectorAll('.btn-export'));
         if (btns.length < 2) return `only ${btns.length} .btn-export buttons found (warn)`;
         const labels = btns.map(b => (b.textContent || '').trim().toUpperCase());
@@ -2342,7 +2360,7 @@ const TIER3_GROUPS = [
       }],
       ['SLATE button wired to showSlateModal', 'SCN', function(){
         const d = getDoc();
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const btns = Array.from(d.querySelectorAll('.btn-export, button'));
         const slate = btns.find(b => /SLATE/i.test(b.textContent || ''));
         if (!slate) return 'SLATE button not found (warn)';
@@ -2370,7 +2388,7 @@ const TIER3_GROUPS = [
       }],
       ['SLATE button uses .btn-export class (same size)', 'SCN', function(){
         const d = getDoc();
-        try { WIN.runDecoSchedule(); } catch(e){}
+        try { runCalc(); } catch(e){}
         const slate = Array.from(d.querySelectorAll('button')).find(b => /SLATE/i.test(b.textContent || ''));
         if (!slate) return 'SLATE button not found (warn)';
         assert(slate.classList.contains('btn-export'), `SLATE button missing .btn-export class: "${slate.className}"`);

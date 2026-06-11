@@ -1249,18 +1249,33 @@ function getDoc() { return WIN && WIN.document; }
 // then restores original values. Prevents mobile browser hang from heavy engine
 // calls on the default 40m/30min deco profile.
 function fastRDS() {
-  // Uses 20m/15min — guaranteed NDL (no deco stops) on all 3 algorithms,
-  // giving the fastest possible engine run on mobile.
+  // Uses 10m/10min — guaranteed NDL at ALL altitudes and all algorithms.
+  // Also resets altitude to sea level before running and restores after,
+  // preventing altitude state leaking from T3-B tests from making this
+  // a deco dive (which would trigger full decompression table rendering
+  // and risk a "slow script" timeout on mobile).
   const d = getDoc();
   const dEl  = d && d.getElementById('decoDepth');
   const btEl = d && d.getElementById('decoBT');
-  const origD  = dEl  ? dEl.value  : null;
-  const origBT = btEl ? btEl.value : null;
-  if (dEl)  dEl.value  = '20';
-  if (btEl) btEl.value = '15';
+  const altEl = d && d.getElementById('altitudeSelect');
+  const origD   = dEl   ? dEl.value   : null;
+  const origBT  = btEl  ? btEl.value  : null;
+  const origAlt = altEl ? altEl.value : null;
+
+  // Reset altitude to sea level to guarantee NDL
+  if (altEl && altEl.value !== '0') { altEl.value = '0'; WIN.setAltitude && WIN.setAltitude(); }
+
+  if (dEl)  dEl.value  = '10';
+  if (btEl) btEl.value = '10';
   WIN.runDecoSchedule();
+
+  // Restore original values
   if (dEl  && origD  !== null) dEl.value  = origD;
   if (btEl && origBT !== null) btEl.value = origBT;
+  if (altEl && origAlt !== null && origAlt !== altEl.value) {
+    altEl.value = origAlt;
+    WIN.setAltitude && WIN.setAltitude();
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // safeSetUnits: calls WIN.setUnits() but suppresses heavy recalcs that would
