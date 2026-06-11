@@ -86,7 +86,7 @@ const BAKER = {
   '50m/25min TMX18/45 C0': { rt:73, first:27, stops:{27:1,24:1,21:1,18:3,15:3,12:4,9:6,6:10,3:17} },
 };
 
-// LSP v2.8.9 pinned outputs (captured 2026-06-11, must not change between versions)
+// LSP v2.9.0 pinned outputs (captured 2026-06-11, must not change between versions)
 const LSP_PINNED = {
   'vpmb_40_25_air_c0':       { rt:61,  first:18, stops:{18:1,15:1,12:2,9:4,6:7,3:13}   },
   'vpmb_40_25_air_c2':       { rt:70,  first:21, stops:{21:0,18:1,15:2,12:3,9:5,6:9,3:16} },
@@ -143,9 +143,9 @@ const SECTIONS = [
 
 // ══ A: Pinned Regression — VPM-B ═════════════════════════════════════════════
 {
-  title: 'A · Pinned Regression — VPM-B (LSP v2.8.9)',
+  title: 'A · Pinned Regression — VPM-B (LSP v2.9.0)',
   badge: 'badge-vpmb',
-  desc: 'Exact stop tables pinned to LSP v2.8.9. Any change = engine regression.',
+  desc: 'Exact stop tables pinned to LSP v2.9.0. Any change = engine regression.',
   tests: [
     ['40m/25min Air C0 — RT matches pinned', () => {
       const r = vpmCalc(40,25); const p = LSP_PINNED.vpmb_40_25_air_c0;
@@ -208,9 +208,9 @@ const SECTIONS = [
 
 // ══ B: Pinned Regression — Bühlmann ZHL-16C+GF ═══════════════════════════════
 {
-  title: 'B · Pinned Regression — Bühlmann ZHL-16C+GF (LSP v2.8.9)',
+  title: 'B · Pinned Regression — Bühlmann ZHL-16C+GF (LSP v2.9.0)',
   badge: 'badge-zhl',
-  desc: 'Exact Bühlmann outputs pinned. GF30/85 standard. Any change = engine regression.',
+  desc: 'Exact Bühlmann outputs pinned to LSP v2.9.0. GF30/85 standard. Any change = engine regression.',
   tests: [
     ['40m/25min Air GF30/85 — RT matches pinned', () => {
       const r = zhlCalc(40,25); const p = LSP_PINNED.zhl_40_25_air_gf3085;

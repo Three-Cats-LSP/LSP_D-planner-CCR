@@ -8,6 +8,28 @@ A technical dive decompression planner for recreational and mixed-gas technical 
 
 ---
 
+## What's New in v2.9.0
+
+- **PDF Export Dialog** — section picker for both Dive Plan PDF and Emergency Plan PDF; choose which sections to include before exporting
+- **Emergency PDF Export** — new full PDF export for contingency plans: emergency gas consumption, ascent schedule, dive profile graph, GF curve, tissue saturation, and emergency slate; same dialog-driven section picker as the main PDF
+- **Consistent PDF rendering** — both PDFs now use identical helper structure (same fonts, layout, header/footer format, section title style); only theme colors differ (blue vs red)
+- **DejaVu Sans Unicode font** — all PDFs use DejaVu Sans (regular + bold) as the single font; proper rendering of ✓ ✗ ⚠ ↑ ↓ ← → and all Unicode symbols throughout
+- **⚠ icon in Emergency PDF** — `[!]` replaced with the proper Unicode warning triangle `⚠` in the emergency PDF header bar and scenario info box
+- **Collapsible cards with right-side caret** — Gas Consumption, Contingency Plans, Dive Graph, Tissue Saturation, GF Gradient Factor Curve cards all collapsible; caret positioned on the right side of each card header
+- **Card reorder** — result cards now appear in logical order: Dive Profile → Gas Consumption → Contingency Plans → Dive Graph → Tissue Saturation → GF Curve
+- **Tissue Saturation card** — new format matching web view (per-compartment bars); exported correctly to PDF
+- **END column in Deco Table PDF** — all 9 deco table columns exported to PDF (Phase / Depth / Stop / Run / Mix / EAD / END / PPO2 / CNS%)
+- **Copy modal** — copy button now opens a preview modal (same style as the Slate modal) showing the full plan text before copying; both Deco Plan and Emergency Plan copy functions use this modal
+- **Timestamps on all exports** — date/time stamp (`YYYY/DD/MM HH:MM`) added as a separate line in all copy, slate, and TXT exports
+- **Export header labels** — `DECO PLAN` / `EMERGENCY PLAN` title lines added to all copy and text exports; `LSP D-PLANNER` prefix removed from slate headers
+- **Two-line copy footer** — copy function footer split into two lines: `Run Time:MM'SS" Deco:MM'SS"` on line 1, `CNS:x% OTU:x PrT:x` on line 2; applied to all copy paths (deco, emergency, VPM, VPM fallback)
+- **Slate footer rework** — slate footer now shows `TRT: MM'SS" | DECO: MM'SS"` (Total Run Time, full seconds format) + second line `CNS: x% OTU: x PrT: x`; TRT reads from the totals row run time, DECO from the totals row deco time
+- **TRT label** — renamed from TBT to TRT (Total Run Time) to avoid confusion with BT (Bottom Time)
+- **Divider rows** — separator line added after the date/time row in both copy and text exports
+- **Math Verification Suite** (`tests-verify.html`) — new standalone verification page: ZHL-16C Bühlmann + VPM-B cross-check against Baker/FORTRAN reference; sections A–H covering pinned regression, Baker Python cross-check, Maiken invariants, coefficient verification, physics constants, determinism, MultiDeco/V-Planner compatibility; 4 bugs fixed in test harness (gfs double-division, WATER_VAPOR NaN-safe re-sync, ZHL16C fallback path, dead stops() code)
+
+---
+
 ## Overview
 
 LSP D-Planner supports two modes: **Rec** for recreational divers using PADI-based NDL tables, and **Tec** for technical divers requiring full decompression planning with trimix, multiple deco gases, and advanced algorithms. Everything runs client-side in a single `index.html` file with no external dependencies.
@@ -45,7 +67,7 @@ Full decompression schedule calculation for multi-gas technical dives:
 - Stop rounding: whole minute or 30-second intervals
 - Water vapour correction (Bühlmann standard 0.0627 bar)
 - **Transit Mode** — Schreiner (accurate) or MultiDeco-compatible ascent tissue loading
-- **END column** — Equivalent Narcotic Depth column in the deco table; trimix-aware
+- **END column** — Equivalent Narcotic Depth in the deco table; trimix-aware
 - Colour-coded deco table: descent, bottom, deco stops, gas switch rows
 
 ---
@@ -122,12 +144,58 @@ Metric (metres, bar, litres) and Imperial (feet, psi, cu ft) — switchable glob
 
 ## Output and Export
 
-- **Summary stats bar**: max depth, bottom time, TTS, CNS%, OTU, altitude chip, travel gas chip
-- **Gas tags strip**: colour-coded pills per gas showing surface-to-MOD ranges
-- **Deco Slate** — compact monospaced waterproof-slate format (deco stops only): depth, cumulative run time, gas, ppO₂; header shows date, algorithm, bottom gas and switch gases; footer shows total bottom time and total deco time. Opens via the **SLATE** button.
-- **Export order**: Copy → SLATE → TXT → PDF
-- All exports (TXT, copy, PDF) include: dive profile, gas consumption, deco slate, altitude and acclimatization state
-- **Named dive profile presets** — save and recall full dive setups (algorithm, GF/conservatism, all gas mixes, cylinders, depth, bottom time, altitude, SAC, min-deco settings). Up to 20 presets stored in `localStorage`. Accessed via the **★ PRESETS** button in the Deco Schedule card header.
+### Copy
+Opens a **preview modal** (same style as the Slate modal) showing the full formatted plan text before copying. Both Deco Plan and Emergency Plan share this modal. Footer format:
+
+```
+Run Time:66'00" Deco:27'24"
+CNS:36.2% OTU:73 PrT:21.7
+```
+
+### Deco Slate
+Compact monospaced waterproof-slate format (deco stops only). Header: date/time, algorithm, bottom gas and switch gases. Table columns: depth, run time, gas, ppO₂. Footer:
+
+```
+TRT: 66'00" | DECO: 27'24"
+CNS: 36.2% OTU: 73 PrT: 21.7
+```
+
+TRT = Total Run Time (reads from totals row, full MM'SS" format). Same footer format in both deco and emergency slates.
+
+### TXT Export
+Full plan text including settings, deco table, and gas consumption. Header: `DECO PLAN` / `EMERGENCY PLAN` with date/time stamp and divider.
+
+### PDF Export (Dive Plan)
+Section picker dialog before export. Available sections:
+- Gas Consumption
+- Dive Profile
+- Deco Slate
+- GF Curve
+- Tissue Saturation
+
+All sections use DejaVu Sans Unicode font. 9-column deco table (Phase / Depth / Stop / Run / Mix / EAD / END / PPO2 / CNS%). Proper ✓ ✗ ⚠ rendering.
+
+### PDF Export (Emergency Plan)
+Section picker dialog before export. Available sections:
+- Emergency Gas Consumption
+- Ascent Schedule
+- Dive Profile
+- GF Curve
+- Tissue Saturation
+- Emergency Slate
+
+Red theme (vs blue for dive plan). Same font, layout, header/footer structure as the dive plan PDF.
+
+### Named Presets
+Save and recall full dive setups (algorithm, GF/conservatism, all gas mixes, cylinders, depth, bottom time, altitude, SAC, min-deco settings). Up to 20 presets stored in `localStorage`. Accessed via the **★ PRESETS** button in the Deco Schedule card header.
+
+---
+
+## Emergency / Contingency Plans
+
+The **Contingency Plans** card shows auto-generated emergency ascent schedules based on the current dive profile. Each scenario shows: ascent schedule, gas required vs available, run time, deco time, CNS, OTU, PrT, and a severity indicator.
+
+Export options per scenario: Copy (preview modal) / Slate / TXT / PDF.
 
 ---
 
@@ -165,7 +233,25 @@ Quick planning calculators and reference material:
 
 - Dark / light theme toggle
 - Unified `?` tooltip icon system across all settings — inline explanations for every algorithm, GF, conservatism, altitude, and gas setting
+- Collapsible result cards (Gas Consumption, Contingency Plans, Dive Graph, Tissue Saturation, GF Curve) with right-side caret
 - All settings cards use a consistent grid layout; mobile-responsive
+
+---
+
+## Quality & Testing
+
+| Suite | Description |
+|-------|-------------|
+| [`tests.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests.html) | Core regression — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases |
+| [`tests-extended.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first stop depths |
+| [`tests-massive.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive.html) | 446-test regression suite — engines, UI/DOM, Tier 1–3 scenarios, travel gas, altitude, trimix, VPM-B/GFS, GF UI, gas plan, slate, presets |
+| [`tests-massive-main.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive-main.html) | Mobile-optimised — same scope as tests-massive, minus heaviest Tier 3 groups |
+| [`tests-verify.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-verify.html) | **Math Verification Suite** — ZHL-16C + VPM-B cross-check vs Baker/FORTRAN reference; sections A–H (pinned regression, Baker cross-check, Maiken invariants, coefficient verification, physics constants, determinism, MultiDeco/V-Planner compatibility) |
+| `audit.py` | Static analysis — structural checks across 20+ code groups. Run before every commit. |
+
+```bash
+python3 audit.py index.html
+```
 
 ---
 
@@ -174,15 +260,12 @@ Quick planning calculators and reference material:
 | Path | Purpose |
 |------|---------|
 | `index.html` | Self-contained web app — the entire planner in one file |
-| `audit.py` | Static analysis script — structural checks across 20+ groups. Run before every commit. |
+| `audit.py` | Static analysis script |
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java engine |
 | `VpmbGfsEngine.java` | VPM-B/GF hybrid Java engine |
-| [`tests.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests.html) | Core regression suite — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases |
-| [`tests-extended.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first stop depths |
-| [`tests-massive.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive.html) | Full 446-test regression suite — engines, UI/DOM, Tier 1–3 scenarios, travel gas, altitude, trimix, VPM-B/GFS, GF UI, gas plan, slate, presets |
-| [`tests-massive-main.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive-main.html) | Mobile-optimised regression suite — same scope as tests-massive but excludes the heaviest Tier 3 groups; recommended for on-device testing |
-| `Knowledge Base/` | Reference PDFs and study materials |
+| `VpmbGfsPlanner.java` | VPM-B/GF planner Java |
+| `Knowledge Base/` | 18 reference PDFs (Baker FORTRAN source, EUBS proceedings, published Bühlmann/VPM comparisons) |
 
 ### Knowledge Base
 
@@ -209,16 +292,6 @@ Quick planning calculators and reference material:
 
 ---
 
-## Running the Audit
-
-```bash
-python3 audit.py index.html
-```
-
-Exit 0 = all checks pass. Run before every commit to main.
-
----
-
 ## Branches
 
 | Branch | Purpose |
@@ -242,4 +315,4 @@ To deploy a new version: replace `index.html` on `main`.
 
 ---
 
-*Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
+*Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp) · v2.9.0*
