@@ -1284,6 +1284,10 @@ function fastRDS(needsDOM) {
   if (altEl && altEl.value !== '0') { altEl.value = '0'; WIN.setAltitude && WIN.setAltitude(); }
   if (dEl)  dEl.value  = '10';
   if (btEl) btEl.value = '10';
+  // Force Bühlmann — runVPMSchedule has no _zhlHeadless guard and would block
+  const _algoEl2 = d && d.getElementById('algorithmSelect');
+  const _origAlgo2 = _algoEl2?.value;
+  if (_algoEl2) _algoEl2.value = 'ZHLC_GF';
 
   // If DOM was pre-warmed at test start, skip re-render even for needsDOM=true
   if (!needsDOM || WIN._zhlPrewarmed) WIN._zhlHeadless = true;
@@ -1291,6 +1295,7 @@ function fastRDS(needsDOM) {
     WIN.runDecoSchedule();
   } finally {
     WIN._zhlHeadless = false;
+    if (_algoEl2 && _origAlgo2) _algoEl2.value = _origAlgo2;
   }
 
   if (dEl  && origD  !== null) dEl.value  = origD;
@@ -3555,8 +3560,16 @@ async function startTests(skipTier1 = false) {
       const _origD = _dEl?.value, _origBT = _btEl?.value;
       if (_dEl)  _dEl.value  = '10';
       if (_btEl) _btEl.value = '10';
+      // Force Bühlmann algo so runDecoSchedule() doesn't route to runVPMSchedule()
+      // (user may have VPM-B saved in localStorage — runVPMSchedule has no headless guard)
+      const _algoEl = _d.getElementById('algorithmSelect');
+      const _origAlgo = _algoEl?.value;
+      if (_algoEl) _algoEl.value = 'ZHLC_GF';
       win._zhlHeadless = true;
-      try { win.runDecoSchedule(); } finally { win._zhlHeadless = false; }
+      try { win.runDecoSchedule(); } finally {
+        win._zhlHeadless = false;
+        if (_algoEl && _origAlgo) _algoEl.value = _origAlgo;
+      }
       if (_dEl  && _origD  != null) _dEl.value  = _origD;
       if (_btEl && _origBT != null) _btEl.value = _origBT;
       // Inject stub output into the REAL DOM elements (not nested copies)

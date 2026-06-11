@@ -5568,6 +5568,9 @@ function clearVpmRepState() {
 
 function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, surfaceAscentRate,
                         stepSize, lastStop, minStopTime, ppo2Bottom, ppo2Deco, model) {
+  // Headless mode: skip all VPM computation and DOM rendering
+  // (called from ZHLEngine or fastRDS headless path when algo is VPM-B)
+  if (window._zhlHeadless) return;
   const dU = units === 'metric';
   const conservatism = parseInt(document.getElementById('conservatismSelect')?.value || '0');
   const gfHi = mGF.high; // used by VPM-B/GFS
