@@ -15222,21 +15222,21 @@ async function exportPDF(opts) {
         if(isBottom){
           if(insufficient){
             doc.setFont('NotoSans','bold'); doc.setTextColor(180,0,0);
-            doc.text(`✗ short ${gpVolDisp(r.shortL)} ${pdfVolU}`, gx.suf+1, y+2.8);
+            doc.text(`SHORT ${gpVolDisp(r.shortL)} ${pdfVolU}`, gx.suf+1, y+2.8);
             if(r.maxBTmin!=null){
               doc.setFont('NotoSans','normal'); doc.setFontSize(5.5); doc.setTextColor(140,0,0);
               doc.text(`BT→${r.maxBTmin}min, turn ${gpPresDisp(r.maxTurnBar)}${pdfPresU}`, gx.suf+1, y+5.8);
             }
           } else {
             doc.setFont('NotoSans','normal'); doc.setTextColor(0,130,60);
-            doc.text(`⟳ ${gpPresDisp(r.turnBar)}${pdfPresU}  ✓ ${gpVolDisp(r.reqL)}${pdfVolU}`, gx.suf+1, y+4.2);
+            doc.text(`turn ${gpPresDisp(r.turnBar)}${pdfPresU}  OK ${gpVolDisp(r.reqL)}${pdfVolU}`, gx.suf+1, y+4.2);
           }
         } else {
           if(r.reqL==null){
             doc.setFont('NotoSans','normal'); doc.setTextColor(160,160,160);
             doc.text('run plan first', gx.suf+1, y+4.2);
           } else {
-            const stat3 = r.totalL>=r.reqL*1.10?'✓ OK':r.totalL>=r.reqL?'⚠ TIGHT':'✗ SHORT';
+            const stat3 = r.totalL>=r.reqL*1.10?'OK':r.totalL>=r.reqL?'TIGHT':'SHORT';
             const tc3 = r.totalL>=r.reqL*1.10?[0,130,60]:r.totalL>=r.reqL?[180,80,0]:[180,0,0];
             doc.setFont('NotoSans','bold'); doc.setTextColor(...tc3);
             doc.text(stat3, gx.suf+1, y+2.8);
