@@ -13234,6 +13234,7 @@ function buildMessengerText(mode) {
     const result = [];
     result.push('EMERGENCY PLAN');
     result.push(_cStamp);
+    result.push('-'.repeat(28));
     result.push(`${depth}${du} / ${bt}min / ${c.label}`);
 
     const cRnd = (document.getElementById('stopRounding')?.value||'fractional')==='wholeminute'?'Yes':'No';
@@ -13273,7 +13274,6 @@ function buildMessengerText(mode) {
     const otuDisp  = c.totalOTU && c.totalOTU !== '—' ? ` OTU:${c.totalOTU}` : '';
     const prtDisp  = c.totalPrT ? ` PrT:${c.totalPrT}` : '';
     result.push(`Run Time:${runDisp} Deco:${decoDisp}${cnsDisp}${otuDisp}${prtDisp}`);
-    result.push('LSP D-Planner');
     return result.join('\n');
   }
 
@@ -13319,7 +13319,14 @@ function buildMessengerText(mode) {
     ? `${_msgBotLabel} (O2:${Math.round(_msgBotFracs.fO2*100)}% He:${_msgBotHe}% N2:${Math.round(_msgBotFracs.fN2*100)}%)`
     : _msgBotLabel;
 
+  const _msgNow = new Date();
+  const _msgStamp = `${_msgNow.getFullYear()}/${String(_msgNow.getDate()).padStart(2,'0')}/${String(_msgNow.getMonth()+1).padStart(2,'0')} ${String(_msgNow.getHours()).padStart(2,'0')}:${String(_msgNow.getMinutes()).padStart(2,'0')}`;
+  const _msgHr = '-'.repeat(28);
+
   const result = [];
+  result.push('DECO PLAN');
+  result.push(_msgStamp);
+  result.push(_msgHr);
   // Algorithm + settings line
   const _algoSel = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
   const _algoNames = { ZHLC_GF: 'ZHL16C+GF', VPMB: 'VPM-B', VPMB_GFS: 'VPM-B/GFS' };
