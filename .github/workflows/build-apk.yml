@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Capacitor)
 
 on:
   push:
@@ -26,10 +26,8 @@ jobs:
       - name: Extract app version from index.html
         id: version
         run: |
-          # Extract the version string e.g. "2.7.4"
           VERSION=$(grep -oP "APP_VERSION\s*=\s*'\K[^']+" index.html)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          # Convert dotted version to integer versionCode (e.g. 2.7.4 -> 20704)
           IFS='.' read -ra PARTS <<< "$VERSION"
           MAJOR="${PARTS[0]:-0}"
           MINOR="${PARTS[1]:-0}"
@@ -37,13 +35,6 @@ jobs:
           VERSION_CODE=$(( MAJOR * 10000 + MINOR * 100 + PATCH ))
           echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION (code: $VERSION_CODE)"
-
-      - name: Patch build.gradle with extracted version
-        run: |
-          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.VERSION_CODE }}/" android/app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${{ steps.version.outputs.VERSION }}\"/" android/app/build.gradle
-          echo "build.gradle after patch:"
-          grep -E "versionCode|versionName" android/app/build.gradle
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -54,6 +45,30 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Capacitor dependencies
+        run: npm ci
+
+      - name: Prepare web assets (www/)
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+
+      - name: Capacitor sync (copies web assets + updates plugins)
+        run: npx cap sync android
+
+      - name: Patch build.gradle with extracted version
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.VERSION_CODE }}/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${{ steps.version.outputs.VERSION }}\"/" android/app/build.gradle
+          echo "build.gradle after patch:"
+          grep -E "versionCode|versionName" android/app/build.gradle
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -63,11 +78,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
-      - name: Copy web content into Android assets
-        run: |
-          mkdir -p android/app/src/main/assets/www
-          cp index.html android/app/src/main/assets/www/index.html
 
       - name: Build debug APK
         working-directory: android
@@ -84,7 +94,6 @@ jobs:
           git config user.name "Three Cats LSP"
           git add "Android Apk/LSP_D-planner.apk"
           git commit -m "build(android): update LSP_D-planner.apk v${{ steps.version.outputs.VERSION }} [skip ci]" --allow-empty
-          # build.gradle was patched in-tree but must not be committed back
           git checkout -- android/app/build.gradle
           git pull --rebase origin main
           git push
