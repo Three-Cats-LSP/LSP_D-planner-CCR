@@ -59,6 +59,10 @@ jobs:
           mkdir -p www
           cp index.html www/index.html
           cp capacitor-bridge.js www/capacitor-bridge.js
+          # manifest.json and sw.js are web/PWA only — not bundled into APK
+          # but must be in www/ so cap sync doesn't remove them from assets
+          cp manifest.json www/manifest.json 2>/dev/null || true
+          cp sw.js www/sw.js 2>/dev/null || true
 
       - name: Capacitor sync (copies web assets + updates plugins)
         run: npx cap sync android

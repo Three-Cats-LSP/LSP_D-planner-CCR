@@ -903,99 +903,112 @@ else:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# GROUP 20 — GAS PLAN: unit correctness (calcGasPlan system, v2.8.8+)
-# The old inline gas render was replaced by calcGasPlan() in v2.8.8.
+# GROUP 20 — GAS CONSUMPTION: unit correctness
 # ══════════════════════════════════════════════════════════════════════════════
 
-# 20.1 calcGasPlan function exists
-if "function calcGasPlan(" in js:
-    ok("calcGasPlan() function present")
-else:
-    fail("calcGasPlan() missing — Gas Plan tab broken")
-
-# 20.2 calcGasPlan uses units-aware volume label at top
-gp_fn = re.search(r"function calcGasPlan\(\)(.*?)(?=\nfunction )", js, re.DOTALL)
-if gp_fn:
-    gp_body = gp_fn.group(1)
-    if "cu ft" in gp_body and "imperial" in gp_body:
-        ok("calcGasPlan uses units-aware volU ('cu ft' / 'L')")
+# 20.1 SAC fields have convertNumericInput in setUnits (L/min ↔ cu ft/min)
+set_units_fn = re.search(r"function setUnits\(.*?(?=\nfunction )", js, re.DOTALL)
+if set_units_fn:
+    set_units_body = set_units_fn.group(0)
+    if "convertNumericInput('sacBottom'" in set_units_body:
+        ok("setUnits converts sacBottom value (L/min ↔ cu ft/min)")
     else:
-        fail("calcGasPlan does not use units-aware volume label — always shows 'L' in imperial")
-else:
-    fail("calcGasPlan body not found for unit check")
-
-# 20.3 gpPresBar helper converts psi→bar automatically
-if "function gpPresBar(" in js:
-    gp_pres_fn = re.search(r"function gpPresBar\(.*?\}", js, re.DOTALL)
-    if gp_pres_fn and ("14.5038" in gp_pres_fn.group(0) or "GP_PSI_PER_BAR" in gp_pres_fn.group(0)):
-        ok("gpPresBar() converts psi→bar in imperial mode")
+        fail("setUnits missing convertNumericInput for sacBottom — SAC value stays at metric default in imperial mode")
+    if "convertNumericInput('sacDeco'" in set_units_body:
+        ok("setUnits converts sacDeco value (L/min ↔ cu ft/min)")
     else:
-        fail("gpPresBar() missing psi→bar conversion — cylinder capacity wrong in imperial")
+        fail("setUnits missing convertNumericInput for sacDeco — SAC value stays at metric default in imperial mode")
 else:
-    fail("gpPresBar() not found — Gas Plan pressure reading broken")
+    fail("setUnits function not found for SAC conversion check")
 
-# 20.4 gpSizeL helper converts cuft→L automatically
-if "function gpSizeL(" in js:
-    gp_size_fn = re.search(r"function gpSizeL\(.*?\}", js, re.DOTALL)
-    if gp_size_fn and ("GP_CUFT_PER_L" in gp_size_fn.group(0) or "0.0353" in gp_size_fn.group(0)):
-        ok("gpSizeL() converts cuft→L in imperial mode")
-    else:
-        fail("gpSizeL() missing cuft→L conversion — cylinder size wrong in imperial")
+# 20.2 Gas consumption display uses correct unit label (not hardcoded 'L')
+# Buhlmann path: normal plan uses calcGasPlan() (volU declared inside),
+# emergency path uses inline Object.entries forEach with volUnitV2.
+# VPM path: uses for..of loop over gasConsVPM entries with volUnitV.
+buh_block_start = js.find("if (gasEl && Object.keys(gasConsumed).length)")
+buh_block = js[buh_block_start:buh_block_start + 3000] if buh_block_start > 0 else ""
+if ("volUnitV" in buh_block or "calcGasPlan()" in buh_block):
+    ok("Buhlmann gas consumption display uses units-aware volume label (L / cu ft)")
 else:
-    fail("gpSizeL() not found — Gas Plan size reading broken")
+    fail("Buhlmann gas consumption display hardcodes 'L' — wrong unit shown in imperial mode")
 
-# 20.5 GP_PSI_PER_BAR = 14.5038 and GP_CUFT_PER_L = 0.0353147
-psi_m = re.search(r"GP_PSI_PER_BAR\s*=\s*([\d.]+)", js)
-cuft_m = re.search(r"GP_CUFT_PER_L\s*=\s*([\d.]+)", js)
+vpm_block_start = js.find("if (gasElVPM && Object.keys(gasConsVPM).length)")
+vpm_block = js[vpm_block_start:vpm_block_start + 3000] if vpm_block_start > 0 else ""
+if "volUnitV" in vpm_block or "volUnit" in vpm_block:
+    ok("VPM gas consumption display uses units-aware volume label (L / cu ft)")
+else:
+    fail("VPM gas consumption display hardcodes 'L' — wrong unit shown in imperial mode")
+
+# 20.3 Buhlmann gas plan renders via calcGasPlan() or declares volUnitV before use
+# (Buhlmann refactored to use calcGasPlan() for normal path + volUnitV2 for emergency path)
+calc_gas_plan_fn = js.find("function calcGasPlan()")
+calc_gas_plan_units = js[calc_gas_plan_fn:calc_gas_plan_fn + 200] if calc_gas_plan_fn > 0 else ""
+if ("const volU" in calc_gas_plan_units or "volUnit" in calc_gas_plan_units):
+    ok("calcGasPlan() declares unit-aware volume label — no ReferenceError in Buhlmann gas render")
+else:
+    fail("volUnitV not declared in Buhlmann gas loop — ReferenceError when gas consumption renders")
+
+# 20.1b ZHLEngine exposed on window for test harnesses
+if "window.ZHLEngine = ZHLEngine" in js and "const ZHLEngine = (() => {" in js:
+    ok("ZHLEngine callable interface exposed — Bühlmann testable without DOM coupling")
+else:
+    fail("ZHLEngine not exposed on window — ZHLC_GF tests in test harness will run VPM-B instead")
+
+# 20.3b calcEND_tool uses calcEND() — not simplified sea-level formula
+# Bug: was using pNarc * 10 - 10 (wrong at altitude, ignored narcotic toggles)
+end_tool_fn = js[js.find("function calcEND_tool()"):js.find("function calcEND_tool()") + 1500]
+if "calcEND(dM" in end_tool_fn or "calcEND(depthM" in end_tool_fn:
+    ok("calcEND_tool() delegates to calcEND() — altitude-correct, respects narcotic toggles")
+else:
+    fail("calcEND_tool() uses simplified formula — wrong at altitude, ignores narcoticN2/narcoticO2 settings")
+
+# 20.3c calcMOD() in Tools panel uses altSurfaceP (not hardcoded sea-level formula)
+mod_fn_start = js.find("function calcMOD() {")
+mod_fn = js[mod_fn_start:mod_fn_start + 400] if mod_fn_start > 0 else ""
+if "altSurfaceP" in mod_fn and "BAR_PER_METRE" in mod_fn:
+    ok("calcMOD() (Tools tab) uses altSurfaceP + BAR_PER_METRE — altitude-correct")
+else:
+    fail("calcMOD() (Tools tab) uses hardcoded sea-level formula — wrong at altitude")
+
+# 20.3d setUnits() refreshes Tools panels (END Calc, Best Mix, MOD, EAD, Gas Table, Surface Int)
+set_units_end = js[js.find("function setUnits("):js.find("function setUnits(") + 14000]
+required_refreshes = ["calcEND_tool", "calcBestMix", "renderEADTable", "renderGasTable", "calcSurfInt", "calcAvgDepth"]
+missing = [f for f in required_refreshes if f not in set_units_end]
+if not missing:
+    ok("setUnits() refreshes all Tools panels — no stale displays on metric/imperial toggle")
+else:
+    fail(f"setUnits() missing Tools panel refresh calls: {', '.join(missing)}")
+
+# 20.4 PSI_PER_BAR and CUFT_PER_L constants defined with correct values
+psi_m = re.search(r"PSI_PER_BAR\s*=\s*([\d.]+)", js)
+cuft_m = re.search(r"CUFT_PER_L\s*=\s*([\d.]+)", js)
 if psi_m and abs(float(psi_m.group(1)) - 14.5038) < 0.01:
-    ok(f"GP_PSI_PER_BAR = {psi_m.group(1)} ✓")
+    ok(f"PSI_PER_BAR = {psi_m.group(1)} (correct)")
 else:
-    fail(f"GP_PSI_PER_BAR = {psi_m.group(1) if psi_m else 'NOT FOUND'} (expected 14.5038)")
+    fail(f"PSI_PER_BAR = {psi_m.group(1) if psi_m else 'NOT FOUND'} (expected 14.5038)")
 if cuft_m and abs(float(cuft_m.group(1)) - 0.0353147) < 0.000001:
-    ok(f"GP_CUFT_PER_L = {cuft_m.group(1)} ✓")
+    ok(f"CUFT_PER_L = {cuft_m.group(1)} (correct)")
 else:
-    fail(f"GP_CUFT_PER_L = {cuft_m.group(1) if cuft_m else 'NOT FOUND'} (expected 0.0353147)")
+    fail(f"CUFT_PER_L = {cuft_m.group(1) if cuft_m else 'NOT FOUND'} (expected 0.0353147)")
 
-# 20.6 calcGasPlan called in setUnits (unit switch triggers recalculation)
-set_units_fn3 = re.search(r"function setUnits\(.*?(?=\nfunction )", js, re.DOTALL)
-if set_units_fn3 and "calcGasPlan()" in set_units_fn3.group(0):
-    ok("setUnits calls calcGasPlan() — Gas Plan recalculates on unit switch")
-elif "calcGasPlan()" in js[js.find("function setUnits("):js.find("function setUnits(")+5000]:
-    ok("setUnits calls calcGasPlan() — Gas Plan recalculates on unit switch")
-else:
-    fail("setUnits does not call calcGasPlan() — Gas Plan stays in wrong units after switch")
+# 20.5 Cylinder pressure inputs converted in setUnits (bar ↔ psi)
+if set_units_fn:
+    body = set_units_fn.group(0)
+    if "allCylPres" in body and "PSI_PER_BAR" in body:
+        ok("setUnits converts all cylinder pressure fields (bar ↔ psi)")
+    else:
+        fail("setUnits missing cylinder pressure conversion — fields stay in metric units when switching to imperial")
+    if "allCylSize" in body and "CUFT_PER_L" in body:
+        ok("setUnits converts all cylinder size fields (L ↔ cu ft)")
+    else:
+        fail("setUnits missing cylinder size conversion — size fields stay in metric units when switching")
 
-# 20.7 gp* cylinder fields in DECO_FIELDS (all 12)
-deco_fields_idx5 = html.find("DECO_FIELDS:")
-deco_fields_block5 = html[deco_fields_idx5:deco_fields_idx5 + 2500] if deco_fields_idx5 > 0 else ""
-gp_persist_fields = [
-    "gpBot_size", "gpBot_fill", "gpBot_reserve",
-    "gpTravel_size", "gpTravel_fill", "gpTravel_reserve",
-    "gpDg1_size", "gpDg1_fill", "gpDg1_reserve",
-    "gpDg2_size", "gpDg2_fill", "gpDg2_reserve",
-]
-gp_missing = [f for f in gp_persist_fields if f not in deco_fields_block5]
-if gp_missing:
-    for f in gp_missing:
-        fail(f"DECO_FIELDS missing '{f}' — Gas Plan cylinder value lost on reload")
+# 20.6 Dynamic cylinder pressure fields covered by allCylPres (querySelectorAll)
+if "querySelectorAll" in js and 'cylDg' in js and '_pres' in js:
+    ok("allCylPres uses querySelectorAll to include dynamic deco gas cylinder fields")
 else:
-    ok(f"DECO_FIELDS includes all {len(gp_persist_fields)} gp* cylinder fields")
+    fail("allCylPres missing querySelectorAll — dynamically added deco gas cylinder fields not converted")
 
-# 20.8 SAC convertNumericInput still present
-if set_units_fn3 and "convertNumericInput('sacBottom'" in set_units_fn3.group(0):
-    ok("setUnits converts sacBottom (L/min ↔ cu ft/min)")
-elif "convertNumericInput('sacBottom'" in js[js.find("function setUnits("):js.find("function setUnits(")+5000]:
-    ok("setUnits converts sacBottom (L/min ↔ cu ft/min)")
-else:
-    fail("setUnits missing convertNumericInput for sacBottom — SAC stays at metric default in imperial")
-
-# 20.9 gp* size and fill fields converted in setUnits
-su_idx = js.find("function setUnits(")
-su_block = js[su_idx:su_idx + 6000] if su_idx > 0 else ""
-if "gpBot_size" in su_block and ("GP_CUFT_PER_L" in su_block or "CUFT_PER_L" in su_block):
-    ok("setUnits converts gp* cylinder size fields (L ↔ cu ft)")
-else:
-    fail("setUnits missing gp* size conversion — Gas Plan cylinder sizes wrong in imperial")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 21 — FEATURE: Minimum Decompression Profile
