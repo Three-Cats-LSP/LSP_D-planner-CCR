@@ -2420,7 +2420,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
     <button onclick="calcContingency()" style="width:100%;padding:11px;background:linear-gradient(135deg,rgba(255,71,87,0.12),rgba(255,100,50,0.16));color:var(--red);border:1px solid var(--red);border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,71,87,0.22)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,71,87,0.12),rgba(255,100,50,0.16))'">Calculate Emergency Plan</button>
 
     <div id="contingencyResult" style="display:none;"></div>
-    <div id="emergencyGasConsumption" style="display:none;margin-top:8px;"></div>
+    <div id="emergencyGasConsumption" style="display:none;"></div>
     </div><!-- /card-collapsible-body contingency -->
   </div>
 
@@ -9001,11 +9001,15 @@ function runDecoSchedule() {
         emergRows += `<tr><td style="font-weight:700;">${gas}</td><td style="color:${short2?'var(--red)':'var(--text)'};">${Math.round(reqL)} ${volUnitV2}</td><td style="color:${avail!=null?(short2?'var(--red)':'var(--green)'):'var(--muted)'};">${avail!=null?Math.round(avail)+' '+volUnitV2:'—'}</td><td style="color:${sufCol2};font-weight:700;">${sufTxt2}</td></tr>`;
         if (short2) emergWarn += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${Math.round(reqL)} ${volUnitV2}, have ${Math.round(avail||0)} ${volUnitV2}.</div></div>`;
       });
-      const html2 = `<div class="card" style="margin-top:8px;">
-        <div class="card-title">${cardTitle}</div>
-        <div style="overflow-x:auto;"><table class="deco-table table-view" style="margin-top:0;">
-          <thead><tr><th style="text-align:left;">GAS</th><th style="text-align:left;">REQUIRED</th><th style="text-align:left;">AVAILABLE</th><th style="text-align:left;">STATUS</th></tr></thead>
-          <tbody>${emergRows}</tbody></table></div>
+      const html2 = `<div style="margin-top:14px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">${cardTitle}</div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table class="gas-plan-table" style="margin-top:0;">
+            <colgroup><col style="width:20%"><col style="width:25%"><col style="width:25%"><col style="width:30%"></colgroup>
+            <thead><tr><th>GAS</th><th>REQUIRED</th><th>AVAILABLE</th><th>STATUS</th></tr></thead>
+            <tbody>${emergRows}</tbody>
+          </table>
+        </div>
         ${emergWarn}
       </div>`;
       gasEl.innerHTML = html2;
