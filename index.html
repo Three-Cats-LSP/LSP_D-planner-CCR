@@ -12478,7 +12478,7 @@ function buildExportText(mode) {
     const gasStr  = gasEl?.options[gasEl?.selectedIndex]?.text || '';
     const o2pct   = document.getElementById('customO2')?.value;
 
-    lines.push('LSP D-PLANNER - DIVE PLAN');
+    lines.push('DECO PLAN');
     lines.push(stamp);
     lines.push(hr);
     lines.push(`Algorithm : ${algo}${gfStr ? '  ' + gfStr : ''}`);
@@ -12593,7 +12593,7 @@ function buildExportText(mode) {
       };
     });
 
-    lines.push('DECOMPRESSION SCHEDULE');
+    lines.push('DECO PLAN');
     lines.push(stamp);
     lines.push(decoHr);
     // Algorithm line — name + settings (GF or conservatism)
@@ -13090,7 +13090,7 @@ function buildSlateText() {
 
   const bar = '========================';
   const lines = [];
-  lines.push('LSP D-PLANNER DECO SLATE');
+  lines.push('DECO SLATE');
   lines.push(stamp);
   lines.push(bar);
   lines.push(`Algo: ${algoLine}`);
@@ -13193,7 +13193,7 @@ function buildContingencySlateText() {
     }
   });
   const bar = '========================';
-  const lines = ['LSP D-PLANNER EMERGENCY SLATE', ecStamp, bar,
+  const lines = ['EMERGENCY SLATE', ecStamp, bar,
     `Algo: ${algoLine}`, `Mix: ${mixLine}`, '',
     'DEPTH  TIME   GAS    PPO2'];
   if (out.length) out.forEach(l => lines.push(l));
