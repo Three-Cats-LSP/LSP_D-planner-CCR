@@ -42,7 +42,7 @@
   if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
 
   const FS = 'Filesystem';
-  const FO = 'CapacitorFileOpener'; // plugin registration name for file-opener v6
+  const FO = 'FileOpener'; // plugin registration name — @CapacitorPlugin(name = "FileOpener")
 
   // Helper: read a blob as base64 string
   function blobToBase64(blob) {

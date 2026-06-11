@@ -38,12 +38,9 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Storage — needed for API ≤ 28; API 29+ uses scoped/app-specific storage (no permission required) -->
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+    <!-- No storage permissions needed: exports use Directory.Cache (app-private,
+         no permission required on any Android version). The old READ/WRITE_EXTERNAL_STORAGE
+         entries have been removed — they caused unnecessary permission dialogs and
+         were never needed for the Cache directory. -->
 
 </manifest>
