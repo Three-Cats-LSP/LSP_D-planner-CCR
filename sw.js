@@ -2,7 +2,7 @@
 // Network-first for HTML (always fresh), cache-first for static assets.
 // Bump CACHE_VERSION on every deploy to force old SW replacement.
 
-const CACHE_VERSION = 'lsp-dplanner-v2.9.0';
+const CACHE_VERSION = 'lsp-dplanner-v2.10.0';
 
 // These are never cached — always fetched live or passed through
 const NEVER_CACHE = [
