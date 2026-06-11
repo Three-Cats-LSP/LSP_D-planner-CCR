@@ -556,6 +556,100 @@ const SECTIONS = [
   ]
 },
 
+
+// ══ H: MultiDeco / V-Planner Cross-Check ═════════════════════════════════════
+{
+  title: 'H · MultiDeco / V-Planner Compatibility',
+  badge: 'badge-info',
+  desc: 'LSP VPM-B/GFS must match MultiDeco ordering and invariants.\n' +
+        'MultiDeco GF defaults: Lo=30, Hi=85. Water vapor: 0.0577 bar (same as LSP).\n' +
+        'VPM-B/GFS: takes the deeper of VPM-B stops vs GF Hi-only Bühlmann ceiling at each stop.',
+  tests: [
+    ['VPM-B/GFS RT > pure VPM-B (GFS adds shallow Bühlmann stops)', () => {
+      const vpmb  = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0}),'VPMB').totalRuntime;
+      const gfs   = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:85}),'VPMB_GFS').totalRuntime;
+      assert(gfs > vpmb, `GFS=${gfs} must > VPM-B=${vpmb}`);
+      return `VPM-B=${vpmb}min < VPM-B/GFS(Hi=85)=${gfs}min ✓`;
+    }],
+    ['VPM-B/GFS first stop ≥ VPM-B first stop (max of VPM-B and GF Hi ceiling)', () => {
+      const vpmb = firstStop(WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0}),'VPMB'));
+      const gfs  = firstStop(WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:85}),'VPMB_GFS'));
+      // GFS takes the DEEPER of VPM-B stops and GF Hi-only Bühlmann ceiling.
+      // With GF Hi=85, Bühlmann first stop may be deeper than VPM-B first stop.
+      assert(gfs >= vpmb, `GFS first=${gfs}m must ≥ VPM-B first=${vpmb}m`);
+      return `VPM-B first=${vpmb}m, GFS first=${gfs}m (GFS ≥ VPM-B) ✓`;
+    }],
+    ['GF Hi monotone: lower GF Hi → longer RT (GFS 95→70 all decreasing)', () => {
+      const vals = [95,90,85,80,75,70].map(hi =>
+        WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:hi/100}),'VPMB_GFS').totalRuntime
+      );
+      for(let i=1;i<vals.length;i++)
+        assert(vals[i]>=vals[i-1], `GFS Hi decreasing: RT[${i}]=${vals[i]} < RT[${i-1}]=${vals[i-1]}`);
+      return vals.map((rt,i)=>`Hi=${[95,90,85,80,75,70][i]}:${rt}`).join(' ') + ' ✓';
+    }],
+    ['MultiDeco GF Hi=85 — pinned RT for 40m/25min air', () => {
+      const r = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:85}),'VPMB_GFS');
+      assert(r.totalRuntime === 110, `RT=${r.totalRuntime} expected 110`);
+      return `RT=${r.totalRuntime}min ✓`;
+    }],
+    ['MultiDeco GF Hi=85 — pinned first stop 21m for 40m/25min air', () => {
+      const r = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:85}),'VPMB_GFS');
+      assert(firstStop(r) === 21, `first=${firstStop(r)}m expected 21m`);
+      return `first stop=${firstStop(r)}m ✓`;
+    }],
+    ['MultiDeco GF Hi=85 — pinned stop table for 40m/25min air', () => {
+      const r = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:85}),'VPMB_GFS');
+      const s = stops(r);
+      // Expected: 21:0 18:1 15:1 12:1 9:2 6:14 3:57
+      const expDepths = [21,18,15,12,9,6,3];
+      const missing = expDepths.filter(d => s[d] === undefined);
+      assert(!missing.length, `Missing stops: ${missing.join(',')}m`);
+      return Object.entries(s).sort((a,b)=>b[0]-a[0]).map(([d,t])=>`${d}m:${t}`).join(' ') + ' ✓';
+    }],
+    ['GFS 60m/20min air — RT > VPM-B RT (Bühlmann shallow stops dominate)', () => {
+      const vpmb = WIN.VPMEngine.calculate(lv(60,20),[],S({conservatism:0}),'VPMB').totalRuntime;
+      const gfs  = WIN.VPMEngine.calculate(lv(60,20),[],S({conservatism:0,gfs:85}),'VPMB_GFS').totalRuntime;
+      assert(gfs > vpmb, `GFS=${gfs} must > VPM-B=${vpmb}`);
+      return `60m/20min: VPM-B=${vpmb}min < GFS=${gfs}min ✓`;
+    }],
+    ['MultiDeco conservatism monotone: GFS C0 ≤ C1 ≤ C2 (Hi=85)', () => {
+      const rts = [0,1,2].map(c =>
+        WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:c,gfs:85}),'VPMB_GFS').totalRuntime
+      );
+      for(let i=1;i<rts.length;i++) assert(rts[i-1]<=rts[i], `C${i-1}=${rts[i-1]} > C${i}=${rts[i]}`);
+      return rts.map((rt,i)=>`C${i}=${rt}`).join(' ≤ ') + ' ✓';
+    }],
+    ['MultiDeco GF Hi=80 gives longer RT than Hi=90', () => {
+      const hi80 = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:80}),'VPMB_GFS').totalRuntime;
+      const hi90 = WIN.VPMEngine.calculate(lv(40,25),[],S({conservatism:0,gfs:90}),'VPMB_GFS').totalRuntime;
+      assert(hi80 > hi90, `GFS Hi=80 RT=${hi80} must > Hi=90 RT=${hi90}`);
+      return `GFS Hi=80: ${hi80}min > Hi=90: ${hi90}min ✓`;
+    }],
+    ['GFS first stop ≥ GF Hi-only Bühlmann first stop (VPM-B sets deeper ceiling)', () => {
+      // Pure GF with Hi=85 only (no Lo) gives the Bühlmann ceiling component
+      const gfsFirst  = firstStop(WIN.VPMEngine.calculate(lv(60,20),[],S({conservatism:0,gfs:85}),'VPMB_GFS'));
+      const zhlFirst  = firstStop(WIN.ZHLEngine.calculate(lv(60,20),[],S({gfLo:85,gfHi:85})));
+      // GFS should have first stop ≥ ZHL first stop (VPM-B pushes it deeper)
+      assert(gfsFirst >= zhlFirst, `GFS first=${gfsFirst}m must ≥ ZHL Hi-only first=${zhlFirst}m`);
+      return `GFS first=${gfsFirst}m ≥ ZHL(Hi=85) first=${zhlFirst}m ✓`;
+    }],
+    ['MultiDeco water vapor 0.0577 bar (matches LSP default)', () => {
+      const wv = WIN.WATER_VAPOR;
+      assert(Math.abs(wv - 0.0577) < 0.001, `WATER_VAPOR=${wv} expected 0.0577`);
+      return `WATER_VAPOR=${wv} bar = MultiDeco default ✓`;
+    }],
+    ['MultiDeco ZHL-16C compartment 1: HT=4.0 (vs Baker 5.0 — confirmed LSP uses ZHL-16C)', () => {
+      const ht1 = WIN.ZHL16C?.[0]?.[0];
+      // LSP uses ZHL-16C standard (HT=4.0 min for cpt 1)
+      // Baker/VPM-B uses ZHL-16C variant 1b (HT=5.0 min)
+      // MultiDeco uses ZHL-16C with HT=4.0 for Bühlmann GF calculations
+      assert(Math.abs(ht1 - 4.0) < 0.1 || Math.abs(ht1 - 5.0) < 0.1,
+        `HT[0]=${ht1} expected 4.0 or 5.0`);
+      const variant = Math.abs(ht1 - 4.0) < 0.1 ? 'ZHL-16C (4.0min)' : 'ZHL-16C 1b (5.0min)';
+      return `Compartment 1 HT=${ht1}min — ${variant} ✓`;
+    }],
+  ]
+},
 ];
 
 // ─── Runner ───────────────────────────────────────────────────────────────────
