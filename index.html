@@ -13945,7 +13945,7 @@ async function exportContingencyPDF(opts) {
   function drawHeader() {
     doc.setFillColor(180,30,30); doc.rect(0,0,PW,8,'F');
     doc.setFontSize(8); doc.setFont('DejaVuSans','bold'); doc.setTextColor(255,255,255);
-    doc.text('[!] EMERGENCY PLAN', ML, 5.5);
+    doc.text('⚠ EMERGENCY PLAN', ML, 5.5);
     doc.setFont('DejaVuSans','normal'); doc.setFontSize(8);
     // Truncate label so it fits the center zone (max ~70mm)
     const _hdrLabel = `${bt}min @ ${depth}${du} | ${c.label}`;
@@ -13985,7 +13985,7 @@ async function exportContingencyPDF(opts) {
   doc.setFillColor(255,240,240); doc.setDrawColor(220,150,150);
   doc.roundedRect(ML,y,CW,16,2,2,'FD');
   doc.setFontSize(10); doc.setFont('DejaVuSans','bold'); doc.setTextColor(180,30,30);
-  doc.text('[!] ' + cleanPDF(c.label), ML+3, y+6);
+  doc.text('⚠ ' + cleanPDF(c.label), ML+3, y+6);
   doc.setFontSize(8); doc.setFont('DejaVuSans','normal'); doc.setTextColor(100,0,0);
   doc.text(`Run: ${c.lastRunFmt||c.lastRun+"'00\""} | Deco: ${c.decoTimeFmt||c.decoTime+"'00\""} | CNS: ${c.totalCNS||'--'} | OTU: ${c.totalOTU||'--'} | PrT: ${c.totalPrT||'--'}`, ML+3, y+10.5);
   doc.setTextColor(150,0,0); doc.text(cleanPDF(c.msg||''), ML+3, y+14.5);
