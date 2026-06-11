@@ -3,7 +3,8 @@
  *
  * Intercepts blob <a download> clicks produced by exportTXT() and exportPDF()
  * and saves the file to the device's Documents directory via @capacitor/filesystem
- * when running inside the Android app.
+ * when running inside the Android app. After saving, immediately opens the file
+ * with the system viewer via @capawesome-team/capacitor-file-opener.
  *
  * On the web / PWA this file does nothing — the normal <a download> path runs as-is.
  *
@@ -22,16 +23,16 @@
  *   - Capacitor is present (i.e. we are in the Android app), AND
  *   - the anchor has a `download` attribute, AND
  *   - the href is a blob: URL
- * we read the blob, base64-encode it, and write it via Filesystem.writeFile
- * instead of letting the browser try to "download" it (which silently fails
- * inside Capacitor's WebView).
+ * we read the blob, base64-encode it, write it via Filesystem.writeFile to
+ * Directory.DOCUMENTS, then open it with FileOpener.
  */
 
 (function () {
   // Only activate inside Capacitor (Android app)
   if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
 
-  const PLUGIN_NAME = 'Filesystem';
+  const FS = 'Filesystem';
+  const FO = 'CapacitorFileOpener'; // plugin registration name for file-opener v6
 
   // Helper: read a blob as base64 string
   function blobToBase64(blob) {
@@ -39,21 +40,26 @@
       const reader = new FileReader();
       reader.onloadend = () => {
         // result is "data:<mime>;base64,<data>" — strip the prefix
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
+        resolve(reader.result.split(',')[1]);
       };
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
   }
 
-  // Helper: show a brief toast-style message (reuses app's showExportToast if available)
+  // Helper: derive MIME type from filename extension
+  function mimeFromFilename(name) {
+    if (name.endsWith('.pdf'))  return 'application/pdf';
+    if (name.endsWith('.txt'))  return 'text/plain';
+    return 'application/octet-stream';
+  }
+
+  // Helper: show a brief toast (reuses app's showExportToast if available)
   function notify(msg) {
     if (typeof window.showExportToast === 'function') {
       window.showExportToast(msg);
       return;
     }
-    // Fallback: simple overlay
     const div = document.createElement('div');
     div.textContent = msg;
     div.style.cssText = [
@@ -66,25 +72,29 @@
     setTimeout(() => div.remove(), 3000);
   }
 
-  // Save a blob to Documents/<filename> via Capacitor Filesystem
-  async function saveViaCapacitor(blob, filename) {
+  // Save blob to Documents/<filename>, then open it with the system viewer
+  async function saveAndOpen(blob, filename) {
+    const mime = mimeFromFilename(filename);
+
+    // 1 — Write to Documents
+    let savedPath;
     try {
       const base64Data = await blobToBase64(blob);
-      await Capacitor.Plugins[PLUGIN_NAME].writeFile({
+      const result = await Capacitor.Plugins[FS].writeFile({
         path: filename,
         data: base64Data,
-        directory: 'DOCUMENTS',   // Directory.Documents
+        directory: 'DOCUMENTS',
         recursive: true
       });
-      notify(`Saved to Documents: ${filename}`);
+      savedPath = result.uri; // absolute file:// URI returned by Filesystem
     } catch (err) {
       console.error('[CapBridge] writeFile failed:', err);
-      // Graceful fallback: try sharing via native share sheet
+      // Last-resort fallback: native share sheet
       try {
         const url = URL.createObjectURL(blob);
         await Capacitor.Plugins['Share'].share({
           title: filename,
-          url: url,
+          url,
           dialogTitle: 'Save or share file'
         });
         URL.revokeObjectURL(url);
@@ -92,30 +102,38 @@
         console.error('[CapBridge] share fallback failed:', shareErr);
         notify('Save failed — try copying to clipboard instead');
       }
+      return;
+    }
+
+    notify(`Saved: ${filename}`);
+
+    // 2 — Open the file immediately with the system viewer
+    try {
+      await Capacitor.Plugins[FO].openFile({
+        path: savedPath,
+        mimeType: mime
+      });
+    } catch (openErr) {
+      // Not fatal — file is already saved, viewer just didn't open
+      console.warn('[CapBridge] FileOpener failed (file still saved):', openErr);
     }
   }
 
-  // Patch HTMLAnchorElement.prototype.click
+  // Patch HTMLAnchorElement.prototype.click to intercept blob downloads
   const _origClick = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function () {
-    if (
-      this.download &&
-      this.href &&
-      this.href.startsWith('blob:')
-    ) {
-      // Fetch the blob from the object URL
+    if (this.download && this.href && this.href.startsWith('blob:')) {
       fetch(this.href)
         .then(r => r.blob())
-        .then(blob => saveViaCapacitor(blob, this.download))
+        .then(blob => saveAndOpen(blob, this.download))
         .catch(err => {
           console.error('[CapBridge] blob fetch failed:', err);
-          _origClick.call(this); // fall back to original behaviour
+          _origClick.call(this);
         });
-      // Do NOT call the original click — we're handling it
-      return;
+      return; // don't call original — we're handling it
     }
     _origClick.call(this);
   };
 
-  console.log('[CapBridge] Filesystem save bridge active');
+  console.log('[CapBridge] Filesystem + FileOpener bridge active');
 })();
