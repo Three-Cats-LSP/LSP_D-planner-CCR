@@ -9191,7 +9191,8 @@ const ZHLEngine = (() => {
           const lims = {6:720,7:570,8:450,9:360,10:300,11:240,12:210,13:180,14:150,15:120,16:45};
           const lo = Math.floor(ppO2 * 10), hi = lo + 1;
           const lim = (lims[lo] || 0) + ((lims[hi] || 0) - (lims[lo] || 0)) * (ppO2 * 10 - lo);
-          if (lim > 0) hCNSfrac += dur / lim;
+          const safeLim = lim > 0 ? lim : 45; // ppO2>1.6: clamp to 45-min limit (matches segCNSfrac fix)
+          hCNSfrac += dur / safeLim;
         }
       });
       lp.totalCNS = parseFloat((hCNSfrac * 100).toFixed(1));
