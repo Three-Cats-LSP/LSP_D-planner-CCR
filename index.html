@@ -8709,7 +8709,7 @@ function runDecoSchedule() {
     // --- Phase 2: bottom gas, switch depth → bottom ---
     const bottomDescentTimeMin = (depthM - travelSwitchMrow) / descentRate;
     const bottomMidM = (travelSwitchMrow + depthM) / 2;
-    const descentPPO2 = ((bottomMidM * BAR_PER_METRE + altSurfaceP) * (1 - bottomFN2)).toFixed(2);
+    const descentPPO2 = ((bottomMidM * BAR_PER_METRE + altSurfaceP) * bottomFO2).toFixed(2); // trimix-safe (was 1-bottomFN2)
     rowRT += bottomDescentTimeMin;
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), bottomDescentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), bottomDescentTimeMin);
@@ -8727,7 +8727,7 @@ function runDecoSchedule() {
   } else {
     // No travel gas — single descent row as before
     rowRT += descentTimeMin;
-    const descentPPO2 = ((rawD/2 * BAR_PER_METRE + altSurfaceP) * (1 - bottomFN2)).toFixed(2);
+    const descentPPO2 = ((rawD/2 * BAR_PER_METRE + altSurfaceP) * bottomFO2).toFixed(2); // trimix-safe (was 1-bottomFN2)
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), descentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), descentTimeMin);
     addGas(bottomMixLabel, rawD / 2, descentTimeMin, sacBottom);
@@ -8746,7 +8746,7 @@ function runDecoSchedule() {
   // ── BOTTOM ROW ──
   const btAtDepthMin = Math.max(0, bt - descentTimeMin);
   rowRT += btAtDepthMin;
-  const btPPO2 = ((rawD * BAR_PER_METRE + altSurfaceP) * (1 - bottomFN2)).toFixed(2);
+  const btPPO2 = ((rawD * BAR_PER_METRE + altSurfaceP) * bottomFO2).toFixed(2); // trimix-safe (was 1-bottomFN2)
   const btCNS  = rowCNS(parseFloat(btPPO2), btAtDepthMin);
   totalCNSfrac += segCNSfrac(parseFloat(btPPO2), btAtDepthMin);
   totalOTU     += segOTU(parseFloat(btPPO2), btAtDepthMin);
