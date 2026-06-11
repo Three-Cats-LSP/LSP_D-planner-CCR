@@ -2,7 +2,7 @@
 // Cache-first strategy for offline use.
 // Bump CACHE_VERSION when deploying a new app version to force cache refresh.
 
-const CACHE_VERSION = 'lsp-dplanner-v2.9.0';
+const CACHE_VERSION = 'lsp-dplanner-v2.9.1';
 const ASSETS = [
   '/LSP_D-planner/',
   '/LSP_D-planner/index.html'

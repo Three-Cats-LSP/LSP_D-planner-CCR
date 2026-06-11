@@ -4,6 +4,29 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.9.1 — 2026-06-12
+
+### Fixed
+- ZHL CNS renderer: `bottomFO2` used instead of `(1-bottomFN2)` for trimix ppO₂ on descent/bottom rows
+- Custom bottom gas cap raised 40% → 100%; MOD display now updates live on O₂% input
+- `segCNSfrac`, `rowCNS`, ZHLEngine headless `hCNSfrac`: ppO₂ > 1.6 now clamps to 45-min NOAA limit instead of returning 100% per segment
+- Gas switch flags on dive graph: colour changed to yellow/green (#FFD700 / #007A33) to match deco table switch row style; same fix applied to PDF deco table (3 locations)
+- Dive graph card tooltip added — explains all visual elements (profile line, Bühlmann ceiling, gas switch flags, stop dots, ppO₂ halos, interaction)
+- Multi TXT export (`mode=multi`) rewired from orphaned `#multiCards`/`#multiWarnings` to live `#unifiedDivePlan` renderer
+- Static inline-SVG favicon replaces dynamically injected one (was broken after `initPWA` removal)
+
+### Changed
+- Dead code cleanup: 14 unused functions removed (`ftToM`, `setNDLUnits`, `setMultiUnits`, `updateGF`, `floorPPO2`, `depthFromPressure`, `getEl`, `switchMultiMode`, `runMulti`, `buildBuhRef`, `initPWA`, `calcMaxDepth`, `exportContingencyTXT`, `buildPdfGasCards`); archived to `dev/legacy.js`
+- 12 dead CSS classes and 22 utility CSS rules removed
+- Whitespace and separator comment cleanup (-5.7 KB)
+
+### Added
+- Proper PWA: `manifest.json` + `sw.js` (cache-first, offline-capable); Android Chrome install banner; iOS Safari Add-to-Home-Screen instructions
+- `CHANGELOG.md` — full version history from v2.7
+- `dev/legacy.js` — archive of removed functions for reference
+
+---
+
 ## v2.9.0 — 2026-06-09
 
 ### Added
