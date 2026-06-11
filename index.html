@@ -3263,6 +3263,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
 
 const APP_VERSION = '2.9.1';
 window.APP_VERSION = APP_VERSION;
+// _zhlPrewarmed: set true by test harness after first headless run to skip
+// DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
+window._zhlPrewarmed = window._zhlPrewarmed || false;
 
 const ZHL16C = [
   [4.0,   1.2599, 0.5050],[8.0,   1.0000, 0.6514],[12.5,  0.8618, 0.7222],
