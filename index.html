@@ -1943,24 +1943,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
       </div>
       <!-- Advanced action buttons -->
       <div class="field" style="display:flex;align-items:flex-end;gap:8px;grid-column:1/-1;margin-top:4px;">
-        <button class="btn-export" onclick="openAdvConfigPresets()" id="advConfigPresetsBtn"
-          title="Save / load advanced settings configurations"
-          style="display:flex;align-items:center;gap:6px;flex:1;justify-content:center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Config
-        </button>
-        <button class="btn-export" onclick="saveAsMyDefault()" id="saveMyDefaultBtn"
-          title="Set current advanced settings as your personal defaults (used by Reset)"
-          style="display:flex;align-items:center;gap:6px;flex:1;justify-content:center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 3.2L18 4l.8 3.8L22 10l-2.4 3.2L22 16l-3.8.8L16 20l-3.2-2.4L10 20l-2.8-3.2L4 16l.8-3.8L2 10l2.4-3.2L2 4l3.8.8L8 2z"/><polyline points="8 12 11 15 16 9"/></svg>
-          Set Default
-        </button>
-        <button class="btn-export btn-reset-red" onclick="resetToDefaults()"
-          title="Reset advanced settings to your saved defaults (or factory defaults if none saved)"
-          style="display:flex;align-items:center;gap:6px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          Reset
-        </button>
+        <button class="btn-export" onclick="openAdvConfigPresets()" id="advConfigPresetsBtn" title="Save / load advanced settings configurations"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+        <button class="btn-export" onclick="saveAsMyDefault()" id="saveMyDefaultBtn" title="Set current advanced settings as your personal defaults (used by Reset)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 3.2L18 4l.8 3.8L22 10l-2.4 3.2L22 16l-3.8.8L16 20l-3.2-2.4L10 20l-2.8-3.2L4 16l.8-3.8L2 10l2.4-3.2L2 4l3.8.8L8 2z"/><polyline points="8 12 11 15 16 9"/></svg></button>
+        <button class="btn-export btn-reset-red" onclick="resetToDefaults()" title="Reset advanced settings to your saved defaults (or factory defaults if none saved)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
       </div>
     </div><!-- end form-grid inside advanced -->
     </div><!-- end advancedSettingsBody -->
@@ -5375,10 +5360,9 @@ function saveAsMyDefault() {
     const btn = document.getElementById('saveMyDefaultBtn');
     if (btn) {
       const orig = btn.innerHTML;
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 3.2L18 4l.8 3.8L22 10l-2.4 3.2L22 16l-3.8.8L16 20l-3.2-2.4L10 20l-2.8-3.2L4 16l.8-3.8L2 10l2.4-3.2L2 4l3.8.8L8 2z"/><polyline points="8 12 11 15 16 9"/></svg> Saved!';
       btn.style.color = 'var(--green)';
       btn.style.borderColor = 'var(--green)';
-      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+      setTimeout(() => { btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
     }
   } catch(e) {
     showToast('Could not save defaults — storage unavailable', 'error');
