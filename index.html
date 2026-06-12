@@ -1106,6 +1106,9 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px) { .stats { grid-template-columns:repeat(2,1fr); }
+.desktop-only { display:none !important; }
+}
+@media(min-width:641px) { .mobile-only { display:none !important; }
  header { flex-direction:column; align-items:flex-start; }
  .brand-text h1 { font-size:22px; }
  .tabs-nav { flex-wrap:wrap; }
@@ -1193,8 +1196,18 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
       </button>
     </div>
 
-    <!-- Spacer -->
-    <div style="flex:1;"></div>
+    <!-- Centered banner — desktop only -->
+    <div class="desktop-only" style="flex:1;display:flex;justify-content:center;align-items:center;pointer-events:none;">
+      <div onclick="toggleWarningModal()" title="Click to read full disclaimer"
+        style="pointer-events:auto;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;
+               font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+               border:1px solid var(--border);border-radius:5px;padding:4px 10px;
+               transition:all .15s;white-space:nowrap;"
+        onmouseenter="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+        onmouseleave="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
+        ⚠ Planning Aid Only — Not a Dive Computer
+      </div>
+    </div>
 
     <!-- Mode (Right side) -->
     <div style="display:flex;align-items:center;gap:8px;padding-right:14px;flex-shrink:0;">
@@ -1348,7 +1361,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
     </div><!-- end envSettingsBody -->
     <!-- Warning -->
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;">
-      <div class="header-warn u1" onclick="toggleWarningModal()" title="Click to read full disclaimer">⚠ Planning Aid Only — Not a Dive Computer</div>
+      <div class="header-warn u1 mobile-only" onclick="toggleWarningModal()" title="Click to read full disclaimer">⚠ Planning Aid Only — Not a Dive Computer</div>
     </div>
   </div>
 
@@ -1397,7 +1410,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
     </div>
     <!-- Warning -->
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;">
-      <div class="header-warn u1" onclick="toggleWarningModal()" title="Click to read full disclaimer">⚠ Planning Aid Only — Not a Dive Computer</div>
+      <div class="header-warn u1 mobile-only" onclick="toggleWarningModal()" title="Click to read full disclaimer">⚠ Planning Aid Only — Not a Dive Computer</div>
     </div>
   </div>
 </header>
