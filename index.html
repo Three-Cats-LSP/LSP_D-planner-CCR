@@ -1282,8 +1282,19 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
         <option value="5">5 — +50%</option>
       </select>
     </div>
-    <!-- Separator -->
-    <span style="color:var(--border);font-size:14px;flex-shrink:0;">|</span>
+    <!-- Separator + collapsible env settings toggle -->
+    <button id="envSettingsToggle" onclick="toggleEnvSettings()"
+      title="Water / Units / Altitude — set once per location"
+      style="display:flex;align-items:center;gap:3px;background:none;border:1px solid var(--border);
+             border-radius:5px;padding:3px 7px;cursor:pointer;color:var(--muted);font-family:inherit;
+             font-size:10px;font-weight:700;letter-spacing:.5px;flex-shrink:0;transition:all .15s;"
+      onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+      onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+      <span id="envSettingsChevron" style="transition:transform .2s;display:inline-block;font-size:8px;">▶</span>
+      <span id="envSettingsLabel">ENV</span>
+    </button>
+    <!-- Collapsible: Water, Units, Altitude, Acclimatized -->
+    <div id="envSettingsBody" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
     <!-- Water -->
     <div id="waterRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
       <span class="algo-label-text u1">Water:</span>
@@ -1334,6 +1345,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
         <option value="no">No</option>
       </select>
     </div>
+    </div><!-- end envSettingsBody -->
     <!-- Warning -->
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;">
       <div class="header-warn u1" onclick="toggleWarningModal()" title="Click to read full disclaimer">⚠ Planning Aid Only — Not a Dive Computer</div>
@@ -3616,6 +3628,21 @@ function applyEndColumn() {
   injectEndCells();
 }
 
+function _updateEnvSummary() {
+  const body = document.getElementById('envSettingsBody');
+  if (!body || body.style.display !== 'none') return;
+  const lbl = document.getElementById('envSettingsLabel');
+  if (!lbl) return;
+  const water = document.getElementById('waterDensitySelect')?.value || 'salt';
+  const u     = document.getElementById('unitsSelect')?.value || 'metric';
+  const alt   = document.getElementById('altitudeSelect')?.value || '0';
+  const parts = [];
+  if (water !== 'salt') parts.push(water);
+  if (u     !== 'metric') parts.push('ft');
+  if (alt   !== '0')     parts.push(alt + 'm');
+  lbl.textContent = parts.length ? parts.join(' · ') : 'ENV';
+}
+
 function setWaterDensity(type, customKgM3) {
   if (type === 'custom') {
     const kg = parseFloat(customKgM3 || document.getElementById('waterCustomInput')?.value || document.getElementById('waterCustomInputRec')?.value || 1025);
@@ -5299,6 +5326,38 @@ function closeConfirmModal(ok) {
     _confirmCallback();
   }
   _confirmCallback = null;
+}
+
+// ── Env Settings collapse (Water / Units / Altitude / Acclimatized) ─────────
+function toggleEnvSettings(forceOpen) {
+  const body     = document.getElementById('envSettingsBody');
+  const chevron  = document.getElementById('envSettingsChevron');
+  const btn      = document.getElementById('envSettingsToggle');
+  const lbl      = document.getElementById('envSettingsLabel');
+  if (!body) return;
+  const open = forceOpen !== undefined ? forceOpen : body.style.display === 'none';
+  body.style.display = open ? 'flex' : 'none';
+  if (chevron) chevron.style.transform = open ? 'rotate(90deg)' : '';
+  if (btn) {
+    btn.style.borderColor = open ? 'var(--accent)' : 'var(--border)';
+    btn.style.color       = open ? 'var(--accent)' : 'var(--muted)';
+  }
+  // Show summary when collapsed
+  if (lbl) {
+    if (open) {
+      lbl.textContent = 'ENV';
+    } else {
+      const water   = document.getElementById('waterDensitySelect')?.value || 'salt';
+      const units   = document.getElementById('unitsSelect')?.value || 'metric';
+      const alt     = document.getElementById('altitudeSelect')?.value || '0';
+      const parts   = [];
+      if (water !== 'salt') parts.push(water);
+      if (units !== 'metric') parts.push('ft');
+      if (alt   !== '0')     parts.push(alt + 'm');
+      lbl.textContent = parts.length ? parts.join(' · ') : 'ENV';
+    }
+  }
+  try { localStorage.setItem('lspEnvOpen', open ? '1' : '0'); } catch(e) {}
 }
 
 // ── Advanced Settings collapse ───────────────────────────────────────────────
@@ -15374,6 +15433,7 @@ var appSettings = {
   save: function(verbose = true) {
     if (window._zhlHeadless) return; // skip during headless tests
     _updateAdvancedSummary(); // keep collapsed summary in sync
+    _updateEnvSummary();       // keep env summary in sync
     const values = {};
     const fields = this.getExistingFields();
     
@@ -15898,6 +15958,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (window.__lspInitDone) return;
   window.__lspInitDone = true;
   console.log('[LSP] DOMContentLoaded fired');
+
+  // ── Restore env settings collapse state ─────────────────────────────────
+  try {
+    const env = localStorage.getItem('lspEnvOpen');
+    toggleEnvSettings(env === '1'); // default: collapsed
+  } catch(e) { toggleEnvSettings(false); }
 
   // ── Restore advanced settings collapse state ──────────────────────────────
   try {
