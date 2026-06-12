@@ -3042,7 +3042,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
       <div style="font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);">Dive Profiles</div>
       <span id="profilePresetCount" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);"></span>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Saves depth &amp; BT only. Load to quickly switch between planned dives.</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Saves depth, BT, bottom gas, travel gas and deco mixes. Load to switch between planned dives.</div>
     <div id="profilePresetList" style="max-height:280px;overflow-y:auto;"></div>
     <div style="display:flex;gap:8px;margin-top:12px;">
       <button id="newProfilePresetBtn" onclick="saveNewProfilePreset()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;">+ SAVE CURRENT</button>
@@ -15546,11 +15546,39 @@ function _renderProfilePresetModal() {
     <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--bg-alt);">
       <div style="flex:1;min-width:0;">
         <div style="color:var(--text);font-weight:700;font-size:12px;">${escapePresetHtml(p.name)}</div>
-        <div style="color:var(--muted);font-size:10px;margin-top:1px;">${p.depth}${du} / ${p.bt} min</div>
+        <div style="color:var(--muted);font-size:10px;margin-top:1px;">${p.depth}${du} / ${p.bt}min${p.summary ? ' · ' + escapePresetHtml(p.summary) : ''}</div>
       </div>
       <button onclick="loadProfilePreset(${i})" style="padding:5px 10px;background:var(--accent);border:none;border-radius:6px;color:#000;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;">Load</button>
       <button onclick="deleteProfilePreset(${i})" style="padding:5px 10px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--red);font-family:inherit;font-size:10px;cursor:pointer;">Del</button>
     </div>`).join('');
+}
+
+const _PROFILE_GAS_FIELDS = [
+  'decoGas','decoCustomO2','botTrimixO2','botTrimixHe',
+  'travelGasMix','travelGasCustomO2','travelGasSwitchMode','travelGasManualDepth',
+  'dg1Mix','dg1CustomO2','dg1TrimixO2','dg1TrimixHe',
+  'dg2Mix','dg2CustomO2','dg2TrimixO2','dg2TrimixHe',
+];
+
+function _snapshotProfileGases() {
+  const g = {};
+  _PROFILE_GAS_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) g[id] = el.value; });
+  return g;
+}
+
+function _profileGasSummary(gases) {
+  const bot = gases.decoGas || 'air';
+  const parts = [bot === 'custom' ? (gases.decoCustomO2 || '?') + '%' :
+                 bot === 'trimix' ? (gases.botTrimixO2||'?') + '/' + (gases.botTrimixHe||'?') : bot];
+  if (gases.travelGasMix && gases.travelGasMix !== 'none')
+    parts.push('T:' + (gases.travelGasMix === 'custom' ? (gases.travelGasCustomO2||'?')+'%' : gases.travelGasMix));
+  if (gases.dg1Mix && gases.dg1Mix !== 'none')
+    parts.push('D1:' + (gases.dg1Mix === 'custom' ? (gases.dg1CustomO2||'?')+'%' :
+                        gases.dg1Mix === 'trimix' ? (gases.dg1TrimixO2||'?')+'/'+(gases.dg1TrimixHe||'?') : gases.dg1Mix));
+  if (gases.dg2Mix && gases.dg2Mix !== 'none')
+    parts.push('D2:' + (gases.dg2Mix === 'custom' ? (gases.dg2CustomO2||'?')+'%' :
+                        gases.dg2Mix === 'trimix' ? (gases.dg2TrimixO2||'?')+'/'+(gases.dg2TrimixHe||'?') : gases.dg2Mix));
+  return parts.join(' + ');
 }
 
 function saveNewProfilePreset() {
@@ -15559,10 +15587,11 @@ function saveNewProfilePreset() {
   const depth = document.getElementById('decoDepth')?.value || '?';
   const bt    = document.getElementById('decoBT')?.value || '?';
   const du    = units === 'metric' ? 'm' : 'ft';
-  const defName = `${depth}${du} / ${bt}min`;
+  const gases = _snapshotProfileGases();
+  const defName = `${depth}${du} / ${bt}min / ${_profileGasSummary(gases)}`;
   const name = (window.prompt('Profile name:', defName) || '').trim();
   if (!name) return;
-  presets.push({ name, depth, bt });
+  presets.push({ name, depth, bt, gases, summary: _profileGasSummary(gases) });
   saveProfilePresets(presets);
   _renderProfilePresetModal();
   showToast('Dive profile saved', 'preset');
@@ -15575,6 +15604,25 @@ function loadProfilePreset(idx) {
   const bEl = document.getElementById('decoBT');
   if (dEl) dEl.value = p.depth;
   if (bEl) bEl.value = p.bt;
+  // Restore gas fields (older presets may not have gases)
+  if (p.gases) {
+    _PROFILE_GAS_FIELDS.forEach(id => {
+      if (p.gases[id] !== undefined) {
+        const el = document.getElementById(id);
+        if (el) el.value = p.gases[id];
+      }
+    });
+    // Fire toggle handlers to show/hide custom fields and update MOD displays
+    toggleDecoCustomO2?.('decoGas', 'decoCustomO2Field');
+    toggleBottomTrimix?.();
+    toggleDecoCustomO2?.('travelGasMix', 'travelGasCustomField');
+    updateTravelGasMOD?.();
+    toggleDecoCustomO2?.('dg1Mix', 'dg1CustomField');
+    toggleDecoTrimix?.(1);
+    toggleDecoCustomO2?.('dg2Mix', 'dg2CustomField');
+    toggleDecoTrimix?.(2);
+    updateGasMODDisplays?.();
+  }
   closeDiveProfilePresets();
   showToast(`Loaded: ${p.name}`, 'preset');
 }
