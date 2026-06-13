@@ -1281,6 +1281,14 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
     </button>
     <!-- Collapsible: Water, Units, Altitude, Acclimatized -->
     <div id="envSettingsBody" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+    <!-- Units -->
+    <div id="unitsRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <span class="algo-label-text u1">Units:</span>
+      <select id="unitsSelect" onchange="setUnits(this.value)" class="u7">
+        <option value="metric">m (metric)</option>
+        <option value="imperial">ft (imperial)</option>
+      </select>
+    </div>
     <!-- Water -->
     <div id="waterRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
       <span class="algo-label-text u1">Water:</span>
@@ -1294,14 +1302,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
         <input type="number" id="waterCustomInput" value="1025" min="900" max="1100" step="1" style="width:58px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;" oninput="applyCustomWaterDensity('waterCustomInput')" onchange="applyCustomWaterDensity('waterCustomInput')">
         <span class="algo-label-text u1">kg/m³</span>
       </div>
-    </div>
-    <!-- Units -->
-    <div id="unitsRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-      <span class="algo-label-text u1">Units:</span>
-      <select id="unitsSelect" onchange="setUnits(this.value)" class="u7">
-        <option value="metric">m (metric)</option>
-        <option value="imperial">ft (imperial)</option>
-      </select>
     </div>
     <!-- Altitude -->
     <div id="altitudeRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
@@ -1339,6 +1339,14 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
 
   <!-- ROW: Global settings for REC mode (Water, Units, Warning) -->
   <div id="algoSettingsRow" class="algo-switcher" style="display:flex;align-items:center;gap:12px;padding:2px 14px;flex-wrap:wrap;min-height:0;">
+    <!-- Units -->
+    <div id="unitsRowRec" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <span class="algo-label-text u1">Units:</span>
+      <select onchange="setUnits(this.value)" id="unitsSelectRec" class="u7">
+        <option value="metric">m (metric)</option>
+        <option value="imperial">ft (imperial)</option>
+      </select>
+    </div>
     <!-- Water -->
     <div id="waterRowRec" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
       <span class="algo-label-text u1">Water:</span>
@@ -1352,14 +1360,6 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
         <input type="number" id="waterCustomInputRec" value="1025" min="900" max="1100" step="1" style="width:58px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;" oninput="applyCustomWaterDensity('waterCustomInputRec')" onchange="applyCustomWaterDensity('waterCustomInputRec')">
         <span class="algo-label-text u1">kg/m³</span>
       </div>
-    </div>
-    <!-- Units -->
-    <div id="unitsRowRec" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-      <span class="algo-label-text u1">Units:</span>
-      <select onchange="setUnits(this.value)" id="unitsSelectRec" class="u7">
-        <option value="metric">m (metric)</option>
-        <option value="imperial">ft (imperial)</option>
-      </select>
     </div>
     <!-- Altitude (REC) -->
     <div id="altitudeRowRec" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
