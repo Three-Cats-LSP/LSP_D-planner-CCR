@@ -4058,7 +4058,7 @@ function toggleTheme() {
   try {
     if (window.Capacitor?.isNativePlatform() && window.Capacitor?.Plugins?.StatusBar) {
       window.Capacitor.Plugins.StatusBar.setStyle({ style: isLight ? 'LIGHT' : 'DARK' }); // LIGHT=dark icons, DARK=white icons
-      window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#f0f4ff' : '#030c18' });
+      window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#ffffff' : '#030c18' });
     }
   } catch(e) {}
 
@@ -4113,7 +4113,7 @@ function loadThemePreference() {
       if (window.Capacitor?.isNativePlatform() && window.Capacitor?.Plugins?.StatusBar) {
         // LIGHT style = dark icons (for light app bg), DARK style = light icons (for dark app bg)
         window.Capacitor.Plugins.StatusBar.setStyle({ style: isLight ? 'LIGHT' : 'DARK' });
-        window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#f0f4ff' : '#030c18' });
+        window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#ffffff' : '#030c18' });
       }
     } catch(e) {}
   }
