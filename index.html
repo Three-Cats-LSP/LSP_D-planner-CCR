@@ -4053,7 +4053,7 @@ function toggleTheme() {
   // Sync Android status bar color with theme (Capacitor native only)
   try {
     if (window.Capacitor?.isNativePlatform() && window.Capacitor?.Plugins?.StatusBar) {
-      window.Capacitor.Plugins.StatusBar.setStyle({ style: isLight ? 'DARK' : 'LIGHT' });
+      window.Capacitor.Plugins.StatusBar.setStyle({ style: isLight ? 'LIGHT' : 'DARK' }); // LIGHT=dark icons, DARK=white icons
       window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#f0f4ff' : '#030c18' });
     }
   } catch(e) {}
@@ -4077,14 +4077,24 @@ function loadThemePreference() {
   const savedTheme = localStorage.getItem('diveTheme');
   const body = document.body;
   const icon = document.getElementById('themeIcon');
-  
-  if (savedTheme === 'light') {
+  const isLight = savedTheme === 'light';
+
+  if (isLight) {
     body.classList.add('light-theme');
     if (icon) icon.textContent = '☀️';
   } else {
     body.classList.remove('light-theme');
     if (icon) icon.textContent = '🌙';
   }
+
+  // Sync Android status bar icon color with initial theme
+  try {
+    if (window.Capacitor?.isNativePlatform() && window.Capacitor?.Plugins?.StatusBar) {
+      // LIGHT style = dark icons (for light app bg), DARK style = light icons (for dark app bg)
+      window.Capacitor.Plugins.StatusBar.setStyle({ style: isLight ? 'LIGHT' : 'DARK' });
+      window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: isLight ? '#f0f4ff' : '#030c18' });
+    }
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════
