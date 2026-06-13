@@ -107,10 +107,10 @@ body { background: var(--bg);
  min-height: 100vh;
  overflow-x: hidden;
  transition: all 0.4s ease;
- padding-top: env(safe-area-inset-top);
- padding-bottom: env(safe-area-inset-bottom);
- padding-left: env(safe-area-inset-left);
- padding-right: env(safe-area-inset-right);
+ padding-top: env(safe-area-inset-top, 0px);
+ padding-bottom: env(safe-area-inset-bottom, 0px);
+ padding-left: env(safe-area-inset-left, 0px);
+ padding-right: env(safe-area-inset-right, 0px);
 }
 
 body::before { content: '';
@@ -3354,7 +3354,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
   }
 })();
 
-const APP_VERSION = '2.9.11';
+const APP_VERSION = '2.10.0';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
