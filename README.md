@@ -21,10 +21,15 @@ LSP D-Planner is available as a native Android app built with Capacitor by Ionic
 4. If prompted, allow *Install from unknown sources* in Settings
 5. Install and launch LSP D-Planner
 
+**Current version: 2.10.0**
+
 **What the app includes:**
 - Full offline operation — no internet required after install
+- Edge-to-edge transparent status bar — app content fills the full screen
+- Status bar icon color synced to light/dark theme (dark icons in light mode, white in dark mode)
 - Export dive plans as TXT and PDF directly to your Downloads folder
-- Dark/light theme, all algorithms, all tools
+- Dark/light theme with collapsible ENV and Advanced Settings panels
+- All algorithms (Bühlmann ZHL-16C + GF, VPM-B, VPM-B/GFS), all tools
 
 ---
 
@@ -330,4 +335,4 @@ Android APK is built automatically by GitHub Actions on every push to `main` and
 
 *Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+See [CHANGELOG.md](CHANGELOG.md) for version history. Current release: **v2.10.0**.
