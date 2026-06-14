@@ -2,7 +2,7 @@
 
 A technical dive decompression planner for recreational and mixed-gas technical diving. Runs entirely in the browser — no install, no build step, no server required.
 
-🌐 **Live App**: https://three-cats-lsp.github.io/LSP_D-planner/
+🌐 **Live App**: https://threecats-lsp.com/d-planner/
 
 ---
 
@@ -10,9 +10,9 @@ A technical dive decompression planner for recreational and mixed-gas technical 
 
 LSP D-Planner is available as a native Android app built with Capacitor by Ionic.
 
-📲 **[Download APK](https://three-cats-lsp.github.io/LSP_D-planner/download.html)**
+📲 **[Download APK](https://threecats-lsp.com/d-planner/download.html)**
 
-> Direct download page: https://three-cats-lsp.github.io/LSP_D-planner/download.html
+> Direct download page: https://threecats-lsp.com/d-planner/download.html
 
 **Installation:**
 1. Open the download page on your Android device
@@ -37,9 +37,9 @@ LSP D-Planner is available as a native Android app built with Capacitor by Ionic
 
 [T-Viewer](https://github.com/Three-Cats-LSP/T-Viewer) is a companion Android app for reading and viewing the dive plan TXT files exported by LSP D-Planner. It provides a clean, formatted view of exported plans directly on your device.
 
-📲 **[Download T-Viewer APK](https://three-cats-lsp.github.io/T-Viewer/download.html)**
+📲 **[Download T-Viewer APK](https://threecats-lsp.com/t-viewer/download.html)**
 
-> Direct download page: https://three-cats-lsp.github.io/T-Viewer/download.html
+> Direct download page: https://threecats-lsp.com/t-viewer/download.html
 
 ---
 
@@ -255,11 +255,11 @@ Quick planning calculators and reference material:
 
 | Suite | Description |
 |-------|-------------|
-| [`tests.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests.html) | Core regression — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases |
-| [`tests-extended.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first stop depths |
-| [`tests-massive.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive.html) | 446-test regression suite — engines, UI/DOM, Tier 1–3 scenarios, travel gas, altitude, trimix, VPM-B/GFS, GF UI, gas plan, slate, presets |
-| [`tests-massive-main.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-massive-main.html) | Mobile-optimised — same scope as tests-massive, minus heaviest Tier 3 groups |
-| [`tests-verify.html`](https://three-cats-lsp.github.io/LSP_D-planner/tests-verify.html) | **Math Verification Suite** — ZHL-16C + VPM-B cross-check vs Baker/FORTRAN reference; sections A–H (pinned regression, Baker cross-check, Maiken invariants, coefficient verification, physics constants, determinism, MultiDeco/V-Planner compatibility) |
+| [`tests.html`](https://threecats-lsp.com/d-planner/tests.html) | Core regression — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases |
+| [`tests-extended.html`](https://threecats-lsp.com/d-planner/tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first stop depths |
+| [`tests-massive.html`](https://threecats-lsp.com/d-planner/tests-massive.html) | 446-test regression suite — engines, UI/DOM, Tier 1–3 scenarios, travel gas, altitude, trimix, VPM-B/GFS, GF UI, gas plan, slate, presets |
+| [`tests-massive-main.html`](https://threecats-lsp.com/d-planner/tests-massive-main.html) | Mobile-optimised — same scope as tests-massive, minus heaviest Tier 3 groups |
+| [`tests-verify.html`](https://threecats-lsp.com/d-planner/tests-verify.html) | **Math Verification Suite** — ZHL-16C + VPM-B cross-check vs Baker/FORTRAN reference; sections A–H (pinned regression, Baker cross-check, Maiken invariants, coefficient verification, physics constants, determinism, MultiDeco/V-Planner compatibility) |
 | `audit.py` | Static analysis — structural checks across 20+ code groups. Run before every commit. |
 
 ```bash
