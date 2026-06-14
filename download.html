@@ -25,21 +25,9 @@
       width: 100%;
       text-align: center;
     }
-    .logo {
-      font-size: 48px;
-      margin-bottom: 8px;
-    }
-    h1 {
-      font-size: 22px;
-      color: #00c8ff;
-      margin-bottom: 6px;
-    }
-    p {
-      font-size: 14px;
-      color: #7fb8cc;
-      margin-bottom: 28px;
-      line-height: 1.5;
-    }
+    .logo { font-size: 48px; margin-bottom: 8px; }
+    h1 { font-size: 22px; color: #00c8ff; margin-bottom: 6px; }
+    p { font-size: 14px; color: #7fb8cc; margin-bottom: 28px; line-height: 1.5; }
     .btn {
       display: inline-block;
       background: #00c8ff;
@@ -53,18 +41,8 @@
       transition: opacity 0.2s;
     }
     .btn:active { opacity: 0.8; }
-    .note {
-      font-size: 12px;
-      color: #4a7a8a;
-      line-height: 1.6;
-      margin-top: 20px;
-    }
-    .status {
-      font-size: 13px;
-      color: #00c8ff;
-      margin-top: 12px;
-      min-height: 20px;
-    }
+    .note { font-size: 12px; color: #4a7a8a; line-height: 1.6; margin-top: 20px; }
+    .status { font-size: 13px; color: #00c8ff; margin-top: 12px; min-height: 20px; }
   </style>
 </head>
 <body>
@@ -74,7 +52,7 @@
     <p>Decompression planning app for Android</p>
 
     <a class="btn" id="dlBtn"
-       href="https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk"
+       href="https://threecats-lsp.com/d-planner/LSP_D-planner.apk"
        download="LSP_D-planner.apk">
       ⬇ Download APK
     </a>
@@ -88,11 +66,9 @@
   </div>
 
   <script>
-    // Force download via fetch + blob — bypasses Chrome's in-app browser behavior
-    // for raw.githubusercontent.com links
     const btn = document.getElementById('dlBtn');
     const status = document.getElementById('status');
-    const APK_URL = 'https://raw.githubusercontent.com/Three-Cats-LSP/LSP_D-planner/main/Android%20Apk/LSP_D-planner.apk';
+    const APK_URL = 'https://threecats-lsp.com/d-planner/LSP_D-planner.apk';
 
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -118,8 +94,7 @@
           btn.style.opacity = '1';
           btn.style.pointerEvents = '';
         })
-        .catch(err => {
-          // Fallback: direct link open
+        .catch(() => {
           status.textContent = 'Redirecting… tap Save if prompted';
           window.location.href = APK_URL;
           btn.style.opacity = '1';
