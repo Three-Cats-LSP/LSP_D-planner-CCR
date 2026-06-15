@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'tests.html'
+      - 'tests-extended.html'
+      - 'tests-massive.html'
+      - 'tests-massive-main.html'
+      - 'tests-verify.html'
 
 jobs:
   notify:
