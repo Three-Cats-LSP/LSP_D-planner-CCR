@@ -968,7 +968,7 @@ function startTests() {
     WIN = win;
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
     const rawBAR = win.BAR_PER_METRE;
-    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : (1/10.078);
+    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : 0.10000;
 
     document.getElementById('meta-version').textContent = 'APPVERSION: ' + (win.APPVERSION || '—');
     document.getElementById('meta-surface').textContent = 'altSurfaceP: ' + pretty(SURF, 4);

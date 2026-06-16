@@ -521,13 +521,10 @@ var GROUPS = [
         assert(approx(SURF, 1.013, 0.01), 'Got ' + SURF);
         return SURF.toFixed(4) + ' bar';
       }],
-      // BAR_PER_METRE: app uses ApexDeco-convention constants (not strict SI).
-      // Init default = 1/10.078 = 0.09922 (ApexDeco salt match).
-      // WATER_DENSITY.salt = 0.10020 (empirical, ~1027 kg/m³ convention).
-      // WATER_DENSITY.fresh = 0.09681 (empirical, dive-computer convention).
-      // Strict SI: 1025 kg/m³ → 0.10052, 1000 kg/m³ → 0.09807.
-      // The test reads BAR_PER_METRE AFTER setWater('salt') so the correct
-      // WATER_DENSITY.salt constant (0.10020) is in effect — not the init default.
+      // BAR_PER_METRE: canonical m/bar-derived constants (MultiDeco/DiveKit aligned).
+      // WATER_DENSITY.salt = 0.10000 (10.000 m/bar), fresh = 0.09681, EN13319 = 0.09921.
+      // Strict SI: 1025 kg/m³ → ~0.10052, 1000 kg/m³ → ~0.09807.
+      // The test reads BAR_PER_METRE AFTER setWater('salt') so WATER_DENSITY.salt is in effect.
       ['BAR_PER_METRE in salt range after setWater (0.0993–0.1007)', function() {
         var w = WIN_APP;
         if (!w) return 'WIN_APP not ready (warn)';
@@ -536,8 +533,8 @@ var GROUPS = [
         var live = w.BAR_PER_METRE;
         var v = (live != null && isFinite(live)) ? ((live > 1) ? 1/live : live) : BAR;
         assert(v != null && v >= 0.0993 && v <= 0.1007,
-          'Got ' + v + ' — expected WATER_DENSITY.salt ≈ 0.10020 (ApexDeco convention)');
-        return v.toFixed(5) + ' bar/m (ApexDeco-convention salt)';
+          'Got ' + v + ' — expected WATER_DENSITY.salt ≈ 0.10000 (MultiDeco/DiveKit)');
+        return v.toFixed(5) + ' bar/m (salt: 10.000 m/bar)';
       }],
       // 10m salt water depth ≈ 1.0 bar absolute pressure increase
       ['10m salt water pressure ≈ 1.0 bar (±0.015)', function() {
@@ -688,7 +685,7 @@ function startTests() {
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
     // BAR_PER_METRE is a let at top-level script scope
     var rawBAR = win.BAR_PER_METRE;
-    BAR = (rawBAR != null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : (1/10.078);
+    BAR = (rawBAR != null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : 0.10000;
 
     statusEl.className = 'ready';
     statusEl.textContent = '✓ Engine ready  |  APP: ' + (win.APP_VERSION || '?') +

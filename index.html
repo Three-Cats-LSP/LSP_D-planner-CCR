@@ -1286,7 +1286,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
 </div>
 <!-- Water -->
 <div id="waterRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
-<span class="algo-label-text u1">Water:</span><span class="tip-icon" onclick="showTip('Water Type','Affects buoyancy pressure calculation (BAR_PER_METRE) used throughout all deco algorithms.\n\n• Salt (default) — 1025 kg/m³, ~0.1002 bar/m. Standard open ocean. Most conservative.\n• EN13319 — 1020 kg/m³, ~0.0997 bar/m. European dive computer standard. Slightly less pressure per metre.\n• Fresh — 1000 kg/m³, ~0.0981 bar/m. Lakes, rivers, quarries. Least dense — stops are shallower in absolute pressure terms.\n• Custom — enter density in kg/m³ manually for brackish water or specific dive sites.\n\nIn practice the difference between salt and fresh adds ~1-2% to stop depths and run times — significant at technical depths.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
+<span class="algo-label-text u1">Water:</span><span class="tip-icon" onclick="showTip('Water Type','Affects buoyancy pressure calculation (BAR_PER_METRE) used throughout all deco algorithms.\n\n• Salt (default) — 10.000 m/bar (0.10000 bar/m). MultiDeco/DiveKit/ApexDeco standard.\n• EN13319 — 10.080 m/bar (0.09921 bar/m). European dive-computer standard.\n• Fresh — 10.330 m/bar (0.09681 bar/m). Lakes, rivers, quarries. Least dense — stops are shallower in absolute pressure terms.\n• Custom — enter density in kg/m³ manually for brackish water or specific dive sites.\n\nIn practice the difference between salt and fresh adds ~1-2% to stop depths and run times — significant at technical depths.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
 <select class="u7" id="waterDensitySelect" onchange="setWaterDensity(this.value)">
 <option selected="" value="salt">Salt</option>
 <option value="en13319">EN13319</option>
@@ -1342,7 +1342,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
 </div>
 <!-- Water -->
 <div id="waterRowRec" style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
-<span class="algo-label-text u1">Water:</span><span class="tip-icon" onclick="showTip('Water Type','Affects buoyancy pressure calculation (BAR_PER_METRE) used throughout all deco algorithms.\n\n• Salt (default) — 1025 kg/m³, ~0.1002 bar/m. Standard open ocean. Most conservative.\n• EN13319 — 1020 kg/m³, ~0.0997 bar/m. European dive computer standard. Slightly less pressure per metre.\n• Fresh — 1000 kg/m³, ~0.0981 bar/m. Lakes, rivers, quarries. Least dense — stops are shallower in absolute pressure terms.\n• Custom — enter density in kg/m³ manually for brackish water or specific dive sites.\n\nIn practice the difference between salt and fresh adds ~1-2% to stop depths and run times — significant at technical depths.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
+<span class="algo-label-text u1">Water:</span><span class="tip-icon" onclick="showTip('Water Type','Affects buoyancy pressure calculation (BAR_PER_METRE) used throughout all deco algorithms.\n\n• Salt (default) — 10.000 m/bar (0.10000 bar/m). MultiDeco/DiveKit/ApexDeco standard.\n• EN13319 — 10.080 m/bar (0.09921 bar/m). European dive-computer standard.\n• Fresh — 10.330 m/bar (0.09681 bar/m). Lakes, rivers, quarries. Least dense — stops are shallower in absolute pressure terms.\n• Custom — enter density in kg/m³ manually for brackish water or specific dive sites.\n\nIn practice the difference between salt and fresh adds ~1-2% to stop depths and run times — significant at technical depths.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
 <select class="u7" id="waterDensitySelectRec" onchange="setWaterDensity(this.value)">
 <option selected="" value="salt">Salt</option>
 <option value="en13319">EN13319</option>
@@ -5622,6 +5622,7 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
 function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct, decoGases, model, _vpmBotFracs) {
   const dU = units === 'metric';
   const du = dU ? 'm' : 'ft';
+  const surfP = altSurfaceP || 1.01325; // altitude-correct surface pressure for ppO₂ display
   const plan = result.plan || [];
   const tbody = document.getElementById('decoTableBody');
   if (!tbody) return;
@@ -5652,13 +5653,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const hepct = parseInt(gasParts[1]) || 0;
     const gc = gasColor(o2pct);
     const gasDisp = getGasLabel(o2pct/100, hepct/100);
-    const pAmb = 1.013 + seg.depth * BAR_PER_METRE; // VPM depths always in metres internally
-    const ppO2 = (o2pct / 100 * (seg.startDepth !== undefined ? 1.013 + seg.startDepth * BAR_PER_METRE : pAmb)).toFixed(2);
+    const pAmb = surfP + seg.depth * BAR_PER_METRE; // VPM depths always in metres internally
+    const ppO2 = (o2pct / 100 * (seg.startDepth !== undefined ? surfP + seg.startDepth * BAR_PER_METRE : pAmb)).toFixed(2);
 
     // Gas switch row
     if (segGas !== prevGas && seg.type !== 'descent') {
       const switchDepth = seg.type === 'stop' ? seg.depth : (seg.startDepth || seg.depth || 0);
-      const switchPAmb = 1.013 + switchDepth * BAR_PER_METRE;
+      const switchPAmb = surfP + switchDepth * BAR_PER_METRE;
       const switchPpO2 = (o2pct / 100 * switchPAmb).toFixed(2);
       html += `<tr data-phase="switch">
         <td style="font-size:16px;text-align:center;padding:10px 6px;">⇄</td>
@@ -5678,13 +5679,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
         <td data-label="EAD" style="color:var(--muted);">—</td>
-        <td data-label="PPO2" style="color:var(--muted);">${(o2pct / 100 * (1.013 + seg.endDepth * BAR_PER_METRE)).toFixed(2)}</td>
+        <td data-label="PPO2" style="color:var(--muted);">${(o2pct / 100 * (surfP + seg.endDepth * BAR_PER_METRE)).toFixed(2)}</td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
       prevGas = segGas;
     } else if (seg.type === 'bottom') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbB = 1.013 + seg.depth * BAR_PER_METRE;
+      const pAmbB = surfP + seg.depth * BAR_PER_METRE;
       const ppO2b = (o2pct / 100 * pAmbB).toFixed(2);
       html += `<tr class="btm-row" data-phase="bottom">
         <td><span style="color:var(--accent);font-size:13px;">🔵</span></td>
@@ -5698,7 +5699,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       </tr>`;
     } else if (seg.type === 'ascent') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbFrom = 1.013 + seg.startDepth * BAR_PER_METRE;
+      const pAmbFrom = surfP + seg.startDepth * BAR_PER_METRE;
       const ppO2a = (o2pct / 100 * pAmbFrom).toFixed(2);
       const fromD = dU ? seg.startDepth : Math.round(seg.startDepth * 3.28084);
       const toD   = dU ? seg.endDepth   : Math.round(seg.endDepth   * 3.28084);
@@ -5714,7 +5715,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       </tr>`;
     } else if (seg.type === 'stop') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbS = 1.013 + seg.depth * BAR_PER_METRE;
+      const pAmbS = surfP + seg.depth * BAR_PER_METRE;
       const ppO2s = (o2pct / 100 * pAmbS).toFixed(2);
       const ppO2Color = parseFloat(ppO2s) > 1.6 ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);';
       // Cumulative CNS row highlight (same logic as Bühlmann, uses _cumCNS stored by VPM engine)
@@ -5789,7 +5790,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     if (!durMin || !mixRaw || mixRaw === '-') return;
     const gasKey = mixRaw; // labels now always in O2/He format (e.g. '50/00', '21/35', '100/00')
     const sac = (ph === 'bottom') ? sacBotVPM : sacDecoVPM;
-    const absP = 1.013 + depthM2 * BAR_PER_METRE;
+    const absP = surfP + depthM2 * BAR_PER_METRE;
     gasConsVPM[gasKey] = (gasConsVPM[gasKey] || 0) + sac * absP * durMin;
   });
   const gasElVPM = document.getElementById('gasConsumptionSummary');
@@ -6045,7 +6046,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const bottomGasTagVPM = `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:700;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Bottom:</span> <strong>${gasLabel} — ${bottomO2pct}% O₂ @ surface→${rawDdisp}${du}</strong></div>`;
     const decoGasTagsVPM = decoGases.map((dg, i) => {
       const lbl = dg.o2 >= 99 ? '100%' : (dg.o2 === 21 && !dg.he) ? 'Air' : `${dg.o2}/${String(dg.he || 0).padStart(2,'0')}`;
-      const switchD = dg.o2 >= 99 ? 6 : Math.floor(((settings.ppO2Deco || 1.6) / (dg.o2/100) - 1.013) / (dU ? BAR_PER_METRE : BAR_PER_METRE * 0.3048) / (dU ? 1 : 3.28084));
+      const switchD = dg.o2 >= 99 ? 6 : Math.floor(((settings.ppO2Deco || 1.6) / (dg.o2/100) - surfP) / (dU ? BAR_PER_METRE : BAR_PER_METRE * 0.3048) / (dU ? 1 : 3.28084));
       const switchDdisp = dU ? Math.max(3, Math.floor(switchD/3)*3) : Math.max(10, Math.floor(switchD/10)*10);
       return `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:600;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Deco:</span> <strong>${lbl} — ${dg.o2}% O₂ @ ${switchDdisp}${du}</strong></div>`;
     }).join(' ');

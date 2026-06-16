@@ -1983,7 +1983,7 @@ const TIER2_GROUPS = [
         // pNarc = pAmb * (fN2 + fO2) = pAmb * 1.0 → END ≈ actual depth = 40m
         // Formula: END = (pNarc / narcoticFracAir - altSurfaceP) / BAR_PER_METRE
         // narcoticFracAir = 0.79 + 0.21 = 1.0; pNarc = pAmb * 1.0 → END = depthM = 40
-        const FN2_AIR = 0.79, BAR_PER_METRE = 1/10.078, altSurfaceP = 1.01325;
+        const FN2_AIR = 0.79, BAR_PER_METRE = 0.10000, altSurfaceP = 1.01325;
         const depthM = 40, fN2 = 0.68, fO2 = 0.32;
         const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
         const pNarc = pAmb * fN2 + pAmb * fO2;  // both N2 and O2 narcotic
@@ -3061,7 +3061,7 @@ async function startTests() {
 
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
     const rawBAR = win.BAR_PER_METRE;
-    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1/rawBAR) : rawBAR) : (1/10.078);
+    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1/rawBAR) : rawBAR) : 0.10000;
 
     document.getElementById('meta-version').textContent = 'APP: ' + (win.APP_VERSION || win.APPVERSION || '—');
     document.getElementById('meta-surface').textContent = 'SURFACEP: ' + SURF.toFixed(4);
