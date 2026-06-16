@@ -1324,6 +1324,40 @@ else:
     fail("ZHL WATER_DENSITY.en13319 not found or unexpected value")
 
 # ══════════════════════════════════════════════════════════════════════════════
+# GROUP 27 — BAR_PER_METRE INIT AND 10.078 ERADICATION
+# After the water constant unification, BAR_PER_METRE must initialise to the
+# salt default (0.10000) and no display/calculation code may hardcode 10.078.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 27.1 BAR_PER_METRE init = 0.10000 (salt default, not stale 1/10.078 = 0.09922)
+if "BAR_PER_METRE = 0.10000" in js:
+    ok("BAR_PER_METRE init = 0.10000 (salt default, matches WATER_DENSITY.salt)")
+elif "BAR_PER_METRE = 1/10.078" in js or "BAR_PER_METRE = 1 / 10.078" in js:
+    fail("BAR_PER_METRE init still 1/10.078 = 0.09922 — stale after water constant update")
+else:
+    fail("BAR_PER_METRE init value unclear — should be 0.10000")
+
+# 27.2 No hardcoded / 10.078 in live calculation code (tooltip HTML exempt)
+import re
+# Strip HTML comments and tooltip strings before checking
+stripped = re.sub(r'<!--.*?-->', '', js, flags=re.DOTALL)
+# Remove content inside showTip(...) calls to avoid flagging tooltip text
+stripped = re.sub(r"showTip\([^)]{0,400}\)", "showTip()", stripped)
+hardcoded_instances = [ln for ln in stripped.split('\n') if '/ 10.078' in ln and '//' not in ln.lstrip()[:3]]
+if not hardcoded_instances:
+    ok("No hardcoded / 10.078 in live calculation code — all replaced with BAR_PER_METRE")
+else:
+    fail(f"Hardcoded / 10.078 still present in {len(hardcoded_instances)} line(s) — use BAR_PER_METRE")
+
+# 27.3 VPM render pAmb uses BAR_PER_METRE not 0.0305 imperial hardcode
+if "seg.depth * BAR_PER_METRE" in js and "seg.depth * 0.0305" not in js:
+    ok("VPM render: pAmb uses BAR_PER_METRE (not hardcoded imperial 0.0305)")
+elif "seg.depth * 0.0305" in js:
+    fail("VPM render: pAmb still uses hardcoded imperial 0.0305 — use BAR_PER_METRE")
+else:
+    fail("VPM render: pAmb calculation not found or ambiguous")
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PRINT RESULTS
 # ══════════════════════════════════════════════════════════════════════════════
 

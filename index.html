@@ -3179,7 +3179,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
   }
 })();
 
-const APP_VERSION = '2.10.3';
+const APP_VERSION = '2.10.5';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3274,14 +3274,14 @@ const WATER_DENSITY = {
   en13319:  0.09921,  // 10.080 m/bar — EN13319 standard (DiveKit/MultiDeco)
   salt:     0.10000,  // 10.000 m/bar — industry standard (MultiDeco/DiveKit/ApexDeco)
 };
-// NOTE: WATER_DENSITY values are ApexDeco-convention empirical constants, NOT strict SI physics.
+// NOTE: WATER_DENSITY values are canonical m/bar-derived constants matching MultiDeco/DiveKit:
+//   salt:    10.000 m/bar = 0.10000 bar/m (MultiDeco/DiveKit/ApexDeco standard)
+//   fresh:   10.330 m/bar = 0.09681 bar/m
+//   EN13319: 10.080 m/bar = 0.09921 bar/m (EN13319 standard — DiveKit compatible)
 // Strict SI:  1000 kg/m³ × 9.80665 / 100000 = 0.09807 bar/m (fresh)
 //             1025 kg/m³ × 9.80665 / 100000 = 0.10052 bar/m (standard ocean)
-//             1027 kg/m³ × 9.80665 / 100000 = 0.10071 bar/m (ApexDeco ref density)
-// App uses rounded/matched constants to align output with ApexDeco and dive computers.
-// BAR_PER_METRE init = 1/10.078 = 0.09922 (ApexDeco default before setWater() is called).
-// Do NOT compare BAR_PER_METRE to strict SI range before setWater('salt') is called.
-let BAR_PER_METRE = 1/10.078; // ApexDeco init default (= 0.09922); updated by setWater()
+// Init = salt default (0.10000); overwritten by setWaterDensity() on startup.
+let BAR_PER_METRE = 0.10000; // salt default (10.000 m/bar); updated by setWaterDensity()
 window.BAR_PER_METRE = BAR_PER_METRE;
 
 // ── Narcosis settings ──
@@ -5652,13 +5652,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const hepct = parseInt(gasParts[1]) || 0;
     const gc = gasColor(o2pct);
     const gasDisp = getGasLabel(o2pct/100, hepct/100);
-    const pAmb = settings.metric ? (1.013 + seg.depth / 10.078) : (1.013 + seg.depth * 0.0305);
-    const ppO2 = (o2pct / 100 * (seg.startDepth !== undefined ? 1.013 + seg.startDepth / 10.078 : pAmb)).toFixed(2);
+    const pAmb = 1.013 + seg.depth * BAR_PER_METRE; // VPM depths always in metres internally
+    const ppO2 = (o2pct / 100 * (seg.startDepth !== undefined ? 1.013 + seg.startDepth * BAR_PER_METRE : pAmb)).toFixed(2);
 
     // Gas switch row
     if (segGas !== prevGas && seg.type !== 'descent') {
       const switchDepth = seg.type === 'stop' ? seg.depth : (seg.startDepth || seg.depth || 0);
-      const switchPAmb = 1.013 + switchDepth / 10.078;
+      const switchPAmb = 1.013 + switchDepth * BAR_PER_METRE;
       const switchPpO2 = (o2pct / 100 * switchPAmb).toFixed(2);
       html += `<tr data-phase="switch">
         <td style="font-size:16px;text-align:center;padding:10px 6px;">⇄</td>
@@ -5678,13 +5678,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
         <td data-label="EAD" style="color:var(--muted);">—</td>
-        <td data-label="PPO2" style="color:var(--muted);">${(o2pct / 100 * (1.013 + seg.endDepth / 10.078)).toFixed(2)}</td>
+        <td data-label="PPO2" style="color:var(--muted);">${(o2pct / 100 * (1.013 + seg.endDepth * BAR_PER_METRE)).toFixed(2)}</td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
       prevGas = segGas;
     } else if (seg.type === 'bottom') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbB = 1.013 + seg.depth / 10.078;
+      const pAmbB = 1.013 + seg.depth * BAR_PER_METRE;
       const ppO2b = (o2pct / 100 * pAmbB).toFixed(2);
       html += `<tr class="btm-row" data-phase="bottom">
         <td><span style="color:var(--accent);font-size:13px;">🔵</span></td>
@@ -5698,7 +5698,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       </tr>`;
     } else if (seg.type === 'ascent') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbFrom = 1.013 + seg.startDepth / 10.078;
+      const pAmbFrom = 1.013 + seg.startDepth * BAR_PER_METRE;
       const ppO2a = (o2pct / 100 * pAmbFrom).toFixed(2);
       const fromD = dU ? seg.startDepth : Math.round(seg.startDepth * 3.28084);
       const toD   = dU ? seg.endDepth   : Math.round(seg.endDepth   * 3.28084);
@@ -5714,7 +5714,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       </tr>`;
     } else if (seg.type === 'stop') {
       const rtDisp = fmtRT(seg.runtime);
-      const pAmbS = 1.013 + seg.depth / 10.078;
+      const pAmbS = 1.013 + seg.depth * BAR_PER_METRE;
       const ppO2s = (o2pct / 100 * pAmbS).toFixed(2);
       const ppO2Color = parseFloat(ppO2s) > 1.6 ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);';
       // Cumulative CNS row highlight (same logic as Bühlmann, uses _cumCNS stored by VPM engine)
@@ -5750,7 +5750,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
   const cnsDisp = result.totalCNS != null ? result.totalCNS.toFixed(1) : '—';
   const otuDisp = result.totalOTU ?? '—';
   // PrT
-  const prtValVPM = (depthM / 10.078) * Math.sqrt(bt);
+  const prtValVPM = (depthM * BAR_PER_METRE) * Math.sqrt(bt);
   const prtDispVPM = prtValVPM.toFixed(1);
   const prtColorVPM = prtValVPM < 15 ? 'var(--green)' : prtValVPM < 25 ? 'var(--yellow)' : prtValVPM < 40 ? 'var(--orange)' : 'var(--red)';
   const cnsFootColor = result.totalCNS != null ? (result.totalCNS >= 100 ? 'var(--red)' : result.totalCNS >= 80 ? 'var(--orange)' : result.totalCNS >= 50 ? 'var(--yellow)' : 'var(--green)') : 'var(--muted)';
@@ -6008,7 +6008,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     rt, deco: Math.round(deco),
     cns: result.totalCNS != null ? result.totalCNS.toFixed(1) + '%' : '-',
     otu: result.totalOTU != null ? String(result.totalOTU) : '-',
-    prt: ((depthM / 10.078) * Math.sqrt(bt)).toFixed(1),
+    prt: ((depthM * BAR_PER_METRE) * Math.sqrt(bt)).toFixed(1),
   };
 
   // Show results card
@@ -8736,7 +8736,7 @@ function runDecoSchedule() {
   const otuFootColor = totalOTUval >= 300 ? 'var(--red)' : totalOTUval >= 200 ? 'var(--orange)' : totalOTUval >= 100 ? 'var(--yellow)' : 'var(--green)';
   // PrT = P_rel (bar) × √T(min) — Fraedrich/Balestra severity index
   // P_rel = gauge pressure at deepest depth, T = bottom time
-  const prtVal  = (depthM / 10.078) * Math.sqrt(bt);
+  const prtVal  = (depthM * BAR_PER_METRE) * Math.sqrt(bt);
   const prtDisp = prtVal.toFixed(1);
   // GF High guidance from evidence (Fraedrich 2019):
   // PrT <15 → GF Hi ≤80 ok; 15–25 → ≤75; 25–40 → ≤70; >40 → extreme caution
@@ -11194,7 +11194,7 @@ function renderTissueLoadChart() {
       const pTotal = pN2 + pHe;
 
       // Compute GF-adjusted M-value at this stop depth
-      const pAmb = altSurfaceP + s.depth / 10.078;
+      const pAmb = altSurfaceP + s.depth * BAR_PER_METRE;
       let a, b;
       if (pTotal > 0 && pHe > 0) {
         // Trimix: weighted a/b
@@ -12084,7 +12084,7 @@ function buildExportText(mode) {
 
     // PrT fallback if not in totals row
     if (prtExpVal === '-') {
-      const prtN = (parseFloat(depth) / 10.078) * Math.sqrt(parseFloat(bt));
+      const prtN = (parseFloat(depth) * BAR_PER_METRE) * Math.sqrt(parseFloat(bt));
       if (!isNaN(prtN)) prtExpVal = prtN.toFixed(1);
     }
 
@@ -12969,7 +12969,7 @@ function buildMessengerText(mode) {
       const dtV  = document.getElementById('decoDecoTimeDisplay')?.textContent?.trim().replace(/\s*min\s*/,'') || '-';
       const cnsV = document.getElementById('decoCNSDisplay')?.textContent?.trim() || '-';
       const otuV = document.getElementById('decoOTUDisplay')?.textContent?.trim() || '-';
-      const prtN = (parseFloat(document.getElementById('decoDepth')?.value||'0') / 10.078) * Math.sqrt(parseFloat(document.getElementById('decoBT')?.value||'0'));
+      const prtN = (parseFloat(document.getElementById('decoDepth')?.value||'0') * BAR_PER_METRE) * Math.sqrt(parseFloat(document.getElementById('decoBT')?.value||'0'));
       result.push('-'.repeat(28));
       result.push(`Run Time:${rtV}'00" Deco:${dtV}'00"`);
       result.push(`CNS:${cnsV} OTU:${otuV} PrT:${isNaN(prtN)?'-':prtN.toFixed(1)}`);
@@ -13268,7 +13268,7 @@ function calcContingency() {
   const _emDecoFmt = decoTimeFmt || `${decoTime}'00"`;
   const _emDepth   = parseFloat(document.getElementById('decoDepth')?.value || '0');
   const _emBT      = parseFloat(document.getElementById('decoBT')?.value || '0') + (contExtraBT || 0);
-  const _emPrT     = (_emDepth / 10.078 * Math.sqrt(_emBT)).toFixed(1);
+  const _emPrT     = (_emDepth * BAR_PER_METRE * Math.sqrt(_emBT)).toFixed(1);
   const _emOTU     = totalOTUc || '—';
   const cnsColor   = totalCNS && parseFloat(totalCNS) >= 100 ? 'var(--red)' : totalCNS && parseFloat(totalCNS) >= 80 ? 'var(--orange)' : 'var(--text)';
   const prtColorEm = parseFloat(_emPrT) < 15 ? 'var(--green)' : parseFloat(_emPrT) < 25 ? 'var(--yellow)' : parseFloat(_emPrT) < 40 ? 'var(--orange)' : 'var(--red)';
@@ -15171,7 +15171,7 @@ async function exportPDF(opts) {
               decoSteps.forEach((s,si)=>{
                 const t=s._tissues[i];
                 const pN2r=t.pN2||0; const pHer=t.pHe||0; const pTr=pN2r+pHer;
-                const pAmb=altSurfaceP+s.depth/10.078;
+                const pAmb=altSurfaceP+s.depth * BAR_PER_METRE;
                 let ar=a_n2r, br=b_n2r;
                 if(pTr>0&&pHer>0){
                   const wN2=pN2r/pTr, wHe=pHer/pTr;
