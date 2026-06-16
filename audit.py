@@ -1357,9 +1357,17 @@ elif "seg.depth * 0.0305" in js:
 else:
     fail("VPM render: pAmb calculation not found or ambiguous")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PRINT RESULTS
-# ══════════════════════════════════════════════════════════════════════════════
+# 27.4 VPM gas tag switch depth: imperial formula gives feet not metres
+# Correct: / BAR_PER_METRE * 3.28084 for imperial (result in feet)
+# Wrong:   / (BAR_PER_METRE * 0.3048) / 3.28084 (cancels to metres, displayed as ft)
+if "/ BAR_PER_METRE * (dU ? 1 : 3.28084)" in js:
+    ok("VPM gas tag switch depth: imperial formula correct (/ BAR_PER_METRE * 3.28084 → feet)")
+elif "BAR_PER_METRE * 0.3048) / (dU ? 1 : 3.28084)" in js or "BAR_PER_METRE * 0.3048) / 3.28084" in js:
+    fail("VPM gas tag switch depth: imperial formula broken — / (BPM*0.3048)/3.28084 cancels to metres, displays wrong ft value")
+else:
+    fail("VPM gas tag switch depth formula not found or changed structure")
+
+
 
 print(f"\nLSP D-Planner Audit — {path}")
 print("=" * 60)

@@ -3179,7 +3179,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
   }
 })();
 
-const APP_VERSION = '2.10.5';
+const APP_VERSION = '2.10.6';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -6046,7 +6046,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const bottomGasTagVPM = `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:700;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Bottom:</span> <strong>${gasLabel} — ${bottomO2pct}% O₂ @ surface→${rawDdisp}${du}</strong></div>`;
     const decoGasTagsVPM = decoGases.map((dg, i) => {
       const lbl = dg.o2 >= 99 ? '100%' : (dg.o2 === 21 && !dg.he) ? 'Air' : `${dg.o2}/${String(dg.he || 0).padStart(2,'0')}`;
-      const switchD = dg.o2 >= 99 ? 6 : Math.floor(((settings.ppO2Deco || 1.6) / (dg.o2/100) - surfP) / (dU ? BAR_PER_METRE : BAR_PER_METRE * 0.3048) / (dU ? 1 : 3.28084));
+      const switchD = dg.o2 >= 99 ? (dU ? 6 : 20) : Math.floor(((settings.ppO2Deco || 1.6) / (dg.o2/100) - surfP) / BAR_PER_METRE * (dU ? 1 : 3.28084));
       const switchDdisp = dU ? Math.max(3, Math.floor(switchD/3)*3) : Math.max(10, Math.floor(switchD/10)*10);
       return `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:600;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Deco:</span> <strong>${lbl} — ${dg.o2}% O₂ @ ${switchDdisp}${du}</strong></div>`;
     }).join(' ');
