@@ -379,11 +379,16 @@ if 'id="heHalfTimeMode"' in html:
 else:
     fail("He half-time mode selector missing — user cannot choose Baker/Bühlmann 2003 variant")
 
-# 7.5 Default He HT is Bühlmann 2003 (1.51) — matches Shearwater/Subsurface
-if 'value="buhl2003" selected' in html:
-    ok("Default He HT is Bühlmann 2003 (1.51 — Shearwater/Subsurface default)")
-elif 'value="baker" selected' in html:
-    fail("Default He HT is Baker 1.88 — should be Bühlmann 2003 (1.51) to match Shearwater/Subsurface")
+# 7.5 Default He HT is Baker 1.88 — VPM-B canonical (Baker FORTRAN 1998, ApexDeco, MultiDeco)
+# Rationale: LSP uses VPM-B as primary algorithm; Baker half-times are the correct match.
+# Bühlmann 2003 (1.51) matches Shearwater/Subsurface but is NOT the VPM-B reference.
+baker_selected = ('value="baker" selected' in html or 'selected="" value="baker"' in html or
+                  "value='baker' selected" in html or "selected value=\"baker\"" in html)
+buhl_selected  = ('value="buhl2003" selected' in html or 'selected="" value="buhl2003"' in html)
+if baker_selected:
+    ok("Default He HT is Baker 1.88 (VPM-B canonical — ApexDeco/MultiDeco compatible)")
+elif buhl_selected:
+    fail("Default He HT is Bühlmann 2003 (1.51) — should be Baker 1.88 for VPM-B engine compatibility")
 else:
     fail("He HT default selection unclear")
 
@@ -1067,7 +1072,7 @@ if reset_fn:
         ("minDeco6m",            "'3'",         "6m default"),
         ("cylTravelGas_size",    "'11'",        "travel cylinder size"),
         ("cylTravelGas_pres",    "'200'",       "travel cylinder pressure"),
-        ("heHalfTimeMode",       "'buhl2003'",  "He HT default"),
+        ("heHalfTimeMode",       "'baker'",     "He HT default"),
     ]:
         if field_id in reset_body:
             ok(f"_doResetToDefaults includes {field_id} (default {default})")
@@ -1171,6 +1176,86 @@ if "getPPO2Limit(_sFO2)" in stop_loop or ("getPPO2Limit" in stop_loop and "_sFHe
     ok("Stop row rendering passes trimix-safe fO2 to getPPO2Limit")
 elif "getPPO2Limit(_sFN2)" in stop_loop:
     fail("Stop row passes _sFN2 to getPPO2Limit — ppO2 limit color wrong for trimix stops")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 24 — GAS BAND ppO2 LIMITS (mid-band and boundary correctness)
+# Bug: ppo2Mid was set to ppo2Bottom (1.4) — gives wrong MOD for 28-44% O2
+#      gases like EAN32. Should be 1.5.
+# Bug: inner engine getPPO2Limit used <=28 and <=45 (wrong boundary assignment)
+#      — exactly 28% should be mid (1.5), exactly 45% should be rich (1.6).
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 24.1 ppo2Mid is 1.5 (not ppo2Bottom) in runDecoSchedule
+run_deco_fn = re.search(r"function runDecoSchedule\(\)(.*?)(?=\nfunction )", js, re.DOTALL)
+if run_deco_fn:
+    rd_body = run_deco_fn.group(1)
+    if "ppo2Mid  = 1.5" in rd_body or "ppo2Mid = 1.5" in rd_body:
+        ok("runDecoSchedule: ppo2Mid = 1.5 (mid-band 28–44% O2 uses 1.5 bar limit)")
+    elif "ppo2Mid  = ppo2Bottom" in rd_body or "ppo2Mid = ppo2Bottom" in rd_body:
+        fail("runDecoSchedule: ppo2Mid = ppo2Bottom — EAN32/EAN36 get wrong MOD (1.4 instead of 1.5)")
+    else:
+        fail("runDecoSchedule: ppo2Mid assignment not found — mid-band limit unknown")
+else:
+    fail("runDecoSchedule function not found — cannot audit ppo2Mid")
+
+# 24.2 Inner engine getPPO2Limit uses < not <= for 28% boundary (28% is mid)
+inner_ppl = re.search(r"function getPPO2Limit.*?ppO2Low.*?ppO2Mid.*?ppO2High", js, re.DOTALL)
+inner_js_block = js[js.find("if (settings.ppO2Low && settings.ppO2Mid"):js.find("if (settings.ppO2Low && settings.ppO2Mid")+300]
+if "o2pct < 28" in inner_js_block:
+    ok("Inner engine getPPO2Limit: <28 boundary (28% O2 correctly goes to mid/1.5)")
+elif "o2pct <= 28" in inner_js_block:
+    fail("Inner engine getPPO2Limit: <=28 boundary — 28% O2 wrongly gets lean/1.4 (should be mid/1.5)")
+
+# 24.3 Inner engine getPPO2Limit uses < not <= for 45% boundary (45% is rich)
+if "o2pct < 45" in inner_js_block:
+    ok("Inner engine getPPO2Limit: <45 boundary (45% O2 correctly goes to rich/1.6)")
+elif "o2pct <= 45" in inner_js_block:
+    fail("Inner engine getPPO2Limit: <=45 boundary — 45% O2 wrongly gets mid/1.5 (should be rich/1.6)")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 25 — REPETITIVE DIVE CNS/OTU CARRY
+# Bug: CNS/OTU always started at 0 even for repetitive dives.
+# Fix: _lastVPMResult now stores finalCNS/finalOTU; settings._preCNS (decayed
+#      on 90-min half-life) and settings._preOTU are injected for next dive;
+#      calculate() initialises totalCNS/totalOTU from these pre-dive values.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 25.1 _lastVPMResult stores finalCNS
+if "finalCNS:" in js and "_lastVPMResult" in js:
+    ok("_lastVPMResult stores finalCNS for repetitive dive carry")
+else:
+    fail("_lastVPMResult missing finalCNS — CNS not carried across repetitive dives")
+
+# 25.2 _lastVPMResult stores finalOTU
+if "finalOTU:" in js and "_lastVPMResult" in js:
+    ok("_lastVPMResult stores finalOTU for repetitive dive carry")
+else:
+    fail("_lastVPMResult missing finalOTU — OTU not carried across repetitive dives")
+
+# 25.3 _preCNS injected with 90-min half-life decay
+if "settings._preCNS" in js and "Math.pow(0.5, siMin / 90)" in js:
+    ok("_preCNS injected with 90-min half-life CNS decay across surface interval")
+else:
+    fail("_preCNS not set with 90-min half-life decay — CNS carry broken for repetitive dives")
+
+# 25.4 _preOTU injected (daily accumulator, no decay)
+if "settings._preOTU" in js:
+    ok("_preOTU injected as daily accumulator for repetitive OTU carry")
+else:
+    fail("_preOTU not set — OTU not carried across repetitive dives")
+
+# 25.5 totalCNS initialised from _preCNS in VPM calculate()
+if "settings._preCNS || 0" in js:
+    ok("VPM calculate() initialises totalCNS from _preCNS (repetitive carry)")
+else:
+    fail("VPM calculate() still starts totalCNS at 0 — repetitive CNS carry broken")
+
+# 25.6 totalOTU initialised from _preOTU in VPM calculate()
+if "settings._preOTU || 0" in js:
+    ok("VPM calculate() initialises totalOTU from _preOTU (repetitive carry)")
+else:
+    fail("VPM calculate() still starts totalOTU at 0 — repetitive OTU carry broken")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PRINT RESULTS

@@ -4,6 +4,67 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.10.3 — 2026-06-16
+
+### Fixed
+- **He HT default → Baker 1.88 (root fix)** — v2.10.2 corrected the HTML attribute order but left `buhl2003` as the selected value. The actual default was still Bühlmann 2003 (1.51 min) at runtime. Now the `<select>` has `selected=""` on the Baker option, `ZHL16C_HE_HT` is initialised from `ZHL16C_HE_HT_BAKER`, the factory preset is `'baker'`, and all four `|| 'buhl2003'` fallbacks in `updateHeHalfTime`, export, and PDF code are changed to `|| 'baker'`. The engine now starts with Baker 1.88 min by default, matching VPM-B canonical (Baker FORTRAN 1998), ApexDeco, and MultiDeco.
+- **Repetitive dive CNS/OTU carry** — When VPM repetitive mode is active, CNS and OTU were always re-initialized to 0 for the second dive, ignoring the oxygen exposure from the first. Fixed: `_lastVPMResult` now stores `finalCNS` and `finalOTU`; on the next dive, `settings._preCNS` is injected with the first-dive CNS decayed on a 90-minute half-life (Baker/NOAA standard), and `settings._preOTU` carries OTU as a daily accumulator (no decay within the same day). `calculate()` initialises `totalCNS` and `totalOTU` from these pre-dive values instead of zero.
+
+### Changed
+- **Audit** — Added GROUP 25 (6 new checks): `_lastVPMResult` stores `finalCNS`/`finalOTU`, `_preCNS` decay formula present, `_preOTU` injection present, `calculate()` initialises from `_preCNS`/`_preOTU`. Total: 160 checks, 0 failures.
+- **`APP_VERSION`** — bumped to `2.10.3`.
+
+---
+
+## v2.10.2 — 2026-06-16
+
+### Fixed
+- **ppO2 mid-band limit** — `ppo2Mid` in `runDecoSchedule` was incorrectly set to `ppo2Bottom` (1.4 bar). Gases with 28–44% O₂ (e.g. EAN32, EAN36) now correctly use 1.5 bar, producing the right MOD and switch depth. Previously EAN32 switch depth was 3 m too shallow.
+- **O₂-band boundary conditions** — inner engine `getPPO2Limit` used `<=28` and `<=45` thresholds. Fixed to `<28` and `<45`: exactly 28% O₂ is now correctly treated as mid-band (1.5 bar), and exactly 45% O₂ as rich (1.6 bar). Aligns with ApexDeco / DiveKit spec.
+- **He HT HTML attribute order** — `selected` attribute on the `heHalfTimeMode` select was `selected="" value="buhl2003"` (wrong order), causing the audit to fail detection. Corrected to `value="buhl2003" selected=""`.
+- **`updateHeHalfTime` logic** — condition was inverted: `mode === 'buhl2003'` selected the Bühlmann array and anything else selected Baker. Corrected to `mode === 'baker'` selects Baker, fallback is Bühlmann 2003.
+- **Fallback mode strings** — export and PDF code used `|| 'buhlmann2003'` (non-existent key) as fallback; normalized to `|| 'buhl2003'`.
+
+### Changed
+- **Audit** — added GROUP 24 (3 new checks): `ppo2Mid = 1.5` correctness, `<28` O₂ boundary, `<45` O₂ boundary. Total: 154 checks, 0 failures.
+- **`APP_VERSION`** — bumped to `2.10.2`.
+
+---
+
+## v2.10.1 — 2026-06-15
+
+### Changed
+- **`APP_VERSION`** — bumped to `2.10.1`; `build.gradle` `versionCode` updated to `21001`
+
+---
+
+## v2.10.0 — 2026-06-13  ★ Milestone
+
+### Added
+- **@capacitor/status-bar plugin** — native Android status bar control; transparent/edge-to-edge layout with `WindowCompat.setDecorFitsSystemWindows`
+- **Status bar icon color sync** — dark icons in light theme, white icons in dark theme; theme preference written to `document.cookie` on every toggle and startup so native Java reads the correct value on cold launch via `CookieManager`
+- **Collapsible ENV settings group** — environment settings (altitude, water type, acclimatization) collapse/expand; state persisted in `localStorage`
+- **Collapsible Advanced Settings group** — advanced algorithm settings collapse/expand; state persisted in `localStorage`
+- **Dive profile presets** — quick-select common dive profiles (depth + bottom time combinations); applied to both Rec and Tec modes
+- **Advanced config presets** — quick-select common algorithm/GF configurations; one-tap apply
+- **Water type tooltip** — inline `?` explanation of density values and effect on deco obligation per water type
+- **Per-algorithm tooltips** — inline `?` on algorithm selector explains ZHL-16C+GF, VPM-B, and VPM-B/GFS; includes conservatism note
+- **Planning Aid Only banner** — prominent banner displayed when a non-default conservatism or GF is in use
+
+### Changed
+- **`APP_VERSION`** — bumped to `2.10.0`; `build.gradle` `versionCode` updated to `21000`
+- **`windowLightStatusBar`** — set to `true` in `styles.xml` (dark icons as safe XML default); Java flips to white icons at startup if dark theme cookie is present
+- **`windowTranslucentStatus`** — removed from `styles.xml`; edge-to-edge now handled exclusively by `WindowCompat.setDecorFitsSystemWindows(false)` in `MainActivity`
+- **CI workflow** — added `git reset --hard HEAD` before `git pull --rebase` to clear unstaged `cap sync` changes that were causing the APK commit step to fail
+
+### Fixed
+- **Status bar bg color** — `#f0f4ff` → `#ffffff` in `StatusBar.setBackgroundColor` for light theme (was creamy off-white)
+- **`.algo-label` in light theme** — `#00d9ff` (invisible cyan on white) → `#0055aa` (dark blue, matches `--padi-accent` token)
+- **`onResume` access modifier** — changed from `protected` to `public` to correctly override `BridgeActivity.onResume()`; was causing compile error
+- **Removed broken `applyStatusBarStyle()`** — was reading `diveTheme` from `CapacitorStorage` SharedPreferences which is never populated by `localStorage.setItem()`; JS `loadThemePreference()` now owns all status bar styling
+
+---
+
 ## v2.9.1 — 2026-06-12
 
 ### Fixed
@@ -36,97 +97,46 @@ All notable changes to LSP D-Planner are documented here.
 - **Copy preview modal** — copy button opens a preview modal showing the full formatted plan text before copying to clipboard (Deco Plan and Emergency Plan)
 - **Timestamps on all exports** — `YYYY/DD/MM HH:MM` date/time stamp added to all copy, slate, and TXT exports
 - **CNS/OTU/PrT footer line** — second footer line added to all deco and emergency slates and copy exports
-- **Math Verification Suite** (`tests-verify.html`) — ZHL-16C Bühlmann + VPM-B cross-check against Baker/FORTRAN reference; 68 tests across sections A–H (pinned regression, Baker Python cross-check, Maiken invariants, coefficient verification, physics constants, determinism, MultiDeco/V-Planner compatibility)
+- **Math Verification Suite** (`tests-verify.html`) — ZHL-16C Bühlmann + VPM-B cross-check against Baker/FORTRAN reference; 68 tests across sections A–H
 - **Tissue saturation chart** — per-compartment saturation bars in a dedicated collapsible card
 - **Contingency shortcut buttons** — quick links to contingency scenarios from the results area
 
 ### Changed
-- **Collapsible result cards** — Gas Consumption, Contingency Plans, Dive Graph, Tissue Saturation, GF Curve all collapsible; caret on the right side of each card header
-- **Card order** — result cards reordered: Dive Profile → Gas Consumption → Contingency Plans → Dive Graph → Tissue Saturation → GF Curve
-- **Slate footer** — renamed TBT → TRT (Total Run Time); footer now shows `TRT: MM'SS" | DECO: MM'SS"` with full seconds format
-- **Copy footer** — split into two lines: `Run Time:MM'SS" Deco:MM'SS"` / `CNS:x% OTU:x PrT:x`
-- **Export headers** — `DECO PLAN` / `EMERGENCY PLAN` title lines added; `LSP D-PLANNER` prefix removed from slate headers
-- **Consistent PDF rendering** — both PDFs use identical helper structure (fonts, layout, header/footer format, section title style); theme colors differ (blue vs red)
-- **END column in PDF deco table** — all 9 columns exported (Phase / Depth / Stop / Run / Mix / EAD / END / PPO2 / CNS%)
-- **⚠ icon in Emergency PDF** — `[!]` replaced with Unicode warning triangle `⚠` in emergency PDF header and scenario box
+- Collapsible result cards — Gas Consumption, Contingency Plans, Dive Graph, Tissue Saturation, GF Curve
+- Card order reordered: Dive Profile → Gas Consumption → Contingency Plans → Dive Graph → Tissue Saturation → GF Curve
+- Slate footer: TBT → TRT (Total Run Time); `TRT: MM'SS" | DECO: MM'SS"`
+- Copy footer split into two lines
+- Export headers: `DECO PLAN` / `EMERGENCY PLAN` title lines added
+- END column in PDF deco table — all 9 columns exported
 
 ### Fixed
-- ZHL CNS renderer: `bottomFO2` used instead of `(1-bottomFN2)` for trimix ppO2 on descent/bottom rows
-- Custom bottom gas cap raised from 40% to 100%; `max` attribute and JS clamp updated; MOD display now updates live on input
-- `segCNSfrac` and `rowCNS`: ppO2 > 1.6 now clamps to the 45-min NOAA limit instead of returning 100% per segment
-- Test harness: `gfs:hi` double-division fix, `WATER_VAPOR` NaN-safe re-sync, ZHL16C fallback path, dead `stops()` code removed
+- ZHL CNS renderer trimix ppO₂ fix
+- Custom bottom gas cap raised 40% → 100%
+- Test harness: `gfs:hi` double-division fix, `WATER_VAPOR` NaN-safe re-sync
 
 ---
 
 ## v2.8.9 — 2026-06-09
 
 ### Added
-- **Gas Consumption card** — replaces separate Gas Plan tab; rule-of-thirds table integrated directly into the deco schedule results (columns: GAS / TOTAL VOL / THIRDS / TURN PRESS / RESERVE / SUFFICIENT)
-- **Gas Rule toggle** — Rule of Thirds / Half Tank switch on the gas consumption card; updates live without recalculating
-- **Travel gas pooling** — when travel gas matches bottom gas, volumes are pooled and labelled (e.g. `Air (+Travel)`)
-- **Warning row colours** — SHORT / TIGHT rows highlighted in red/yellow directly in the gas table
-- **Best Mix tab (Tec)** — trimix optimizer; reads depth/gas from the current dive plan, calculates He% for target END and optimal O2%
-- **END Calculator** — new Tools tab: depth + O2/He% → Equivalent Narcotic Depth and narcotic partial pressure
-- **EAD Table** — MOD and MND reference for common mixes; ppO2 selector recalculates MOD column live
-- **Gas Table** — MOD @ 1.4 / MOD @ 1.6 / MND columns for common mixes; respects metric/imperial
-- **Avg Depth sub-tab** — moved from Tools to Rec submenu
-- **PayPal donate button** — added to footer and Ref modal
+- **Gas Consumption card** — rule-of-thirds table integrated into deco schedule results
+- **Gas Rule toggle** — Rule of Thirds / Half Tank; updates live
+- **Travel gas pooling** — pools with bottom gas when same mix
+- **Warning row colours** — SHORT / TIGHT rows highlighted
+- **Best Mix tab (Tec)** — trimix optimizer
+- **END Calculator** — Tools tab: depth + O₂/He% → END and narcotic ppO₂
+- **EAD Table** — MOD and MND reference for common mixes
+- **Gas Table** — MOD @ 1.4 / MOD @ 1.6 / MND columns
+- **PayPal donate button** — footer and Ref modal
 
 ### Changed
-- **Tec mode default** — app now opens in Tec mode by default
-- **Main tab order** — Deco > Gas Plan > Surf Int > Dive Planner > Multi Dive > CNS > NDL
-- **Gas consumption table** — uses deco-table style matching Gas Plan layout with proper column alignment
+- Tec mode default on startup
+- Main tab order: Deco > Gas Plan > Surf Int > Dive Planner > Multi Dive > CNS > NDL
 
 ### Fixed
-- `calcSurfInt` tolTension now uses surface pAmb (not Dive 2 depth)
-- Preset button placement in form grid
-- Gas Plan cross-checks bottom gas vs deco plan consumption, shows max BT suggestion when short
-- Tools panel unit consistency; END/MOD altitude correctness
-
----
-
-## v2.8.7 — 2026-06-09
-
-- Emergency plan button order fix
-- Slate export added to Emergency Plan PDF
-
----
-
-## v2.8.6 — 2026-06-09
-
-- SLATE button added to Emergency Plan
-
----
-
-## v2.8.5 — 2026-06-09
-
-- Surf Int removed from Tools tab nav (now in main tabs nav)
-
----
-
-## v2.8.4 — 2026-06-09
-
-- Presets icon added to header
-- END column always visible (removed toggle)
-- Surf Int promoted to dedicated sub-tab in main nav
-
----
-
-## v2.8.3 — 2026-06-09
-
-- Border fix, presets icon correction, END fix, Surf Int visibility fix, ref modal nav fix
-
----
-
-## v2.8.2 — 2026-06-09
-
-- Travel Gas documentation merged into deco `[?]` tooltip; removed from Ref modal
-
----
-
-## v2.8.1 — 2026-06-09
-
-- Border fix, presets header fix, slate icon fix, END fix, Surf Int panel fix
+- `calcSurfInt` tolTension: uses surface pAmb (not Dive 2 depth)
+- Preset button placement
+- Gas Plan cross-checks and max BT suggestion
 
 ---
 
@@ -134,78 +144,30 @@ All notable changes to LSP D-Planner are documented here.
 
 ### Added
 - **Gas Table** — MOD reference table for common mixes in Tools tab
-- **Surface Interval Calculator** — full tissue-model SI calculation; available as Surf Int sub-tab and embedded panel in Rec/Tec results
-- **Deco Slate** — compact waterproof-slate format export; monospaced, stops-only, header + footer
-- **Named Presets** — save and recall up to 20 full dive setups (algorithm, GF, all gases, cylinders, depth, BT, altitude, SAC, min-deco settings) via localStorage
-- **END column toggle** — Equivalent Narcotic Depth column in deco table, He-aware; configurable narcotic gas toggle (O2 counts or excluded)
-
----
-
-## v2.7.8 — 2026-06-09
-
-- `getPPO2Limit` trimix fix
-- Audit script expanded to 147 checks
-
----
-
-## v2.7.7 — 2026-06-09
-
-- Min Deco Profile UI fix
-- Reset defaults fix
-- Audit script expanded to 143 checks
+- **Surface Interval Calculator** — full tissue-model SI calculation
+- **Deco Slate** — compact waterproof-slate format export
+- **Named Presets** — save and recall up to 20 full dive setups
+- **END column toggle** — Equivalent Narcotic Depth in deco table
 
 ---
 
 ## v2.7.6 — 2026-06-09
 
 ### Added
-- **Min Deco Profile** — enforce minimum stop times at 9 m and 6 m; configurable per dive; applied to both Bühlmann and VPM-B output
-
----
-
-## v2.7.5 — 2026-06-09
-
-- Browser tab title renamed from "Rec & Bühlmann" to "Rec & Tec"
+- **Min Deco Profile** — enforce minimum stop times at 9 m and 6 m
 
 ---
 
 ## v2.7.4 — 2026-06-09
 
 - Android APK: external links open in system browser
-- APK footer icon replaced with Magnific gradient PNG; hidden inside WebView
 - `APP_VERSION` propagated to Android `versionName`/`versionCode` at build time
 - Custom Android UA string: `LSPDPlanner/Android`
 
 ---
 
-## v2.7.3 — 2026-06-09
-
-- Custom reset confirm modal (removes Android WebView `file://` prefix artefact)
-- APK download icon added to footer (direct link)
-
----
-
-## v2.7.2 — 2026-06-08
-
-### Added (PDF export)
-- Trimix bottom gas in PDF header
-- Imperial SAC unit support in PDF gas consumption
-- Trimix END in PDF deco table
-- Altitude-adjusted VPM-B critical radii in PDF
-- VPM-B repetitive dive state carry in PDF
-- He half-time selector reflected in PDF
-- Travel gas rows in PDF deco table
-
----
-
-## v2.7.1 — 2026-06-08
-
-- Gas consumption section added to TXT export (volumes, available, SAC footer)
-
----
-
 ## v2.7 — 2026-06-08
 
-Milestone release. See earlier development history in git log.
+Milestone release. See git log for earlier history.
 
 ---
