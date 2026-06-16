@@ -71,11 +71,13 @@ LSP D-Planner is available as a native Android app built with Capacitor by Ionic
 
 ## Get In Water
 
-[Get In Water](https://github.com/Three-Cats-LSP/Get-In-Water) is a companion app for **dive trip packing** — customizable master gear template, per-trip checklists, multi-day trip dates, and TXT/PDF export for printing.
+[Get In Water](https://github.com/Three-Cats-LSP/Get-In-Water) is a companion app for **dive trip packing** — master gear list, starter templates (Rec, Photo, Tech), per-trip checklists with quantities, notes, critical items, packing phases, tags, unpack mode, buddy copy, JSON backup, Android widget, and TXT/PDF export.
 
 📲 **[Download Get In Water APK](https://threecats-lsp.com/get-in-water/download.html)**
 
 🌐 **Web app**: https://threecats-lsp.com/get-in-water/
+
+**Current version: 1.3.0**
 
 ---
 
