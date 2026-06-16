@@ -3270,9 +3270,9 @@ window.WATER_VAPOR = WATER_VAPOR; // expose for test harnesses
 
 // Water density pressure factors (bar per metre)
 const WATER_DENSITY = {
-  fresh:    0.09681,  // ApexDeco-convention (strict SI: 1000 kg/m³ → 0.09807)
-  en13319:  0.09964,  // 1020 kg/m³ — EN13319
-  salt:     0.10020,  // ApexDeco-convention (strict SI: 1025 kg/m³ → 0.10052, 1027 → 0.10071)
+  fresh:    0.09681,  // 10.330 m/bar — matches VPM SLP_FW_M
+  en13319:  0.09921,  // 10.080 m/bar — EN13319 standard (DiveKit/MultiDeco)
+  salt:     0.10000,  // 10.000 m/bar — industry standard (MultiDeco/DiveKit/ApexDeco)
 };
 // NOTE: WATER_DENSITY values are ApexDeco-convention empirical constants, NOT strict SI physics.
 // Strict SI:  1000 kg/m³ × 9.80665 / 100000 = 0.09807 bar/m (fresh)
@@ -5527,8 +5527,9 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
   }
 
   // Build settings object for VPMEngine
-  // IMPORTANT: waterType 0=salt, 1=fresh (VPM engine uses its own SLP constants)
-  const waterTypeVal = (document.getElementById('waterDensitySelect')?.value === 'fresh') ? 1 : 0;
+  // IMPORTANT: waterType 0=salt, 1=fresh, 2=EN13319 (VPM engine uses its own SLP constants)
+  const _wdSel = document.getElementById('waterDensitySelect')?.value;
+  const waterTypeVal = _wdSel === 'fresh' ? 1 : _wdSel === 'en13319' ? 2 : 0;
 
   const settings = {
     metric:            dU,
@@ -6148,14 +6149,18 @@ const VPMEngine = (() => {
     function twoGammaOverR(gamma, r) {
         return (2.0 * gamma / r) / 1.0e5; 
     }
-    const SLP_SW_M = 10.078;
-    const SLP_FW_M = 10.337;
-    const SLP_SW_F = 33.066;
-    const SLP_FW_F = 33.914;
+    const SLP_SW_M = 10.000;  // salt, metric — MultiDeco/DiveKit/ApexDeco standard
+    const SLP_FW_M = 10.330;  // fresh, metric — matches ZHL WATER_DENSITY.fresh (0.09681 bar/m)
+    const SLP_EN_M = 10.080;  // EN13319, metric — matches DiveKit EN13319
+    const SLP_SW_F = 32.808;  // salt, imperial — 10.000 × 3.28084
+    const SLP_FW_F = 33.891;  // fresh, imperial — 10.330 × 3.28084
+    const SLP_EN_F = 33.071;  // EN13319, imperial — 10.080 × 3.28084
     function getSLP(settings) {
         if (settings.metric) {
+            if (settings.waterType === 2) return SLP_EN_M;
             return settings.waterType === 0 ? SLP_SW_M : SLP_FW_M;
         }
+        if (settings.waterType === 2) return SLP_EN_F;
         return settings.waterType === 0 ? SLP_SW_F : SLP_FW_F;
     }
     function getSurfacePressure(settings) {
@@ -6401,7 +6406,7 @@ const VPMEngine = (() => {
         const time = Math.abs(endDepth - startDepth) / rate;
         if (time <= 0) return 0;
         const ppH2O = WATER_VAPOR_PRESSURE;
-        const slp = settings.metric ? SLP_SW_M : SLP_SW_F;
+        const slp = getSLP(settings);
         const surfP = getSurfacePressure(settings);
         const maxP = Math.max(getAmbientPressure(startDepth, settings), getAmbientPressure(endDepth, settings));
         if (maxP > state.maxAmbientPressure) {
@@ -6537,7 +6542,7 @@ const VPMEngine = (() => {
         }
     }
     function calcStartOfDecoZone(state, startingDepth, ascentRate, o2Frac, heFrac, settings, setpoint) {
-        const slp = settings.metric ? SLP_SW_M : SLP_SW_F;
+        const slp = getSLP(settings);
         const surfP = getSurfacePressure(settings);
         const startAmb = getAmbientPressure(startingDepth, settings);
         const fractions = getInertFractions(o2Frac, heFrac, startAmb, setpoint);
@@ -6575,7 +6580,7 @@ const VPMEngine = (() => {
         return depthStart;
     }
     function projectedAscent(state, startingDepth, ascentRate, stopDepth, stepSize, o2Frac, heFrac, settings, setpoint) {
-        const slp = settings.metric ? SLP_SW_M : SLP_SW_F;
+        const slp = getSLP(settings);
         const surfP = getSurfacePressure(settings);
         const startAmb = getAmbientPressure(startingDepth, settings);
         const fractions = getInertFractions(o2Frac, heFrac, startAmb, setpoint);
@@ -6660,7 +6665,7 @@ const VPMEngine = (() => {
     }
     function boyleLawCompensation(state, firstStopDepth, decoStopDepth, stepSize, settings) {
         const surfP = getSurfacePressure(settings);
-        const unitsFactor = settings.metric ? SLP_SW_M : SLP_SW_F;
+        const unitsFactor = getSLP(settings);
         const firstStop = Math.max(0, firstStopDepth || state.firstStopDepth || 0);
         const currentStop = Math.max(0, decoStopDepth || firstStop);
         const nextStop = Math.max(0, currentStop - (stepSize || 0));
@@ -6709,7 +6714,7 @@ const VPMEngine = (() => {
     }
     function getVPMCeiling(state, settings) {
         const surfP = getSurfacePressure(settings);
-        const slp = settings.metric ? SLP_SW_M : SLP_SW_F;
+        const slp = getSLP(settings);
         let maxCeilingP = 0;
         for (let i = 0; i < NC; i++) {
             const pN2 = state.tissues[i].pN2;

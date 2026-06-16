@@ -1258,6 +1258,72 @@ else:
     fail("VPM calculate() still starts totalOTU at 0 — repetitive OTU carry broken")
 
 # ══════════════════════════════════════════════════════════════════════════════
+# GROUP 26 — WATER PRESSURE FACTOR ALIGNMENT
+# Both engines must use the same canonical m/bar factors:
+#   salt:    10.000 m/bar (MultiDeco/DiveKit/ApexDeco standard)
+#   fresh:   10.330 m/bar (matches ZHL WATER_DENSITY.fresh 0.09681 bar/m)
+#   EN13319: 10.080 m/bar (EN13319 standard — DiveKit compatible)
+# VPM engine must recognise EN13319 as waterType===2 (not silently fall through to salt).
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 26.1 VPM SLP_SW_M = 10.000 (not old 10.078)
+if "SLP_SW_M = 10.000" in js:
+    ok("VPM SLP_SW_M = 10.000 m/bar (MultiDeco/DiveKit standard)")
+elif "SLP_SW_M = 10.078" in js:
+    fail("VPM SLP_SW_M still 10.078 — should be 10.000 to match MultiDeco/DiveKit")
+else:
+    fail("VPM SLP_SW_M not found or unexpected value")
+
+# 26.2 VPM SLP_FW_M = 10.330 (matches ZHL WATER_DENSITY.fresh)
+if "SLP_FW_M = 10.330" in js:
+    ok("VPM SLP_FW_M = 10.330 m/bar (matches ZHL fresh factor)")
+elif "SLP_FW_M = 10.337" in js:
+    fail("VPM SLP_FW_M still 10.337 — should be 10.330 to match ZHL WATER_DENSITY.fresh")
+else:
+    fail("VPM SLP_FW_M not found or unexpected value")
+
+# 26.3 VPM SLP_EN_M defined (EN13319)
+if "SLP_EN_M = 10.080" in js:
+    ok("VPM SLP_EN_M = 10.080 m/bar (EN13319 constant defined)")
+else:
+    fail("VPM SLP_EN_M not defined — EN13319 water type unsupported in VPM engine")
+
+# 26.4 getSLP handles waterType===2 (EN13319)
+if "settings.waterType === 2" in js:
+    ok("getSLP(): waterType===2 branch present (EN13319 support)")
+else:
+    fail("getSLP(): no waterType===2 branch — EN13319 silently uses salt factor in VPM")
+
+# 26.5 waterTypeVal maps EN13319 to 2
+if ("'en13319' ? 2" in js or '"en13319" ? 2' in js or
+    "=== 'en13319' ? 2" in js or '=== "en13319" ? 2' in js):
+    ok("waterTypeVal: EN13319 mapped to 2 (not silently 0/salt)")
+else:
+    fail("waterTypeVal: EN13319 not mapped to 2 — VPM engine uses wrong water factor for EN13319")
+
+# 26.6 No hardcoded salt slp in VPM functions
+if "SLP_SW_M : SLP_SW_F" in js:
+    fail("VPM inner functions still use hardcoded salt slp — water type not respected")
+else:
+    ok("VPM inner functions use getSLP(settings) not hardcoded salt factor")
+
+# 26.7 ZHL WATER_DENSITY.salt = 0.10000
+if "salt:     0.10000" in js or "salt: 0.10000" in js:
+    ok("ZHL WATER_DENSITY.salt = 0.10000 bar/m (10.000 m/bar — industry standard)")
+elif "salt:     0.10020" in js or "salt: 0.10020" in js:
+    fail("ZHL WATER_DENSITY.salt still 0.10020 — should be 0.10000 (MultiDeco/DiveKit)")
+else:
+    fail("ZHL WATER_DENSITY.salt not found or unexpected value")
+
+# 26.8 ZHL WATER_DENSITY.en13319 = 0.09921
+if "en13319:  0.09921" in js or "en13319: 0.09921" in js:
+    ok("ZHL WATER_DENSITY.en13319 = 0.09921 bar/m (10.080 m/bar — EN13319 standard)")
+elif "en13319:  0.09964" in js or "en13319: 0.09964" in js:
+    fail("ZHL WATER_DENSITY.en13319 still 0.09964 — should be 0.09921 (10.080 m/bar)")
+else:
+    fail("ZHL WATER_DENSITY.en13319 not found or unexpected value")
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PRINT RESULTS
 # ══════════════════════════════════════════════════════════════════════════════
 
