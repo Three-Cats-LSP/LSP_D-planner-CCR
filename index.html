@@ -2143,7 +2143,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 </div>
 <div id="decoSummary"></div>
-<div style="overflow-x:auto;width:100%;"><table class="deco-table">
+<div style="overflow-x:auto;max-width:100%;"><table class="deco-table">
 <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Mix</th><th>Run</th><th>TTS</th><th>PPO2</th><th class="end-col">END</th><th>EAD</th><th>CNS%</th></tr></thead>
 <tbody id="decoTableBody"></tbody>
 </table></div>
@@ -2196,7 +2196,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 <!-- Calculate Button -->
 <button onclick="calcContingency()" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,71,87,0.12),rgba(255,100,50,0.16))'" onmouseover="this.style.background='rgba(255,71,87,0.22)'" style="width:100%;padding:11px;background:linear-gradient(135deg,rgba(255,71,87,0.12),rgba(255,100,50,0.16));color:var(--red);border:1px solid var(--red);border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;transition:all 0.2s;">Calculate Emergency Plan</button>
-<div id="contingencyResult" style="display:none;overflow-x:auto;width:100%;"></div>
+<div id="contingencyResult" style="display:none;overflow-x:auto;max-width:100%;"></div>
 <div id="emergencyGasConsumption" style="display:none;"></div>
 </div><!-- /card-collapsible-body contingency -->
 </div>
@@ -3204,7 +3204,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.10.37';
+const APP_VERSION = '2.10.38';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
