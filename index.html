@@ -3202,7 +3202,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.10.39';
+const APP_VERSION = '2.10.40';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -4414,7 +4414,7 @@ function planInfoTipIconHtml() {
 function buildPlanInfoRowHtml(o) {
   const decoColor = o.hasDeco ? 'var(--orange)' : 'var(--green)';
   return `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
-    <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
+    <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:normal;">
       ${planInfoTipIconHtml()}
       <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:12px;">${o.runTime}</span>
       <span style="color:var(--muted);">TTS:</span> <span style="color:var(--text);font-weight:700;margin-right:12px;">${o.tts}</span>
