@@ -906,22 +906,40 @@ body.light-theme .asc-color { color: #1a9e55 !important; }
 
 /* Gas switch row — subtle inline separator, blends with table */
 .deco-table tr[data-phase="switch"] td {
-  padding: 4px 8px !important;
   border-top: 1px solid var(--border-hi) !important;
   border-bottom: 1px solid var(--border-hi) !important;
-  background: rgba(0,200,255,0.04) !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  letter-spacing: 1.5px !important;
+  background: rgba(255,215,0,0.05) !important;
+  color: var(--muted) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+/* Phase icon cell */
+.deco-table tr[data-phase="switch"] td:first-child {
   color: #FFD700 !important;
-  text-transform: uppercase !important;
-  text-align: left !important;
+  font-size: 15px !important;
+  text-align: center !important;
+}
+/* Depth cell — gas name + depth */
+.deco-table tr[data-phase="switch"] td:nth-child(2) {
+  color: #FFD700 !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+  text-align: right !important;
+}
+/* PPO2 cell */
+.deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
+  color: #FFD700 !important;
+  font-weight: 600 !important;
+  text-align: right !important;
 }
 body.light-theme .deco-table tr[data-phase="switch"] td {
-  background: rgba(0,150,200,0.06) !important;
+  background: rgba(180,140,0,0.06) !important;
+}
+body.light-theme .deco-table tr[data-phase="switch"] td:first-child,
+body.light-theme .deco-table tr[data-phase="switch"] td:nth-child(2),
+body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   color: #b38a00 !important;
-  border-top: 1px solid rgba(0,150,200,0.25) !important;
-  border-bottom: 1px solid rgba(0,150,200,0.25) !important;
 }
 
 .deco-table tr:hover td { background:rgba(0,200,255,0.04); }
@@ -942,12 +960,15 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
  background:var(--card);
  }
 
- /* Gas switch row — keep as full-width banner */
- .deco-table:not(.table-view) tr td[colspan] { border-radius:8px;
- padding:10px 12px;
- font-size:11px;
- text-align:left !important;
- }
+ /* Gas switch row — display as a compact flex row, not stacked cards */
+ .deco-table:not(.table-view) tr[data-phase="switch"] { display:flex !important; align-items:center; gap:0; padding:6px 10px; border-radius:6px; }
+ .deco-table:not(.table-view) tr[data-phase="switch"] td { display:inline !important; width:auto !important; padding:0 !important; border:none !important; background:transparent !important; }
+ .deco-table:not(.table-view) tr[data-phase="switch"] td:first-child { width:auto !important; flex:none !important; padding-right:6px !important; }
+ .deco-table:not(.table-view) tr[data-phase="switch"] td:nth-child(2) { flex:1 !important; }
+ /* Hide empty cells in switch row on mobile */
+ .deco-table:not(.table-view) tr[data-phase="switch"] td:nth-child(n+3):not([data-label="PPO2"]) { display:none !important; }
+ .deco-table:not(.table-view) tr[data-phase="switch"] td[data-label="PPO2"]::before { content:"ppO₂ "; color:var(--muted); font-weight:400; }
+ .deco-table:not(.table-view) tr[data-phase="switch"] td[data-label="PPO2"] { margin-left:auto; }
 
  /* First cell = icon header bar */
  .deco-table:not(.table-view) td:first-child { width:100% !important;
@@ -3182,7 +3203,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
   }
 })();
 
-const APP_VERSION = '2.10.18';
+const APP_VERSION = '2.10.19';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5849,7 +5870,14 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const switchPAmb = surfP + switchDepth * BAR_PER_METRE;
       const switchPpO2 = (o2pct / 100 * switchPAmb).toFixed(2);
       html += `<tr data-phase="switch">
-        <td colspan="20">⇄ ${gasDisp} @ ${switchDepth}${du} &nbsp;·&nbsp; ppO₂ ${switchPpO2}</td>
+        <td style="text-align:center;">⇄</td>
+        <td data-label="Depth">${gasDisp} @ ${switchDepth}${du}</td>
+        <td data-label="Stop"></td>
+        <td data-label="Run"></td>
+        <td data-label="Mix"></td>
+        <td data-label="EAD"></td>
+        <td data-label="PPO2">${switchPpO2}</td>
+        <td data-label="CNS%"></td>
       </tr>`;
       prevGas = segGas;
     }
@@ -8941,7 +8969,14 @@ function runDecoSchedule() {
       const switchLimit = getPPO2Limit(_swFO2);
       const sppColor    = sppVal > switchLimit ? 'color:var(--red);font-weight:700;' : sppVal > switchLimit * 0.97 ? 'color:var(--orange);font-weight:700;' : '';
       tbody.innerHTML += `<tr data-phase="switch">
-        <td colspan="20">⇄ ${s.gas.replace(/\s+/g,'').toUpperCase()} @ ${switchDepthDisp} &nbsp;·&nbsp; ppO₂ ${switchPpO2}</td>
+        <td style="text-align:center;">⇄</td>
+        <td data-label="Depth">${s.gas.replace(/\s+/g,'').toUpperCase()} @ ${switchDepthDisp}</td>
+        <td data-label="Stop"></td>
+        <td data-label="Run"></td>
+        <td data-label="Mix"></td>
+        <td data-label="EAD"></td>
+        <td data-label="PPO2" style="${sppColor}">${switchPpO2}</td>
+        <td data-label="CNS%"></td>
       </tr>`;
     }
     prevGas = s.gas;
