@@ -939,7 +939,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td {
 body.light-theme .deco-table tr[data-phase="switch"] td:first-child,
 body.light-theme .deco-table tr[data-phase="switch"] td:nth-child(2),
 body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
-  color: #cc9900 !important;
+  color: #FFBF00 !important;
 }
 
 .deco-table tr:hover td { background:rgba(0,200,255,0.04); }
@@ -2158,7 +2158,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
 <span style="font-size:16px;color:#80e0a0;">↑</span> Ascent
         </div>
 <div class="u17">
-<span style="font-size:15px;">🔴</span> Deco Stop
+<span style="font-size:15px;">🔴</span> First Deco
         </div>
 <div class="u17">
 <span style="font-size:15px;">🟢</span> Safety Stop
@@ -3203,7 +3203,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   }
 })();
 
-const APP_VERSION = '2.10.21';
+const APP_VERSION = '2.10.22';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -14613,7 +14613,7 @@ function attachDiveProfileInteraction(canvasId) {
     const dDisp = units === 'imperial' ? Math.round(depth * 3.28084) : Math.round(depth * 10) / 10;
 
     // Build tooltip
-    const phaseLabel = { descent:'Descent', bottom:'Bottom', ascent:'Ascent', deco:'Deco Stop', safety:'Safety Stop', surface:'Surface' };
+    const phaseLabel = { descent:'Descent', bottom:'Bottom', ascent:'Ascent', deco:'First Deco', safety:'Safety Stop', surface:'Surface' };
     let html = `<div style="color:var(--accent);font-size:10px;letter-spacing:1px;margin-bottom:4px;">${phaseLabel[phase] || phase || ''}</div>`;
     html += `<div>⏱ ${Math.round(t * 10) / 10} min</div>`;
     html += `<div>⬇ ${dDisp} ${du}</div>`;
@@ -15075,7 +15075,7 @@ async function exportPDF(opts) {
     [decoTimeVal,'Deco Time'],[totalRTVal,'Run Time'],[ttsVal,'TTS'],[gfStr,isVPM?algo:'GF Low/High'],
     [`${document.getElementById('lastDecoStop')?.value||'—'} ${du}`,'Last Stop'],
     [`${document.getElementById('decoStep')?.value||'—'} ${du}`,'Step Size'],
-    [cnsVal,'CNS%'],[otuVal,'OTU'],[prtVal,'PrT'],[decoStopVal,'Deco Stop'],[decoZoneVal,'Decozone'],
+    [cnsVal,'CNS%'],[otuVal,'OTU'],[prtVal,'PrT'],[decoStopVal,'First Deco'],[decoZoneVal,'Decozone'],
     [_pdfEndStr,'END Narcotic']
   ];
   const sw=CW/6, sh=10;
