@@ -909,6 +909,7 @@ body.light-theme .asc-color { color: #1a9e55 !important; }
   color: var(--muted) !important;
   font-size: 11px !important;
   font-weight: 400 !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 /* Phase icon cell */
 .deco-table tr[data-phase="switch"] td:first-child {
@@ -936,6 +937,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td:nth-child(2),
 body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   color: #FFBF00 !important;
 }
+body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 
 .deco-table tr:hover td { background:rgba(0,200,255,0.04); }
 .deco-table .deco-row td { color:var(--red); font-weight:600; }
@@ -1051,6 +1053,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
  body.light-theme .deco-table tr.gas-tight-row td:first-child { background:#FF4433 !important; color:#000 !important; }
  body.light-theme .deco-table tr.gas-tight-row td span,
  body.light-theme .deco-table tr.gas-tight-row td * { color:#000 !important; }
+ .deco-table.table-view tr[data-phase="switch"] td { border-bottom: 1px solid var(--border) !important; }
 }
 
 /* ── LSP SLIDER ── */
@@ -2159,7 +2162,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
 <span style="font-size:15px;">🟢</span> Safety Stop
         </div>
 <div class="u17">
-<span style="font-size:15px;color:#FFD700;">⇄</span> Gas Switch
+<span class="switch-legend-icon" style="font-size:15px;color:#FFD700;">⇄</span> Gas Switch
         </div>
 </div>
 <!-- Alerts — populated by both Bühlmann and VPM renderers -->
@@ -3198,7 +3201,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   }
 })();
 
-const APP_VERSION = '2.10.24';
+const APP_VERSION = '2.10.25';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
