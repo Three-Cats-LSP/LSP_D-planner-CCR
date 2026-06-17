@@ -4,6 +4,21 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.10.44 — 2026-06-18
+
+### Fixed
+- **Headless test mode silently changed computed RT/TTS, not just rendering** — found via a from-scratch 16-compartment tissue diff against ApexDeco (a separate, real open-source ZHL-16C+GF engine) on a plain air dive (S2: 45m/22min). Tissue states matched ApexDeco's almost exactly at every stop (noise-level differences, <0.13 bar across all 16 compartments), ruling out the deco math itself — but the first deco stop's reported duration was consistently ~0.5-0.7 min longer than it should be.
+  - Root cause: `holdStep` (the while-loop's ceiling-check granularity used to determine how long to hold at each stop) was forced to a coarse 1-minute resolution in headless mode, even for the first stop — which the real (non-headless) app deliberately gives a fine 1/6-minute (10-second) resolution, since the first stop's duration is meant to be fractional (matching ApexDeco/MultiDeco's "RT-snap" convention), not floored to a whole minute.
+  - This was the **only** `_zhlHeadless` branch in the file that changes a computed result rather than skipping DOM rendering — every other usage of the flag just skips a render call, so this one slipped through as if it were purely a speed optimization (6x fewer loop iterations) when it was actually also silently producing different RT/TTS numbers in headless tests (and in every prior session's headless verification scripts) than the live app would show for identical inputs.
+  - Fixed: `holdStep` now always uses fine resolution for the first stop regardless of headless mode; non-first stops keep the coarser 1-minute resolution (which already matched the real app's own behavior, so no change there). Performance impact is negligible — only one stop per dive uses the finer loop.
+  - This explains roughly 10-15% of the previously-unexplained RT/TTS gap on plain air/nitrox baseline scenarios (S2, S7, FS2) — most of the remaining gap on those and the trimix/Extended-Stops scenarios is still open, now narrowed down to small per-stop floor-rounding accumulation rather than any tissue-tracking or formula discrepancy (confirmed via the same tissue-diff method).
+
+### Changed
+- **Audit** — Added GROUP 33 (1 check): headless mode no longer forces coarse first-stop resolution. Total: 192 checks, 0 failures.
+- **`APP_VERSION`** — bumped to `2.10.44`.
+
+---
+
 ## v2.10.13 — 2026-06-18
 
 ### Fixed

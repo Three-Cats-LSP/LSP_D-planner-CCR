@@ -3203,7 +3203,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.10.43';
+const APP_VERSION = '2.10.44';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -8453,11 +8453,21 @@ function runDecoSchedule() {
     const gfForClear = gfAt((nextStop < lastStop) ? 0 : nextStop);
 
     const isFirstDecoStop = (firstDecoDepth === null);
-    // Step resolution: first deco stop uses fine (10-sec) resolution.
-    // Subsequent stops: use 1-min steps for ceiling resolution (MultiDeco behaviour),
-    // regardless of minStopT. This ensures stops don't under-count.
-    // In headless test mode use 1-min steps (6x faster); real renders use 10-sec for precision
-    const holdStep = (window._zhlHeadless) ? 1 : (isFirstDecoStop ? 1/6 : 1);
+    // Step resolution: first deco stop uses fine (10-sec) resolution, matching
+    // ApexDeco/MultiDeco's fractional first-stop snap. Subsequent stops use
+    // 1-min steps for ceiling resolution (MultiDeco behaviour), regardless of
+    // minStopT, ensuring stops don't under-count.
+    // BUGFIX (v2.10.44): headless mode previously forced holdStep=1 even for
+    // the first stop (a test-speed shortcut), which coarsened the while-loop's
+    // own resolution and inflated the first-stop time relative to what the
+    // real app and headless test harnesses both expect — this is the only
+    // _zhlHeadless branch in the file that changes a computed RESULT rather
+    // than skipping DOM rendering, so it was silently producing different
+    // RT/TTS numbers in headless tests than the real app would for the same
+    // inputs. Subsequent (non-first) stops still use the coarser 1-min step
+    // in headless mode for speed, since that resolution already matches the
+    // real app's own non-first-stop behavior.
+    const holdStep = isFirstDecoStop ? 1/6 : 1;
 
     const ceil     = ceiling(tissues, gfForClear);
     const mustStop = ceil > ceilTarget;

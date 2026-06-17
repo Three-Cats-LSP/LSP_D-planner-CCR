@@ -1546,6 +1546,30 @@ if re.search(r"type: 'ascent', from: cur, to: 0,", js):
 else:
     fail("Final ascent: step not pushed — RT/TTS may update but plan/exports won't show the leg")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 33 — HEADLESS holdStep RESULT-CHANGING BUG (post-v2.10.43)
+# Found via a from-scratch 16-compartment tissue diff against ApexDeco on S2:
+# tissue states matched almost exactly at every stop (noise-level diffs), but
+# the FIRST stop's reported duration differed by ~0.5-0.7min between headless
+# test runs and what the real app / ApexDeco would produce for identical input.
+# Root cause: holdStep (the while-loop's ceiling-check granularity) was forced
+# to a coarse 1 minute in headless mode even for the first stop, which the real
+# app deliberately gives a fine 1/6-min (10-sec) resolution. This is the ONLY
+# _zhlHeadless branch in the file that changes a computed RESULT rather than
+# skipping DOM rendering — every other _zhlHeadless check just skips a render
+# call, so this one silently meant headless test numbers (used by this audit's
+# sibling test suites AND by Claude's own headless verification scripts) did
+# not match what the live app would actually show for the same inputs.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 33.1 holdStep no longer forces coarse resolution for the first stop in headless mode
+if re.search(r'const holdStep = isFirstDecoStop \? 1/6 : 1;', js):
+    ok("holdStep: first-stop fine resolution (1/6 min) applies regardless of headless mode")
+elif re.search(r'const holdStep = \(window\._zhlHeadless\) \? 1 :', js):
+    fail("holdStep: REGRESSION — headless mode still forces coarse 1-min resolution on the first stop, producing different RT/TTS than the real app for identical inputs")
+else:
+    fail("holdStep: assignment not found or changed structure — verify manually")
+
 
 print(f"\nLSP D-Planner Audit — {path}")
 print("=" * 60)
