@@ -3179,7 +3179,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td { color: #007A33 !import
   }
 })();
 
-const APP_VERSION = '2.10.10';
+const APP_VERSION = '2.10.11';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -9065,14 +9065,14 @@ const ZHLEngine = (() => {
     const fO2bot = level.o2 / 100;
     const fHeBot = (level.he || 0) / 100;
     const fN2bot = Math.max(0, 1 - fO2bot - fHeBot);
-    // Set custom trimix mix
+    // Set bottom gas — must use 'trimix' mode when He > 0 so getBottomGasFractions() reads He correctly
     const decoGasEl = document.getElementById('decoGas');
     let prevDecoGasVal = decoGasEl ? decoGasEl.value : 'air';
     if (decoGasEl) {
       if (fHeBot > 0) {
-        decoGasEl.value = 'custom';
-        setEl('decoCustomO2', Math.round(fO2bot * 100));
-        setEl('decoCustomHe', Math.round(fHeBot * 100));
+        decoGasEl.value = 'trimix';  // BUGFIX: was 'custom' — custom branch in getBottomGasFractions() sets fHe:0
+        setEl('botTrimixO2', Math.round(fO2bot * 100));
+        setEl('botTrimixHe', Math.round(fHeBot * 100));
       } else if (Math.round(fO2bot * 100) === 21) {
         decoGasEl.value = 'air';
       } else if (Math.round(fO2bot * 100) === 32) {
@@ -9080,26 +9080,76 @@ const ZHLEngine = (() => {
       } else {
         decoGasEl.value = 'custom';
         setEl('decoCustomO2', Math.round(fO2bot * 100));
-        setEl('decoCustomHe', 0);
       }
     }
 
     // ── Deco gases ──────────────────────────────────────────────────────────
-    // Clear all deco gas slots then set from gases array
+    // Collect current card indices (pre-built slots 1 and 2, plus any dynamic ones)
+    // and record their current state for restore.
     const prevDGVals = [];
-    for (let n = 1; n <= 3; n++) {
-      const mixEl = document.getElementById(`dg${n}Mix`);
-      if (mixEl) { prevDGVals.push({ id: `dg${n}Mix`, val: mixEl.value }); mixEl.value = 'none'; }
+    const _prevDGCards = [];
+    {
+      const container = document.getElementById('decoGasCards');
+      if (container) {
+        container.querySelectorAll('.deco-gas-card').forEach(card => {
+          const idMatch = card.id.match(/dgCard_(\d+)/);
+          if (idMatch) _prevDGCards.push(parseInt(idMatch[1]));
+        });
+      } else {
+        // fallback: pre-built slots 1 and 2
+        _prevDGCards.push(1, 2);
+      }
     }
+    // Save and clear all current slots
+    _prevDGCards.forEach(idx => {
+      const mixEl = document.getElementById(`dg${idx}Mix`);
+      if (mixEl) {
+        prevDGVals.push({ id: `dg${idx}Mix`, val: mixEl.value });
+        prevDGVals.push({ id: `dg${idx}CustomO2`, val: document.getElementById(`dg${idx}CustomO2`)?.value });
+        prevDGVals.push({ id: `dg${idx}TrimixO2`, val: document.getElementById(`dg${idx}TrimixO2`)?.value });
+        prevDGVals.push({ id: `dg${idx}TrimixHe`, val: document.getElementById(`dg${idx}TrimixHe`)?.value });
+        mixEl.value = 'none';
+      }
+    });
+    // Track any dynamic cards we add so we can remove them on restore
+    const _addedDGIdxs = [];
     (decoGases || []).forEach((g, i) => {
       const n = i + 1;
-      const mixEl = document.getElementById(`dg${n}Mix`);
+      // Resolve the card idx for position n (pre-built cards 1&2 have idx==n; dynamic cards use _dgNextIdx)
+      let cardIdx;
+      const existingMix = document.getElementById(`dg${n}Mix`);
+      if (existingMix) {
+        cardIdx = n;  // pre-built card — slot index matches card number
+      } else {
+        // Add a dynamic card for this extra gas
+        if (typeof addDecoGasCard === 'function') {
+          addDecoGasCard();
+          cardIdx = _dgNextIdx - 1;  // addDecoGasCard increments _dgNextIdx before returning
+          _addedDGIdxs.push(cardIdx);
+        } else {
+          return;  // can't add more slots
+        }
+      }
+      const mixEl = document.getElementById(`dg${cardIdx}Mix`);
       if (!mixEl) return;
       const o2pct = g.o2;
-      if (o2pct === 100) { mixEl.value = 'o2'; }
-      else if (o2pct === 50) { mixEl.value = 'ean50'; }
-      else if (o2pct === 80) { mixEl.value = 'ean80'; }
-      else { mixEl.value = 'custom'; setEl(`dg${n}CustomO2`, o2pct); setEl(`dg${n}CustomHe`, g.he || 0); }
+      const hePct = g.he || 0;
+      if (o2pct === 100) {
+        mixEl.value = 'o2';
+      } else if (o2pct === 50 && hePct === 0) {
+        mixEl.value = 'ean50';
+      } else if (o2pct === 80 && hePct === 0) {
+        mixEl.value = 'ean80';
+      } else if (hePct > 0) {
+        // BUGFIX: trimix deco gas — must use 'trimix' mode, NOT 'custom'.
+        // 'custom' branch in getDecoGasFractions() sets fHe:0 unconditionally.
+        mixEl.value = 'trimix';
+        setEl(`dg${cardIdx}TrimixO2`, o2pct);
+        setEl(`dg${cardIdx}TrimixHe`, hePct);
+      } else {
+        mixEl.value = 'custom';
+        setEl(`dg${cardIdx}CustomO2`, o2pct);
+      }
     });
 
     // ── Run the Bühlmann engine (headless — skip DOM rendering) ─────────────
@@ -9165,7 +9215,10 @@ const ZHLEngine = (() => {
     if (algoEl) algoEl.value = prevAlgo;
     // Don't fire change event on restore — avoids unnecessary UI repaint after each test call.
     if (decoGasEl) decoGasEl.value = prevDecoGasVal;
-    prevDGVals.forEach(({ id, val }) => { const el = document.getElementById(id); if (el) el.value = val; });
+    prevDGVals.forEach(({ id, val }) => { const el = document.getElementById(id); if (el && val != null) el.value = val; });
+    // Remove any dynamic deco gas cards we added for this headless call
+    _addedDGIdxs.forEach(idx => { const card = document.getElementById(`dgCard_${idx}`); if (card) card.remove(); });
+    if (_addedDGIdxs.length > 0 && typeof renumberDecoGasCards === 'function') renumberDecoGasCards();
 
     if (!lp) return { error: 'No plan generated', stops: [], plan: [], totalRuntime: 0 };
 
