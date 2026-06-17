@@ -888,11 +888,11 @@ body.light-theme .ok { background:#f0fff4; border-color:#116622; color:#116622; 
 .bmt-ref-row:last-child td { border-bottom:none; }
 .bmt-ref-row.bmt-ref-highlight { background:rgba(255,255,255,0.04); }
 .bmt-ref-row.bmt-ref-highlight td:first-child { border-left:2px solid var(--accent); padding-left:4px; }
-/* Right-align numeric columns: Depth(2), Stop(3), Run(4), TTS(5), EAD(7), END(8), PPO2(9), CNS%(10) */
+/* Right-align numeric columns: Depth(2), Stop(3), Run(5), TTS(6), PPO2(7), END(8), EAD(9), CNS%(10) */
 .deco-table th:nth-child(2), .deco-table td:nth-child(2),
 .deco-table th:nth-child(3), .deco-table td:nth-child(3),
-.deco-table th:nth-child(4), .deco-table td:nth-child(4),
 .deco-table th:nth-child(5), .deco-table td:nth-child(5),
+.deco-table th:nth-child(6), .deco-table td:nth-child(6),
 .deco-table th:nth-child(7), .deco-table td:nth-child(7),
 .deco-table th:nth-child(8), .deco-table td:nth-child(8),
 .deco-table th:nth-child(9), .deco-table td:nth-child(9),
@@ -2143,7 +2143,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
 </div>
 <div id="decoSummary"></div>
 <table class="deco-table">
-<thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>TTS</th><th>Mix</th><th>EAD</th><th class="end-col">END</th><th>PPO2</th><th>CNS%</th></tr></thead>
+<thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Mix</th><th>Run</th><th>TTS</th><th>PPO2</th><th class="end-col">END</th><th>EAD</th><th>CNS%</th></tr></thead>
 <tbody id="decoTableBody"></tbody>
 </table>
 <!-- Icon legend -->
@@ -3203,7 +3203,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   }
 })();
 
-const APP_VERSION = '2.10.20';
+const APP_VERSION = '2.10.21';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3445,10 +3445,10 @@ function injectEndCells() {
     const ph = tr.dataset.phase;
     if (ph === 'switch' || ph === 'totals') return; // these use colspan, no END cell
     const tds = tr.querySelectorAll('td');
-    if (tds.length < 8) return;
-    const eadCell = tds[6]; // EAD column (after TTS + Mix)
+    if (tds.length < 9) return;
+    const ppo2Cell = tds[6]; // PPO2 column — END inserted after it
     const depthM = endParseDepthM(tds[1]?.textContent || '');
-    const frac   = endParseFrac(tds[5]?.textContent || '');
+    const frac   = endParseFrac(tds[3]?.textContent || '');  // Mix is now col 4 (index 3)
     let disp = '—';
     if (depthM != null && frac) {
       const endM = calcEND(depthM, frac.fN2, frac.fHe);
@@ -3460,7 +3460,7 @@ function injectEndCells() {
     cell.style.color = 'var(--muted)';
     cell.style.fontSize = '11px';
     cell.textContent = disp;
-    eadCell.insertAdjacentElement('afterend', cell);
+    ppo2Cell.insertAdjacentElement('afterend', cell);
   });
 }
 
@@ -4443,7 +4443,7 @@ function injectTtsCells(tbodyId, rtAtBottomEnd) {
   tbody.querySelectorAll('tr[data-phase]').forEach(tr => {
     const ph = tr.dataset.phase;
     if (ph === 'totals' || ph === 'switch') return;
-    const runVal = parseRunMinutes(tr.querySelectorAll('td')[3]?.textContent);
+    const runVal = parseRunMinutes(tr.querySelectorAll('td')[4]?.textContent);  // Run is col 4 (icon|Depth|Stop|Mix|Run)
     if (runVal > finalRun) finalRun = runVal;
   });
   tbody.querySelectorAll('tr[data-phase]').forEach(tr => {
@@ -4452,12 +4452,12 @@ function injectTtsCells(tbodyId, rtAtBottomEnd) {
     const tds = tr.querySelectorAll('td');
     if (tds.length < 4) return;
     tr.querySelector('td[data-label="TTS"]')?.remove();
-    const runVal = parseRunMinutes(tds[3]?.textContent);
+    const runVal = parseRunMinutes(tds[4]?.textContent);
     const cell = document.createElement('td');
     cell.setAttribute('data-label', 'TTS');
     cell.style.cssText = 'color:var(--muted);font-size:11px;text-align:right;';
     cell.textContent = fmtRowTTS(runVal, rtAtBottomEnd, finalRun);
-    tds[3].insertAdjacentElement('afterend', cell);
+    tds[4].insertAdjacentElement('afterend', cell);
   });
 }
 
@@ -5873,12 +5873,12 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td style="text-align:center;">⇄</td>
         <td data-label="Depth">${gasDisp} @ ${switchDepth}${du}</td>
         <td data-label="Stop"></td>
+        <td data-label="Mix"></td>
         <td data-label="Run"></td>
         <td data-label="TTS"></td>
-        <td data-label="Mix"></td>
-        <td data-label="EAD"></td>
-        <td data-label="END" class="end-col"></td>
         <td data-label="PPO2">${switchPpO2}</td>
+        <td data-label="END" class="end-col"></td>
+        <td data-label="EAD"></td>
         <td data-label="CNS%"></td>
       </tr>`;
       prevGas = segGas;
@@ -5890,10 +5890,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td><span style="font-size:18px;color:var(--red);">↓</span></td>
         <td data-label="Depth">0 → ${dU ? seg.endDepth : Math.round(seg.endDepth * 3.28084)}${du}</td>
         <td data-label="Stop"></td>
-        <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
-        <td data-label="EAD" style="color:var(--muted);">—</td>
+        <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="PPO2" style="color:var(--muted);">${(o2pct / 100 * (surfP + seg.endDepth * BAR_PER_METRE)).toFixed(2)}</td>
+        <td data-label="EAD" style="color:var(--muted);">—</td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
       prevGas = segGas;
@@ -5906,10 +5906,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td><span style="color:var(--accent);font-size:13px;">🔵</span></td>
         <td data-label="Depth" style="color:var(--accent);">${dU ? seg.depth : Math.round(seg.depth * 3.28084)}${du}</td>
         <td data-label="Stop" style="color:var(--accent);">${fmtT(seg.time)}</td>
-        <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
-        <td data-label="EAD" style="color:var(--muted);">—</td>
+        <td data-label="Run" style="color:var(--accent);">${rtDisp}</td>
         <td data-label="PPO2" style="color:var(--muted);">${ppO2b}</td>
+        <td data-label="EAD" style="color:var(--muted);">—</td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
     } else if (seg.type === 'ascent') {
@@ -5922,10 +5922,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td><span class="asc-color" style="font-size:18px;">↑</span></td>
         <td data-label="Depth" class="asc-color">${fromD}→${toD}${du}</td>
         <td data-label="Stop" class="asc-color" style="font-size:11px;color:var(--muted);">${fmtT(seg.time)}</td>
-        <td data-label="Run" class="asc-color">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
-        <td data-label="EAD" style="color:var(--muted);"></td>
+        <td data-label="Run" class="asc-color">${rtDisp}</td>
         <td data-label="PPO2" style="color:var(--muted);">${ppO2a}</td>
+        <td data-label="EAD" style="color:var(--muted);"></td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
     } else if (seg.type === 'stop') {
@@ -5944,10 +5944,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         <td><span style="color:${rowBgVPM?'#b30000':'var(--red)'};font-size:13px;">🔴</span></td>
         <td data-label="Depth" style="color:${rowBgVPM?'#b30000':'var(--red)'};font-weight:600;">${dU ? seg.depth : Math.round(seg.depth * 3.28084)}${du}</td>
         <td data-label="Stop" style="color:${rowBgVPM?'#b30000':'var(--red)'};font-weight:600;">${fmtT(seg.time)}</td>
-        <td data-label="Run" style="color:var(--text);">${rtDisp}</td>
         <td data-label="Mix" style="color:${gc};">${gasDisp}</td>
-        <td data-label="EAD" style="color:var(--muted);">—</td>
+        <td data-label="Run" style="color:var(--text);">${rtDisp}</td>
         <td data-label="PPO2" style="${rowBgVPM?'color:#b30000;font-weight:700;':ppO2Color}">${ppO2s}</td>
+        <td data-label="EAD" style="color:var(--muted);">—</td>
         <td data-label="CNS%" style="color:var(--muted);">—</td>
       </tr>`;
     }
@@ -6013,7 +6013,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const ph = tr.dataset.phase;
     if (ph === 'switch' || ph === 'totals') return;
     const tds = tr.querySelectorAll('td');
-    const mixRaw = tds[5]?.textContent?.trim() || '';
+    const mixRaw = tds[3]?.textContent?.trim() || '';
     const stopRaw = tds[2]?.textContent?.trim() || '';
     const depthRaw = tds[1]?.textContent?.trim() || '';
     const depthM2 = parseFloat(depthRaw) || 0;
@@ -8880,10 +8880,10 @@ function runDecoSchedule() {
       <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
       <td data-label="Depth" style="color:#ff8080;">0→${travelSwitchDisp}</td>
       <td data-label="Stop" style="color:#ff8080;"></td>
-      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="Mix"><span style="color:#ff9900;font-weight:700;">${travelInfoRow.label}</span></td>
-      <td data-label="EAD" style="color:var(--muted);"></td>
+      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="PPO2" style="color:var(--muted);">${travelPPO2}</td>
+      <td data-label="EAD" style="color:var(--muted);"></td>
       <td data-label="CNS%" style="color:var(--muted);">${rowCNS(parseFloat(travelPPO2), travelDescentTimeMin)}</td>
     </tr>`;
 
@@ -8899,10 +8899,10 @@ function runDecoSchedule() {
       <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
       <td data-label="Depth" style="color:#ff8080;">${travelSwitchDisp}→${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
       <td data-label="Stop" style="color:#ff8080;"></td>
-      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
-      <td data-label="EAD" style="color:var(--muted);"></td>
+      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
+      <td data-label="EAD" style="color:var(--muted);"></td>
       <td data-label="CNS%" style="color:var(--muted);">${rowCNS(parseFloat(descentPPO2), bottomDescentTimeMin)}</td>
     </tr>`;
   } else {
@@ -8916,10 +8916,10 @@ function runDecoSchedule() {
       <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
       <td data-label="Depth" style="color:#ff8080;">0→${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
       <td data-label="Stop" style="color:#ff8080;"></td>
-      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
-      <td data-label="EAD" style="color:var(--muted);"></td>
+      <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
+      <td data-label="EAD" style="color:var(--muted);"></td>
       <td data-label="CNS%" style="color:var(--muted);">${rowCNS(parseFloat(descentPPO2), descentTimeMin)}</td>
     </tr>`;
   }
@@ -8936,10 +8936,10 @@ function runDecoSchedule() {
     <td>🔵</td>
     <td data-label="Depth" style="color:var(--accent);">${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
     <td data-label="Stop" style="color:var(--accent);">${fmtMM(btAtDepthMin)}</td>
-    <td data-label="Run" style="color:var(--accent);">${fmtMM(rowRT)}</td>
     <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
-    <td data-label="EAD" style="color:var(--muted);"></td>
+    <td data-label="Run" style="color:var(--accent);">${fmtMM(rowRT)}</td>
     <td data-label="PPO2" style="color:var(--muted);">${btPPO2}</td>
+    <td data-label="EAD" style="color:var(--muted);"></td>
     <td data-label="CNS%" style="color:var(--muted);">${btCNS}</td>
   </tr>`;
 
@@ -8974,12 +8974,12 @@ function runDecoSchedule() {
         <td style="text-align:center;">⇄</td>
         <td data-label="Depth">${s.gas.replace(/\s+/g,'').toUpperCase()} @ ${switchDepthDisp}</td>
         <td data-label="Stop"></td>
+        <td data-label="Mix"></td>
         <td data-label="Run"></td>
         <td data-label="TTS"></td>
-        <td data-label="Mix"></td>
-        <td data-label="EAD"></td>
-        <td data-label="END" class="end-col"></td>
         <td data-label="PPO2" style="${sppColor}">${switchPpO2}</td>
+        <td data-label="END" class="end-col"></td>
+        <td data-label="EAD"></td>
         <td data-label="CNS%"></td>
       </tr>`;
     }
@@ -9008,10 +9008,10 @@ function runDecoSchedule() {
         <td>🔴</td>
         <td data-label="Depth">${dU?s.depth+'m':mToFt(s.depth)+'ft'}</td>
         <td data-label="Stop" style="color:${rowBg?'#b30000':'var(--red)'};">${fmtMM(stepDur)}</td>
+        <td data-label="Mix" style="color:${rowBg?'#b30000':'var(--red)'}">${s.gas.toUpperCase()}</td>
         <td data-label="Run">${rtDisp}</td>
-        <td data-label="Mix" style="color:${rowBg?'#b30000':'var(--red)'};">${s.gas.toUpperCase()}</td>
-        <td data-label="EAD" style="color:${rowBg?'#555':'var(--muted)'};font-size:11px;">${eadDisp}</td>
         <td data-label="PPO2" style="${rowBg?'color:#b30000;font-weight:700;':pO2Color}">${pO2Val.toFixed(2)}</td>
+        <td data-label="EAD" style="color:${rowBg?'#555':'var(--muted)'};font-size:11px;">${eadDisp}</td>
         <td data-label="CNS%" style="${rowBg?'color:#b30000;font-weight:700;':cnsColor}">${cnsPct}</td>
       </tr>`;
     // ── SAFETY STOP ROW ──
@@ -9024,10 +9024,10 @@ function runDecoSchedule() {
         <td style="font-size:16px;">🟢</td>
         <td data-label="Depth">${dU?s.depth+'m':mToFt(s.depth)+'ft'}</td>
         <td data-label="Stop" style="color:var(--green);">${fmtMM(stepDur)}</td>
-        <td data-label="Run">${rtDisp}</td>
         <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
-        <td data-label="EAD" style="color:var(--muted);font-size:11px;">${fmtEAD(s.depth, s.fN2)}</td>
+        <td data-label="Run">${rtDisp}</td>
         <td data-label="PPO2" style="color:var(--muted);">${s.pO2||'—'}</td>
+        <td data-label="EAD" style="color:var(--muted);font-size:11px;">${fmtEAD(s.depth, s.fN2)}</td>
         <td data-label="CNS%" style="color:var(--muted);">${cnsPct}</td>
       </tr>`;
     // ── ASCENT ROW ──
@@ -9041,10 +9041,10 @@ function runDecoSchedule() {
         <td><span style="font-size:18px;" class="asc-color">↑</span></td>
         <td data-label="Depth" class="asc-color">${dU?s.from+'m':mToFt(s.from)+'ft'}→${dU?s.to+'m':mToFt(s.to)+'ft'}</td>
         <td data-label="Stop" class="asc-color" style="font-size:11px;color:var(--muted);">${fmtMM(s.dur)}</td>
-        <td data-label="Run" class="asc-color">${rtDisp}</td>
         <td data-label="Mix" style="color:${gasColor};">${s.gas.toUpperCase()}</td>
-        <td data-label="EAD" style="color:var(--muted);"></td>
+        <td data-label="Run" class="asc-color">${rtDisp}</td>
         <td data-label="PPO2" style="${pO2Color}">${s.pO2}</td>
+        <td data-label="EAD" style="color:var(--muted);"></td>
         <td data-label="CNS%" style="color:var(--muted);">${cnsPct}</td>
       </tr>`;
     }
@@ -10698,11 +10698,11 @@ function drawDecoProfile() {
     }
     if (phase !== 'deco' && phase !== 'safety' && phase !== 'ascent') return;
     const tds    = tr.querySelectorAll('td');
-    const run    = parseRunMin(tds[3]?.textContent);
+    const run    = parseRunMin(tds[4]?.textContent);
     const depthTxt = tds[1]?.textContent?.trim() || '';
-    const ppo2   = parseFloat(tds[8]?.textContent) || 0;  // PPO2 (after TTS, Mix, EAD, END)
-    const gas    = tds[5]?.textContent?.trim() || null;    // Mix
-    const cns    = tds[9]?.textContent?.trim() || null;    // CNS%
+    const ppo2   = parseFloat(tds[6]?.textContent) || 0;  // PPO2 (col 6: icon|Depth|Stop|Mix|Run|TTS|PPO2|END|EAD|CNS%)
+    const gas    = tds[3]?.textContent?.trim() || null;    // Mix (col 3)
+    const cns    = tds[9]?.textContent?.trim() || null;    // CNS% (col 9)
 
     if (phase === 'ascent') {
       const parts   = depthTxt.split('→');
@@ -12599,7 +12599,7 @@ function buildExportText(mode) {
       const shr = '-'.repeat(56);
       lines.push('ASCENT SCHEDULE');
       lines.push(shr);
-      lines.push('Phase Depth  Stop   Run   TTS   Mix   EAD    PPO2  CNS%');
+      lines.push('Phase Depth  Stop   Mix   Run   TTS   PPO2  END   EAD  CNS%');
       lines.push(shr);
       const phaseLabel = { descent:'Des', bottom:'Lvl', ascent:'Asc', deco:'Stp', safety:'Stp', totals:'TOT' };
       rows.forEach(tr => {
@@ -12782,7 +12782,7 @@ function buildExportText(mode) {
     if (rows.length) {
       lines.push('EMERGENCY ASCENT SCHEDULE');
       lines.push('-'.repeat(56));
-      lines.push('Phase Depth  Stop   Run   TTS   Mix   EAD    PPO2  CNS%');
+      lines.push('Phase Depth  Stop   Mix   Run   TTS   PPO2  END   EAD  CNS%');
       lines.push('-'.repeat(56));
       const phaseLabel = { descent:'Des', bottom:'Lvl', ascent:'Asc', deco:'Stp', safety:'Stp', switch:'>>' };
       rows.forEach(tr => {
@@ -13007,9 +13007,9 @@ function buildSlateText() {
     const tds = tr.querySelectorAll('td');
     const depRaw = clean(tds[1]?.textContent).replace(/(m|ft)$/i, '');
     const dep = (depRaw + du).padStart(5);
-    const run = clean(tds[3]?.textContent).padStart(5);
-    const gas = shortMix(tds[5]?.textContent).padEnd(6);
-    const ppo2 = clean(tds[8]?.textContent).padStart(4);
+    const run = clean(tds[4]?.textContent).padStart(5);
+    const gas = shortMix(tds[3]?.textContent).padEnd(6);
+    const ppo2 = clean(tds[6]?.textContent).padStart(4);
     out.push(`${dep}  ${run}  ${gas} ${ppo2}`);
   });
 
@@ -13127,9 +13127,9 @@ function buildContingencySlateText() {
     const tds = tr.querySelectorAll('td');
     const depRaw = clean(tds[1]?.textContent).replace(/(m|ft)$/i,'');
     const dep = (depRaw + du).padStart(5);
-    const run = clean(tds[3]?.textContent).padStart(5);
-    const gas = shortMix(tds[5]?.textContent).padEnd(6);
-    const ppo2 = clean(tds[8]?.textContent).padStart(4);
+    const run = clean(tds[4]?.textContent).padStart(5);
+    const gas = shortMix(tds[3]?.textContent).padEnd(6);
+    const ppo2 = clean(tds[6]?.textContent).padStart(4);
     out.push(`${dep}  ${run}  ${gas} ${ppo2}`);
   });
   const _ecToMMSS = s => {
@@ -13705,7 +13705,7 @@ function calcContingency() {
     </div>
     <div style="overflow-x:auto;">
       <table class="deco-table table-view" style="font-size:10px;">
-        <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>TTS</th><th>Mix</th><th>EAD</th><th class="end-col">END</th><th>PPO2</th><th>CNS%</th></tr></thead>
+        <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Mix</th><th>Run</th><th>TTS</th><th>PPO2</th><th class="end-col">END</th><th>EAD</th><th>CNS%</th></tr></thead>
         <tbody id="contingencyTableBody">${newRows.replace(/<tr[^>]*data-phase="totals"[^>]*>[\s\S]*?<\/tr>/, '')}${emInfoRow}</tbody>
       </table>
     </div>
@@ -13996,7 +13996,7 @@ async function exportContingencyPDF(opts) {
     const colX=[ML]; colW.forEach((w,i)=>{ if(i<colW.length-1) colX.push(colX[i]+colW[i]); });
     doc.setFillColor(180,30,30); doc.rect(ML,y,CW,6,'F');
     doc.setFontSize(7); doc.setFont('DejaVuSans','bold'); doc.setTextColor(255,255,255);
-    ['Phase','Depth','Stop','Run','TTS','Mix','EAD','END','PPO2','CNS%'].forEach((h,i)=>doc.text(h,colX[i]+colW[i]/2,y+4,{align:'center'}));
+    ['Phase','Depth','Stop','Mix','Run','TTS','PPO2','END','EAD','CNS%'].forEach((h,i)=>doc.text(h,colX[i]+colW[i]/2,y+4,{align:'center'}));
     doc.setTextColor(0,0,0); y+=6;
 
     document.querySelectorAll('#contingencyResult .deco-table tbody tr').forEach((tr,rowI)=>{
