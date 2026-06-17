@@ -1535,7 +1535,7 @@ else:
     fail("Final ascent: surfaceRate leg missing — surfacing time/off-gassing undercounted")
 
 # 32.2 Final ascent applies off-gassing via saturateLinear (not treated as instant)
-if re.search(r'tissues = saturateLinear\\(tissues, cur, 0, finalAscentDur', js):
+if re.search(r'tissues = saturateLinear\(tissues, cur, 0, finalAscentDur', js):
     ok("Final ascent: off-gassing applied via saturateLinear during the final leg")
 else:
     fail("Final ascent: off-gassing not applied — tissue state wrong for repetitive-dive surface interval")
