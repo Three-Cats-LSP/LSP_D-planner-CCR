@@ -4277,6 +4277,21 @@ function switchTab(name, btn) {
 // ═══════════════════════════════════════════════
 function mToFt(m)    { return Math.round(m * 3.28084); }
 function depthDisp(m, u) { return u === 'metric' ? `${m} m` : `${mToFt(m)} ft`; }
+function formatDecoZoneStart(depthM) {
+  if (!depthM || depthM <= 0) return '—';
+  const dU = units === 'metric';
+  const rounded = Math.round(depthM * 10) / 10;
+  const disp = rounded % 1 === 0 ? String(Math.round(rounded)) : rounded.toFixed(1);
+  return dU ? disp + ' m' : mToFt(depthM) + ' ft';
+}
+function getDecoZoneExportVal(fromTotalsEl) {
+  const el = fromTotalsEl || document.querySelector('#decoTableBody tr[data-phase="totals"] td');
+  if (el) {
+    const dzM = el.textContent.replace(/\s+/g, ' ').match(/Deco zone:\s*([\d.]+ (?:m|ft)|—)/i);
+    if (dzM) return dzM[1].trim();
+  }
+  return formatDecoZoneStart(window._lastPlan?.decoZoneStart);
+}
 
 function setUnits(u) {
   const prev = units;
@@ -5755,9 +5770,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
   const prtDispVPM = prtValVPM.toFixed(1);
   const prtColorVPM = prtValVPM < 15 ? 'var(--green)' : prtValVPM < 25 ? 'var(--yellow)' : prtValVPM < 40 ? 'var(--orange)' : 'var(--red)';
   const cnsFootColor = result.totalCNS != null ? (result.totalCNS >= 100 ? 'var(--red)' : result.totalCNS >= 80 ? 'var(--orange)' : result.totalCNS >= 50 ? 'var(--yellow)' : 'var(--green)') : 'var(--muted)';
+  const decoZoneDispVPM = formatDecoZoneStart(result.decoZoneStart);
   tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
     <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
-      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${rt}'00"</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${deco>0?'var(--orange)':'var(--green)'};font-weight:700;margin-right:16px;">${Math.round(deco)}'00"</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${cnsDisp}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${otuDisp}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min)">PrT:</span> <span style="color:${prtColorVPM};font-weight:700;">${prtDispVPM}</span>
+      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${rt}'00"</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${deco>0?'var(--orange)':'var(--green)'};font-weight:700;margin-right:16px;">${Math.round(deco)}'00"</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${cnsDisp}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${otuDisp}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min)">PrT:</span> <span style="color:${prtColorVPM};font-weight:700;margin-right:16px;">${prtDispVPM}</span><span style="color:var(--muted);" title="Depth where the leading compartment enters the decompression zone during ascent">Deco zone:</span> <span style="color:var(--text);font-weight:700;">${decoZoneDispVPM}</span>
     </td>
   </tr>`;
 
@@ -6002,6 +6018,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     decoTime: Math.round(deco),
     stops: _vpmRawStops.map(s => ({ depth: s.depth, dur: s.dur, gas: s.gas })),
     steps: plan,
+    decoZoneStart: result.decoZoneStart || 0,
   };
 
   // Store for TXT/copy export (stat card IDs may not exist in DOM)
@@ -8313,6 +8330,7 @@ function runDecoSchedule() {
     decoTime: Math.round(decoTime),
     stops: decoStops.map(s => ({ depth: s.depth, dur: s.dur, gas: s.gas })),
     steps: collapsed,
+    decoZoneStart: hasDeco ? firstStopDepth : 0,
   };
 
   // ── Headless mode early return: skip ceiling/graph/DOM work ─────────────
@@ -8743,9 +8761,10 @@ function runDecoSchedule() {
   // PrT <15 → GF Hi ≤80 ok; 15–25 → ≤75; 25–40 → ≤70; >40 → extreme caution
   const prtGfHint = prtVal < 15 ? 'GF Hi ≤80' : prtVal < 25 ? 'GF Hi ≤75' : prtVal < 40 ? 'GF Hi ≤70' : 'GF Hi ≤60';
   const prtColor  = prtVal < 15 ? 'var(--green)' : prtVal < 25 ? 'var(--yellow)' : prtVal < 40 ? 'var(--orange)' : 'var(--red)';
+  const decoZoneDisp = formatDecoZoneStart(hasDeco ? firstStopDepth : 0);
   tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
     <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
-      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;margin-right:16px;">${totalOTUval}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min). Fraedrich 2019 severity index for GF High selection.">PrT:</span> <span style="color:${prtColor};font-weight:700;" title="${prtGfHint} recommended (Fraedrich 2019)">${prtDisp}</span>
+      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;margin-right:16px;">${totalOTUval}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min). Fraedrich 2019 severity index for GF High selection.">PrT:</span> <span style="color:${prtColor};font-weight:700;margin-right:16px;" title="${prtGfHint} recommended (Fraedrich 2019)">${prtDisp}</span><span style="color:var(--muted);" title="Depth where the leading compartment enters the decompression zone during ascent (GF-low anchored first stop)">Deco zone:</span> <span style="color:var(--text);font-weight:700;">${decoZoneDisp}</span>
     </td>
   </tr>`;
 
@@ -12055,7 +12074,7 @@ function buildExportText(mode) {
     const decoModelSel = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
     const isVPMExport  = decoModelSel === 'VPMB' || decoModelSel === 'VPMB_GFS';
 
-    let decoTimeVal = '-', runTimeVal = '-', cnsExpVal = '-', otuExpVal = '-', prtExpVal = '-';
+    let decoTimeVal = '-', runTimeVal = '-', cnsExpVal = '-', otuExpVal = '-', prtExpVal = '-', decoZoneExpVal = '-';
 
     const totalsRowEl = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
     if (totalsRowEl) {
@@ -12065,12 +12084,15 @@ function buildExportText(mode) {
       const cM = t.match(/CNS:\s*([\d.]+%)/i);
       const oM = t.match(/OTU:\s*(\d+)/i);
       const pM = t.match(/PrT:\s*([\d.]+)/i);
+      const dzM = t.match(/Deco zone:\s*([\d.]+ (?:m|ft)|—)/i);
       if (rM) runTimeVal  = rM[1];
       if (dM) decoTimeVal = dM[1];
       if (cM) cnsExpVal   = cM[1];
       if (oM) otuExpVal   = oM[1];
       if (pM) prtExpVal   = pM[1];
+      if (dzM) decoZoneExpVal = dzM[1].trim();
     }
+    if (decoZoneExpVal === '-') decoZoneExpVal = getDecoZoneExportVal(totalsRowEl);
 
     // Fallback for VPM if totals row not yet rendered: use _lastVPMExport
     if (isVPMExport && runTimeVal === '-' && window._lastVPMExport) {
@@ -12165,7 +12187,7 @@ function buildExportText(mode) {
       const _dgLabel = _dgCard ? getGasLabel(_dgCard.fO2, _dgCard.fHe) : g.gas;
       lines.push(`Deco Gas ${i+1}  : ${_dgLabel} (switch @ ${g.depth})`);
     });
-    lines.push(`Deco Time   : ${decoTimeVal}  Run Time: ${runTimeVal}  CNS: ${cnsExpVal}  OTU: ${otuExpVal}  PrT: ${prtExpVal}`);
+    lines.push(`Deco Time   : ${decoTimeVal}  Run Time: ${runTimeVal}  CNS: ${cnsExpVal}  OTU: ${otuExpVal}  PrT: ${prtExpVal}  Deco zone: ${decoZoneExpVal}`);
     lines.push('');
 
     // Ascent schedule table
@@ -12214,7 +12236,7 @@ function buildExportText(mode) {
       // Totals row — use values already read from table footer (runTimeVal etc.)
       lines.push(shr);
       lines.push(`Run Time:${runTimeVal} Deco:${decoTimeVal}`);
-      lines.push(`CNS:${cnsExpVal} OTU:${otuExpVal} PrT:${prtExpVal}`);
+      lines.push(`CNS:${cnsExpVal} OTU:${otuExpVal} PrT:${prtExpVal} Deco zone:${decoZoneExpVal}`);
       lines.push('');
     }
 
@@ -12401,9 +12423,10 @@ function buildExportText(mode) {
         const cnsM = t.match(/CNS:\s*([\d.]+%)/i);
         const otuM = t.match(/OTU:\s*(\d+)/i);
         const prtM = t.match(/PrT:\s*([\d.]+)/i);
+        const dzM = t.match(/Deco zone:\s*([\d.]+ (?:m|ft)|—)/i);
         lines.push('-'.repeat(49));
         lines.push(`Run Time:${runM?.[1]||'-'} Deco:${decM?.[1]||'-'}`);
-        lines.push(`CNS:${cnsM?.[1]||'-'} OTU:${otuM?.[1]||'-'} PrT:${prtM?.[1]||'-'}`);
+        lines.push(`CNS:${cnsM?.[1]||'-'} OTU:${otuM?.[1]||'-'} PrT:${prtM?.[1]||'-'} Deco zone:${dzM?.[1]?.trim()||'-'}`);
       }
       lines.push('');
     }
@@ -12596,7 +12619,7 @@ function buildSlateText() {
 
   // Footer: TRT/DECO/CNS/OTU/PrT — read from totals row
   const _stotRow = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
-  let tbt = '-', decoDisp = '-', _sCNS = '-', _sOTU = '-', _sPrT = '-';
+  let tbt = '-', decoDisp = '-', _sCNS = '-', _sOTU = '-', _sPrT = '-', _sDz = '-';
   if (_stotRow) {
     const _st = _stotRow.textContent.replace(/\s+/g,' ');
     const _srM = _st.match(/Run time:\s*([\d'":\s]+)/i);
@@ -12604,6 +12627,7 @@ function buildSlateText() {
     const _scM = _st.match(/CNS:\s*([\d.]+%)/i);
     const _soM = _st.match(/OTU:\s*(\d+)/i);
     const _spM = _st.match(/PrT:\s*([\d.]+)/i);
+    const _sdzM = _st.match(/Deco zone:\s*([\d.]+ (?:m|ft)|—)/i);
     const _toMMSS = s => {
       if (!s) return '-';
       s = s.trim();
@@ -12619,7 +12643,9 @@ function buildSlateText() {
     if (_scM) _sCNS = _scM[1];
     if (_soM) _sOTU = _soM[1];
     if (_spM) _sPrT = _spM[1];
+    if (_sdzM) _sDz = _sdzM[1].trim();
   }
+  if (_sDz === '-') _sDz = getDecoZoneExportVal(_stotRow);
   // Fallback: use input field for BT if totals row not available
   if (tbt === '-') tbt = `${document.getElementById('decoBT')?.value || '-'}'00"`;
 
@@ -12639,7 +12665,7 @@ function buildSlateText() {
   }
   lines.push(bar);
   lines.push(`TRT: ${tbt} | DECO: ${decoDisp}`);
-  lines.push(`CNS: ${_sCNS} OTU: ${_sOTU} PrT: ${_sPrT}`);
+  lines.push(`CNS: ${_sCNS} OTU: ${_sOTU} PrT: ${_sPrT} Deco zone: ${_sDz}`);
   return lines.join('\n');
 }
 
@@ -12733,6 +12759,7 @@ function buildContingencySlateText() {
   const _ecCNS = cc.totalCNS || '-';
   const _ecOTU = cc.totalOTU || '-';
   const _ecPrT = cc.totalPrT || '-';
+  const _ecDz = cc.decoZoneDisp || formatDecoZoneStart(cc.decoZoneStart);
   const bar = '========================';
   const lines = ['EMERGENCY SLATE', ecStamp, bar,
     `Algo: ${algoLine}`, `Mix: ${mixLine}`, '',
@@ -12741,7 +12768,7 @@ function buildContingencySlateText() {
   else lines.push('  (no decompression stops)');
   lines.push(bar);
   lines.push(`TRT: ${tbt} | DECO: ${decoDisp}`);
-  lines.push(`CNS: ${_ecCNS} OTU: ${_ecOTU} PrT: ${_ecPrT}`);
+  lines.push(`CNS: ${_ecCNS} OTU: ${_ecOTU} PrT: ${_ecPrT} Deco zone: ${_ecDz}`);
   return lines.join('\n');
 }
 
@@ -12815,7 +12842,8 @@ function buildMessengerText(mode) {
     const cnsDisp  = c.totalCNS ? ` CNS:${c.totalCNS}` : '';
     const otuDisp  = c.totalOTU && c.totalOTU !== '—' ? ` OTU:${c.totalOTU}` : '';
     const prtDisp  = c.totalPrT ? ` PrT:${c.totalPrT}` : '';
-    result.push(`Run Time:${runDisp} Deco:${decoDisp}${cnsDisp}${otuDisp}${prtDisp}`);
+    const dzDisp   = c.decoZoneDisp || formatDecoZoneStart(c.decoZoneStart);
+    result.push(`Run Time:${runDisp} Deco:${decoDisp}${cnsDisp}${otuDisp}${prtDisp} Deco zone:${dzDisp}`);
     return result.join('\n');
   }
 
@@ -12948,6 +12976,7 @@ function buildMessengerText(mode) {
   const _algoForCopy = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
   const _isVPMCopy   = _algoForCopy === 'VPMB' || _algoForCopy === 'VPMB_GFS';
   const totRow = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
+  let decoZoneCopyVal = getDecoZoneExportVal(totRow);
   if (totRow) {
     const t    = totRow.textContent.replace(/\s+/g, ' ').trim();
     const runM = t.match(/Run time:\s*([\d':"]+)/i);
@@ -12957,14 +12986,14 @@ function buildMessengerText(mode) {
     const prtM = t.match(/PrT:\s*([\d.]+)/i);
     result.push('-'.repeat(28));
     result.push(`Run Time:${runM?.[1]||'-'} Deco:${decM?.[1]||'-'}`);
-    result.push(`CNS:${cnsM?.[1]||'-'} OTU:${otuM?.[1]||'-'} PrT:${prtM?.[1]||'-'}`);
+    result.push(`CNS:${cnsM?.[1]||'-'} OTU:${otuM?.[1]||'-'} PrT:${prtM?.[1]||'-'} Deco zone:${decoZoneCopyVal}`);
   } else if (_isVPMCopy) {
     const vx2 = window._lastVPMExport;
     if (vx2) {
       const toMMSS = (n) => { const m = Math.floor(n), s = Math.round((n - m) * 60); return `${m}'${String(s).padStart(2,'0')}"`; };
       result.push('-'.repeat(28));
       result.push(`Run Time:${toMMSS(vx2.rt)} Deco:${toMMSS(vx2.deco)}`);
-      result.push(`CNS:${vx2.cns} OTU:${vx2.otu} PrT:${vx2.prt}`);
+      result.push(`CNS:${vx2.cns} OTU:${vx2.otu} PrT:${vx2.prt} Deco zone:${decoZoneCopyVal}`);
     } else {
       const rtV  = document.getElementById('decoRunTimeDisplay')?.textContent?.trim().replace(/['\s]/g,'') || '-';
       const dtV  = document.getElementById('decoDecoTimeDisplay')?.textContent?.trim().replace(/\s*min\s*/,'') || '-';
@@ -12973,7 +13002,7 @@ function buildMessengerText(mode) {
       const prtN = (parseFloat(document.getElementById('decoDepth')?.value||'0') * BAR_PER_METRE) * Math.sqrt(parseFloat(document.getElementById('decoBT')?.value||'0'));
       result.push('-'.repeat(28));
       result.push(`Run Time:${rtV}'00" Deco:${dtV}'00"`);
-      result.push(`CNS:${cnsV} OTU:${otuV} PrT:${isNaN(prtN)?'-':prtN.toFixed(1)}`);
+      result.push(`CNS:${cnsV} OTU:${otuV} PrT:${isNaN(prtN)?'-':prtN.toFixed(1)} Deco zone:${decoZoneCopyVal}`);
     }
   }
 
@@ -13110,23 +13139,26 @@ function runContingencyScenario(modifyFn) {
   // Capture formatted totals from DOM totals row
   const totalsRow = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
   let lastRunFmt = null, decoTimeFmt = null, totalCNS = null, totalOTUc = null;
+  let decoZoneStart = window._lastPlan?.decoZoneStart ?? 0;
   if (totalsRow) {
     const t = totalsRow.textContent.replace(/\s+/g, ' ');
     const rM = t.match(/Run time:\s*([\d'":]+)/i);
     const dM = t.match(/Deco time:\s*([\d'":]+)/i);
     const cM = t.match(/CNS:\s*([\d.]+%)/i);
     const oM = t.match(/OTU:\s*(\d+)/i);
+    const dzM = t.match(/Deco zone:\s*([\d.]+)\s*m/i);
     if (rM) lastRunFmt  = rM[1];
     if (dM) decoTimeFmt = dM[1];
     if (cM) totalCNS    = cM[1];
     if (oM) totalOTUc   = oM[1];
+    if (dzM) decoZoneStart = parseFloat(dzM[1]);
   }
 
   // Restore original DOM
   document.getElementById('decoTableBody').innerHTML = savedBody;
   document.getElementById('decoSummary').innerHTML   = savedSummary;
 
-  return { newRows, lastRun, decoTime: Math.round(decoTime), lastRunFmt, decoTimeFmt, totalCNS, totalOTUc };
+  return { newRows, lastRun, decoTime: Math.round(decoTime), lastRunFmt, decoTimeFmt, totalCNS, totalOTUc, decoZoneStart };
 }
 
 // Contingency state
@@ -13246,7 +13278,7 @@ function calcContingency() {
                    (contExtraBT > 0)        ? 'Carry extra gas reserve for this scenario.' :
                    'Showing standard plan.';
 
-  const { newRows, lastRun, decoTime, lastRunFmt, decoTimeFmt, totalCNS, totalOTUc } = runContingencyScenario(() => {
+  const { newRows, lastRun, decoTime, lastRunFmt, decoTimeFmt, totalCNS, totalOTUc, decoZoneStart } = runContingencyScenario(() => {
     if (contExtraBT > 0 && origBT)
       document.getElementById('decoBT').value = parseFloat(origBT) + contExtraBT;
     for (const idx of getAllDecoGasIds()) {
@@ -13273,6 +13305,7 @@ function calcContingency() {
   const _emOTU     = totalOTUc || '—';
   const cnsColor   = totalCNS && parseFloat(totalCNS) >= 100 ? 'var(--red)' : totalCNS && parseFloat(totalCNS) >= 80 ? 'var(--orange)' : 'var(--text)';
   const prtColorEm = parseFloat(_emPrT) < 15 ? 'var(--green)' : parseFloat(_emPrT) < 25 ? 'var(--yellow)' : parseFloat(_emPrT) < 40 ? 'var(--orange)' : 'var(--red)';
+  const decoZoneDispEm = formatDecoZoneStart(decoZoneStart);
   resultEl.innerHTML = `
     <div class="alert ${severity}" style="margin:0 0 10px;${contGasLose==='both'?'border-width:2px;':''}">
       <span>${icon}</span>
@@ -13284,7 +13317,7 @@ function calcContingency() {
         <thead><tr><th>Phase</th><th>Depth</th><th>Stop</th><th>Run</th><th>Mix</th><th>EAD</th><th class="end-col">END</th><th>PPO2</th><th>CNS%</th></tr></thead>
         <tbody>${newRows.replace(/<tr[^>]*data-phase="totals"[^>]*>[\s\S]*?<\/tr>/, '')}<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
           <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
-            <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emRunFmt}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:var(--orange);font-weight:700;margin-right:16px;">${_emDecoFmt}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsColor};font-weight:700;margin-right:16px;">${totalCNS || '—'}</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emOTU}</span><span style="color:var(--muted);">PrT:</span> <span style="color:${prtColorEm};font-weight:700;">${_emPrT}</span>
+            <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emRunFmt}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:var(--orange);font-weight:700;margin-right:16px;">${_emDecoFmt}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsColor};font-weight:700;margin-right:16px;">${totalCNS || '—'}</span><span style="color:var(--muted);">OTU:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${_emOTU}</span><span style="color:var(--muted);">PrT:</span> <span style="color:${prtColorEm};font-weight:700;margin-right:16px;">${_emPrT}</span><span style="color:var(--muted);" title="Depth where the leading compartment enters the decompression zone during ascent">Deco zone:</span> <span style="color:var(--text);font-weight:700;">${decoZoneDispEm}</span>
           </td>
         </tr></tbody>
       </table>
@@ -13300,7 +13333,7 @@ function calcContingency() {
     </div>`;
 
   // Store for export
-  window._lastContingency = { label, lastRun, decoTime, lastRunFmt, decoTimeFmt, totalCNS, totalOTU: _emOTU, totalPrT: _emPrT, newRows, severity, icon, msg };
+  window._lastContingency = { label, lastRun, decoTime, lastRunFmt, decoTimeFmt, totalCNS, totalOTU: _emOTU, totalPrT: _emPrT, decoZoneStart, decoZoneDisp: decoZoneDispEm, newRows, severity, icon, msg };
 
   // CNS alert — goes into emergency card, NOT main decoAlerts
   const emAlerts = document.getElementById('decoAlertsEmergency');
@@ -13528,7 +13561,7 @@ async function exportContingencyPDF(opts) {
   doc.setFontSize(10); doc.setFont('DejaVuSans','bold'); doc.setTextColor(180,30,30);
   doc.text('⚠ ' + cleanPDF(c.label), ML+3, y+6);
   doc.setFontSize(8); doc.setFont('DejaVuSans','normal'); doc.setTextColor(100,0,0);
-  doc.text(`Run: ${c.lastRunFmt||c.lastRun+"'00\""} | Deco: ${c.decoTimeFmt||c.decoTime+"'00\""} | CNS: ${c.totalCNS||'--'} | OTU: ${c.totalOTU||'--'} | PrT: ${c.totalPrT||'--'}`, ML+3, y+10.5);
+  doc.text(`Run: ${c.lastRunFmt||c.lastRun+"'00\""} | Deco: ${c.decoTimeFmt||c.decoTime+"'00\""} | CNS: ${c.totalCNS||'--'} | OTU: ${c.totalOTU||'--'} | PrT: ${c.totalPrT||'--'} | Deco zone: ${c.decoZoneDisp||formatDecoZoneStart(c.decoZoneStart)}`, ML+3, y+10.5);
   doc.setTextColor(150,0,0); doc.text(cleanPDF(c.msg||''), ML+3, y+14.5);
   doc.setTextColor(0,0,0); y+=19;
 
@@ -14583,13 +14616,16 @@ async function exportPDF(opts) {
     ? `${_pdfBotLabel} (O2:${_pdfBotO2}% He:${_pdfBotHe}% N2:${_pdfBotN2}%)`
     : _pdfBotLabel;
   const totalsRowEl = document.querySelector('#decoTableBody tr[data-phase="totals"] td');
-  let decoTimeVal='—', totalRTVal='—', cnsVal='—', otuVal='—', prtVal='—';
+  let decoTimeVal='—', totalRTVal='—', cnsVal='—', otuVal='—', prtVal='—', decoZoneVal='—';
   if (totalsRowEl) {
     const t = totalsRowEl.textContent.replace(/\s+/g,' ');
     const rM=t.match(/Run time:\s*([\d'":]+)/i), dM=t.match(/Deco time:\s*([\d'":]+)/i);
     const cM=t.match(/CNS:\s*([\d.]+%)/i), oM=t.match(/OTU:\s*(\d+)/i), pM=t.match(/PrT:\s*([\d.]+)/i);
+    const dzM=t.match(/Deco zone:\s*([\d.]+ (?:m|ft)|—)/i);
     if(rM) totalRTVal=rM[1]; if(dM) decoTimeVal=dM[1]; if(cM) cnsVal=cM[1]; if(oM) otuVal=oM[1]; if(pM) prtVal=pM[1];
+    if(dzM) decoZoneVal=dzM[1].trim();
   }
+  if (decoZoneVal === '—') decoZoneVal = getDecoZoneExportVal(totalsRowEl);
   const algoTag = decoModelSel==='ZHLC_GF'?`GF${mGF.low}-${mGF.high}_Buhlmann`:decoModelSel==='VPMB'?`C${cons}_VPM-B`:`GFHi${mGF.high}_C${cons}_VPM-B_GFS`;
   const fileName = `LSP_${isoDate}_Deco_${depthVal}${du}_${btVal}min_${algoTag}.pdf`;
   const PW=210, PH=297, ML=14, MR=14, MT=10, MB=10, CW=182;
@@ -14653,7 +14689,7 @@ async function exportPDF(opts) {
     [decoTimeVal,'Deco Time'],[totalRTVal,'Run Time'],[gfStr,isVPM?algo:'GF Low/High'],
     [`${document.getElementById('lastDecoStop')?.value||'—'} ${du}`,'Last Stop'],
     [`${document.getElementById('decoStep')?.value||'—'} ${du}`,'Step Size'],
-    [cnsVal,'CNS%'],[otuVal,'OTU'],[prtVal,'PrT'],
+    [cnsVal,'CNS%'],[otuVal,'OTU'],[prtVal,'PrT'],[decoZoneVal,'Deco Zone'],
     [_pdfEndStr,'END Narcotic']
   ];
   const sw=CW/6, sh=10;
