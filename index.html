@@ -783,11 +783,11 @@ body.algo-buh .buh-only { display: flex !important; }
 .warn { background:rgba(255,183,3,0.07); border-color:rgba(255,183,3,0.22); color:#ffcc40; }
 .dang { background:#fff0f0; border:1px solid #cc0000; color:#cc0000 !important; font-weight:600; }
 .info { background:rgba(0,200,255,0.06); border-color:rgba(0,200,255,0.2); color:#60d8ff; }
-.deco { background:#ffffff; border:1px solid #cc0000; color:#111111; }
+.deco { background:#FF4433; border:1px solid #111111; color:#fff; font-weight:700; }
 
 /* Light theme: solid strong colors for readability on white */
 body.light-theme .dang { background:#fff0f0; border:1px solid #cc0000; color:#cc0000; font-weight:600; }
-body.light-theme .deco { background:#ffffff; border:1px solid #cc0000; color:#111111; }
+body.light-theme .deco { background:#FF4433; border:1px solid #111111; color:#fff; font-weight:700; }
 body.light-theme .warn { background:#fff8e6; border-color:#cc7700; color:#884400; }
 body.light-theme .ok { background:#f0fff4; border-color:#116622; color:#116622; }
 
@@ -3198,7 +3198,7 @@ body.light-theme .deco-table tr[data-phase="switch"] td[data-label="PPO2"] {
   }
 })();
 
-const APP_VERSION = '2.10.23';
+const APP_VERSION = '2.10.24';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5002,7 +5002,7 @@ function runPlanner() {
         <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:1px;"><span>NDL USAGE</span><span>${pct}%</span></div>
         <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc};"></div></div>
       </div>
-      ${ceil>0 ? '<div class="alert deco" style="margin-top:12px;"><span>🔴</span><div><strong>DECOMPRESSION REQUIRED.</strong> Deco ceiling at '+Math.ceil(ceil)+' m. See Deco Schedule tab for full profile.</div></div>' : ''}
+      ${ceil>0 ? '<div class="alert deco" style="margin-top:12px;"><span>⚠</span><div><strong>DECOMPRESSION REQUIRED.</strong> Deco ceiling at '+Math.ceil(ceil)+' m. See Deco Schedule tab for full profile.</div></div>' : ''}
       ${!btOk && ceil<=0 ? '<div class="alert" style="margin-top:12px;background:#FF4433;border-color:#cc2200;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NDL EXCEEDED.</strong> Reduce bottom time by '+(bt-ndl)+' min.</div></div>' : ''}
       ${btOk ? '<div class="alert ok" style="margin-top:12px;"><span>✓</span><div><strong>WITHIN NDL.</strong> GF '+gfL+'/'+gfH+'. '+rem+' minutes remaining.</div></div>' : ''}
       ${pO2>1.4 ? '<div class="alert dang"><span>⚠</span><div><strong>ppO₂ EXCEEDS 1.4 bar.</strong> CNS oxygen toxicity risk. Use lower O₂ mix or reduce depth.</div></div>' : ''}
@@ -6322,7 +6322,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         ${altBadge} ${repBadge}
       </div>
       ${hasDeco
-        ? '<div class="alert deco" style="margin-top:10px;background:#ffffff;border-color:#cc0000;border-width:1px;color:#111111;"><span>🔴</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
+        ? '<div class="alert deco" style="margin-top:10px;"><span>⚠</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
         : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong></div></div>'}
       ${endMvpm > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endMvpm > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
 
@@ -8772,7 +8772,7 @@ function runDecoSchedule() {
       ${travelGasTag} ${bottomGasTag} ${decoGasTags}
     </div>` : ''}
     ${hasDeco
-      ? '<div class="alert deco" style="margin-top:10px;background:#ffffff;border-color:#cc0000;border-width:1px;color:#111111;"><span>🔴</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
+      ? '<div class="alert deco" style="margin-top:10px;"><span>⚠</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
       : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}
     ${endM > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endM > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
 
@@ -15132,9 +15132,10 @@ async function exportPDF(opts) {
   [...alertEls].forEach(el=>{
     const txt=cleanPDF(el.textContent);
     const isNarc=txt.includes('NARCOTIC')||txt.includes('NDL');
+    const isDeco=txt.includes('DECOMPRESSION');
     const isCNS=txt.includes('CNS');
-    const bg=isNarc?[255,68,51]:isCNS?[255,255,0]:[255,232,232];
-    const tx=isNarc?[255,255,255]:isCNS?[17,17,17]:[160,30,30];
+    const bg=isNarc||isDeco?[255,68,51]:isCNS?[255,255,0]:[255,68,51];
+    const tx=isNarc||isDeco?[255,255,255]:isCNS?[17,17,17]:[255,255,255];
     checkY(9); doc.setFillColor(...bg); doc.roundedRect(ML,y,CW,7,1.5,1.5,'F');
     doc.setFontSize(7.5); doc.setFont('DejaVuSans','bold'); doc.setTextColor(...tx);
     const ls=doc.splitTextToSize(txt,CW-4); const lh=5.5*ls.length;
