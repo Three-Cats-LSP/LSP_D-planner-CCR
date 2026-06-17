@@ -1369,6 +1369,48 @@ else:
 
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 28 — GF FIRST-STOP ANCHOR FIX (v2.10.7)
+# Bug: firstStopDepth was pre-computed from ceiling(bottom_tissues, gfL) → caused
+# spurious stop at 21m for Air+EAN50 dives (MultiDeco shows first stop at 18m).
+# Fix: firstStopDepth is now anchored dynamically at the ACTUAL first mustStop depth.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 28.1 firstStopDepth must be declared as `let` (mutable), not `const`
+# The old bug used `const firstStopDepth = ...` pre-computed from bottom tissues.
+if re.search(r'let firstStopDepth = 0;', js):
+    ok("GF anchor: firstStopDepth declared as `let` (mutable, dynamically anchored)")
+else:
+    fail("GF anchor: firstStopDepth must be `let firstStopDepth = 0` — pre-computed const causes spurious stops")
+
+# 28.2 candidateFirstStop used for stop list, not firstStopDepth
+# The candidate stop list must be built from candidateFirstStop, not the old firstStopDepth.
+if re.search(r'const candidateFirstStop = bottomCeil > 0', js):
+    ok("GF anchor: stop list built from candidateFirstStop (not pre-computed firstStopDepth)")
+else:
+    fail("GF anchor: missing candidateFirstStop — stop list must use candidate variable, not firstStopDepth")
+
+# 28.3 firstStopDepth is anchored in the mustStop branch
+# The fix must set firstStopDepth = cur when the first required stop is found.
+if re.search(r'firstStopDepth\s*=\s*cur;\s*//\s*anchor GF line', js):
+    ok("GF anchor: firstStopDepth set to cur at first mustStop (anchor from actual first stop)")
+else:
+    fail("GF anchor: firstStopDepth not anchored at first mustStop — spurious stop bug will recur")
+
+# 28.4 minStopZoneDepth is declared as `let` (not const) and starts as null
+# With dynamic anchoring, minStopZoneDepth must be null until first stop is known.
+if re.search(r'let minStopZoneDepth = null;', js):
+    ok("GF anchor: minStopZoneDepth starts as null (set when first stop is known)")
+else:
+    fail("GF anchor: minStopZoneDepth must be `let ... = null` — const from pre-computed firstStopDepth is broken")
+
+# 28.5 minStopZoneDepth is set in mustStop branch alongside firstStopDepth
+if re.search(r'minStopZoneDepth\s*=\s*cur;\s*//\s*enable min-stop', js):
+    ok("GF anchor: minStopZoneDepth set to cur at first mustStop (min-stop enforcement enabled)")
+else:
+    fail("GF anchor: minStopZoneDepth not set at first mustStop — min-stop enforcement may fail")
+
+
 print(f"\nLSP D-Planner Audit — {path}")
 print("=" * 60)
 

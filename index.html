@@ -8067,17 +8067,25 @@ function runDecoSchedule() {
   let rt  = bt; // run time = full BT input (descent already counted in BT)
 
 
-  // ── GF anchor = ceiling(bottom_tissues, gfL) rounded up to nearest stop depth ──
+  // ── GF anchor: candidate stop list built from ceiling(bottom_tissues, gfL) ──
+  // firstStopDepth is NOT pre-computed here — it is anchored dynamically at the
+  // FIRST depth where mustStop actually fires. This matches MultiDeco/Baker:
+  // GF line is pinned at the actual first required stop, not at a pre-computed
+  // ceiling that may be one step above the real first stop.
   const bottomCeil = ceiling(tissues, gfL);
-  const firstStopDepth = bottomCeil > 0
+  const candidateFirstStop = bottomCeil > 0
     ? Math.max(lastStop, Math.ceil(bottomCeil / decoStep) * decoStep)
     : 0;
 
+  // firstStopDepth: mutable — set when the first ceiling-forced stop is reached.
+  // Until it is set, gfAt() returns gfH (GF line not yet anchored).
+  let firstStopDepth = 0;
+
   // ── Stop-based ascent engine ──
-  // Start stop iteration from firstStopDepth — ascent from bottom to first stop
+  // Start stop iteration from candidateFirstStop — ascent from bottom to first stop
   // is a single linear segment. Gas switch happens at the first stop where it's available.
   // This matches ApexDeco: ascend to first stop, then iterate stops down to lastStop.
-  const startStop = firstStopDepth > 0 ? firstStopDepth : lastStop;
+  const startStop = candidateFirstStop > 0 ? candidateFirstStop : lastStop;
   const stopDepths = [];
   for (let d = startStop; d >= lastStop; d -= decoStep) {
     stopDepths.push(d);
@@ -8101,12 +8109,14 @@ function runDecoSchedule() {
     }
   }
 
-  // minStop zone: only enforce minimum stops within the GF-anchored deco zone
-  // Do NOT force a pre-switch stop above the gas switch depth — ApexDeco switches
-  // gas at the first stop where ppO2 is within limits, no forced stop above.
-  const minStopZoneDepth = firstStopDepth || null;
+  // minStop zone: only enforce minimum stops within the GF-anchored deco zone.
+  // Dynamically updated when firstStopDepth is set — starts null (no min-stop
+  // enforcement until the first required stop depth is known).
+  let minStopZoneDepth = null;
 
   // ── GF interpolation: gfL at firstStopDepth → gfH at surface ──
+  // Returns gfH when firstStopDepth is not yet set (no anchor → most conservative
+  // interpretation: only stop where gfH ceiling forces it).
   function gfAt(depthM) {
     if (!firstStopDepth || firstStopDepth <= 0) return gfH;
     if (depthM >= firstStopDepth) return gfL;
@@ -8178,8 +8188,14 @@ function runDecoSchedule() {
     const mustStop = ceil > ceilTarget;
 
     if (mustStop) {
-      // Record the first depth where ceiling forces a stop
-      if (firstDecoDepth === null) firstDecoDepth = cur;
+      // Record the first depth where ceiling forces a stop.
+      // CRITICAL: anchor firstStopDepth here (not pre-computed from bottom tissues).
+      // This matches MultiDeco/Baker: GF line is anchored at the ACTUAL first stop depth.
+      if (firstDecoDepth === null) {
+        firstDecoDepth  = cur;
+        firstStopDepth  = cur;   // anchor GF line at real first stop
+        minStopZoneDepth = cur;  // enable min-stop enforcement from here down
+      }
       decoZoneEntered = true;
       // Capture RT before ceiling loop — ApexDeco snaps the arrival RT to next minute
       const rtOnArrival = rt;
@@ -8764,7 +8780,7 @@ function runDecoSchedule() {
   const decoZoneDisp = formatDecoZoneStart(hasDeco ? firstStopDepth : 0);
   tbody.innerHTML += `<tr style="background:rgba(0,200,255,0.04);border-top:2px solid var(--border-hi);" data-phase="totals">
     <td colspan="20" style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">
-      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;margin-right:16px;">${totalOTUval}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min). Fraedrich 2019 severity index for GF High selection.">PrT:</span> <span style="color:${prtColor};font-weight:700;margin-right:16px;" title="${prtGfHint} recommended (Fraedrich 2019)">${prtDisp}</span><span style="color:var(--muted);" title="Depth where the leading compartment enters the decompression zone during ascent (GF-low anchored first stop)">Deco zone:</span> <span style="color:var(--text);font-weight:700;">${decoZoneDisp}</span>
+      <span style="color:var(--muted);">Run time:</span> <span style="color:var(--text);font-weight:700;margin-right:16px;">${totalRunMMSS}</span><span style="color:var(--muted);">Deco time:</span> <span style="color:${hasDeco ? 'var(--orange)' : 'var(--green)'};font-weight:700;margin-right:16px;">${decoTimeMMSS}</span><span style="color:var(--muted);">CNS:</span> <span style="color:${cnsFootColor};font-weight:700;margin-right:16px;">${totalCNSpct}%</span><span style="color:var(--muted);">OTU:</span> <span style="color:${otuFootColor};font-weight:700;margin-right:16px;">${totalOTUval}</span><span style="color:var(--muted);" title="PrT = gauge pressure (bar) × √bottom time (min). Fraedrich 2019 severity index for GF High selection.">PrT:</span> <span style="color:${prtColor};font-weight:700;margin-right:16px;" title="${prtGfHint} recommended (Fraedrich 2019)">${prtDisp}</span><span style="color:var(--muted);" title="Depth where the first ceiling-required deco stop occurs (GF line anchor point)">Deco zone:</span> <span style="color:var(--text);font-weight:700;">${decoZoneDisp}</span>
     </td>
   </tr>`;
 
