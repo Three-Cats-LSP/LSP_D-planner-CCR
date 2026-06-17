@@ -868,10 +868,21 @@ body.light-theme .ok { background:#f0fff4; border-color:#116622; color:#116622; 
 .t-col { display:flex; flex-direction:column; align-items:center; gap:4px; }
 
 /* ── DECO TABLE ── */
-.deco-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; margin-top:10px; }
-.deco-table th { padding:4px 6px; text-align:left; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.05); vertical-align:middle; }
-.deco-table td { padding:4px 6px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
-.deco-table th:first-child, .deco-table td:first-child { text-align:center; width:36px; }
+.deco-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; margin-top:10px; table-layout:fixed; }
+/* Column widths: Phase|Depth|Stop|Mix|Run|TTS|PPO2|END|EAD|CNS% */
+.deco-table th:nth-child(1), .deco-table td:nth-child(1) { width:28px; min-width:28px; }
+.deco-table th:nth-child(2), .deco-table td:nth-child(2) { width:88px; min-width:64px; }
+.deco-table th:nth-child(3), .deco-table td:nth-child(3) { width:44px; min-width:40px; }
+.deco-table th:nth-child(4), .deco-table td:nth-child(4) { width:52px; min-width:44px; }
+.deco-table th:nth-child(5), .deco-table td:nth-child(5) { width:44px; min-width:40px; }
+.deco-table th:nth-child(6), .deco-table td:nth-child(6) { width:44px; min-width:40px; }
+.deco-table th:nth-child(7), .deco-table td:nth-child(7) { width:38px; min-width:34px; }
+.deco-table th:nth-child(8), .deco-table td:nth-child(8) { width:38px; min-width:34px; }
+.deco-table th:nth-child(9), .deco-table td:nth-child(9) { width:38px; min-width:34px; }
+.deco-table th:nth-child(10), .deco-table td:nth-child(10) { width:38px; min-width:34px; }
+.deco-table th { padding:4px 6px; text-align:left; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-bottom:1px solid var(--border-hi); background:rgba(0,200,255,0.05); vertical-align:middle; white-space:nowrap; overflow:hidden; }
+.deco-table td { padding:4px 6px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.deco-table th:first-child, .deco-table td:first-child { text-align:center; }
 /* Gas Plan table — standalone, no deco-table inheritance */
 .gas-plan-table { table-layout:fixed; width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; margin-top:10px; }
 .gas-plan-table col:nth-child(1) { width:13%; }
@@ -3201,7 +3212,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.10.25';
+const APP_VERSION = '2.10.26';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
