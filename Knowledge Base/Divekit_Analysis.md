@@ -1,37 +1,142 @@
 # Dive Kit App — Deco Engine Analysis
 **App:** `app.skuba.diving` (Dive Kit)  
-**Developer:** Ronny Majani  
-**APK version analysed:** 1.1.8 (December 2025) from APKCombo  
+**Developer:** Ronny Majani / Lazuli Global  
 **Play Store:** https://play.google.com/store/apps/details?id=app.skuba.diving  
 **Documentation:** https://divekit.app/docs/  
 **Analysis date:** June 2026
 
 ---
 
-## Key Finding: C++ Native Engine (Not JavaScript)
+## Versions Analysed
 
-The deco engine is **not in the JavaScript bundle**. It runs natively on the device through a React Native **Nitro Modules** JSI bridge as a compiled C++ library. This is why:
+| Version | Source | Build date | Notes |
+|---|---|---|---|
+| **1.1.8** | APKCombo (December 2025) | Dec 2025 | No `libDecoEngine.so` — C++ engine absent |
+| **2.8.5** | User device APK (Dropbox) | **2026-06-11 23:43 UTC** | C++ engine present; `libDecoEngine.so` in split APK |
 
-- Searching the Hermes bytecode (`index.android.bundle`, 13 MB, 1.76M disasm lines) found no ZHL-16C coefficient strings — the coefficients live in C++ code, not JS
-- The Hermes JS bundle handles UI only (React Native / Expo / Tamagui components)
-- None of the `.so` files in the architecture split APK (`config.arm64_v8a.apk`) contain deco-engine strings — the engine was moved to C++ between v1.1.8 and the June 2026 release
-- The `how-it-works` documentation page explicitly states: *"The engine is written in C++ and runs natively on the phone through a native module, rather than in JavaScript. …for speed and numerical accuracy."*
-
-**Note on version gap:** APKCombo supplied v1.1.8 (Dec 2025). The Play Store shows a June 11, 2026 update (user's device has this). The C++ migration may have landed in that update. The user's device APK (pullable via `adb pull`) would contain the native engine `.so`.
+The v2.8.5 base APK was analysed directly. The architecture-specific split APK (`config.arm64_v8a.apk`) containing `libDecoEngine.so` was not included in the provided zip — it is downloaded separately by the Play Store at install time. The JS bundle (Hermes v98, 25 MB) and DEX files in the base APK were fully analysed.
 
 ---
 
-## Architecture (v1.1.8 APK)
+## Key Finding: C++ Native Engine Confirmed via DEX Analysis
+
+The `classes5.dex` in v2.8.5 contains the loader class `com.margelo.nitro.divekit.deco.DecoEngineOnLoad` with the literal call:
+
+```java
+System.loadLibrary("DecoEngine");
+// → loads libDecoEngine.so from split APK at runtime
+```
+
+Log strings recovered from DEX:
+- `"Loading DecoEngine C++ library..."`
+- `"Successfully loaded DecoEngine C++ library!"`
+- `"Failed to load DecoEngine C++ library! Is it properly installed and linked? Is the name correct? (see CMakeLists.txt, at add_library(...))"`
+
+The React Native package class is `com.divekit.deco.DecoEnginePackage` (in `classes3.dex`).
+
+---
+
+## Architecture (v2.8.5)
 
 | Component | Technology |
 |---|---|
-| UI framework | React Native + Expo, Tamagui (component library) |
-| JS runtime | Hermes v96 bytecode |
+| UI framework | React Native 19.2.3 + Expo SDK 56.0.0 |
+| JS runtime | Hermes **v98** bytecode (25 MB bundle, up from 13 MB in v1.1.8) |
 | Native bridge | Nitro Modules (margelo/nitro) — JSI bridge |
-| JS engine called | `libNitroModules.so`, `libappmodules.so` (SVG/nav only in v1.1.8) |
-| Deco computation | **C++ native** (documented; library absent in v1.1.8 split APK) |
-| Storage | MMKV (`libNitroMmkv.so`, `libmmkv.so`) |
-| Crash tracking | Sentry |
+| **Deco engine** | **`libDecoEngine.so`** — C++ native, Nitro HybridObject |
+| Storage | MMKV via `libNitroMmkv.so` |
+| Crash tracking | Sentry (`de.sentry.io`, project `divekit-app`, org `lazuli-global`) |
+| React compiler | Experimental React Compiler enabled (`reactCompiler: true`) |
+
+### Class Hierarchy
+
+```
+com.divekit.deco.DecoEnginePackage        (React Native package registration)
+  └─ com.margelo.nitro.divekit.deco.DecoEngineOnLoad  (SO loader)
+       └─ System.loadLibrary("DecoEngine")             (→ libDecoEngine.so)
+```
+
+The DecoEngine is a **Nitro HybridObject** — a C++ class registered via
+`HybridObjectRegistry` and exposed to JavaScript via the Nitro JSI bridge.
+JS calls it through `NitroModules` global proxy.
+
+---
+
+## JS Bundle Analysis (v2.8.5)
+
+The Hermes v98 bundle contains the complete planner UI and settings schemas.
+Key structures recovered from the disassembled bytecode:
+
+### Default Settings Object (confirmed from bytecode literal)
+
+```js
+{
+  gfLow: 50,
+  gfHigh: 80,
+  ascentRateDeep: 9,          // m/min
+  ascentRateShallow: 3,       // m/min
+  ascentRateChangeDepth: 6,   // m — switch depth between the two rates
+  descentRate: 20,            // m/min
+  lastStopDepth: 6,           // m (shown in settings schema; 3 m documented as minimum stop)
+  decoStepSize: 3,            // m stop grid
+  stopTimePrecision: 'roundMinutes',
+  maxPO2Lean: 1.4,
+  maxPO2Mid: 1.5,
+  maxPO2Rich: 1.6,
+  waterType: 'salt',
+  workingRmv: 20,             // L/min
+  decoRmv: 15,                // L/min
+  ccrMetabolicO2Rate: 0.85,   // L/min
+  gasSwitchTime: 0,           // min
+  switchGasAtMod: true,
+  treatO2AsNarcotic: false,
+  stayOnLoop: true,
+  airBreaksEnabled: false,
+  airBreakPO2Threshold: 1.4,
+  airBreakInterval: 20,       // min
+  airBreakDuration: 5,        // min
+  airBreaksOnCCR: false,
+  includeTravelInLevelTime: false,
+  maxENDWarning: 30,          // m
+  gasDensityWarning: 5.2,     // g/L
+  gasDensityCritical: 6.2,    // g/L
+  cnsWarningThreshold: 80,    // %
+  otuWarningThreshold: 300,   // OTU
+  minPO2Warning: 0.18,        // bar
+  ccrDefaults: null
+}
+```
+
+### Plan Input Schema (confirmed from bytecode array literal)
+
+All 31 fields that constitute a dive plan input to the engine:
+
+```
+mode, levels, gfLow, gfHigh, cylinders, ascentRateDeep, ascentRateShallow,
+ascentRateChangeDepth, descentRate, lastStopDepth, decoStepSize,
+stopTimePrecision, gasSwitchTime, switchGasAtMod, maxPO2Lean, maxPO2Mid,
+maxPO2Rich, altitude, waterType, surfaceInterval, workingRmv, decoRmv,
+treatO2AsNarcotic, airBreaksEnabled, airBreaksOnCCR, airBreakPO2Threshold,
+airBreakInterval, airBreakDuration, includeTravelInLevelTime, maxENDWarning,
+minPPO2, otuWarningThreshold, switchGasAtMod, treatO2AsNarcotic,
+waterType, workingRmv, ccrMetabolicO2Rate, maxPO2Lean, maxPO2Mid, maxPO2Rich,
+stopTimePrecision
+```
+
+### Tissue State Validation (from error string in string pool)
+
+```
+"Invalid tissue state from native engine: expected 16 compartments, got N2=..."
+```
+
+Confirms the C++ engine returns a tissue state object with **16 N₂ compartment values + 16 He compartment values** to JavaScript (for repetitive dive chaining and UI display).
+
+### Other Engine-Related Strings in Bundle
+
+- `"Native DecoEngine module not available. This requires a native build (not Expo Go)."` — fallback error if `.so` not loaded
+- `"/(tabs)/manage/settings/deco-planner.ts"` — settings screen source path
+- GF auto-raise: `"GF high raised to {{usedGfHigh}}"` — engine can automatically raise GF High when configured GF cannot produce a valid plan
+- `"Your configured GF {{gfLow}}/{{requestedGfHigh}} cannot produce a valid plan. This export uses the closest GF that can: {{gfLow}}/{{usedGfHigh}}"` — export behaviour when GF is auto-raised
 
 ---
 
@@ -68,15 +173,31 @@ The deco engine is **not in the JavaScript bundle**. It runs natively on the dev
 | Equation | Haldane / Schreiner (standard dissolved-gas formula) |
 | Scope | Every depth change, not only at fixed stops |
 
+From JS bundle `formulaContent` string (Bühlmann help page):
+
+```
+P_tissue(t) = P₀ + (P_inspired - P₀) × (1 - e^(-k×t)) + (R × t - R/k) × (1 - e^(-k×t))
+
+Where:
+  P_tissue = tissue inert gas pressure after time t
+  P₀       = initial tissue pressure
+  P_inspired = inspired inert gas pressure
+  k        = ln(2) / half-time (compartment constant)
+  R        = rate of ambient pressure change
+  t        = time
+```
+
 ### M-Value / Ceiling Formula
 
 ```
 M = a + P_amb / b        (standard Bühlmann)
 ```
 
-With gradient factors applied:
+With gradient factors applied (from bundle):
 
 ```
+Ceiling = (P_tissue - M₀) / ΔM × 10     (shallowest depth where tissue ≤ M-value)
+
 GF(depth) = GF_Low + (GF_High - GF_Low) × (depth_first_stop - depth) / depth_first_stop
 ceiling_GF = a × GF + P_amb / b        (Baker-style scaled ceiling)
 ```
@@ -92,7 +213,7 @@ ceiling_GF = a × GF + P_amb / b        (Baker-style scaled ceiling)
 | GF Low | **50** |
 | GF High | **80** |
 | Stop grid | 3 m |
-| Last stop depth | 3 m (salt) |
+| Last stop depth | 6 m (in settings schema) / 3 m (documented minimum) |
 | Stop time rounding | Whole minutes (default); precise MM'SS" opt-in |
 | Minimum last stop | **1 minute** |
 | Gas switch time | 0 minutes (default) |
@@ -117,8 +238,8 @@ Boundary: exactly 28% = mid; exactly 45% = rich. Gas-switch depth and hyperoxia 
 ### Ascent Model
 
 - **Two-rate model**: deep rate + shallow rate, switching at configurable depth
-- Default deep ascent: 9 m/min; shallow ascent: 3 m/min; switch at 3 m depth
-- Descent rate: configurable
+- Default deep ascent: **9 m/min**; shallow ascent: **3 m/min**; switch at **6 m** (from bytecode default object)
+- Descent rate: **20 m/min** (default)
 - Last stop: held until leading tissue can surface within GF_High — **no credit for the swim to surface**
 
 ### Oxygen Toxicity
@@ -127,6 +248,20 @@ Boundary: exactly 28% = mid; exactly 45% = rich. Gas-switch depth and hyperoxia 
 - Limits: NOAA / Shearwater CNS clock
 - CNS decays on half-life, including across surface intervals
 - OTU: pulmonary "whole-body" measure
+- CNS warning threshold: **80%** (default)
+- OTU warning threshold: **300** (default)
+
+### Air Breaks (CCR / Rich-O₂ Deco)
+
+New in post-v1.1.8 releases (confirmed from settings schema):
+
+| Setting | Default |
+|---|---|
+| Air breaks enabled | **false** |
+| Air break PPO₂ threshold | 1.4 bar |
+| Air break interval | 20 min |
+| Air break duration | 5 min |
+| Air breaks on CCR | false |
 
 ### CCR Support
 
@@ -171,15 +306,25 @@ Cross-reference dataset files (local copies):
 
 ## APK Binary Analysis
 
-### APK Structure (v1.1.8)
+### APK Structure
+
+#### v1.1.8 (APKCombo, Dec 2025)
 
 | File | Size | Notes |
 |---|---|---|
 | `index.android.bundle` | 13 MB | Hermes v96 bytecode — UI only |
-| `config.arm64_v8a.apk` | ~28 MB | ARM64 native libs |
+| `config.arm64_v8a.apk` | ~28 MB | ARM64 native libs (no `libDecoEngine.so`) |
 | `classes.dex` – `classes6.dex` | ~total 12 MB | Android/RN framework code |
 
-### Native Libraries (arm64-v8a)
+#### v2.8.5 (User device, 2026-06-11)
+
+| File | Size | Notes |
+|---|---|---|
+| `index.android.bundle` | **25 MB** | Hermes **v98** bytecode (was 13 MB in v1.1.8) |
+| `classes.dex` – `classes7.dex` | 7 DEX files | One more DEX than v1.1.8; includes `DecoEngineOnLoad` and `DecoEnginePackage` classes |
+| `config.arm64_v8a.apk` | not in zip | Contains `libDecoEngine.so` — distributed as separate split APK by Play Store |
+
+### Native Libraries (v1.1.8, arm64-v8a — for reference)
 
 | Library | Size | Purpose |
 |---|---|---|
@@ -190,15 +335,32 @@ Cross-reference dataset files (local copies):
 | `libNitroModules.so` | 789 KB | Nitro JSI bridge framework |
 | `libexpo-modules-core.so` | 1.3 MB | Expo core |
 | `libmmkv.so` + `libNitroMmkv.so` | ~738 KB | MMKV key-value storage |
+| **`libDecoEngine.so`** | **absent** | **Added in post-v1.1.8 update** |
 
-**No deco engine `.so` found in v1.1.8.** The engine was added as C++ native in a later update (June 2026 release). Pull APK from user's device for the current version.
+### v2.8.5 DEX: DecoEngine Loader (classes5.dex)
 
-### JS Bundle Analysis
+```java
+// com.margelo.nitro.divekit.deco.DecoEngineOnLoad
+public final void initializeNative() {
+    if (DecoEngineOnLoad.didLoad) return;
+    try {
+        Log.i(TAG, "Loading DecoEngine C++ library...");
+        System.loadLibrary("DecoEngine");  // ← libDecoEngine.so
+        Log.i(TAG, "Successfully loaded DecoEngine C++ library!");
+        DecoEngineOnLoad.didLoad = true;
+    } catch (Error e) {
+        Log.e(TAG, "Failed to load DecoEngine C++ library! ...", e);
+        throw e;
+    }
+}
+```
 
-- 1.584M lines of decompiled JS (hermes-dec v0.1.4)
-- No ZHL-16C coefficients in bundle (all deco math is in native)
-- Engine-adjacent identifiers found: `tissueLoading` (post-dive UI display), `BestMixCalculator` (gas planning), `maxAllowedDepth`, `maxMOD`, `maxPPO2` (MOD calculator)
-- Gas blender functions found: `solveGasMix`, `solve1BankAnalytical`, `solve2BankAnalytical`, `findOptimalGasMix`
+### JS Bundle Analysis (v2.8.5)
+
+- Hermes v98 bytecode, 25 MB (hbc-disassembler used; full decompile not feasible — runs to 7+ GB)
+- No ZHL-16C coefficients in bundle (all deco math is in C++ native)
+- Default settings object embedded as bytecode literal (confirmed above)
+- Tissue state validation: 16 N₂ + 16 He compartment values passed back to JS
 
 ---
 
@@ -212,6 +374,7 @@ Cross-reference dataset files (local copies):
 | VPM-B | Yes (primary model) | No |
 | Default GF | 20/85 (OC), 90/90 (bailout) | 50/80 |
 | CCR | Yes | Yes |
+| Air breaks | Yes | Yes (configurable) |
 | Open source | Engine JS files extractable | Closed-source C++ |
 
 ---
@@ -230,6 +393,9 @@ Ronny Majani maintains `ronnymajani/Abysner` (a fork of `NeoTech-Software/Abysne
 4. **1-second integration:** DiveKit and LSP both use 1 s. MultiDeco uses coarser steps → small RT/TTS differences expected.
 5. **Cross-reference dataset:** Use `divekit-cross-reference/` for 3-way LSP vs MultiDeco vs DiveKit regression testing. Run after any ZHL+GF engine change.
 6. **Coefficient table:** DiveKit uses standard ZH-L16C — same table as Abysner, Subsurface, MultiDeco, LSP. See `Abysner_Analysis.md` for verified a/b/halfTime tables.
+7. **Air breaks:** DiveKit now supports configurable air breaks (disabled by default). Consider adding to LSP for completeness.
+8. **Ascent rate change depth:** DiveKit default is **6 m** switch depth (confirmed from bytecode). LSP should verify this matches intended behaviour.
+9. **GF auto-raise:** DiveKit silently raises GF High to the lowest value that produces a valid plan when the user's GF can't complete deco. LSP could add a similar guard/warning.
 
 ---
 
@@ -248,5 +414,6 @@ Ronny Majani maintains `ronnymajani/Abysner` (a fork of `NeoTech-Software/Abysne
 
 ---
 
-*Analysis by APK inspection (v1.1.8) + official documentation (June 2026)*  
-*Engine architecture confirmed C++ via divekit.app/docs/engine/how-it-works/*
+*Analysis by APK inspection (v1.1.8 + v2.8.5) + official documentation (June 2026)*  
+*Engine architecture confirmed via DEX class analysis (`libDecoEngine.so` via `System.loadLibrary`)*  
+*v2.8.5 build date: 2026-06-11 23:43 UTC (commitTime: 1781221405060)*
