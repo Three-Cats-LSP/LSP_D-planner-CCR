@@ -151,6 +151,67 @@ if overtime:
 
 ---
 
+## Item 5 — Multi-level dive profile support
+
+**Status:** Real, large item. Previously deferred ("too large for current session scope") — now being added to 2.20.0 proper per Roman's request, but should be treated as the biggest single item in this release and may justify its own sub-milestone/branch rather than landing in one pass.
+
+**What exists today:** LSP's entire planning pipeline is single-level. The whole UI and both engines are built around one `decoDepth` input and one bottom-time value — confirmed by reading the live code, not assumed: `decoDepth` (a single numeric field, e.g. line ~14388) drives `bottomDepth`, which flows into a single descent→bottom→ascent schedule. There is no concept of "descend to 40m for 10 min, then move to 25m for 20 min, then ascend" as a single planned dive — multi-level dives today have to be approximated by running LSP multiple times and manually combining results, which doesn't correctly track tissue loading across the transition.
+
+**What's needed:**
+1. **Input model change:** replace (or augment) the single depth/time pair with an ordered list of segments, each with its own depth, time, and optionally gas (a multi-level dive may also be a multi-gas dive, though gas switching during bottom segments is a related-but-separable concern — confirm whether to scope both together or gate gas-per-segment behind the existing gas-switch UI). UI needs an "Add Level" affordance, similar in spirit to the existing deco-gas add/remove list, ordered top-to-bottom by time (segment 1 happens first).
+2. **Engine change:** both `loadTissuesConstant`-style segment processing and the Schreiner descent/ascent-between-segments math already exist and are correct (per the "Schreiner vs Haldane" correction above) — the work is in the *driving loop*, not the underlying physics. Each level transition is just another Schreiner-driven depth change followed by a Haldane-driven constant-depth hold; the existing per-segment functions should compose directly. The real engineering risk is in how `runDecoSchedule()` (line ~8152) currently assumes a single bottom phase — needs a careful read of that function's control flow before estimating effort further.
+3. **TTS worst-point consideration (flagged separately in `Abysner_GUE_Crosscheck_Addendum.md`):** Abysner computes Time-To-Surface at every segment boundary, not just end-of-final-segment, specifically because a shallower-but-longer trailing segment can accumulate more deco obligation than the deep portion. LSP's reserve-gas/TTS logic should adopt this same per-boundary-max approach once multi-level segments exist — doing this from the start avoids a silent under-report of reserve gas on profiles where the worst point isn't the last segment.
+4. **Result display:** the existing single-bottom-segment result table/export structure (deco table rows, TXT/PDF export, profile graph) needs to show multiple bottom/transition rows distinctly — check whether the existing row-type system (`'bottom'`, `'descent'`, etc., seen at line ~7684) already has the vocabulary for this or needs new row types for "transit between levels" vs "initial descent."
+5. **Validation:** decide how strictly to validate segment ordering/depths (e.g. can a later segment be deeper than an earlier one — yes, that's a legitimate multi-level profile and just means the controlling ceiling tracks the max depth reached, not monotonically decreasing depths) and what happens to existing single-level saved dives/presets when this ships (should default to "1 segment" and behave identically to today for anyone not using the new feature).
+
+**Recommended approach:** before writing any code, read `runDecoSchedule()` end-to-end and produce a short written breakdown of exactly which parts assume single-level vs which are already segment-agnostic. This item is large enough that estimating it accurately requires that read first — don't scope further from this roadmap doc alone.
+
+**Acceptance:**
+- User can add 2+ depth/time segments to a single dive plan and get one combined schedule with correctly continuous tissue loading across all segments (verify against a hand-computed or cross-app reference profile, not just "it runs without erroring").
+- TTS/reserve-gas calculation checks every segment boundary, not just the last one.
+- Existing single-segment dives (the overwhelming majority of current users) see zero behavior change — this is additive.
+- All three test suites (`tests-massive.html`, `tests-massive-main.html`, `tests-verify.html`) still pass, plus new multi-level-specific test cases added to at least one of them.
+- Export formats (TXT/PDF/Messenger) correctly show the multi-level structure, per the existing export consistency rule.
+
+---
+
+## Item 6 — Advanced Settings profiles: save/load, plus pre-built app-default presets
+
+**Status:** Scoped, ready to implement. Builds directly on an existing mechanism rather than introducing new architecture.
+
+**What exists today:** `appSettings` (line ~15717) already has exactly the right shape for this — `DECO_FIELDS` is a maintained list of every relevant setting's element ID, and `save()`/`load()` already serialize all of them to/from a single `localStorage` slot (`lspDiveSettings_v6`) as one JSON blob. This is a single implicit "current settings" slot, not a named multi-profile system — that's the actual gap.
+
+**What's being added:**
+1. **Named user profiles:** instead of one implicit slot, support N named profiles (e.g. "My Cave Setup", "Conservative Travel"), each storing the same field set `DECO_FIELDS` already tracks. Store as `lspDiveProfiles_v1: { profileName: { ...fields }, ... }` alongside (not replacing) the existing auto-save slot, which continues to behave as "last used settings" exactly as today. Add Save/Load/Delete/Rename UI in the Advanced Settings panel — a profile selector dropdown plus "Save as new profile" / "Save changes to current profile" / "Load" / "Delete" actions.
+2. **Pre-built app-default presets:** a fixed, non-editable set of "load these values" buttons, one per reference app already studied, populating the *same* `DECO_FIELDS` that user profiles use — selecting one just pre-fills the form, exactly like loading a user profile, and the diver can then tweak and optionally save their own variant from there. Confirmed default values to seed each preset (already documented in the knowledge base, not invented for this item):
+
+| Setting | LSP (current default) | MultiDeco | Abysner | GUE DecPlanner |
+|---|---|---|---|---|
+| GF Low | 40 (confirmed: `gfLowInput` selected option) | 30 | 60 | 20 (OC) |
+| GF High | 80 (confirmed: `gfHighInput` selected option) | 85 | 70 | 85 (OC) |
+| Descent rate | 20 m/min | ~18 m/min (60 ft/min) | 20 m/min | 20 m/min |
+| Ascent rate | 10 m/min | ~5 m/min (15 ft/min) | 5 m/min | 9 m/min |
+| Deco step size | 3 m | (smallest index, ~1m / 3.3ft) | 3 m | 3 m |
+| Last deco stop | 3 m | ~3 m (10 ft) | 3 m | 3 m |
+| Max ppO2 (bottom) | 1.4 bar (confirmed: `ppo2Bottom` selected option) | n/a (deco-only table documented) | 1.4 bar | 1.2 bar |
+| Max ppO2 (deco) | 1.6 bar (confirmed: `ppo2Deco` selected option) | 1.6 ata | 1.6 bar | 1.2 bar (deco) / 1.5 bar (Max O2) |
+
+   **This table still needs one more verification pass before implementation** — some values above were converted from imperial source units (MultiDeco's settings are stored as imperial-default indices per `MultiDeco_GUI_Planner_Analysis.md` §8) and rounded for display; exact metric conversions should be recomputed precisely. LSP's own current defaults (descent/ascent/step/last-stop/ppO2) are now confirmed directly from the live `<select>` markup; GF Low/High were also just confirmed (40/80) and should replace any stale "Lo=30/Hi=85" reference elsewhere in this knowledge base that was actually describing MultiDeco's defaults, not LSP's — worth a search-and-check across other docs for this mix-up before this item ships. An "ApexDeco" preset was also requested but has no dedicated analysis doc yet in this knowledge base — needs a short research pass (the existing `refs/` engine source files may be enough) before that specific preset can be seeded; don't block the other three presets on it.
+
+3. **Known constraint to design around:** several of these settings are `<select>` dropdowns with a *fixed* list of options (e.g. `ascentRate` only offers 3/6/9/10/12/15/18 m/min), not free-text numeric inputs. A reference app's exact default may not exist as an option (e.g. MultiDeco's ~4.6 m/min ascent rate has no matching `<option>` in LSP's current dropdown). Decide per-field whether to (a) snap to the nearest existing option, (b) add the missing option to the dropdown itself if it's a value worth offering generally, or (c) convert affected fields to free-text numeric inputs. Recommend (b) where the missing value is a reasonable thing to offer regardless of presets, (a) otherwise — and document whichever choice is made per field, since "preset says one thing, loaded value is slightly different" needs a clear UI explanation (e.g. a small note "(rounded to nearest available value)") rather than silently snapping.
+4. **Tooltip/labeling:** each preset button should be labeled by app name and have a tooltip noting it's an approximation of that app's *defaults*, not a guarantee of identical computed results (the underlying algorithm differences documented elsewhere in this knowledge base, e.g. MultiDeco's N2/He half-time swap, mean two apps with "the same settings" can still produce different schedules) — avoid implying these presets make LSP compute identically to the named competitor.
+
+**Where it goes:** New subsection within the existing Advanced Settings panel (`advancedSettingsBody`, line ~1757) — a "Settings Profiles" group, likely near the top of the panel given it can replace everything below it.
+
+**Acceptance:**
+- User can save current Advanced Settings as a named profile, reload it later, and delete/rename it.
+- At least 3 app-default presets (MultiDeco, Abysner, GUE DecPlanner) load correctly with verified-accurate values; ApexDeco preset added once its defaults are researched, or explicitly deferred with a note if not feasible in this pass.
+- Loading any preset does not silently fail on fields where the target value isn't an available dropdown option — it either snaps with a visible note, or the dropdown gains the option.
+- Existing single-slot auto-save/auto-load behavior (today's `appSettings.save()`/`.load()`) is unchanged for anyone not using the new named-profile UI — this is additive.
+- Audit check confirming the new `lspDiveProfiles_v1` storage key round-trips correctly (save → reload page → load → values match).
+
+---
+
 ## Deferred — CCR/SCR support
 
 Explicitly deferred to a future version (2.30+ or later) per Roman's instruction — not worth the token/time cost in 2.20.0. For when it is picked up, the formula is already verified and ready from `OpenSource_Deco_Libraries.md` (tl5915):
@@ -166,6 +227,8 @@ and MultiDeco's full CCR/SCR/bailout symbol set is documented in `APK_Reverse_En
 1. **Item 1 (Surface GF)** — smallest, self-contained, no architectural decisions pending.
 2. **Item 2 (CNS/OTU audit)** — should happen before Item 3, since Item 3's OTU-reset fix depends on knowing which OTU formula is authoritative.
 3. **Item 3 (Last Dive dd/hh:mm + OTU day-boundary fix)** — the most user-facing win Roman specifically asked for.
-4. **Item 4 (Shallow Gradient)** — now unblocked (formula confirmed against the real binary). Needs one design decision before starting (the Boyle's Law compensation dependency, see Item 4 above) plus a code-read of LSP's existing stop-time loop to find the equivalent fractional-rounding check the bypass applies to. Can run in any order relative to 1–3 since it's architecturally independent of Surface GF, CNS/OTU, and the repetitive-dive carry mechanism.
+4. **Item 6 (Settings profiles)** — straightforward extension of an existing mechanism (`appSettings`), no dependency on anything else in this list, good candidate to interleave with 1–3 if it speeds up parallel progress.
+5. **Item 4 (Shallow Gradient)** — unblocked (formula confirmed against the real binary). Needs one design decision before starting (the Boyle's Law compensation dependency, see Item 4 above) plus a code-read of LSP's existing stop-time loop to find the equivalent fractional-rounding check the bypass applies to.
+6. **Item 5 (Multi-level profiles)** — by far the largest item; do this last, after the smaller items are shipped and the team has fresh familiarity with `runDecoSchedule()` from working through Items 1–4. Strongly recommend a dedicated read-through of `runDecoSchedule()`'s current control flow as its own first step, written up before estimating further, rather than scoping the implementation purely from this roadmap doc. Consider shipping as its own minor version (e.g. 2.20.0 ships Items 1–4 and 6; multi-level lands in 2.21.0) if it threatens to hold up everything else — flag this trade-off with Roman once Items 1–4 and 6 are further along and there's a clearer sense of remaining time/complexity budget.
 
-Each item gets its own audit GROUP and CHANGELOG entry per existing project convention. Run the full `tests-massive.html` / `tests-massive-main.html` / `tests-verify.html` suite after each item, not just `audit.py`, since these touch live calculation paths (Items 2, 3, and 4 especially).
+Each item gets its own audit GROUP and CHANGELOG entry per existing project convention. Run the full `tests-massive.html` / `tests-massive-main.html` / `tests-verify.html` suite after each item, not just `audit.py`, since these touch live calculation paths (Items 2, 3, 4, and 5 especially).
