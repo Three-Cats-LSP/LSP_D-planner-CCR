@@ -243,6 +243,23 @@ All settings are serialized to `vpm_config.data` (Java `ObjectOutputStream`) and
 | `MaxO2` | int | 3 | Max ppO2 index for MOD |
 | `ascent` | int | 7 | Ascent rate index (→ rateValue()) |
 | `descent` | int | 14 | Descent rate index |
+
+> **⚠️ CORRECTION — §8 table is incomplete on ascent/descent rates (confirmed June 2026 via screenshot):**
+> The jadx decompile of `Settings.java` only surfaced a single `ascent` field and a single `descent`
+> field. However, a screenshot of MultiDeco's actual "Descent / ascent rates" config screen shows
+> **four independently adjustable fields** — Descent and three separate ascent-phase fields (Surface,
+> Deco, Ascent) — each with its own dropdown. Default values confirmed from the running app:
+> - **Descent:** 22 mpm (not the ~18 m/min / 60 ft/min implied by `rateValue(14, false)`)
+> - **Surface ascent:** 9 mpm
+> - **Deco ascent:** 9 mpm
+> - **Ascent (deep):** 9 mpm
+>
+> The `Settings.java` decompile likely missed the other three rate fields (possibly named differently,
+> stored as separate fields in a later version, or defined in a different class not captured by jadx).
+> **Do not rely on the single `ascent`/`descent` fields in this table as a complete picture of
+> MultiDeco's rate settings — use the screenshot-confirmed values above for the Item 6 preset
+> implementation.** A follow-up read of the full decompiled `Settings.java` source (in `jadx_out/`
+> if available) may identify the missing field names, but is not blocking.
 | `OC_CCR` | int | 0 | 0=OC, 1=CCR |
 | `CCRStart` | double | 0.7 | CCR start setpoint (ata) |
 | `Extend` | bool | false | Extended deco stops |
@@ -329,8 +346,8 @@ To call the native engine from your own code (if porting to desktop/web), replic
 - **Model integer mapping:** VPM-B=1, ZHL-B GF=5, ZHL-C GF=6 (matches engine enums)
 - **GF defaults:** GFLo=30, GFHi=85
 - **ppO2 max table:** `[1.2, 1.3, 1.4, 1.5, 1.6]` ata, default index=4 → **1.6 ata** for deco
-- **Ascent rates:** `rateValue(7, false)` = 15 ft/min (imperial default)
-- **Descent rates:** `rateValue(14, false)` = 60 ft/min (imperial default)
+- **Ascent rates:** ~~`rateValue(7, false)` = 15 ft/min (imperial default)~~ **CORRECTED (screenshot):** Three separate phase rates — Surface/Deco/Ascent — each defaulting to **9 mpm**; the single `rateValue(7)` field from `Settings.java` is incomplete.
+- **Descent rate:** ~~`rateValue(14, false)` = 60 ft/min~~ **CORRECTED (screenshot):** **22 mpm** default.
 - **Last stop:** `lastStopValue(0, false)` = **10 ft** (imperial default)
 - **Stop step:** index 0 (smallest step)
 
