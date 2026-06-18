@@ -26,6 +26,16 @@ Already implemented, and arguably more rigorous than MultiDeco's version:
 
 ---
 
+## Update — MultiDeco binary fully obtained and independently re-verified
+
+Roman provided the actual `MultiDeco_226.apk` and both `libmultideco.so` builds (arm64-v8a, armeabi-v7a), now in `MultiDeco Binary/` in this repo, along with two analysis docs (`MultiDeco_Engine_Full_Analysis.md`, `MultiDeco_ShallowGradient_Analysis.md`). Claude independently re-disassembled and byte-verified the contested claims directly against the binary (not by re-reading the docs) — see `MultiDeco_Verified_Findings_2_Claude.md` for full method and evidence. Two things this changes for the roadmap:
+
+1. **Item 4 (Shallow Gradient) is now unblocked** — formula confirmed instruction-for-instruction against the real binary. See the rewritten Item 4 below.
+2. **The a5=0.6491 theory for the RT/TTS gap is retired.** Both of MultiDeco's stored N2 a-tables were found and verified (`0x15d00` = "A/B" variant a5=0.6667, `0x15d80` = "C" variant a5=0.6200) — neither uses 0.6491, and the "C"/GF mode table matches LSP's existing 0.6200 exactly. This is good news (one less unexplained discrepancy) but means the `OpenSource_Deco_Libraries_2.md` batch-2 doc's categorization of MultiDeco under the "canonical Bühlmann a5=0.6491" column was incorrect and should be disregarded.
+3. **New finding, not on the original roadmap:** MultiDeco's N2 and He tissue compartments use each other's half-time constants — confirmed via direct pointer-tracing through `GAS_LOADINGS_CONST_DEPTH`'s disassembly, not inference. N2 tissue loading uses canonical *He* half-times (faster), He tissue loading uses canonical *N2* half-times (slower). This looks like a genuine bug in MultiDeco, not a design choice, and would explain RT/TTS gaps specifically on trimix dives (consistent with `Subsurface_Engine_Analysis.md` already flagging He-bearing scenarios as having the largest deltas) while leaving air/nitrox-only gaps unexplained by this mechanism. **Recommendation: do not replicate this in LSP.** No action item needed beyond noting it as a resolved piece of the historical gap investigation — this doesn't require any LSP code change, since LSP already has correct N2/He half-time assignment.
+
+---
+
 ## Item 1 — Surface GF display
 
 **Status:** Scoped, ready to implement.
@@ -100,26 +110,44 @@ These are two legitimate, different CNS methodologies (rate-accumulation vs limi
 
 ## Item 4 — Shallow Gradient (MultiDeco proprietary feature)
 
-**Status:** Research spike required before any implementation can be scoped. Do not attempt to implement from current information — there is no formula yet, only symbol names.
+**Status:** Unblocked. Formula confirmed via direct ARM64 disassembly of the real binary, independently re-verified instruction-for-instruction by Claude (not just transcribed from the original analysis doc). Ready to scope an implementation.
 
-**What we actually have:** From `APK_Reverse_Engineering.md`, a list of *symbol names* pulled from MultiDeco's stripped native binary's symbol table:
+**What it actually is (confirmed, not symbol-name guesswork):** Shallow Gradient is **not** an additional conservatism layer on the ceiling itself — the GF-derived ceiling is unchanged. It's a stop-scheduling smoothness adjustment with two independent triggers, both of which set a single `Apply_Shallow_Grad` flag:
+
+**Trigger 1 — tissue-loading ratio** (`ShallowGradDepthTest`, confirmed at binary address `0x3251c`):
 ```
-Shallow_Grad_Depth_Factor
-Shallow_Grad_Time_Factor
-Shallow_Grad_Max_ATA_Factor
-ShallowGradDepthTest()
-Apply_Shallow_Grad
+ratio = mean(N2_Press[i] - He_Press[i], i=0..15) / 32.0 / first_stop_depth_bar
+Apply_Shallow_Grad = (ratio > 0.40)
+if Apply_Shallow_Grad:
+    Shallow_Grad_Max_ATA_Factor = min((ratio - 0.40) * 10.0, 1.0)   // 0→1 as ratio goes 0.40→0.50
 ```
-No disassembled function bodies, no formula, no coefficients were extracted — the original analysis (credited to "Three-Cats-LSP / Perplexity Computer" in the doc header) only went as far as the symbol table. **I have not personally inspected the MultiDeco binary** — no `.so` file or disassembly exists anywhere in this sandbox; only the markdown summary and a results JSON were available this session.
+Also applies a Boyle's Law compensation call (`BOYLES_LAW_COMPENSATION(depth/3, depth/3)`) as a side effect before computing the ratio — this dependency is itself a separate, already-disassembled function (`0x342ac`) if exact parity is wanted, though it's plausible the Boyle's-law call matters more for the VPM-B path than the ratio computation itself; needs a decision on whether to port it or treat the ratio check as Bühlmann/GF-only.
 
-**To make progress, one of the following is needed:**
-1. **Roman uploads the actual MultiDeco APK** (available from APKPure/AppBrain/Aptoide — `com.hhssoftware.multideco`, ~4.2 MB, latest v2.26) so the native `libmultideco.so` (both `arm64-v8a` and `armeabi-v7a` variants exist) can be disassembled directly — `strings`, `nm -D`, and a `struct`-based float64/float32 scanner against the `.text`/`.rodata` sections, the same method already used successfully to pull the confirmed ZHL-16C b-coefficient table out of this binary previously. This is the highest-confidence path to an actual formula.
-2. **Alternatively**, if the MultiDeco UI itself exposes a "Shallow Gradient" toggle with a help/tooltip description (most likely under its Advanced or Bailout settings, based on the `bailConserveGFHi`-adjacent symbol naming), screenshots or a written description of what the feature claims to do in plain English would let us design an equivalent from first principles rather than reverse-engineer the exact internal formula.
-3. **Lowest-confidence fallback:** infer a reasonable behavior from the symbol names alone (`Depth_Factor` × `Time_Factor`, capped by `Max_ATA_Factor`, gated by a `DepthTest()`) and implement a documented **approximation**, clearly labeled as such in the UI tooltip and CHANGELOG, not a faithful port. Only pursue this if (1) and (2) are unavailable, since shipping a guessed safety-relevant deco algorithm change under a name that implies parity with a specific competitor's feature is misleading to users.
+**Trigger 2 — stop-time-based** (`ShallowGradTimeTest`, confirmed at `0x35710`):
+```
+Apply_Shallow_Grad |= (current_stop_time_min > 60.0)
+if overtime:
+    Shallow_Grad_Time_Factor = min((current_stop_time_min - 60.0) * 0.05, 1.0)  // 0→1 as time goes 60→80 min
+```
 
-**Recommendation:** Pause this item until Roman can upload the APK (path 1). It's a half-day task once we have the binary, given the existing tooling and successful precedent on the same binary. Don't burn tokens guessing at safety-relevant math from five symbol names.
+**Effect when active** (in `DECOMPRESS_STOP`): bypasses a fractional ceiling-to-stop-depth snap-extension check — when the computed ceiling falls awkwardly between two standard stop depths, the algorithm normally adds an extra rounding cycle; Shallow Gradient skips that check. **Net effect is usually a slightly shorter or smoother shallow-stop schedule, not a longer one** — this corrects an earlier assumption (carried in `MultiDeco_ShallowGradient_Analysis.md`'s own framing and in this roadmap's first draft) that the feature adds conservatism. It does the opposite in the common case.
 
-**If/when implemented:** Advanced Settings toggle, off by default, with a tooltip that's explicit about it being MultiDeco-compatible shallow-stop acceleration (or whatever it's confirmed to do), not a Bühlmann/VPM-B standard feature — same spirit as the existing "MultiDeco compatible" labeling already used elsewhere in Advanced Settings (e.g. Transit Mode, Stop Rounding per `DiveKit_Engine_Knowledge_Base.md`).
+**Confirmed constants (independently re-verified against raw binary bytes by Claude, not just transcribed):**
+- Ratio threshold: `0.40` (rodata, confirmed)
+- Ratio-to-factor scale: `×10`, capped at `1.0`
+- Time threshold: `60.0` minutes (confirmed)
+- Time-to-factor scale: `×0.05`, capped at `1.0` (reaches cap at 80 min)
+
+**Proposed scope for 2.20.0:**
+1. Implement the ratio-trigger and time-trigger as a single `shouldApplyShallowGrad(tissues, firstStopDepthBar, currentStopTimeMin)` helper in LSP's ZHL engine, following the LSP convention of pure functions operating on the existing `tissues` array shape (no need for the `Apply_Shallow_Grad` global flag pattern — keep it functional).
+2. Implement the bypass effect: in LSP's own stop-time loop, identify the equivalent fractional-rounding logic (if LSP has one — needs a code-read first, since LSP's stop loop architecture differs from MultiDeco's; this may be a no-op if LSP doesn't have an equivalent snap-extension check to begin with, in which case the toggle would have no effect and that should be stated plainly in the tooltip rather than silently doing nothing).
+3. Advanced Settings toggle, **off by default**, named clearly as MultiDeco-compatible behavior (not a Bühlmann/VPM-B standard feature), consistent with the existing "MultiDeco compatible" labeling pattern already used for Transit Mode / Stop Rounding.
+4. Decide on the Boyle's Law compensation dependency (open question above) before finalizing — may be VPM-B-only in practice, which would simplify the Bühlmann/GF-mode implementation to just the ratio/time triggers with no Boyle's-law side effect.
+
+**Acceptance:**
+- New toggle in Advanced Settings, off by default, with tooltip stating plainly what it does (smooths/shortens shallow stops under high tissue loading or long stop times) and that it's MultiDeco-specific behavior, not a standard algorithm feature.
+- Audit check confirming the toggle defaults to off and that enabling it only affects shallow-stop rounding, not the underlying ceiling.
+- Regression test on at least one scenario from the existing cross-reference suite where the ratio trigger is expected to activate (a long/deep dive with high tissue loading relative to first-stop depth — S6 or A2 from the existing 21-scenario suite are good candidates given their already-large MultiDeco deltas) to confirm the toggle moves LSP's output in the expected direction (shorter/smoother, not longer).
 
 ---
 
@@ -138,6 +166,6 @@ and MultiDeco's full CCR/SCR/bailout symbol set is documented in `APK_Reverse_En
 1. **Item 1 (Surface GF)** — smallest, self-contained, no architectural decisions pending.
 2. **Item 2 (CNS/OTU audit)** — should happen before Item 3, since Item 3's OTU-reset fix depends on knowing which OTU formula is authoritative.
 3. **Item 3 (Last Dive dd/hh:mm + OTU day-boundary fix)** — the most user-facing win Roman specifically asked for.
-4. **Item 4 (Shallow Gradient)** — blocked on Roman uploading the MultiDeco APK; can run in parallel with 1–3 if the upload happens early, otherwise slips to 2.20.x or later.
+4. **Item 4 (Shallow Gradient)** — now unblocked (formula confirmed against the real binary). Needs one design decision before starting (the Boyle's Law compensation dependency, see Item 4 above) plus a code-read of LSP's existing stop-time loop to find the equivalent fractional-rounding check the bypass applies to. Can run in any order relative to 1–3 since it's architecturally independent of Surface GF, CNS/OTU, and the repetitive-dive carry mechanism.
 
-Each item gets its own audit GROUP and CHANGELOG entry per existing project convention. Run the full `tests-massive.html` / `tests-massive-main.html` / `tests-verify.html` suite after each item, not just `audit.py`, since these touch live calculation paths (Items 2 and 3 especially).
+Each item gets its own audit GROUP and CHANGELOG entry per existing project convention. Run the full `tests-massive.html` / `tests-massive-main.html` / `tests-verify.html` suite after each item, not just `audit.py`, since these touch live calculation paths (Items 2, 3, and 4 especially).
