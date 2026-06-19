@@ -4,6 +4,16 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.6 — 2026-06-19
+
+### Fixed
+
+- **GF preset dropdown shows "Custom" after loading any app or config preset** — `loadAppPreset()` and `loadConfigPreset()` called `setCustomGF()` to commit GF Low/High values into `mGF`. However `setCustomGF()` unconditionally sets `gfPresetSelect.value = 'custom'` regardless of whether the loaded values match a named preset, and never calls `handleGFSelect()`, so `gfCustomRow` was never shown. Result: after loading any preset whose GF matched a named option (e.g. 20/85), the dropdown showed "Custom" instead of "20/85", and the Low/High inputs remained hidden. Fixed by replacing the `setCustomGF()` call in both loaders with `setGF(low, high)`, which correctly matches a preset option in the dropdown (or falls back to "Custom" + shows the custom inputs only when no match exists), and commits the values to `mGF`.
+
+- **`APP_VERSION`** — bumped to `2.20.6`.
+
+---
+
 ## v2.20.5 — 2026-06-19
 
 ### Changed
