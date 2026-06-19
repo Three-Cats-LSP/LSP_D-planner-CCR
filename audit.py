@@ -1731,12 +1731,12 @@ if stale_yes:
 else:
     ok("App presets: o2AtMODSelect values all valid ('on' or 'off')")
 
-# 34.29 GUE DecPlanner ppo2 values must be '1.4', '1.5', or '1.6'
+# 34.29 GUE DecPlanner ppo2 values must be valid select options (1.2/1.4/1.5/1.6)
 gue_ppo2 = re.findall(r"name:\s*'GUE DecPlanner'[\s\S]*?ppo2Bottom:\s*'([^']+)'", js)
-if gue_ppo2 and gue_ppo2[0] not in ('1.4','1.5','1.6'):
-    fail(f"GUE DecPlanner ppo2Bottom={gue_ppo2[0]!r} not a valid select option (1.4/1.5/1.6)")
+if gue_ppo2 and gue_ppo2[0] not in ('1.2','1.4','1.5','1.6'):
+    fail(f"GUE DecPlanner ppo2Bottom={gue_ppo2[0]!r} not a valid select option (1.2/1.4/1.5/1.6)")
 else:
-    ok("GUE DecPlanner preset: ppo2Bottom is a valid select option")
+    ok("GUE DecPlanner preset: ppo2Bottom is a valid select option (1.2 now supported)")
 if re.search(r'CNS DUAL-METHOD AUDIT', js):
     ok("CNS dual-method audit: cross-check comment documented")
 else:

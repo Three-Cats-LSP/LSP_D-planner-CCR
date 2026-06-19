@@ -1906,6 +1906,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <option value="1.6">1.6 bar</option>
 <option value="1.5">1.5 bar</option>
 <option selected="" value="1.4">1.4 bar</option>
+<option value="1.2">1.2 bar</option>
 </select>
 </div>
 <div class="field">
@@ -1914,6 +1915,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <option selected="" value="1.6">1.6 bar</option>
 <option value="1.5">1.5 bar</option>
 <option value="1.4">1.4 bar</option>
+<option value="1.2">1.2 bar</option>
 </select>
 </div>
 <div class="field">
@@ -3244,7 +3246,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.20.12';
+const APP_VERSION = '2.20.13';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -16303,7 +16305,7 @@ const LSP_APP_PRESETS = [
   },
   {
     name: 'GUE DecPlanner',
-    summary: 'WV 0.0627 · MultiDeco transit · Whole-min · 20↓ 9↑ 3deco · GF 20/85 · ppO2 1.4',
+    summary: 'WV 0.0627 · MultiDeco transit · Whole-min · 20↓ 9↑ 3deco · GF 20/85 · ppO₂ 1.2',
     values: {
       gfLowInput: '20', gfHighInput: '85',
       descentRate: '20', ascentRate: '9', decoAscentRate: '3', surfaceAscentRate: '3',
@@ -16312,7 +16314,7 @@ const LSP_APP_PRESETS = [
       waterVapor: '0.0627', heHalfTimeMode: 'baker',
       sacBottom: '22', sacDeco: '20',
       n2NarcSel: 'yes', o2NarcSel: 'yes',
-      ppo2Bottom: '1.4', ppo2Deco: '1.4', o2AtMODSelect: 'on',
+      ppo2Bottom: '1.2', ppo2Deco: '1.2', o2AtMODSelect: 'on',
       minDecoProfileEnable: 'no', minDeco9m: '1', minDeco6m: '3',
     },
   },
