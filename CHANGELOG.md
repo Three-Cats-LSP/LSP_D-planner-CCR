@@ -4,6 +4,38 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.1 — 2026-06-19
+
+### Fixed
+
+- **Contingency gas-loss incorrect gas silenced** — `calcContingency()` compared `contGasLose` (which stores the actual deco-gas card ID, e.g. `"1"`, `"2"`) against `getAllDecoGasIds().indexOf(idx)+1` (a list-position index). These diverge whenever card IDs are non-contiguous. Fixed to compare directly: `contGasLose === String(idx)`.
+
+- **OTU exponent split across three independent copies** — VPM `calculateOTU()` used `0.8333`, ZHL `segOTU()` used `0.833`, and ZHL headless fallback also used `0.833`. Introduced a single top-level constant `OTU_EXPONENT = 0.8333` and replaced all three sites. Roadmap item 2 had flagged this; it was not resolved before shipping.
+
+- **App-default presets did not load GF Low / GF High** — `gfLowInput` and `gfHighInput` were missing from `_ADV_FIELDS`, so `loadAppPreset()` silently left GF unchanged. Added both fields to `_ADV_FIELDS` and added the correct GF values to all five presets (MultiDeco 30/85, Abysner 60/70, Subsurface 30/70, GUE DecPlanner 20/85, DiveKit 50/80).
+
+- **DiveKit preset: `lastDecoStop` wrong, ascent rates wrong** — preset shipped with `lastDecoStop: '3'` (should be `'6'` per confirmed JS bundle default) and `decoAscentRate: '3'` (should be `'9'` — DiveKit uses a two-tier split 9 m/min deep / 3 m/min surface, not a flat 3 m/min throughout). Fixed.
+
+- **MultiDeco preset: `descentRate` wrong, ascent rates wrong** — preset shipped with `descentRate: '20'` (screenshot-confirmed value is 22 m/min) and flat `ascentRate: '10'` (MultiDeco uses three equal tiers at 9 m/min for surface/deco/ascent). Fixed to `descentRate: '22'`, `ascentRate/decoAscentRate/surfaceAscentRate: '9'`.
+
+- **Subsurface preset: ascent rates wrong** — preset used flat 3 m/min for all tiers; Subsurface's confirmed three-tier rates are 9 m/min deep / 6 m/min between stops / 3 m/min surface. Fixed `decoAscentRate: '6'`.
+
+- **GUE DecPlanner preset: ppO2 limits wrong** — preset used 1.4/1.6 bar; GUE's confirmed limits are 1.2 bar for both bottom and deco gas. Fixed.
+
+- **Contingency `emInfoRow` missing Surf GF** — `buildPlanInfoRowHtml` renders Surf GF when `o.surfaceGF` is passed, but `calcContingency()` never passed it. `runContingencyScenario()` now captures `lp.surfaceGF` as `contSurfaceGF` and returns it; `calcContingency()` forwards it to `buildPlanInfoRowHtml`.
+
+- **ZHL headless path did not pick up `_priorDiveCarry`** — the prior-dive O2 carry set in the CNS tab (v2.20.0) was only wired into the live DOM render path. `ZHLEngine.calculate()` now mirrors `s._preOTU`/`s._preCNS` into `window._priorDiveCarry` before the headless `runDecoSchedule()` call and restores it afterwards (including error paths), so test harnesses that pass prior-carry state see consistent CNS/OTU values.
+
+- **OTU exponent also wrong in ZHL headless fallback** — the per-step OTU accumulator inside `ZHLEngine.calculate()`'s CNS/OTU fallback computation used `0.833`; updated to `OTU_EXPONENT`.
+
+### Changed
+
+- **`gfLowInput` / `gfHighInput` added to `_ADV_FIELDS`** — GF settings are now included in "Set as My Default" saves and user-saved config presets alongside all other advanced fields.
+
+- **`APP_VERSION`** — bumped to `2.20.1`.
+
+---
+
 ## v2.20.0 — 2026-06-19
 
 ### Added
