@@ -3345,7 +3345,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.20.18';
+const APP_VERSION = '2.20.19';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -4261,8 +4261,9 @@ function handleGFSelect(val) {
       const highEl = document.getElementById('gfHighInput');
       if (highEl) {
         highEl.style.display = '';
-        const savedHigh = localStorage.getItem('gfCustomHigh');
-        if (savedHigh) highEl.value = savedHigh;
+        // Use current mGF.high first; fall back to last saved custom value
+        const curHigh = (typeof mGF !== 'undefined' && mGF.high) ? String(mGF.high) : localStorage.getItem('gfCustomHigh') || '85';
+        highEl.value = curHigh;
       }
       setCustomGF();
     }
@@ -4273,12 +4274,14 @@ function handleGFSelect(val) {
       const lowField = document.getElementById('gfLowPair');
       if (lowField) lowField.style.display = '';
     }
-    const savedLow  = localStorage.getItem('gfCustomLow');
-    const savedHigh = localStorage.getItem('gfCustomHigh');
     const lowInput  = document.getElementById('gfLowInput');
     const highInput = document.getElementById('gfHighInput');
-    if (lowInput  && savedLow)  lowInput.value  = savedLow;
-    if (highInput && savedHigh) highInput.value = savedHigh;
+    // Populate from current mGF values (e.g. just loaded from a preset),
+    // falling back to last saved custom values only if mGF is at defaults.
+    const curLow  = (typeof mGF !== 'undefined' && mGF.low)  ? String(mGF.low)  : localStorage.getItem('gfCustomLow')  || '20';
+    const curHigh = (typeof mGF !== 'undefined' && mGF.high) ? String(mGF.high) : localStorage.getItem('gfCustomHigh') || '85';
+    if (lowInput)  lowInput.value  = curLow;
+    if (highInput) highInput.value = curHigh;
     setCustomGF();
   } else if (val && val.startsWith('hi/')) {
     // VPM-B/GFS Hi-only preset

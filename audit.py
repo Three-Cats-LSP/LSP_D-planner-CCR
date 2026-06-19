@@ -1962,6 +1962,41 @@ if bsl_start >= 0:
 else:
     fail("buildSlateText: function not found")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 38 — handleGFSelect custom: populates from mGF not stale localStorage
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 38.1 handleGFSelect Buhlmann custom branch uses mGF, not raw localStorage
+hgfs_start = js.find('function handleGFSelect(')
+hgfs_end = js.find('\nfunction ', hgfs_start + 10) if hgfs_start >= 0 else -1
+if hgfs_start >= 0:
+    hgfs_body = js[hgfs_start:hgfs_end] if hgfs_end > 0 else js[hgfs_start:hgfs_start+2000]
+    # Check Buhlmann custom branch: must reference mGF (not just raw localStorage)
+    # Find the non-VPMB_GFS custom branch
+    custom_idx = hgfs_body.find("} else if (val === 'custom') {")
+    if custom_idx >= 0:
+        custom_branch = hgfs_body[custom_idx:custom_idx+900]
+        if re.search(r'mGF\.low', custom_branch) and re.search(r'mGF\.high', custom_branch):
+            ok("handleGFSelect custom (Buhlmann): uses mGF.low/high — preset values preserved when switching to Custom")
+        else:
+            fail("handleGFSelect custom (Buhlmann): uses raw localStorage only — switching to Custom resets inputs, ignoring loaded preset values")
+    else:
+        fail("handleGFSelect: Buhlmann custom branch not found")
+else:
+    fail("handleGFSelect: function not found")
+
+# 38.2 handleGFSelect VPM-B/GFS custom branch also uses mGF
+if hgfs_start >= 0:
+    vpmgfs_idx = hgfs_body.find("val === 'custom' && isVPMBGFSMode")
+    if vpmgfs_idx >= 0:
+        vpmgfs_branch = hgfs_body[vpmgfs_idx:vpmgfs_idx+600]
+        if re.search(r'mGF\.high', vpmgfs_branch):
+            ok("handleGFSelect custom (VPM-B/GFS): uses mGF.high — current GF High preserved when switching to Custom")
+        else:
+            fail("handleGFSelect custom (VPM-B/GFS): uses raw localStorage only — GF High resets on Custom select")
+    else:
+        fail("handleGFSelect: VPM-B/GFS custom branch not found")
+
 print("=" * 60)
 
 if FAIL:

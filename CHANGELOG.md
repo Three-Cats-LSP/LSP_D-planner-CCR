@@ -4,6 +4,18 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.19 — 2026-06-20
+
+### Fixed
+
+- **`handleGFSelect('custom')` resets GF inputs to stale saved values** — When the user selected "Custom" from the GF preset dropdown (after loading a preset like Abysner 60/70), both the Low and High inputs were populated from `localStorage.getItem('gfCustomLow/High')` — whatever the user had last typed manually — instead of the currently active `mGF.low/high`. This meant loading Abysner (60/70) then clicking Custom would silently reset inputs to 20/85 (or any previous custom entry), not 60/70. Fixed in both the Bühlmann branch and the VPM-B/GFS branch: inputs now seed from `mGF.low`/`mGF.high` first, falling back to localStorage only when mGF is unavailable.
+
+- **Audit** — GROUP 38 added (2 checks). Total: 260 checks, 0 failures. Covers: `handleGFSelect` custom branch (Bühlmann) uses `mGF.low/high`; VPM-B/GFS custom branch uses `mGF.high`.
+
+- **`APP_VERSION`** — bumped to `2.20.19`.
+
+---
+
 ## v2.20.18 — 2026-06-20
 
 ### Fixed
