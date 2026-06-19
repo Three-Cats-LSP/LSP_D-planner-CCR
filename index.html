@@ -766,6 +766,102 @@ body.algo-buh .buh-only { display: flex !important; }
  color: var(--muted);
 }
 
+/* ── DIVE PLAN INFO BANNER (Dive Profile header) ── */
+.dive-plan-banner {
+ margin: 0 0 10px;
+ padding: 12px 14px;
+ border-radius: 8px;
+ font-family: 'Outfit', sans-serif;
+ font-size: 12px;
+ line-height: 1.5;
+ display: flex;
+ gap: 10px;
+ align-items: flex-start;
+ border: 1px solid;
+}
+.dive-plan-banner > span:first-child { flex-shrink: 0; font-size: 16px; line-height: 1.2; }
+.dive-plan-banner--deco {
+ background: rgba(255,68,51,0.07);
+ border-color: rgba(255,68,51,0.35);
+ color: var(--text);
+}
+.dive-plan-banner--ndl {
+ background: rgba(38,208,124,0.07);
+ border-color: rgba(38,208,124,0.3);
+ color: var(--text);
+}
+body.light-theme .dive-plan-banner--deco { background: #fff5f4; border-color: #cc4433; }
+body.light-theme .dive-plan-banner--ndl  { background: #f0fff4; border-color: #228855; }
+.dpb-title {
+ font-family: 'Bebas Neue', sans-serif;
+ font-size: 18px;
+ letter-spacing: 1.5px;
+ color: var(--accent);
+ line-height: 1.1;
+}
+.dive-plan-banner--deco .dpb-title { color: #FF4433; }
+.dive-plan-banner--ndl .dpb-title  { color: var(--green); }
+.dpb-stamp {
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 10px;
+ font-weight: 400;
+ letter-spacing: 0;
+ color: var(--muted);
+ margin-left: 8px;
+}
+.dpb-headline {
+ margin-top: 4px;
+ font-size: 13px;
+ font-weight: 600;
+ color: var(--text);
+}
+.dpb-headline strong { color: var(--accent); }
+.dive-plan-banner--deco .dpb-headline strong { color: #FF4433; }
+.dpb-algo {
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 11px;
+ color: var(--muted);
+ font-weight: 400;
+}
+.dpb-chips {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 6px;
+ margin-top: 8px;
+}
+.dpb-chip {
+ display: inline-flex;
+ align-items: center;
+ gap: 5px;
+ padding: 3px 10px;
+ border-radius: 16px;
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 10px;
+ font-weight: 700;
+ border: 2px solid;
+}
+.dpb-chip-lbl {
+ font-size: 9px;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.4px;
+ opacity: 0.85;
+}
+.dpb-chip--bottom { background: #fff; border-color: #4169E1; color: #111; }
+.dpb-chip--deco   { background: #fffbeb; border-color: #d4a017; color: #7a5a00; }
+.dpb-chip--o2     { background: #ecfeff; border-color: var(--accent); color: #005577; }
+body.light-theme .dpb-chip--bottom { background: #f0f4ff; }
+body.light-theme .dpb-chip--deco   { background: #fffbeb; }
+body.light-theme .dpb-chip--o2     { background: #e8faff; }
+.dpb-meta {
+ margin-top: 7px;
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 10px;
+ color: var(--muted);
+ line-height: 1.6;
+}
+.dpb-meta b { color: var(--text); font-weight: 600; }
+
 /* ── ALERTS ── */
 .alert { border-radius: 8px;
  padding: 10px 14px;
@@ -3195,7 +3291,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <a href="https://threecats-lsp.com/d-planner/download.html" id="apkDownloadIcon" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" title="Download LSP D-Planner APK">
 <img alt="Download APK" height="36" src="https://cdn-icons-png.magnific.com/512/9788/9788887.png" style="display:block;" width="36"/>
 </a>
-<a href="https://threecats-lsp.com/t-viewer/download.html" id="tvApkDownloadIcon" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" title="Download T-Viewer APK">
+<a href="https://threecats-lsp.com/t-viewer/" id="tvAppIcon" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" rel="noopener noreferrer" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" target="_blank" title="T-Viewer">
 <svg fill="none" height="36" viewbox="0 0 500 500" width="36" xmlns="http://www.w3.org/2000/svg">
 <!-- background -->
 <rect fill="#0a1628" height="500" width="500"></rect>
@@ -3214,6 +3310,9 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <line opacity="0.65" stroke="#00c8ff" stroke-linecap="round" stroke-width="4" x1="204" x2="284" y1="294" y2="294"></line>
 <line opacity="0.45" stroke="#00c8ff" stroke-linecap="round" stroke-width="4" x1="204" x2="260" y1="312" y2="312"></line>
 </svg>
+</a>
+<a href="https://threecats-lsp.com/get-in-water/" id="giwAppIcon" onmouseout="this.style.opacity='0.7';this.style.transform='scale(1)'" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" rel="noopener noreferrer" style="display:flex;align-items:center;opacity:0.7;transition:opacity 0.2s,transform 0.2s;" target="_blank" title="Get In Water">
+<img alt="Get In Water" height="36" src="https://threecats-lsp.com/get-in-water/icon-192.png" style="display:block;width:36px;height:36px;border-radius:8px;border:1px solid var(--border-hi);object-fit:contain;" width="36"/>
 </a>
 </div>
 <div style="margin-top:10px;display:flex;align-items:center;justify-content:center;">
@@ -3235,8 +3334,6 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   function hideApkIcons() {
     var el = document.getElementById('apkDownloadIcon');
     if (el) el.style.display = 'none';
-    var el2 = document.getElementById('tvApkDownloadIcon');
-    if (el2) el2.style.display = 'none';
   }
   // Primary: userAgent flag injected by MainActivity
   if (window.Capacitor && window.Capacitor.isNativePlatform()) {
@@ -4471,6 +4568,229 @@ function getPlanSummaryExport(fromTotalsEl) {
 
 function getDecoZoneExportVal(fromTotalsEl) {
   return getPlanSummaryExport(fromTotalsEl).decozone;
+}
+
+function _escHtmlPre(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** VPM deco gas switch depth (metric m or imperial ft per unit mode). */
+function vpmDecoSwitchDepthVal(dgO2pct, ppO2Deco, surfP) {
+  const dU = units === 'metric';
+  if (dgO2pct >= 99) return dU ? 6 : 20;
+  return Math.floor(((ppO2Deco || 1.6) / (dgO2pct / 100) - surfP) / BAR_PER_METRE * (dU ? 1 : 3.28084));
+}
+
+/** Parse gas mix label for export/banner (50/00, 100%, Air, …). */
+function shortMixLabel(m) {
+  const s = (m || '').trim();
+  if (!s) return '-';
+  if (/^\d+\/\d+$/.test(s)) return s;
+  if (s === '100%') return '100%';
+  if (/air/i.test(s)) return 'Air';
+  if (/^100/i.test(s)) return '100%';
+  const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
+  const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
+  return s;
+}
+
+/** Deco gas switches — reads computed table rows or falls back to gas cards. */
+function getDecoGasSwitches() {
+  const gswRows = Array.from(document.querySelectorAll('#decoTableBody tr[data-phase="switch"]'));
+  if (gswRows.length) {
+    return gswRows.map(tr => {
+      const txt = (tr.querySelector('td[data-label="Depth"]') || tr.querySelectorAll('td')[1])?.textContent?.trim() || '';
+      const m = txt.match(/^(.+?)\s*@\s*(.+)$/i);
+      const gas = shortMixLabel(m ? m[1] : txt.split('@')[0] || txt);
+      const depth = m ? m[2].replace(/\s+/g, '') : '-';
+      return { gas, depth };
+    });
+  }
+  const switches = [];
+  const decoModelSel = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
+  const isVPM = decoModelSel === 'VPMB' || decoModelSel === 'VPMB_GFS';
+  const ppO2Deco = parseFloat(document.getElementById('ppo2Deco')?.value) || 1.6;
+  const dU = units === 'metric';
+  for (const idx of getAllDecoGasIds()) {
+    const dgf = getDecoCardFractions(idx);
+    if (!dgf || dgf.fN2 === null) continue;
+    const gas = shortMixLabel(getGasLabel(dgf.fO2, dgf.fHe));
+    let sw;
+    if (isVPM) {
+      const switchD = vpmDecoSwitchDepthVal(Math.round(dgf.fO2 * 100), ppO2Deco, altSurfaceP);
+      sw = dU ? Math.max(3, Math.floor(switchD / 3) * 3) : Math.max(10, Math.floor(switchD / 10) * 10);
+    } else {
+      sw = optimalSwitchDepth(dgf.fN2, dgf.fO2);
+    }
+    const depth = isVPM
+      ? (dU ? sw + 'm' : sw + 'ft')
+      : (units === 'metric' ? sw + 'm' : mToFt(sw) + 'ft');
+    switches.push({ gas, depth });
+  }
+  return switches;
+}
+
+function getDecoGasSwitchLines() {
+  return getDecoGasSwitches().map((g, i) => `Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`);
+}
+
+/** Structured dive plan header — shared by text export and on-screen banner. */
+function buildDecoPlanHeaderData() {
+  const now = new Date();
+  const _dd = String(now.getDate()).padStart(2, '0');
+  const _mm = String(now.getMonth() + 1).padStart(2, '0');
+  const _yy = now.getFullYear();
+  const _hh = String(now.getHours()).padStart(2, '0');
+  const _min = String(now.getMinutes()).padStart(2, '0');
+  const stamp = `${_yy}/${_dd}/${_mm} ${_hh}:${_min}`;
+  const du = units === 'imperial' ? 'ft' : 'm';
+  const densityMap = { fresh: 'Fresh', en13319: 'EN13319', salt: 'Salt' };
+  const density = densityMap[localStorage.getItem('waterDensity') || 'en13319'];
+  const altM = typeof altitudeM !== 'undefined' ? altitudeM : 0;
+  const altLabel = altM === 0 ? 'Sea level (0 m)' : `${altM} m`;
+  const acclLabel = (typeof altAcclimatized !== 'undefined' ? altAcclimatized : true) ? 'Yes' : 'No';
+
+  const depth = document.getElementById('decoDepth')?.value || '-';
+  const bt = document.getElementById('decoBT')?.value || '-';
+  const gfLow = mGF?.low ?? '-';
+  const gfHigh = mGF?.high ?? '-';
+  const ascentRate = document.getElementById('ascentRate')?.value || '-';
+  const decoAscentRate = document.getElementById('decoAscentRate')?.value || '-';
+  const surfAscentRate = document.getElementById('surfaceAscentRate')?.value || '-';
+  const descentRate = document.getElementById('descentRate')?.value || '-';
+  const lastStop = document.getElementById('lastDecoStop')?.value || '-';
+  const decoStep = document.getElementById('decoStep')?.value || '-';
+
+  const decoModelSel = document.getElementById('algorithmSelect')?.value || 'ZHLC_GF';
+  const isVPMExport = decoModelSel === 'VPMB' || decoModelSel === 'VPMB_GFS';
+  const consVal = document.getElementById('conservatismSelect')?.value ?? '0';
+  const algoNames = { ZHLC_GF: 'Buhlmann ZH-L16C + GF', VPMB: 'VPM-B', VPMB_GFS: 'VPM-B / GFS' };
+  const algoNameExp = algoNames[decoModelSel] || decoModelSel;
+  const algoSettings = decoModelSel === 'ZHLC_GF'
+    ? `GF ${gfLow}/${gfHigh}`
+    : decoModelSel === 'VPMB'
+      ? `Conservatism +${consVal}`
+      : `GF Hi ${gfHigh}  Conservatism +${consVal}`;
+
+  const _expBotFracs = getBottomGasFractions();
+  const _expBotLabel = getGasLabel(_expBotFracs.fO2, _expBotFracs.fHe);
+  const _expBotO2 = Math.round(_expBotFracs.fO2 * 100);
+  const _expBotHe = Math.round((_expBotFracs.fHe || 0) * 100);
+  const _expBotN2 = Math.round(_expBotFracs.fN2 * 100);
+  const _expIsTrimix = _expBotHe > 0;
+  const _expBotDetail = _expIsTrimix
+    ? `${_expBotLabel}  (O2:${_expBotO2}% He:${_expBotHe}% N2:${_expBotN2}%)`
+    : _expBotLabel;
+
+  const _heHtMode = document.getElementById('heHalfTimeMode')?.value || 'baker';
+  const _heHtLabel = _heHtMode === 'baker' ? 'Baker 1.88 min' : 'Buhlmann 2003 1.51 min';
+  const _expSurfP = 1.01325 * Math.exp(-(altM) / 8434);
+  const _expAltFactor = Math.pow(1.01325 / _expSurfP, 1 / 3);
+  const _expAltRadii = isVPMExport && altM > 0
+    ? `  Radii factor: x${_expAltFactor.toFixed(3)}`
+    : '';
+
+  const _vpmRepEl = document.getElementById('vpmRepMode');
+  const _vpmRepActive = isVPMExport && _vpmRepEl && _vpmRepEl.checked && typeof _lastVPMResult !== 'undefined' && _lastVPMResult;
+  const _vpmSI = _vpmRepActive ? (parseFloat(document.getElementById('vpmSurfaceInterval')?.value || '60')) : null;
+
+  const rndTxt = (document.getElementById('stopRounding')?.value || 'fractional') === 'wholeminute' ? 'Yes' : 'No';
+  const wvTxt = parseFloat(document.getElementById('waterVapor')?.value || '0.0627');
+  const wvLblTxt = wvTxt <= 0.058 ? 'M' : 'B';
+
+  const _expMdpEn = document.getElementById('minDecoProfileEnable')?.value === 'yes';
+  const _expMdp9m = document.getElementById('minDeco9m')?.value || '1';
+  const _expMdp6m = document.getElementById('minDeco6m')?.value || '3';
+  const _depthUnit = units === 'imperial' ? 'ft' : 'm';
+
+  return {
+    stamp, du, density, altLabel, acclLabel, depth, bt,
+    algoNameExp, algoSettings, isVPMExport, heHtLabel: _heHtLabel,
+    bottomGas: _expBotDetail, bottomGasShort: shortMixLabel(_expBotLabel),
+    descentRate, ascentRate, decoAscentRate, surfAscentRate,
+    lastStop, decoStep, stopRounding: rndTxt, wvTxt, wvLblTxt,
+    altRadii: _expAltRadii, minDecoEn: _expMdpEn, minDeco9m: _expMdp9m, minDeco6m: _expMdp6m,
+    depthUnit: _depthUnit, vpmRepActive: _vpmRepActive, vpmSI: _vpmSI,
+    decoGases: getDecoGasSwitches(),
+  };
+}
+
+/** Header lines for DECO PLAN — shared by on-screen summary and text export. */
+function buildDecoPlanHeaderLines() {
+  const d = buildDecoPlanHeaderData();
+  const lines = ['DECO PLAN', d.stamp, '='.repeat(22)];
+  lines.push(`Algorithm   : ${d.algoNameExp}  (${d.algoSettings})`);
+  if (d.isVPMExport) lines.push(`He Half-Time: ${d.heHtLabel}`);
+  lines.push(`Depth       : ${d.depth}${d.du}    BT: ${d.bt} min`);
+  lines.push(`Bottom Gas  : ${d.bottomGas}    Water: ${d.density}`);
+  lines.push(`Descent     : ${d.descentRate}${d.du}/min  Ascent: ${d.ascentRate}${d.du}/min  Deco: ${d.decoAscentRate}${d.du}/min  Surface: ${d.surfAscentRate}${d.du}/min`);
+  lines.push(`Last Stop   : ${d.lastStop}${d.du}  Step: ${d.decoStep}${d.du}`);
+  lines.push(`Stop Rounding: ${d.stopRounding}  WV: ${d.wvTxt}(${d.wvLblTxt})`);
+  lines.push(`Altitude     : ${d.altLabel}  Acclimatized: ${d.acclLabel}${d.altRadii}`);
+  if (d.minDecoEn) lines.push(`Min Deco Profile: ON  (9${d.depthUnit}: ${d.minDeco9m} min  6${d.depthUnit}: ${d.minDeco6m} min)`);
+  if (d.vpmRepActive) lines.push(`Repetitive   : Yes  Surface Interval: ${d.vpmSI} min  (bubble state + tissue loading carried)`);
+  d.decoGases.forEach((g, i) => lines.push(`Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
+  return lines;
+}
+
+function _dpbGasChipClass(gas) {
+  if (/^100/i.test(gas)) return 'dpb-chip--o2';
+  return 'dpb-chip--deco';
+}
+
+function renderDecoPlanHeaderHtml(data, opts) {
+  opts = opts || {};
+  data = data || buildDecoPlanHeaderData();
+  const bannerCls = opts.hasDeco ? 'dive-plan-banner dive-plan-banner--deco' : 'dive-plan-banner dive-plan-banner--ndl';
+  const icon = opts.hasDeco ? '⚠' : '✓';
+  const depthBt = `<strong>${_escHtmlPre(data.depth + data.du)}</strong> · <strong>${_escHtmlPre(data.bt)} min</strong> BT`;
+  const algoLine = `<span class="dpb-algo">${_escHtmlPre(data.algoNameExp)} (${_escHtmlPre(data.algoSettings)})</span>`;
+
+  const chips = [`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Bottom</span>${_escHtmlPre(data.bottomGasShort)}</span>`];
+  data.decoGases.forEach((g, i) => {
+    chips.push(`<span class="dpb-chip ${_dpbGasChipClass(g.gas)}"><span class="dpb-chip-lbl">Deco ${i + 1}</span>${_escHtmlPre(g.gas)} @ ${_escHtmlPre(g.depth)}</span>`);
+  });
+
+  const rates = `Descent <b>${_escHtmlPre(data.descentRate + data.du)}/min</b> · Ascent <b>${_escHtmlPre(data.ascentRate + data.du)}/min</b> · Deco <b>${_escHtmlPre(data.decoAscentRate + data.du)}/min</b> · Surface <b>${_escHtmlPre(data.surfAscentRate + data.du)}/min</b>`;
+  const stops = `Last stop <b>${_escHtmlPre(data.lastStop + data.du)}</b> · Step <b>${_escHtmlPre(data.decoStep + data.du)}</b> · Rounding <b>${_escHtmlPre(data.stopRounding)}</b> · WV <b>${_escHtmlPre(String(data.wvTxt) + '(' + data.wvLblTxt + ')')}</b>`;
+  const env = `${_escHtmlPre(data.density)} water · ${_escHtmlPre(data.altLabel)} · Accl <b>${_escHtmlPre(data.acclLabel)}</b>`;
+  let extra = '';
+  if (data.isVPMExport) extra += `<br>He half-time: <b>${_escHtmlPre(data.heHtLabel)}</b>`;
+  if (data.minDecoEn) extra += `<br>Min deco profile: <b>ON</b> (9${_escHtmlPre(data.depthUnit)}: ${_escHtmlPre(data.minDeco9m)} min · 6${_escHtmlPre(data.depthUnit)}: ${_escHtmlPre(data.minDeco6m)} min)`;
+  if (data.vpmRepActive) extra += `<br>Repetitive dive · SI <b>${_escHtmlPre(String(data.vpmSI))} min</b>`;
+
+  let html = `<div class="${bannerCls}">
+    <span>${icon}</span>
+    <div style="flex:1;min-width:0;">
+      <div class="dpb-title">DECO PLAN <span class="dpb-stamp">${_escHtmlPre(data.stamp)}</span></div>
+      <div class="dpb-headline">${depthBt} · ${algoLine}</div>
+      <div class="dpb-chips">${chips.join('')}</div>
+      <div class="dpb-meta">${rates}<br>${stops}<br>${env}${extra}</div>
+    </div>
+  </div>`;
+  if (opts.decoAlertHtml) html += opts.decoAlertHtml;
+  if (opts.narcAlertHtml) html += opts.narcAlertHtml;
+  return html;
+}
+
+function buildDecoSummaryAlerts(hasDeco, endM, noDecoNote) {
+  const decoAlertHtml = hasDeco
+    ? '<div class="alert deco" style="margin-top:8px;"><span>⚠</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
+    : `<div class="alert ok" style="margin-top:8px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong>${noDecoNote ? ' ' + noDecoNote : ''}</div></div>`;
+  const narcTip = '<span class="tip-icon" style="color:#fff;opacity:0.85;" onclick="showTip(_narcoticTipTitle,_narcoticTipText)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></span>';
+  const narcAlertHtml = endM > 40
+    ? `<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.${narcTip}</div></div>`
+    : endM > 30
+      ? `<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.${narcTip}</div></div>`
+      : '';
+  return { decoAlertHtml, narcAlertHtml };
+}
+
+function updateDecoSummaryHtml(hasDeco, endM, noDecoNote) {
+  const el = document.getElementById('decoSummary');
+  if (!el) return;
+  const alerts = buildDecoSummaryAlerts(hasDeco, endM, noDecoNote);
+  el.innerHTML = renderDecoPlanHeaderHtml(buildDecoPlanHeaderData(), { hasDeco, ...alerts });
 }
 
 function planInfoTipIconHtml() {
@@ -6376,74 +6696,13 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
   setStatVal('decoOTUDisplay',    (result.totalOTU != null ? result.totalOTU : '—') + '');
   setStatVal('decoAlgoDisplay',   modelName + ' C' + cons + gfHi);
 
-  // ── DECO SUMMARY — stat cards + gas tags + alerts (same layout as Bühlmann) ──
+  // ── DECO SUMMARY — text-export style header block ──
   const summEl = document.getElementById('decoSummary');
   if (summEl) {
-    const rawDdisp = dU ? depthM : Math.round(depthM * 3.28084);
-    const lastStopDisp = settings.lastStop || 3;
-    const stepDisp = settings.stepSize || 3;
-    const algoLabel = model === 'VPMB' ? 'VPM-B' : 'VPM-B/GFS';
-
-    // END narcotic depth — use true fN2 (excluding He, which is non-narcotic)
     const bottomFN2vpm = _vpmBotFracs.fN2;
     const endMvpm = ((depthM + 10) * bottomFN2vpm / 0.79) - 10;
-    const endDispVPM = dU ? Math.round(endMvpm) : Math.round(endMvpm * 3.28084);
-    const endColorVPM = endMvpm > 40 ? 'var(--red)' : endMvpm > 30 ? 'var(--orange)' : 'var(--green)';
-    const narcoStrVPM = `N₂:✓ O₂:${document.getElementById('o2NarcSel')?.value === 'yes' ? '✓' : '✗'}`;
-
-    // Gas tags
-    const bottomGasTagVPM = `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:700;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Bottom:</span> <strong>${gasLabel} — ${bottomO2pct}% O₂ @ surface→${rawDdisp}${du}</strong></div>`;
-    const decoGasTagsVPM = decoGases.map((dg, i) => {
-      const lbl = dg.o2 >= 99 ? '100%' : (dg.o2 === 21 && !dg.he) ? 'Air' : `${dg.o2}/${String(dg.he || 0).padStart(2,'0')}`;
-      const switchD = dg.o2 >= 99 ? (dU ? 6 : 20) : Math.floor(((settings.ppO2Deco || 1.6) / (dg.o2/100) - surfP) / BAR_PER_METRE * (dU ? 1 : 3.28084));
-      const switchDdisp = dU ? Math.max(3, Math.floor(switchD/3)*3) : Math.max(10, Math.floor(switchD/10)*10);
-      return `<div style="display:inline-flex;align-items:center;gap:6px;background:#ffffff;border:2px solid #4169E1;border-radius:16px;padding:3px 10px;font-size:11px;color:#111111;font-weight:600;"><span style="color:#4169E1;font-size:10px;font-weight:700;">Deco:</span> <strong>${lbl} — ${dg.o2}% O₂ @ ${switchDdisp}${du}</strong></div>`;
-    }).join(' ');
-
     const hasDeco = (result.stops || []).some(s => s.time > 0);
-    const algoLine = model === 'VPMB' ? `C+${cons}` : `GFHi ${mGF.high} · C+${cons}`;
-
-    // Feature A: altitude radii badge
-    const altM = settings.altitude || 0;
-    const altBadge = altM > 0
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--text);"
-           title="At ${altM} m altitude, initial bubble radii enlarged by ×${(Math.pow(1.01325 / (1.01325 * Math.exp(-altM / 8434)), 1/3)).toFixed(4)} (lower crush pressure)">
-           △ Alt ${altM} m · radii ×${(Math.pow(1.01325 / (1.01325 * Math.exp(-altM / 8434)), 1/3)).toFixed(3)}
-         </span>`
-      : '';
-
-    // Feature B: repetitive dive badge
-    const isRep = settings._prevBubbleState != null;
-    const siMin = settings._surfaceInterval || 0;
-    const repBadge = isRep
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--accent);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--accent);"
-           title="Bubble state + tissue pressures carried from previous dive after ${siMin} min surface interval">
-           ↺ Repetitive &middot; SI ${siMin} min
-         </span>`
-      : '';
-
-    summEl.innerHTML = `
-      <div class="stats" style="margin-top:0;">
-        <div class="stat"><div class="stat-val">${rawDdisp} ${du}</div><div class="stat-lbl">Depth</div></div>
-        <div class="stat"><div class="stat-val">${bt} min</div><div class="stat-lbl">BT Time</div></div>
-        <div class="stat"><div class="stat-val">${gasLabel}</div><div class="stat-lbl">Bottom Gas</div></div>
-        <div class="stat"><div class="stat-val ${hasDeco?'o':'g'}">${Math.round(deco)} min</div><div class="stat-lbl">Deco Time</div></div>
-        <div class="stat"><div class="stat-val">${rt} min</div><div class="stat-lbl">Total Run Time</div></div>
-        <div class="stat"><div class="stat-val">${algoLabel}</div><div class="stat-lbl">${algoLine}</div></div>
-        <div class="stat"><div class="stat-val">${lastStopDisp} ${du}</div><div class="stat-lbl">Last Stop</div></div>
-        <div class="stat"><div class="stat-val">${stepDisp} ${du}</div><div class="stat-lbl">Step Size</div></div>
-        <div class="stat"><div class="stat-val" style="color:${endColorVPM};font-size:15px;">${endDispVPM} ${du}</div><div class="stat-lbl">END <span style="font-size:9px;color:var(--muted);">${narcoStrVPM}</span></div></div>
-      </div>
-      <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        ${bottomGasTagVPM} ${decoGasTagsVPM}
-        ${altBadge} ${repBadge}
-      </div>
-      ${hasDeco
-        ? '<div class="alert deco" style="margin-top:10px;"><span>⚠</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
-        : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong></div></div>'}
-      ${endMvpm > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endMvpm > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
-
-    // CNS warning goes to decoAlerts (after table) — handled by alertsContainer below
+    updateDecoSummaryHtml(hasDeco, endMvpm, '');
   }
 }
 
@@ -8859,24 +9118,6 @@ function runDecoSchedule() {
     window._decoGasColorMap = gasColorMap;
   }
 
-  // Build gas info row with real values: label @ switch depth — O₂%
-  const bottomO2pct  = Math.round(bottomFO2 * 100);  // trimix-safe (was 1-bottomFN2)
-  const _travelInfoTag = getTravelGasInfo();
-  const _travelSwitchMtag = _travelInfoTag ? Math.min(_travelInfoTag.switchDepthM, depthM) : 0;
-  const travelGasTag = _travelInfoTag
-    ? (() => {
-        const to2pct = Math.round((1 - _travelInfoTag.fN2) * 100);
-        const tswDisp = dU ? _travelSwitchMtag+'m' : mToFt(_travelSwitchMtag)+'ft';
-        return `<span style="background:#fff3e0;border:2px solid #ff9900;border-radius:4px;padding:2px 8px;font-size:10px;color:#7a3a00;font-weight:700;">🟠 Travel: ${_travelInfoTag.label} — ${to2pct}% O₂ @ surf→${tswDisp}</span>`;
-      })()
-    : '';
-  const bottomGasTag = `<span style="background:#ffffff;border:2px solid #4169E1;border-radius:4px;padding:2px 8px;font-size:10px;color:#111111;font-weight:700;"><strong>Bottom: ${bottomMixLabel} — ${bottomO2pct}% O₂ @ ${_travelInfoTag ? (dU?_travelSwitchMtag+'m':mToFt(_travelSwitchMtag)+'ft') : 'surface'}→${dU ? rawD+'m' : mToFt(rawD)+'ft'}</strong></span>`;
-  const decoGasTags  = decoGases.filter(dg => !dg.isTravelGas).map(dg => {
-    const o2pct = Math.round((dg.fO2 != null ? dg.fO2 : Math.max(0, 1 - dg.fN2 - (dg.fHe||0))) * 100);  // trimix-safe
-    const depthDisp = dU ? dg.depth + ' m' : mToFt(dg.depth) + ' ft';
-    return `<span style="background:#ffffff;border:2px solid #4169E1;border-radius:4px;padding:2px 8px;font-size:10px;color:#111111;font-weight:700;">Deco: ${dg.label.toUpperCase()} — ${o2pct}% O₂ @ ${depthDisp}</span>`;
-  }).join(' ');
-
   // ── END (Equivalent Narcotic Depth) at bottom depth ──
   const endM     = calcEND(depthM, bottomFN2, bottomFHe);
   const endDisp  = Math.round(endM);
@@ -8889,28 +9130,6 @@ function runDecoSchedule() {
     endLive.textContent = `${endDisp} m  (${narcoStr})`;
     endLive.style.color = endColor;
   }
-
-  document.getElementById('decoSummary').innerHTML = `
-    <div class="stats" style="margin-top:0;">
-      <div class="stat"><div class="stat-val">${rawD} m</div><div class="stat-lbl">Depth</div></div>
-      <div class="stat"><div class="stat-val">${bt} min</div><div class="stat-lbl">BT Time</div></div>
-      <div class="stat"><div class="stat-val">${bottomMixLabel}</div><div class="stat-lbl">Bottom Gas</div></div>
-      <div class="stat"><div class="stat-val ${hasDeco?'o':'g'}">${Math.round(decoTime)} min</div><div class="stat-lbl">Deco Time</div></div>
-      <div class="stat"><div class="stat-val">${Math.round(rt)} min</div><div class="stat-lbl">Total Run Time</div></div>
-      <div class="stat"><div class="stat-val">${mGF.low}/${mGF.high}</div><div class="stat-lbl">GF Low/High</div></div>
-      ${altitudeM > 0 ? `<div class="stat"><div class="stat-val" style="color:var(--accent);">${altitudeM} m</div><div class="stat-lbl">Altitude · ${altSurfaceP.toFixed(3)} bar${altAcclimatized ? '' : ' · ✗ Acclim'}</div></div>` : ''}
-      ${_travelInfoTag ? `<div class="stat"><div class="stat-val" style="color:#ff9900;font-size:13px;">${_travelInfoTag.label}</div><div class="stat-lbl">🟠 Travel Gas</div></div>` : ''}
-      <div class="stat"><div class="stat-val">${lastStop} m</div><div class="stat-lbl">Last Stop</div></div>
-      <div class="stat"><div class="stat-val">${decoStep} m</div><div class="stat-lbl">Step Size</div></div>
-      <div class="stat"><div class="stat-val" style="color:${endColor};font-size:15px;">${endDisp} m</div><div class="stat-lbl">END <span style="font-size:9px;color:var(--muted);">${narcoStr}</span></div></div>
-    </div>
-    ${decoGases.length > 0 || _travelInfoTag || true ? `<div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      ${travelGasTag} ${bottomGasTag} ${decoGasTags}
-    </div>` : ''}
-    ${hasDeco
-      ? '<div class="alert deco" style="margin-top:10px;"><span>⚠</span><div><strong>DECOMPRESSION DIVE.</strong> Do not skip mandatory stops. Switch gas at optimal depth shown above. Verify ppO₂ before each switch.</div></div>'
-      : '<div class="alert ok" style="margin-top:10px;"><span>✓</span><div><strong>NO-DECO DIVE.</strong> 3 min safety stop at 3 m included.</div></div>'}
-    ${endM > 40 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>HIGH NARCOTIC DEPTH.</strong> END exceeds 40 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : endM > 30 ? '<div class="alert" style="margin-top:8px;background:#FF4433;border-color:#111111;border-width:1px;color:#fff;font-weight:700;"><span>⚠</span><div><strong>NARCOTIC DEPTH WARNING.</strong> END exceeds 30 m equivalent. Consider a less narcotic gas mix.<span class=\"tip-icon\" style=\"color:#fff;opacity:0.85;\" onclick=\"showTip(_narcoticTipTitle,_narcoticTipText)\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5.5\" cy=\"5.5\" r=\"5\" stroke=\"currentColor\" stroke-width=\"1.1\"/><path d=\"M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2\" stroke=\"currentColor\" stroke-width=\"1.1\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"5.5\" cy=\"7.4\" r=\"0.55\" fill=\"currentColor\"/></svg></span></div></div>' : ''}`;
 
   const tbody = document.getElementById('decoTableBody');
   const descentTimeMin = Math.round((depthM / descentRate) * 10) / 10;
@@ -9217,6 +9436,7 @@ function runDecoSchedule() {
   const prtColor  = prtVal < 15 ? 'var(--green)' : prtVal < 25 ? 'var(--yellow)' : prtVal < 40 ? 'var(--orange)' : 'var(--red)';
   const decoZoneDisp = formatDecoZoneStart(trueDecoZoneStart);
   const decoStopDisp = formatDecoStopDepth(firstStopDepth);
+  updateDecoSummaryHtml(hasDeco, endM, '3 min safety stop at 3 m included.');
   tbody.innerHTML += buildPlanInfoRowHtml({
     runTime: totalRunMMSS,
     tts: ttsMMSS,
@@ -12614,18 +12834,8 @@ function buildExportText(mode) {
 
   // ────────────────────────────────────────
   } else if (mode === 'deco') {
-    const depth       = document.getElementById('decoDepth')?.value || '-';
-    const bt          = document.getElementById('decoBT')?.value    || '-';
-    const gfLow       = mGF?.low  ?? '-';
-    const gfHigh      = mGF?.high ?? '-';
-    const gasEl       = document.getElementById('decoGas');
-    const gas         = gasEl?.options[gasEl?.selectedIndex]?.text || '-';
-    const ascentRate     = document.getElementById('ascentRate')?.value      || '-';
-    const decoAscentRate = document.getElementById('decoAscentRate')?.value  || '-';
-    const surfAscentRate = document.getElementById('surfaceAscentRate')?.value || '-';
-    const descentRate = document.getElementById('descentRate')?.value || '-';
-    const lastStop    = document.getElementById('lastDecoStop')?.value || '-';
-    const decoStep    = document.getElementById('decoStep')?.value    || '-';
+    const depth = document.getElementById('decoDepth')?.value || '-';
+    const bt    = document.getElementById('decoBT')?.value    || '-';
 
     // ── helper: shorten mix names for table (trimix-aware) ──
     const shortMix = m => {
@@ -12667,82 +12877,7 @@ function buildExportText(mode) {
       if (!isNaN(prtN)) planSum.prt = prtN.toFixed(1);
     }
 
-    // Gas switch depths from rendered GSw rows
-    const gswRows = Array.from(document.querySelectorAll('#decoTableBody tr[data-phase="switch"]'));
-    const gswInfos = gswRows.map(tr => {
-      const txt = clean(tr.querySelector('td[colspan]')?.textContent || '');
-      // e.g. "EAN 50 @ 21m · ppO2 1.5"  or  "100% O2 @ 6m · ppO2 1.6"
-      const depM = txt.match(/@\s*([\d.]+)m/i);
-      const gasM = txt.match(/^([^@]+)@/);
-      return {
-        gas:   shortMix((gasM?.[1] || '').trim()),
-        depth: depM ? depM[1] + du : '-',
-        raw:   txt
-      };
-    });
-
-    lines.push('DECO PLAN');
-    lines.push(stamp);
-    lines.push(decoHr);
-    // Algorithm line — name + settings (GF or conservatism)
-    const algoNames = { ZHLC_GF: 'Buhlmann ZH-L16C + GF', VPMB: 'VPM-B', VPMB_GFS: 'VPM-B / GFS' };
-    const algoNameExp = algoNames[decoModelSel] || decoModelSel;
-    const consVal = document.getElementById('conservatismSelect')?.value ?? '0';
-    const algoSettings = decoModelSel === 'ZHLC_GF'
-      ? `GF ${gfLow}/${gfHigh}`
-      : decoModelSel === 'VPMB'
-        ? `Conservatism +${consVal}`
-        : `GF Hi ${gfHigh}  Conservatism +${consVal}`;
-    // ── bottom gas: read fractions directly for accurate trimix label ──
-    const _expBotFracs = getBottomGasFractions();
-    const _expBotLabel = getGasLabel(_expBotFracs.fO2, _expBotFracs.fHe);
-    const _expBotO2    = Math.round(_expBotFracs.fO2 * 100);
-    const _expBotHe    = Math.round((_expBotFracs.fHe || 0) * 100);
-    const _expBotN2    = Math.round(_expBotFracs.fN2 * 100);
-    const _expIsTrimix = _expBotHe > 0;
-    const _expBotDetail = _expIsTrimix
-      ? `${_expBotLabel}  (O2:${_expBotO2}% He:${_expBotHe}% N2:${_expBotN2}%)`
-      : _expBotLabel;
-
-    // ── He half-time mode (VPM only) ──
-    const _heHtMode = document.getElementById('heHalfTimeMode')?.value || 'baker';
-    const _heHtLabel = _heHtMode === 'baker' ? 'Baker 1.88 min' : 'Buhlmann 2003 1.51 min';
-
-    // ── VPM altitude radii factor ──
-    const _expSurfP = 1.01325 * Math.exp(-(altM) / 8434);
-    const _expAltFactor = Math.pow(1.01325 / _expSurfP, 1/3);
-    const _expAltRadii = isVPMExport && altM > 0
-      ? `  Radii factor: x${_expAltFactor.toFixed(3)}`
-      : '';
-
-    // ── VPM repetitive dive state ──
-    const _vpmRepEl = document.getElementById('vpmRepMode');
-    const _vpmRepActive = isVPMExport && _vpmRepEl && _vpmRepEl.checked && typeof _lastVPMResult !== 'undefined' && _lastVPMResult;
-    const _vpmSI = _vpmRepActive ? (parseFloat(document.getElementById('vpmSurfaceInterval')?.value || '60')) : null;
-
-    lines.push(`Algorithm   : ${algoNameExp}  (${algoSettings})`);
-    if (isVPMExport) lines.push(`He Half-Time: ${_heHtLabel}`);
-    lines.push(`Depth       : ${depth}${du}    BT: ${bt} min`);
-    lines.push(`Bottom Gas  : ${_expBotDetail}    Water: ${density}`);
-    lines.push(`Descent     : ${descentRate}${du}/min  Ascent: ${ascentRate}${du}/min  Deco: ${decoAscentRate}${du}/min  Surface: ${surfAscentRate}${du}/min`);
-    lines.push(`Last Stop   : ${lastStop}${du}  Step: ${decoStep}${du}`);
-    const rndTxt = (document.getElementById('stopRounding')?.value||'fractional')==='wholeminute'?'Yes':'No';
-    const wvTxt  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
-    const wvLblTxt = wvTxt<=0.058?'M':'B';
-    lines.push(`Stop Rounding: ${rndTxt}  WV: ${wvTxt}(${wvLblTxt})`);
-    lines.push(`Altitude     : ${altLabel}  Acclimatized: ${acclLabel}${_expAltRadii}`);
-    const _expMdpEn  = document.getElementById('minDecoProfileEnable')?.value === 'yes';
-    const _expMdp9m  = document.getElementById('minDeco9m')?.value || '1';
-    const _expMdp6m  = document.getElementById('minDeco6m')?.value || '3';
-    const _depthUnit = units === 'imperial' ? 'ft' : 'm';
-    if (_expMdpEn) lines.push(`Min Deco Profile: ON  (9${_depthUnit}: ${_expMdp9m} min  6${_depthUnit}: ${_expMdp6m} min)`);
-    if (_vpmRepActive) lines.push(`Repetitive   : Yes  Surface Interval: ${_vpmSI} min  (bubble state + tissue loading carried)`);
-    gswInfos.forEach((g, i) => {
-      // Re-read deco gas labels properly via getDecoCardFractions for trimix accuracy
-      const _dgCard = getDecoCardFractions ? getDecoCardFractions(i) : null;
-      const _dgLabel = _dgCard ? getGasLabel(_dgCard.fO2, _dgCard.fHe) : g.gas;
-      lines.push(`Deco Gas ${i+1}  : ${_dgLabel} (switch @ ${g.depth})`);
-    });
+    lines.push(...buildDecoPlanHeaderLines());
     lines.push(formatPlanSummaryBlock(planSum));
     lines.push('');
 
@@ -15227,7 +15362,8 @@ async function exportPDF(opts) {
   const depthVal = document.getElementById('decoDepth')?.value || '—';
   const btVal    = document.getElementById('decoBT')?.value    || '—';
   const densityLabel = { fresh:'Fresh', en13319:'EN13319', salt:'Salt' }[localStorage.getItem('waterDensity')||'en13319']||'Salt';
-  const gasTagEls = Array.from(document.querySelectorAll('#decoSummary div[style*="border-radius:16px"]'));
+  const gasTags = buildDecoPlanHeaderLines()
+    .filter(l => l.startsWith('Deco Gas') || l.startsWith('Bottom Gas'));
   // Bottom gas: use fractions directly for accurate trimix label
   const _pdfBotFracs  = getBottomGasFractions();
   const _pdfBotLabel  = getGasLabel(_pdfBotFracs.fO2, _pdfBotFracs.fHe);
@@ -15328,7 +15464,6 @@ async function exportPDF(opts) {
   });
   y+=Math.ceil(stats.length/6)*sh+4;
 
-  const gasTags=gasTagEls.map(el=>el.textContent.trim());
   if(gasTags.length){
     checkY(gasTags.length * 6 + 4);
     gasTags.forEach((tag, i) => {
