@@ -1218,24 +1218,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 </div>
 <!-- SINGLE ROW: Algorithm | algo settings | Water | Units | Warning -->
-<div class="algo-switcher" id="algorithmRow" style="display:none;align-items:center;gap:8px;padding:1px 14px;flex-wrap:wrap;min-height:0;">
-<span class="algo-label-text u1">Algorithm:</span><span class="tip-icon" onclick="showTip('Algorithm Selection','Which decompression algorithm is used to compute deco schedules.\n\nZHL-16C + GF (Bühlmann): tissue-saturation model with Gradient Factors. GF low controls first stop depth; GF high controls surface tissue tolerance. Widely validated, deterministic, matches dive computers.\n\nVPM-B: bubble-mechanics model. Minimises bubble growth by suppressing decompression stops deep, allowing faster ascent with less shallow time. Generally produces shorter total deco on short/shallow dives but may give MORE deco than GF on deep, long trimix dives.\n\nVPM-B + GFS: VPM-B bubble model with Gradient Factor Safety overlay. Always at least as conservative as VPM-B alone.\n\n⚠ Conservatism order is PROFILE-DEPENDENT:\n• Deep / long trimix: ZHL-16C + GF is usually more conservative (longer TTS).\n• Short / shallow dives: VPM-B may match or exceed GF conservatism.\nThere is no single most-conservative model — compare TTS for your specific dive.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
-<select class="u7" id="algorithmSelect" onchange="setDecoAlgorithm(this.value)">
-<option selected="" value="ZHLC_GF">Bühlmann ZH-L16C + GF</option>
-<option value="VPMB">VPM-B</option>
-<option value="VPMB_GFS">VPM-B / GFS</option>
-</select><!-- Conservatism (VPM-B and VPM-B/GFS) -->
-<div id="conservatismRow" style="display:none;align-items:center;gap:6px;flex-shrink:0;">
-<span class="algo-label-text u1">Conservatism:</span><span class="tip-icon" onclick="showTip('VPM-B Conservatism','Adds a safety margin on top of VPM-B bubble mechanics by scaling the critical supersaturation threshold.\n\n0 — Standard VPM-B (no added margin)\n1 — +5% radius allowance\n2 — +12% radius allowance\n3 — +22% radius allowance\n4 — +35% radius allowance\n5 — +50% radius allowance\n\nHigher values produce deeper and/or longer decompression stops.\n\nNote: conservatism level does not change the profile-dependence of the model — on deep trimix dives, even VPM-B at conservatism 0 may produce less deco than GF 20/85.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
-<select class="u7" id="conservatismSelect">
-<option value="0">0 — Standard</option>
-<option value="1">1 — +5%</option>
-<option value="2">2 — +12%</option>
-<option value="3">3 — +22%</option>
-<option value="4">4 — +35%</option>
-<option value="5">5 — +50%</option>
-</select>
-</div>
+<div class="algo-switcher" id="envRow" style="display:none;align-items:center;gap:8px;padding:1px 14px;flex-wrap:wrap;min-height:0;">
 <!-- Separator + collapsible env settings toggle -->
 <button id="envSettingsToggle" onclick="toggleEnvSettings()" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" style="display:flex;align-items:center;gap:3px;background:none;border:1px solid var(--border);
              border-radius:5px;padding:3px 7px;cursor:pointer;color:var(--muted);font-family:inherit;
@@ -1243,7 +1226,6 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <span id="envSettingsChevron" style="transition:transform .2s;display:inline-block;font-size:8px;">▶</span>
 <span id="envSettingsLabel">ENV</span>
 </button>
-<!-- Collapsible: Water, Units, Altitude, Acclimatized -->
 <div id="envSettingsBody" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
 <!-- Units -->
 <div id="unitsRow" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -1681,6 +1663,26 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
 <div class="card-title u0">Decompression Schedule</div>
 <button class="tip-icon tip-btn" onclick="document.getElementById('settingsHelpModal').style.display='block'" title="Settings help"><svg fill="none" height="14" viewbox="0 0 11 11" width="14" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></button>
+</div>
+<!-- Algorithm selection row — moved from header into card -->
+<div id="algoRow" style="display:none;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+<span class="algo-label-text u1">Algorithm:</span><span class="tip-icon" onclick="showTip('Algorithm Selection','Which decompression algorithm is used to compute deco schedules.\n\nZHL-16C + GF (Bühlmann): tissue-saturation model with Gradient Factors. GF low controls first stop depth; GF high controls surface tissue tolerance. Widely validated, deterministic, matches dive computers.\n\nVPM-B: bubble-mechanics model. Minimises bubble growth by suppressing decompression stops deep, allowing faster ascent with less shallow time. Generally produces shorter total deco on short/shallow dives but may give MORE deco than GF on deep, long trimix dives.\n\nVPM-B + GFS: VPM-B bubble model with Gradient Factor Safety overlay. Always at least as conservative as VPM-B alone.\n\n⚠ Conservatism order is PROFILE-DEPENDENT:\n• Deep / long trimix: ZHL-16C + GF is usually more conservative (longer TTS).\n• Short / shallow dives: VPM-B may match or exceed GF conservatism.\nThere is no single most-conservative model — compare TTS for your specific dive.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
+<select class="u7" id="algorithmSelect" onchange="setDecoAlgorithm(this.value)">
+<option selected="" value="ZHLC_GF">Bühlmann ZH-L16C + GF</option>
+<option value="VPMB">VPM-B</option>
+<option value="VPMB_GFS">VPM-B / GFS</option>
+</select>
+<div id="conservatismRow" style="display:none;align-items:center;gap:6px;flex-shrink:0;">
+<span class="algo-label-text u1">Conservatism:</span><span class="tip-icon" onclick="showTip('VPM-B Conservatism','Adds a safety margin on top of VPM-B bubble mechanics by scaling the critical supersaturation threshold.\n\n0 — Standard VPM-B (no added margin)\n1 — +5% radius allowance\n2 — +12% radius allowance\n3 — +22% radius allowance\n4 — +35% radius allowance\n5 — +50% radius allowance\n\nHigher values produce deeper and/or longer decompression stops.\n\nNote: conservatism level does not change the profile-dependence of the model — on deep trimix dives, even VPM-B at conservatism 0 may produce less deco than GF 20/85.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
+<select class="u7" id="conservatismSelect">
+<option value="0">0 — Standard</option>
+<option value="1">1 — +5%</option>
+<option value="2">2 — +12%</option>
+<option value="3">3 — +22%</option>
+<option value="4">4 — +35%</option>
+<option value="5">5 — +50%</option>
+</select>
+</div>
 </div>
 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;"><div id="decoCardSubtitle" style="font-size:10px;color:var(--muted);letter-spacing:.5px;"></div><span class="tip-icon" onclick="showTip('Decompression Schedule','Generates a full ascent profile with deco stops using Bühlmann ZH-L16C + Gradient Factors. Configure up to two decompression gases below — they switch automatically at the specified depths during ascent and are factored into tissue off-gassing.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></div>
 <div class="form-grid">
@@ -3250,7 +3252,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.20.7';
+const APP_VERSION = '2.20.8';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3808,16 +3810,18 @@ function setAlgo(a) {
     document.getElementById('algoSubtitle').textContent = 'Bühlmann ZH-L16C · Gradient Factors';
     document.getElementById('brandIcon').textContent    = '🫧';
     document.getElementById('plannerTitle').textContent = 'Bühlmann Dive Plan';
-    document.getElementById('algorithmRow').style.display    = 'flex';
-    document.getElementById('algoSettingsRow').style.display = 'none';
+    document.getElementById('algoRow').style.display         = 'flex';
+    document.getElementById('envRow').style.display           = 'flex';
+    document.getElementById('algoSettingsRow').style.display  = 'none';
     setDecoAlgorithm(document.getElementById('algorithmSelect')?.value || 'ZHLC_GF', true);
   } else {
     document.getElementById('algoLabel').textContent    = 'Rec';
     document.getElementById('algoSubtitle').textContent = 'Recreational Dive Planner';
     document.getElementById('brandIcon').textContent    = '🤿';
     document.getElementById('plannerTitle').textContent = 'Single Dive Plan';
-    // Rec mode: hide TEC row, show REC water/units row
-    document.getElementById('algorithmRow').style.display     = 'none';
+    // Rec mode: hide TEC rows, show REC water/units row
+    document.getElementById('algoRow').style.display          = 'none';
+    document.getElementById('envRow').style.display           = 'none';
     document.getElementById('algoSettingsRow').style.display  = 'flex';
     document.getElementById('gfPresetsRow').style.display     = 'none';
     document.getElementById('gfCustomRow').style.display      = 'none';
@@ -4110,7 +4114,7 @@ function setDecoAlgorithm(model, skipSave) {
     if (vpmRepRow) vpmRepRow.style.display = 'flex';
   }
 
-  // (algorithmRow contains all TEC settings — no separate algoSettingsRow needed in TEC mode)
+  // (algoRow in the Deco card contains algo select + conservatism; envRow in header contains ENV settings)
 
   // Update subtitle to reflect active algorithm
   const subtitles = {

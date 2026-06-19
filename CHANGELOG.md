@@ -4,6 +4,16 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.8 — 2026-06-19
+
+### Changed
+
+- **Moved Algorithm controls from header into Decompression Schedule card** — Algorithm select (Bühlmann / VPM-B / VPM-B+GFS) and VPM-B Conservatism row are now in a new `algoRow` div at the top of the Decompression Schedule card, directly above the subtitle line and depth/BT inputs. The user no longer needs to jump between the header and the card to change algorithm. The ENV toggle button (Water / Units / Altitude) remains in the header in its own `envRow` div, as those are location settings rather than algorithm settings. All `setAlgo()` show/hide logic updated to reference `algoRow` + `envRow` instead of the old `algorithmRow`. Element IDs for `algorithmSelect`, `conservatismRow`, `conservatismSelect` unchanged.
+
+- **`APP_VERSION`** — bumped to `2.20.8`.
+
+---
+
 ## v2.20.7 — 2026-06-19
 
 ### Changed
