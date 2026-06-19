@@ -4,6 +4,16 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.5 — 2026-06-19
+
+### Changed
+
+- **Moved GF controls from header into Advanced Settings** — `gfPresetsRow` (GF preset selector) and `gfCustomRow` (GF Low / GF High custom inputs) relocated from the algorithm header row into the top of the Advanced Settings panel. GF now appears as the first group in the Advanced Settings form-grid, above Descent Rate. Rationale: GF is the most algorithmically significant parameter and belongs with the other deco-model tuning controls rather than cluttering the always-visible header. All save/restore, CSS visibility (rec-mode / algo-tools opacity), and JS logic (`setDecoAlgorithm`, `handleGFSelect`, `setGF`) updated for the new structure; element IDs unchanged.
+
+- **`APP_VERSION`** — bumped to `2.20.5`.
+
+---
+
 ## v2.20.4 — 2026-06-19
 
 ### Changed

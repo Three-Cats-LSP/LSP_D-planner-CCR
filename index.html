@@ -1224,61 +1224,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <option selected="" value="ZHLC_GF">Bühlmann ZH-L16C + GF</option>
 <option value="VPMB">VPM-B</option>
 <option value="VPMB_GFS">VPM-B / GFS</option>
-</select>
-<!-- GF (Bühlmann + VPM-B/GFS) -->
-<div id="gfPresetsRow" style="display:none;align-items:center;gap:6px;flex-shrink:0;">
-<span class="algo-label-text u1">GF:</span><span class="tip-icon" onclick="showTip('Gradient Factors','GF Low / GF High — two numbers that scale the Bühlmann supersaturation limit.\n\nGF Low: applied at the deepest deco stop. Controls first-stop depth.\n Lower = deeper first stop = more conservative start.\n\nGF High: applied at the surface. Controls how much tissue supersaturation is allowed on surfacing.\n Lower = more conservative finish.\n\nTypical presets:\n 20/85 — aggressive deep stops, permissive finish (classic tech)\n 55/80 ★ — modern consensus; matches Shearwater default\n 100/75 ★ — no deep stops, tight finish (shallow-stop approach)\n\n★ = widely used in technical diving training agencies.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
-<select class="u7" id="gfPresetSelect" onchange="handleGFSelect(this.value)">
-<option selected="" value="20/85">20/85</option>
-<option value="30/70">30/70</option>
-<option value="30/85">30/85</option>
-<option value="40/80">40/80</option>
-<option value="45/85">45/85</option>
-<option value="45/95">45/95</option>
-<option value="50/75">50/75</option>
-<option value="55/80">55/80 ★</option>
-<option value="100/75">100/75 ★</option>
-<option value="custom">Custom…</option>
-</select>
-<div class="u19" id="gfCustomRow">
-<select class="u7" id="gfLowInput" onchange="setCustomGF(true)">
-<option value="10">10</option>
-<option value="15">15</option>
-<option value="20">20</option>
-<option value="25">25</option>
-<option value="30">30</option>
-<option value="35">35</option>
-<option selected="" value="40">40</option>
-<option value="45">45</option>
-<option value="50">50</option>
-<option value="55">55</option>
-<option value="60">60</option>
-<option value="65">65</option>
-<option value="70">70</option>
-<option value="75">75</option>
-<option value="80">80</option>
-<option value="85">85</option>
-<option value="90">90</option>
-<option value="95">95</option>
-<option value="100">100</option>
-</select>
-<span style="color:var(--muted);font-size:11px;font-weight:700;">/</span>
-<select class="u7" id="gfHighInput" onchange="setCustomGF(true)">
-<option value="50">50</option>
-<option value="55">55</option>
-<option value="60">60</option>
-<option value="65">65</option>
-<option value="70">70</option>
-<option value="75">75</option>
-<option selected="" value="80">80</option>
-<option value="85">85</option>
-<option value="90">90</option>
-<option value="95">95</option>
-<option value="100">100</option>
-</select>
-</div>
-</div>
-<!-- Conservatism (VPM-B and VPM-B/GFS) -->
+</select><!-- Conservatism (VPM-B and VPM-B/GFS) -->
 <div id="conservatismRow" style="display:none;align-items:center;gap:6px;flex-shrink:0;">
 <span class="algo-label-text u1">Conservatism:</span><span class="tip-icon" onclick="showTip('VPM-B Conservatism','Adds a safety margin on top of VPM-B bubble mechanics by scaling the critical supersaturation threshold.\n\n0 — Standard VPM-B (no added margin)\n1 — +5% radius allowance\n2 — +12% radius allowance\n3 — +22% radius allowance\n4 — +35% radius allowance\n5 — +50% radius allowance\n\nHigher values produce deeper and/or longer decompression stops.\n\nNote: conservatism level does not change the profile-dependence of the model — on deep trimix dives, even VPM-B at conservatism 0 may produce less deco than GF 20/85.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span>
 <select class="u7" id="conservatismSelect">
@@ -1756,6 +1702,64 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </button>
 <div id="advancedSettingsBody" style="display:none;">
 <div class="form-grid" style="margin-top:8px;">
+<!-- GF Settings (Bühlmann + VPM-B/GFS) -->
+<div id="gfPresetsRow" class="field" style="display:none;align-items:center;gap:6px;grid-column:1/-1;">
+<label>GF Preset <span class="tip-icon" onclick="showTip('Gradient Factors','GF Low / GF High — two numbers that scale the Bühlmann supersaturation limit.\n\nGF Low: applied at the deepest deco stop. Controls first-stop depth.\n Lower = deeper first stop = more conservative start.\n\nGF High: applied at the surface. Controls how much tissue supersaturation is allowed on surfacing.\n Lower = more conservative finish.\n\nTypical presets:\n 20/85 — aggressive deep stops, permissive finish (classic tech)\n 55/80 ★ — modern consensus; matches Shearwater default\n 100/75 ★ — no deep stops, tight finish (shallow-stop approach)\n\n★ = widely used in technical diving training agencies.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
+<select class="u7" id="gfPresetSelect" onchange="handleGFSelect(this.value)">
+<option selected="" value="20/85">20/85</option>
+<option value="30/70">30/70</option>
+<option value="30/85">30/85</option>
+<option value="40/80">40/80</option>
+<option value="45/85">45/85</option>
+<option value="45/95">45/95</option>
+<option value="50/75">50/75</option>
+<option value="55/80">55/80 ★</option>
+<option value="100/75">100/75 ★</option>
+<option value="custom">Custom…</option>
+</select>
+</div>
+<div class="field-row-inline" id="gfCustomRow" style="display:none;gap:12px;grid-column:1/-1;">
+<div class="field">
+<label>GF Low</label>
+<select class="u7" id="gfLowInput" onchange="setCustomGF(true)">
+<option value="10">10</option>
+<option value="15">15</option>
+<option value="20">20</option>
+<option value="25">25</option>
+<option value="30">30</option>
+<option value="35">35</option>
+<option selected="" value="40">40</option>
+<option value="45">45</option>
+<option value="50">50</option>
+<option value="55">55</option>
+<option value="60">60</option>
+<option value="65">65</option>
+<option value="70">70</option>
+<option value="75">75</option>
+<option value="80">80</option>
+<option value="85">85</option>
+<option value="90">90</option>
+<option value="95">95</option>
+<option value="100">100</option>
+</select>
+</div>
+<div class="field">
+<label>GF High</label>
+<select class="u7" id="gfHighInput" onchange="setCustomGF(true)">
+<option value="50">50</option>
+<option value="55">55</option>
+<option value="60">60</option>
+<option value="65">65</option>
+<option value="70">70</option>
+<option value="75">75</option>
+<option selected="" value="80">80</option>
+<option value="85">85</option>
+<option value="90">90</option>
+<option value="95">95</option>
+<option value="100">100</option>
+</select>
+</div>
+</div>
 <div class="field"><label>Descent Rate</label>
 <select id="descentRate">
 <option value="10">10 m/min</option>
@@ -3244,7 +3248,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.20.4';
+const APP_VERSION = '2.20.5';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -4041,12 +4045,12 @@ function setDecoAlgorithm(model, skipSave) {
   if (sel) sel.value = model;
 
   // GF row label + options depend on algorithm
-  const gfLabel = document.querySelector('#gfPresetsRow .algo-label-text');
+  const gfLabel = document.querySelector('#gfPresetsRow label');
   const gfSel   = document.getElementById('gfPresetSelect');
   if (gfLabel && gfSel) {
     if (isVPMBGFS) {
       // VPM-B/GFS: GF High only — GF Low is not used
-      gfLabel.textContent = 'GFS Hi:';
+      gfLabel.firstChild.nodeValue = 'GFS Hi: ';
       const curHi = mGF.high || 85;
       gfSel.innerHTML = `
         <option value="hi/70"${curHi===70?' selected':''}>70</option>
@@ -4059,7 +4063,7 @@ function setDecoAlgorithm(model, skipSave) {
         <option value="custom">Custom…</option>`;
     } else {
       // Bühlmann: Lo/Hi presets
-      gfLabel.textContent = 'GF:';
+      gfLabel.firstChild.nodeValue = 'GF Preset ';
       if (!gfSel.querySelector('option[value="20/85"]')) {
         gfSel.innerHTML = `
           <option value="20/85">20/85</option>
@@ -4085,10 +4089,9 @@ function setDecoAlgorithm(model, skipSave) {
     customRowEl.style.display = (showGF && isCustomSel) ? 'flex' : 'none';
     // When switching to Bühlmann, restore Low + separator visibility
     if (isZHLCGF) {
-      const lowEl = document.getElementById('gfLowInput');
-      const sepEl = customRowEl.querySelector('span');
-      if (lowEl) lowEl.style.display = '';
-      if (sepEl) sepEl.style.display = '';
+      // Restore GF Low field div (hidden in VPM-B/GFS custom mode)
+      const lowField = document.getElementById('gfLowInput')?.closest('.field');
+      if (lowField) lowField.style.display = '';
     }
   }
 
@@ -4147,11 +4150,10 @@ function handleGFSelect(val) {
     // VPM-B/GFS custom: show only GF High (Low is determined by VPM-B bubble mechanics)
     if (customRow) {
       customRow.style.display = 'flex';
-      const lowEl  = document.getElementById('gfLowInput');
-      const sepEl  = customRow.querySelector('span');
+      // VPM-B/GFS: hide GF Low field (Low determined by bubble mechanics)
+      const lowField = document.getElementById('gfLowInput')?.closest('.field');
+      if (lowField) lowField.style.display = 'none';
       const highEl = document.getElementById('gfHighInput');
-      if (lowEl)  lowEl.style.display  = 'none';
-      if (sepEl)  sepEl.style.display  = 'none';
       if (highEl) {
         highEl.style.display = '';
         const savedHigh = localStorage.getItem('gfCustomHigh');
@@ -4162,11 +4164,9 @@ function handleGFSelect(val) {
   } else if (val === 'custom') {
     if (customRow) {
       customRow.style.display = 'flex';
-      // Bühlmann custom: show both Low + separator + High
-      const lowEl = document.getElementById('gfLowInput');
-      const sepEl = customRow.querySelector('span');
-      if (lowEl) lowEl.style.display = '';
-      if (sepEl) sepEl.style.display = '';
+      // Bühlmann custom: show both Low and High fields
+      const lowField = document.getElementById('gfLowInput')?.closest('.field');
+      if (lowField) lowField.style.display = '';
     }
     const savedLow  = localStorage.getItem('gfCustomLow');
     const savedHigh = localStorage.getItem('gfCustomHigh');
@@ -4216,10 +4216,8 @@ function setGF(low, high) {
       if (customRow) customRow.style.display = 'flex';
       if (isVPMBGFS) {
         // Custom for VPM-B/GFS: only show High
-        const lowEl = document.getElementById('gfLowInput');
-        const sepEl = customRow?.querySelector('span');
-        if (lowEl) lowEl.style.display = 'none';
-        if (sepEl) sepEl.style.display = 'none';
+        const lowField = document.getElementById('gfLowInput')?.closest('.field');
+        if (lowField) lowField.style.display = 'none';
         if (highInput) highInput.value = high;
       } else {
         if (lowInput && highInput) { lowInput.value = low; highInput.value = high; }
