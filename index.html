@@ -5055,10 +5055,19 @@ function buildPlanInfoRowHtml(o) {
 }
 
 function formatPlanSummaryBlock(p, compact) {
+  const sg = p.surfGF || '-';
   if (compact) {
-    return `Run Time:${p.runTime} TTS:${p.tts} Deco:${p.decoTime}\nCNS:${p.cns} OTU:${p.otu} PrT:${p.prt} Surf GF:${p.surfGF||'-'} Decozone:${p.decozone} First deco:${p.decoStop}`;
+    return [
+      `Run Time:${p.runTime} TTS:${p.tts} Deco:${p.decoTime}`,
+      `CNS:${p.cns} OTU:${p.otu} PrT:${p.prt}`,
+      `Surf GF:${sg} Decozone:${p.decozone} First deco:${p.decoStop}`,
+    ];
   }
-  return `Deco Time: ${p.decoTime}  Run Time: ${p.runTime}  TTS: ${p.tts}  CNS: ${p.cns}  OTU: ${p.otu}  PrT: ${p.prt}  Surf GF: ${p.surfGF||'-'}  Decozone: ${p.decozone}  First deco: ${p.decoStop}`;
+  return [
+    `Deco Time: ${p.decoTime}  Run Time: ${p.runTime}  TTS: ${p.tts}`,
+    `CNS: ${p.cns}  OTU: ${p.otu}  PrT: ${p.prt}`,
+    `Surf GF: ${sg}  Decozone: ${p.decozone}  First deco: ${p.decoStop}`,
+  ];
 }
 
 function injectTtsCells(tbodyId, rtAtBottomEnd) {
@@ -13150,7 +13159,7 @@ function buildExportText(mode) {
     }
 
     lines.push(...buildDecoPlanHeaderLines());
-    lines.push(formatPlanSummaryBlock(planSum));
+    lines.push(...formatPlanSummaryBlock(planSum));
     lines.push('');
 
     // Ascent schedule table
@@ -13200,7 +13209,7 @@ function buildExportText(mode) {
 
       // Totals row — use values already read from table footer (runTimeVal etc.)
       lines.push(shr);
-      lines.push(formatPlanSummaryBlock(planSum, true));
+      lines.push(...formatPlanSummaryBlock(planSum, true));
       lines.push('');
     }
 
@@ -13383,7 +13392,7 @@ function buildExportText(mode) {
       // Totals line
       const emSum = getContingencySummaryExport();
       lines.push('-'.repeat(56));
-      lines.push(formatPlanSummaryBlock(emSum, true));
+      lines.push(...formatPlanSummaryBlock(emSum, true));
       lines.push('');
     }
     lines.push('!! SAFETY REMINDERS');
@@ -13783,7 +13792,7 @@ function buildMessengerText(mode) {
       result.push(`Stp  ${cv[1]}  ${stop}  ${cv[3]}  ${shortMix(cv[5])}`);
     });
     result.push('-'.repeat(28));
-    result.push(formatPlanSummaryBlock(getContingencySummaryExport(), true));
+    result.push(...formatPlanSummaryBlock(getContingencySummaryExport(), true));
     return result.join('\n');
   }
 
@@ -13950,7 +13959,7 @@ function buildMessengerText(mode) {
     if (!isNaN(prtN)) planSumCopy.prt = prtN.toFixed(1);
   }
   result.push('-'.repeat(28));
-  result.push(formatPlanSummaryBlock(planSumCopy, true));
+  result.push(...formatPlanSummaryBlock(planSumCopy, true));
 
   return result.join('\n');
 }
