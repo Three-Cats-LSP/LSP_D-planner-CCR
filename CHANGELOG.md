@@ -4,6 +4,16 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.7 — 2026-06-19
+
+### Changed
+
+- **Added missing GF preset options to dropdown** — `gfPresetSelect` was missing `50/80` (DiveKit preset) and `60/70` (Abysner preset), causing those presets to always show "Custom" in the dropdown after loading even though their GF values are standard named options. Both values added in sorted order: `50/80` between `50/75` and `55/80`; `60/70` between `55/80` and `100/75`.
+
+- **`APP_VERSION`** — bumped to `2.20.7`.
+
+---
+
 ## v2.20.6 — 2026-06-19
 
 ### Fixed
