@@ -4,6 +4,19 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.20.2 — 2026-06-19
+
+### Fixed
+
+- **OTU exponent `0.833` in `calcCNS()` (CNS tab standalone calculator)** — Roman's v2.20.1 fix converted the three engine-path sites to `OTU_EXPONENT = 0.8333` but missed a fourth copy in `calcCNS()` (the OTU readout in the CNS Oxygen Toxicity Tracker tab). That function displayed a slightly low OTU value for the same ppO₂/time input compared to what the deco plan footer showed. Fixed: now uses `OTU_EXPONENT` like all other sites.
+
+### Changed
+
+- **Audit** — Added 2 checks (34.25: `OTU_EXPONENT` constant defined; 34.26: no stale `0.833` 3-digit copies remain). Total: 218 checks, 0 failures.
+- **`APP_VERSION`** — bumped to `2.20.2`.
+
+---
+
 ## v2.20.1 — 2026-06-19
 
 ### Fixed

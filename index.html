@@ -3246,7 +3246,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.20.1';
+const APP_VERSION = '2.20.2';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -14471,7 +14471,7 @@ function calcCNS() {
 
   const singleCNS = singleLimit > 0 ? Math.min((bt / singleLimit) * 100, 999) : 999;
   const dailyCNS  = dailyLimit  > 0 ? Math.min((bt * dives / dailyLimit) * 100, 999) : 999;
-  const otu = bt * Math.pow(Math.max(0, (ppo2 - 0.5) / 0.5), 0.833);
+  const otu = bt * Math.pow(Math.max(0, (ppo2 - 0.5) / 0.5), OTU_EXPONENT);
 
   // Update stats
   document.getElementById('cnsPPO2').textContent     = ppo2.toFixed(2);

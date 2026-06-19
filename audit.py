@@ -1723,6 +1723,18 @@ if re.search(r'CNS DUAL-METHOD AUDIT', js):
 else:
     fail("CNS dual-method audit: audit comment missing")
 
+# 34.25 OTU_EXPONENT constant defined and no stale 0.833 copies remain
+if re.search(r'const OTU_EXPONENT\s*=\s*0\.8333', js):
+    ok("OTU_EXPONENT: constant defined (0.8333)")
+else:
+    fail("OTU_EXPONENT: constant missing — OTU exponent not a single source of truth")
+
+stale_083 = re.findall(r'0\.833[^3]', js)
+if stale_083:
+    fail(f"OTU exponent: {len(stale_083)} stale 0.833 (3-digit) copies remain — should use OTU_EXPONENT")
+else:
+    ok("OTU exponent: no stale 0.833 (3-digit) copies — all sites use OTU_EXPONENT")
+
 print(f"\nLSP D-Planner Audit — {path}")
 print("=" * 60)
 
