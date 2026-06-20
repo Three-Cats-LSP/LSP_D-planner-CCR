@@ -500,7 +500,8 @@ body.algo-tools .algo-switcher > div:last-child .header-warn { opacity: 1 !impor
 }
 
 /* ── TABS ── */
-.tabs-nav { display: flex;
+.tabs-nav,
+.tools-tabs-nav { display: flex;
  gap: 3px;
  background: var(--surface);
  border-radius: 10px;
@@ -512,7 +513,8 @@ body.algo-tools .algo-switcher > div:last-child .header-warn { opacity: 1 !impor
  flex-wrap: nowrap;
  scrollbar-width: none;
 }
-.tabs-nav::-webkit-scrollbar { display: none; }
+.tabs-nav::-webkit-scrollbar,
+.tools-tabs-nav::-webkit-scrollbar { display: none; }
 
 .tab-btn { flex-shrink: 0;
  padding: 8px 13px;
@@ -1446,7 +1448,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 </header>
 <!-- ══ TABS ══ -->
-<div class="tabs-nav">
+<div class="tabs-nav" id="mainTabsNav">
 <button class="tab-btn buh-only active" id="tab-deco" onclick="switchTab('deco',this)">Deco Schedule</button>
 <button class="tab-btn" id="tab-planner" onclick="switchTab('planner',this)">Dive Planner</button>
 <button class="tab-btn" id="tab-surfint" onclick="switchTab('surfint',this)">Surf Int</button>
@@ -2617,7 +2619,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 <div class="panel" id="tools">
 <!-- ── Tools Sub-nav ── -->
-<div class="tabs-nav u11" id="toolsSubNav">
+<div class="tools-tabs-nav u11" id="toolsSubNav">
 <button class="tab-btn active" id="tool-bestmix" onclick="switchTool('bestmix',this)">Best Mix</button>
 <button class="tab-btn" id="tool-mod" onclick="switchTool('mod',this)">MOD</button>
 <button class="tab-btn" id="tool-endcalc" onclick="switchTool('endcalc',this)">END Calc</button>
@@ -3454,7 +3456,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.6';
+const APP_VERSION = '2.30.7';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3981,7 +3983,7 @@ let lastTissues = null;
 const BRAND_SVGS = {
   padi: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="12" cy="8.5" rx="7" ry="5" stroke="currentColor" stroke-width="1.6"/><path d="M5 14.5c0 3.3 3.1 6 7 6s7-2.7 7-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 8.5h6M12 8.5V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
   buh: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="13.5" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="17.5" cy="15.5" r="2" stroke="currentColor" stroke-width="1.5"/></svg>',
-  tools: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 19l9-9 2 2-9 9H5v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 8l3.5-3.5 1.5 1.5L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  tools: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 
 function setBrandIcon(mode) {
@@ -4020,18 +4022,20 @@ function setAlgo(a) {
     document.getElementById('algoLabel').textContent    = 'TOOLS';
     document.getElementById('algoSubtitle').textContent = 'Dive Planning Tools & Calculators';
     setBrandIcon('tools');
-    document.querySelector('.tabs-nav').style.display = 'none';
+    const mainTabs = document.getElementById('mainTabsNav');
+    if (mainTabs) mainTabs.style.display = 'none';
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tools').classList.add('active');
-    setTimeout(initTools, 50);
+    if (typeof initTools === 'function') initTools();
     return;
   }
 
   // Hide Tools panel when switching to REC or Tec
   document.getElementById('tools').classList.remove('active');
 
-  // Restore tabs nav
-  document.querySelector('.tabs-nav').style.display = 'flex';
+  // Restore main tabs nav (never touch #toolsSubNav)
+  const mainTabs = document.getElementById('mainTabsNav');
+  if (mainTabs) mainTabs.style.display = 'flex';
 
   if (isBuh) {
     document.getElementById('algoLabel').textContent    = 'TEC';
@@ -13318,8 +13322,10 @@ function renderTissueLoadChart() {
 // Init tools on tab open
 function switchTool(name, btn) {
   ['bestmix','mod','endcalc','eadtable','gastable','converter','knowledge'].forEach(t => {
-    document.getElementById('tool-panel-' + t).style.display = t === name ? 'block' : 'none';
-    document.getElementById('tool-' + t).classList.toggle('active', t === name);
+    const panel = document.getElementById('tool-panel-' + t);
+    const tab = document.getElementById('tool-' + t);
+    if (panel) panel.style.display = t === name ? 'block' : 'none';
+    if (tab) tab.classList.toggle('active', t === name);
   });
   document.querySelectorAll('#tool-panel-' + name + ' .lsp-slider').forEach(s => updateSliderFill(s));
   if (name === 'mod')       { calcMOD(); renderModRefTable(); }
