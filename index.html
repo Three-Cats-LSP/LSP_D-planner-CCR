@@ -223,16 +223,13 @@ header { display: flex;
  border-radius: 10px;
  display: flex; align-items: center; justify-content: center;
  font-size: 22px;
+ line-height: 1;
+ font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
  background: linear-gradient(135deg, rgba(0,200,255,0.12), rgba(0,100,200,0.08));
  border: 1px solid var(--accent);
  transition: all 0.4s ease;
  animation: iconGlow 4s ease-in-out infinite;
- overflow: hidden;
 }
-.brand-icon img { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; display: block; }
-
-.algo-btn-icon { display: inline-flex; align-items: center; margin-right: 4px; vertical-align: middle; }
-.algo-btn-icon svg { width: 12px; height: 12px; flex-shrink: 0; }
 @keyframes iconGlow { 0%,100% { box-shadow: 0 0 12px rgba(0,200,255,0.15); }
  50% { box-shadow: 0 0 24px rgba(0,200,255,0.3); }
 }
@@ -1310,7 +1307,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="headerTopRow" style="display:flex;flex-wrap:wrap;align-items:center;width:100%;padding:2px 0;border-bottom:1px solid var(--border);">
 <!-- Logo — left, fixed size -->
 <div style="display:flex;align-items:center;gap:12px;padding-left:14px;flex-shrink:0;flex-grow:0;">
-<div class="brand-icon" id="brandIcon"><img alt="" draggable="false" src="icon-192.png"/></div>
+<div class="brand-icon" id="brandIcon">🫧</div>
 <div class="brand-text">
 <h1>LSP D-PLANNER · <span class="algo-label" id="algoLabel">Rec</span></h1>
 <p id="algoSubtitle">Recreational Dive Tables · RDP Reference</p>
@@ -1329,10 +1326,10 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <!-- Mode buttons — right, never shrinks -->
 <div style="display:flex;align-items:center;gap:8px;padding-right:14px;flex-shrink:0;justify-content:flex-end;">
 <div class="algo-toggle" style="display:flex;align-items:center;gap:4px;">
-<button class="algo-btn" id="algoPADI" onclick="setAlgo('padi')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="8" cy="5.5" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 9.5c0 2.5 2.2 4.5 5 4.5s5-2 5-4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6 5.5h4M8 5.5v-1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></span>Rec</button>
-<button class="algo-btn active" id="algoBUH" onclick="setAlgo('buh')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="9" r="2" stroke="currentColor" stroke-width="1.1"/><circle cx="8.5" cy="6.5" r="1.6" stroke="currentColor" stroke-width="1.1"/><circle cx="11.5" cy="10" r="1.3" stroke="currentColor" stroke-width="1.1"/></svg></span>Tec</button>
+<button class="algo-btn" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
+<button class="algo-btn active" id="algoBUH" onclick="setAlgo('buh')">Tec</button>
 <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
-<button class="algo-btn u6" id="algoTools" onclick="setAlgo('tools')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 12.5l7-7 1.5 1.5-7 7H3.5v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M9.5 4.5l2-2 1 1-2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></span>Tools</button>
+<button class="algo-btn u6" id="algoTools" onclick="setAlgo('tools')">Tools</button>
 <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
 <button class="algo-btn" onclick="toggleReference()" title="Reference &amp; Info">?</button>
 </div>
@@ -3458,7 +3455,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.4';
+const APP_VERSION = '2.30.5';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3982,10 +3979,11 @@ let lastTissues = null;
 // ═══════════════════════════════════════════════
 // ALGO SWITCH
 // ═══════════════════════════════════════════════
-function setBrandIcon() {
+function setBrandIcon(mode) {
   const el = document.getElementById('brandIcon');
   if (!el) return;
-  el.innerHTML = '<img src="icon-192.png" alt="" draggable="false">';
+  const icons = { padi: '🤿', buh: '🫧', tools: '🔧' };
+  el.textContent = icons[mode] || icons.buh;
 }
 
 function setAlgo(a) {
@@ -4017,7 +4015,7 @@ function setAlgo(a) {
   if (isTools) {
     document.getElementById('algoLabel').textContent    = 'TOOLS';
     document.getElementById('algoSubtitle').textContent = 'Dive Planning Tools & Calculators';
-    setBrandIcon();
+    setBrandIcon('tools');
     document.querySelector('.tabs-nav').style.display = 'none';
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tools').classList.add('active');
@@ -4034,7 +4032,7 @@ function setAlgo(a) {
   if (isBuh) {
     document.getElementById('algoLabel').textContent    = 'TEC';
     document.getElementById('algoSubtitle').textContent = 'Bühlmann ZH-L16C · Gradient Factors';
-    setBrandIcon();
+    setBrandIcon('buh');
     document.getElementById('plannerTitle').textContent = 'Bühlmann Dive Plan';
     document.getElementById('algoRow').style.display         = 'flex';
     document.getElementById('envRow').style.display           = 'flex';
@@ -4043,7 +4041,7 @@ function setAlgo(a) {
   } else {
     document.getElementById('algoLabel').textContent    = 'Rec';
     document.getElementById('algoSubtitle').textContent = 'Recreational Dive Planner';
-    setBrandIcon();
+    setBrandIcon('padi');
     document.getElementById('plannerTitle').textContent = 'Single Dive Plan';
     // Rec mode: hide TEC rows, show REC water/units row
     document.getElementById('algoRow').style.display          = 'none';
