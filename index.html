@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.23';
+const APP_VERSION = '2.30.24';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -11145,7 +11145,16 @@ const ZHLEngine = (() => {
       const hCircuit = s.circuit || prevCCR.circuit || 'OC';
       const hBailout = s.bailout != null ? s.bailout : (prevCCR.bailout === 'on');
       const hPscrOnLoop = hCircuit === 'pSCR' && !hBailout;
-      function headlessPpo2(depthM, fO2, fHe, runtimeMin) {
+      const hCcrOnLoop = hCircuit === 'CCR' && !hBailout;
+      const hCcrConfig = {
+        circuit: 'CCR',
+        bailout: false,
+        descentSetpoint: parseFloat(s.descentSetpoint ?? prevCCR.descentSetpoint) || 0.7,
+        bottomSetpoint: parseFloat(s.bottomSetpoint) || parseFloat(prevCCR.bottomSetpoint) || 1.2,
+        decoSetpoint: parseFloat(s.decoSetpoint ?? s.setpoint ?? prevCCR.setpoint) || 1.3,
+        setpoint: parseFloat(s.setpoint ?? prevCCR.setpoint) || 1.3,
+      };
+      function headlessPpo2(depthM, fO2, fHe, runtimeMin, phase) {
         const pAmb = hAltP + depthM * hBAR;
         if (hPscrOnLoop && typeof getEffectivePpo2 === 'function') {
           const ccr = {
@@ -11158,6 +11167,10 @@ const ZHLEngine = (() => {
               || parseFloat(document.getElementById('scrMetabolicO2')?.value) || 1.5,
           };
           return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
+        }
+        if (hCcrOnLoop && typeof getEffectivePpo2 === 'function') {
+          const sp = getEffectiveSetpointAtDepth(depthM, hCcrConfig, hAltP, phase);
+          return getEffectivePpo2(pAmb, sp, fO2, hCcrConfig, depthM, fHe);
         }
         return fO2 * pAmb;
       }
@@ -11174,16 +11187,17 @@ const ZHLEngine = (() => {
       // Descent: average depth = half of bottom depth (linear descent from surface)
       const hDescentRate = s.descentRate || 20;
       const hDescentTime = level.depth / hDescentRate;
-      addExposure(headlessPpo2(level.depth / 2, fO2bot, fHeBot, hDescentTime / 2), hDescentTime);
+      addExposure(headlessPpo2(level.depth / 2, fO2bot, fHeBot, hDescentTime / 2, 'descent'), hDescentTime);
       // Bottom: full level.time at full depth, on bottom gas
-      addExposure(headlessPpo2(level.depth, fO2bot, fHeBot, hDescentTime + level.time), level.time);
+      addExposure(headlessPpo2(level.depth, fO2bot, fHeBot, hDescentTime + level.time, 'bottom'), level.time);
       // Ascent/deco steps
       let hRuntime = hDescentTime + level.time;
       (lp.steps || []).forEach(seg => {
         const d   = seg.depth != null ? seg.depth : (seg.type === 'ascent' ? (seg.from + seg.to) / 2 : 0);
         const fO2s = seg.fN2 !== undefined ? Math.max(0, 1 - seg.fN2 - (seg.fHe || 0)) : fO2bot;
         const fHes = seg.fHe != null ? seg.fHe : fHeBot;
-        addExposure(headlessPpo2(d, fO2s, fHes, hRuntime), seg.dur || 0);
+        const phase = seg.type === 'deco' ? 'deco' : (seg.type === 'ascent' ? 'ascent' : undefined);
+        addExposure(headlessPpo2(d, fO2s, fHes, hRuntime, phase), seg.dur || 0);
         hRuntime += seg.dur || 0;
       });
       lp.totalCNS = parseFloat((hCNSfrac * 100).toFixed(1));

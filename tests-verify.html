@@ -690,6 +690,16 @@ const SECTIONS = [
       assert(ccr.totalRuntime < oc.totalRuntime, `CCR RT=${ccr.totalRuntime} must < OC RT=${oc.totalRuntime}`);
       return `OC=${oc.totalRuntime}min CCR=${ccr.totalRuntime}min ✓`;
     }],
+    ['ZHLEngine headless CCR CNS > OC at 40m (setpoint ppO2)', () => {
+      const st = S({ gfLo: 100, gfHi: 100, metric: true });
+      const oc = WIN.ZHLEngine.calculate(lv(40, 28, 21, 0), [], st);
+      const ccr = WIN.ZHLEngine.calculate(lv(40, 28, 21, 0), [], Object.assign({}, st, {
+        circuit: 'CCR', setpoint: 1.3, bottomSetpoint: 1.2, descentSetpoint: 0.7,
+      }));
+      assert((ccr.totalCNS || 0) > (oc.totalCNS || 0),
+        `CCR CNS=${ccr.totalCNS}% should exceed OC CNS=${oc.totalCNS}% at 40m SP1.3`);
+      return `OC CNS=${oc.totalCNS}% CCR CNS=${ccr.totalCNS}% ✓`;
+    }],
     ['pSCR produces different RT than CCR (more conservative)', () => {
       const ccr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({ circuit: 'CCR', setpoint: 1.3, gfLo: 30, gfHi: 85 }));
       const pscr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({

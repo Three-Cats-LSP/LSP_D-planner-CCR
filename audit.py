@@ -2484,10 +2484,51 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.23['\"]", js):
-    ok("APP_VERSION bumped to 2.30.23")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.24['\"]", js):
+    ok("APP_VERSION bumped to 2.30.24")
 else:
-    fail("APP_VERSION not bumped to 2.30.23")
+    fail("APP_VERSION not bumped to 2.30.24")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 56 — v2.30.24 fix (errors_bugs_report_v17)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "hCcrOnLoop" in js and "hCcrConfig" in js and re.search(
+    r"if \(hCcrOnLoop && typeof getEffectivePpo2 === 'function'\)", js
+):
+    ok("ZHLEngine headless CNS/OTU uses CCR setpoint path (v17 BUG-73)")
+else:
+    fail("ZHLEngine headless still uses OC ppO2 for CCR dives (v17 BUG-73)")
+
+pkg_path = os.path.join(os.path.dirname(__file__), "package.json")
+gradle_path = os.path.join(os.path.dirname(__file__), "android", "app", "build.gradle")
+sw_path = os.path.join(os.path.dirname(__file__), "sw.js")
+version_ok = True
+if os.path.isfile(pkg_path):
+    with open(pkg_path, encoding="utf-8") as f:
+        pkg = f.read()
+    if '"version": "2.30.24"' not in pkg:
+        version_ok = False
+else:
+    version_ok = False
+if os.path.isfile(gradle_path):
+    with open(gradle_path, encoding="utf-8") as f:
+        gradle = f.read()
+    if 'versionName "2.30.24"' not in gradle or "versionCode 23024" not in gradle:
+        version_ok = False
+else:
+    version_ok = False
+if os.path.isfile(sw_path):
+    with open(sw_path, encoding="utf-8") as f:
+        sw = f.read()
+    if "lsp-dplanner-ccr-v2.30.24" not in sw:
+        version_ok = False
+else:
+    version_ok = False
+if version_ok:
+    ok("All version files aligned at 2.30.24 (v17 BUG-74)")
+else:
+    fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 55 — v2.30.22 fix (massive suite headless mode leak)

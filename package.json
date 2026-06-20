@@ -1,6 +1,6 @@
 {
   "name": "lsp-d-planner-ccr",
-  "version": "2.30.19",
+  "version": "2.30.24",
   "description": "LSP D-Planner + CCR — rebreather decompression planning (CCR, pSCR, bailout)",
   "private": true,
   "scripts": {
