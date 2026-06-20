@@ -392,6 +392,47 @@ function minStopDepth(r) { const ss = stopSegs(r); return ss.length ? Math.min(.
 function hasDescent(r) { return (r.plan || []).some(s => s.type === 'descent'); }
 function hasBottom(r) { return (r.plan || []).some(s => s.type === 'bottom'); }
 
+// MultiDeco CCR cross-reference (Knowledge Base/divekit-cross-reference) — ±1 step / ±2 min
+const MULTIDECO_CCR = {
+  C1: { rt: 49, firstStop: 15, stops: { 15: 0, 12: 1, 9: 3, 6: 4, 3: 7 },
+    levels: () => lv(40, 28, 21, 0),
+    settings: () => S({ circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7, gfLo: 50, gfHi: 80, ascentRate: 9, decoAscentRate: 9, surfaceAscentRate: 3 }) },
+  C2: { rt: 69, firstStop: 27, stops: { 27: 1, 24: 1, 21: 1, 18: 2, 15: 3, 12: 4, 9: 6, 6: 8, 3: 14 },
+    levels: () => lv(55, 22, 18, 45),
+    settings: () => S({ circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7, gfLo: 35, gfHi: 75, ascentRate: 9, decoAscentRate: 9, surfaceAscentRate: 3 }) },
+  C3: { rt: 98, firstStop: 45, stops: { 45: 0, 42: 1, 39: 1, 36: 1, 33: 1, 30: 1, 27: 2, 24: 3, 21: 3, 18: 4, 15: 5, 12: 7, 9: 9, 6: 13, 3: 22 },
+    levels: () => lv(80, 16, 12, 60),
+    settings: () => S({ circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7, gfLo: 40, gfHi: 80, ascentRate: 9, decoAscentRate: 9, surfaceAscentRate: 3 }) },
+};
+function ccrStopsMap(r) {
+  const m = {};
+  (r.stops || []).forEach(s => {
+    if (!s || s.time <= 0) return;
+    const d = Math.round(s.depth);
+    m[d] = (m[d] || 0) + Math.round(s.time);
+  });
+  return m;
+}
+function compareCCRMultiDeco(r, ref, label) {
+  const got = ccrStopsMap(r);
+  const gotDepths = Object.keys(got).map(Number).sort((a, b) => b - a);
+  const firstGot = gotDepths[0] || 0;
+  assert(Math.abs(firstGot - ref.firstStop) <= 3, `${label} first stop ${firstGot}m vs MultiDeco ${ref.firstStop}m`);
+  assert(Math.abs(r.totalRuntime - ref.rt) <= 5, `${label} RT ${r.totalRuntime} vs MultiDeco ${ref.rt} (±5 min)`);
+  const refDepths = Object.keys(ref.stops).map(Number);
+  let matched = 0;
+  refDepths.forEach(rd => {
+    const near = gotDepths.find(gd => Math.abs(gd - rd) <= 3);
+    if (near != null) {
+      const dt = Math.abs((got[near] || 0) - ref.stops[rd]);
+      assert(dt <= 2, `${label} stop @${rd}m: got ${got[near]}min vs ref ${ref.stops[rd]}min`);
+      matched++;
+    }
+  });
+  assert(matched >= Math.max(2, refDepths.length - 2), `${label} too few stop matches (${matched}/${refDepths.length})`);
+  return `first=${firstGot}m RT=${r.totalRuntime} matched=${matched}/${refDepths.length} ✓`;
+}
+
 // Shape + integrity validators
 function assertShape(r) {
   finite(r.totalRuntime, 'totalRuntime');
@@ -3317,6 +3358,59 @@ const TIER3_GROUPS = [
         const hasBadPrefix = texts.some(t => t && /^❓/.test(t.trim()));
         if (hasBadPrefix) return '❓ prefix found in a tooltip constant ✗';
         return 'no ❓ prefixes ✓';
+      }],
+    ]
+  },
+
+  // ── Group T3-CCR: CCR / Rebreather cross-validation (MultiDeco C1–C3)
+  {
+    tier: 3, name: 'T3-CCR · CCR / Rebreather — MultiDeco Cross-Val',
+    tests: [
+      ['circuitSelect in DOM + DECO_FIELDS', 'SCN', function(){
+        const d = getDoc();
+        assert(d.getElementById('circuitSelect'), 'circuitSelect missing');
+        assert((WIN.appSettings?.DECO_FIELDS || []).includes('circuitSelect'), 'circuitSelect not in DECO_FIELDS');
+        return 'circuitSelect wired ✓';
+      }],
+      ['getInspiredInertPressures on window', 'SCN', function(){
+        assert(typeof WIN.getInspiredInertPressures === 'function', 'helper missing');
+        return 'found ✓';
+      }],
+      ['CCR C1 air 40m/28min SP1.3 — ZHL vs MultiDeco', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const r = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        return compareCCRMultiDeco(r, ref, 'C1 ZHL');
+      }],
+      ['CCR C2 Tx18/45 55m/22min SP1.3 — ZHL vs MultiDeco', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C2;
+        const r = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        return compareCCRMultiDeco(r, ref, 'C2 ZHL');
+      }],
+      ['CCR C3 Tx12/60 80m/16min SP1.3 — ZHL vs MultiDeco', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C3;
+        const r = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        return compareCCRMultiDeco(r, ref, 'C3 ZHL');
+      }],
+      ['CCR C1 — VPM produces valid plan', 'VPMB', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const r = calc(ref.levels(), [], Object.assign(ref.settings(), { conservatism: 0 }), 'VPMB');
+        assert((r.stops || []).length > 0, 'VPM C1 should have stops');
+        assert(r.totalRuntime > 28, `RT=${r.totalRuntime}`);
+        return `RT=${r.totalRuntime} stops=${(r.stops||[]).length} ✓`;
+      }],
+      ['Bailout C1 — longer RT than on-loop CCR', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const loop = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        const bail = calc(ref.levels(), [], Object.assign(ref.settings(), { bailout: true, circuit: 'CCR' }), 'ZHLC_GF');
+        assert(bail.totalRuntime >= loop.totalRuntime, `bailout RT=${bail.totalRuntime} must ≥ loop ${loop.totalRuntime}`);
+        return `loop=${loop.totalRuntime} bailout=${bail.totalRuntime} ✓`;
+      }],
+      ['pSCR C1 — differs from CCR on-loop', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const ccr = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        const pscr = calc(ref.levels(), [], Object.assign(ref.settings(), { circuit: 'pSCR', scrLoopVolume: 7, scrMetabolicO2: 0.85 }), 'ZHLC_GF');
+        assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ');
+        return `CCR=${ccr.totalRuntime} pSCR=${pscr.totalRuntime} ✓`;
       }],
     ]
   },

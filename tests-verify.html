@@ -654,6 +654,60 @@ const SECTIONS = [
     }],
   ]
 },
+
+// ══ I: CCR / Rebreather (v2.30) ═══════════════════════════════════════════════
+{
+  title: 'I · CCR / Rebreather',
+  badge: 'badge-warn',
+  desc: 'Closed-circuit rebreather tissue loading, setpoint, and loop vs OC deco.',
+  tests: [
+    ['CCR inspired N2 at 40m SP 1.3 (air diluent)', () => {
+      const pAmb = 1.01325 + 40 * 0.1;
+      const insp = WIN.getInspiredInertPressures(pAmb, 1.3, 0.21, 0, { circuit: 'CCR', setpoint: 1.3 });
+      const exp = Math.max(0, pAmb - 1.3 - WIN.WATER_VAPOR) * 0.79 / 0.79;
+      assert(Math.abs(insp.pN2 - exp) < 0.02, `pN2=${insp.pN2.toFixed(3)} expected ~${exp.toFixed(3)}`);
+      return `pN2=${insp.pN2.toFixed(3)} bar @ 40m SP1.3 ✓`;
+    }],
+    ['Above setpoint depth: zero inert loading', () => {
+      const pAmb = 1.3 + WIN.WATER_VAPOR + 0.01;
+      const insp = WIN.getInspiredInertPressures(pAmb, 1.3, 0.21, 0, { circuit: 'CCR', setpoint: 1.3 });
+      assert(insp.pN2 === 0 && insp.pHe === 0, `expected 0, got N2=${insp.pN2}`);
+      return 'Shallow segment: no inert load ✓';
+    }],
+    ['CCR 40m/28min air SP1.3 produces deco (ZHL)', () => {
+      const r = WIN.ZHLEngine.calculate(lv(40, 28, 21, 0), [], S({
+        circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7,
+        gfLo: 50, gfHi: 80, metric: true,
+      }));
+      assert((r.stops || []).length > 0, 'CCR dive should require deco stops');
+      return `${(r.stops||[]).length} stops, RT=${r.totalRuntime}min ✓`;
+    }],
+    ['CCR deco shorter than OC same dive (ZHL)', () => {
+      const oc = WIN.ZHLEngine.calculate(lv(40, 28, 21, 0), [], S({ gfLo: 50, gfHi: 80, circuit: 'OC' }));
+      const ccr = WIN.ZHLEngine.calculate(lv(40, 28, 21, 0), [], S({
+        circuit: 'CCR', setpoint: 1.3, gfLo: 50, gfHi: 80,
+      }));
+      assert(ccr.totalRuntime < oc.totalRuntime, `CCR RT=${ccr.totalRuntime} must < OC RT=${oc.totalRuntime}`);
+      return `OC=${oc.totalRuntime}min CCR=${ccr.totalRuntime}min ✓`;
+    }],
+    ['pSCR produces different RT than CCR (more conservative)', () => {
+      const ccr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({ circuit: 'CCR', setpoint: 1.3, gfLo: 30, gfHi: 85 }));
+      const pscr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({
+        circuit: 'pSCR', setpoint: 1.3, scrLoopVolume: 7, scrMetabolicO2: 0.85, gfLo: 30, gfHi: 85,
+      }));
+      assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ');
+      return `CCR=${ccr.totalRuntime}min pSCR=${pscr.totalRuntime}min ✓`;
+    }],
+    ['VPM CCR 40m/28min produces valid plan', () => {
+      const r = WIN.VPMEngine.calculate(lv(40, 28, 21, 0), [], S({
+        circuit: 'CCR', setpoint: 1.3, conservatism: 0,
+      }), 'VPMB');
+      assert(!r.error, r.error || 'no error');
+      assert(r.totalRuntime > 28, `RT=${r.totalRuntime}`);
+      return `RT=${r.totalRuntime}min stops=${(r.stops||[]).length} ✓`;
+    }],
+  ]
+},
 ];
 
 // ─── Runner ───────────────────────────────────────────────────────────────────

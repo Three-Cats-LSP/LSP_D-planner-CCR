@@ -402,7 +402,7 @@ if deco_fields_idx < 0:
     deco_fields_idx = html.find("'DECO_FIELDS'")
 
 if deco_fields_idx > 0:
-    deco_fields_block = html[deco_fields_idx:deco_fields_idx + 600]
+    deco_fields_block = html[deco_fields_idx:deco_fields_idx + 1500]
     required_fields = [
         ("heHalfTimeMode",  "He half-time mode selector"),
         ("botTrimixO2",     "Bottom gas trimix O2 input"),
@@ -1535,7 +1535,7 @@ else:
     fail("Final ascent: surfaceRate leg missing — surfacing time/off-gassing undercounted")
 
 # 32.2 Final ascent applies off-gassing via saturateLinear (not treated as instant)
-if re.search(r'tissues = saturateLinear\(tissues, cur, 0, finalAscentDur', js):
+if re.search(r'tissues = saturateLinear\(tissues, cur, 0, finalAscentDur', js) or re.search(r'tissues = zhlLoadLinear\(tissues, cur, 0, finalAscentDur', js):
     ok("Final ascent: off-gassing applied via saturateLinear during the final leg")
 else:
     fail("Final ascent: off-gassing not applied — tissue state wrong for repetitive-dive surface interval")
@@ -2078,6 +2078,44 @@ elif spread_calls:
     ok(f"formatPlanSummaryBlock: all {len(spread_calls)} call site(s) use spread (...) — array lines pushed correctly")
 else:
     fail("formatPlanSummaryBlock: no call sites found")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 41 — CCR / Rebreather (v2.30)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if 'getInspiredInertPressures' in js or js.find('function getInspiredInertPressures(') >= 0:
+    ok("getInspiredInertPressures() shared CCR helper present")
+else:
+    fail("getInspiredInertPressures() not found")
+
+if js.find('// CCR stub') >= 0:
+    fail("CCR stub comments still present — tissue math not fully wired")
+else:
+    ok("No CCR stub comments remain")
+
+if html.find('id="circuitSelect"') >= 0:
+    ok("circuitSelect UI control present")
+else:
+    fail("circuitSelect UI control missing")
+
+if js.find("'circuitSelect'") >= 0 and js.find('DECO_FIELDS') >= 0:
+    deco_fields_block = js[js.find('DECO_FIELDS'):js.find('DECO_FIELDS')+1500]
+    if "'circuitSelect'" in deco_fields_block:
+        ok("circuitSelect in appSettings.DECO_FIELDS")
+    else:
+        fail("circuitSelect not in appSettings.DECO_FIELDS")
+else:
+    fail("DECO_FIELDS block not found for CCR check")
+
+if js.find('loadTissuesWithCCR') >= 0 and js.find('function loadTissuesWithCCR') >= 0:
+    ok("loadTissuesWithCCR() Bühlmann CCR wrapper present")
+else:
+    fail("loadTissuesWithCCR() not found")
+
+if js.find('splitSegmentAtSetpoint') >= 0:
+    ok("splitSegmentAtSetpoint() present for setpoint crossing")
+else:
+    fail("splitSegmentAtSetpoint() not found")
 
 print("=" * 60)
 

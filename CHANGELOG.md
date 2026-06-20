@@ -4,6 +4,32 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.30.0 — 2026-06-20  ★ Milestone
+
+Full rebreather planning — CCR, pSCR, bailout, and descent setpoint on v2.20.x foundation.
+
+### Added
+
+- **CCR (Closed Circuit Rebreather)** — DiveKit-verified diluent-aware tissue loading (`pInert = P_amb − setpoint − WV`), setpoint crossing split, descent setpoint (default 0.7 bar), loop vs OC deco gas switch logic. Both Bühlmann ZH-L16C+GF and VPM-B/VPM-B/GFS paths.
+
+- **pSCR (Passive SCR)** — GUE-inspired O₂ drop model (loop volume + metabolic O₂ consumption, 0.16 bar floor).
+
+- **Bailout mode** — OC breathing with GF 90/90 (Bühlmann) for emergency ascent planning.
+
+- **Rebreather UI** — Circuit selector (OC / CCR / pSCR), high setpoint, descent setpoint, bailout toggle, pSCR loop volume and metabolic O₂. Wired to `appSettings.DECO_FIELDS`, plan banner, and text export.
+
+- **Shared CCR physics module** — `getInspiredInertPressures()`, `splitSegmentAtSetpoint()`, `getEffectivePpo2()`, `loadTissuesWithCCR()` used by both engines.
+
+- **Tests** — Section I in `tests-verify.html`: CCR inspired pressure, setpoint crossing, CCR vs OC RT, pSCR, VPM CCR plan.
+
+### Changed
+
+- **Audit** — GROUP 41 added (6 checks). Total: 271 checks.
+
+- **`APP_VERSION`** — bumped to `2.30.0`. `sw.js` `CACHE_VERSION` synced.
+
+---
+
 ## v2.20.21 — 2026-06-20
 
 ### Fixed

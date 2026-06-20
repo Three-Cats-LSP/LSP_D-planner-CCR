@@ -6,7 +6,7 @@ Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**.
 
 🌐 **Live App**: https://threecats-lsp.com/d-planner/
 
-**Current version: 2.20.21**
+**Current version: 2.30.0**
 
 ---
 
@@ -401,4 +401,4 @@ Android APK is built automatically by GitHub Actions on every push to `main` and
 
 *Developed by Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
 
-See [CHANGELOG.md](CHANGELOG.md) for version history. Current release: **v2.20.21**.
+See [CHANGELOG.md](CHANGELOG.md) for version history. Current release: **v2.30.0**.
