@@ -227,7 +227,12 @@ header { display: flex;
  border: 1px solid var(--accent);
  transition: all 0.4s ease;
  animation: iconGlow 4s ease-in-out infinite;
+ overflow: hidden;
 }
+.brand-icon img { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; display: block; }
+
+.algo-btn-icon { display: inline-flex; align-items: center; margin-right: 4px; vertical-align: middle; }
+.algo-btn-icon svg { width: 12px; height: 12px; flex-shrink: 0; }
 @keyframes iconGlow { 0%,100% { box-shadow: 0 0 12px rgba(0,200,255,0.15); }
  50% { box-shadow: 0 0 24px rgba(0,200,255,0.3); }
 }
@@ -1305,7 +1310,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="headerTopRow" style="display:flex;flex-wrap:wrap;align-items:center;width:100%;padding:2px 0;border-bottom:1px solid var(--border);">
 <!-- Logo — left, fixed size -->
 <div style="display:flex;align-items:center;gap:12px;padding-left:14px;flex-shrink:0;flex-grow:0;">
-<div class="brand-icon" id="brandIcon">🤿</div>
+<div class="brand-icon" id="brandIcon"><img alt="" draggable="false" src="icon-192.png"/></div>
 <div class="brand-text">
 <h1>LSP D-PLANNER · <span class="algo-label" id="algoLabel">Rec</span></h1>
 <p id="algoSubtitle">Recreational Dive Tables · RDP Reference</p>
@@ -1324,10 +1329,10 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <!-- Mode buttons — right, never shrinks -->
 <div style="display:flex;align-items:center;gap:8px;padding-right:14px;flex-shrink:0;justify-content:flex-end;">
 <div class="algo-toggle" style="display:flex;align-items:center;gap:4px;">
-<button class="algo-btn" id="algoPADI" onclick="setAlgo('padi')">Rec</button>
-<button class="algo-btn active" id="algoBUH" onclick="setAlgo('buh')">Tec</button>
+<button class="algo-btn" id="algoPADI" onclick="setAlgo('padi')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="8" cy="5.5" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 9.5c0 2.5 2.2 4.5 5 4.5s5-2 5-4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6 5.5h4M8 5.5v-1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></span>Rec</button>
+<button class="algo-btn active" id="algoBUH" onclick="setAlgo('buh')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="9" r="2" stroke="currentColor" stroke-width="1.1"/><circle cx="8.5" cy="6.5" r="1.6" stroke="currentColor" stroke-width="1.1"/><circle cx="11.5" cy="10" r="1.3" stroke="currentColor" stroke-width="1.1"/></svg></span>Tec</button>
 <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
-<button class="algo-btn u6" id="algoTools" onclick="setAlgo('tools')">🔧 Tools</button>
+<button class="algo-btn u6" id="algoTools" onclick="setAlgo('tools')"><span class="algo-btn-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 12.5l7-7 1.5 1.5-7 7H3.5v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M9.5 4.5l2-2 1 1-2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></span>Tools</button>
 <div style="width:1px;height:18px;background:var(--border-hi);margin:0 2px;"></div>
 <button class="algo-btn" onclick="toggleReference()" title="Reference &amp; Info">?</button>
 </div>
@@ -1822,11 +1827,11 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <select class="u7" id="gfLowInput" onchange="setCustomGF(true)">
 <option value="10">10</option>
 <option value="15">15</option>
-<option value="20">20</option>
+<option value="20" selected="">20</option>
 <option value="25">25</option>
 <option value="30">30</option>
 <option value="35">35</option>
-<option selected="" value="40">40</option>
+<option value="40">40</option>
 <option value="45">45</option>
 <option value="50">50</option>
 <option value="55">55</option>
@@ -1848,8 +1853,8 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <option value="65">65</option>
 <option value="70">70</option>
 <option value="75">75</option>
-<option selected="" value="80">80</option>
-<option value="85">85</option>
+<option value="80">80</option>
+<option value="85" selected="">85</option>
 <option value="90">90</option>
 <option value="95">95</option>
 <option value="100">100</option>
@@ -3453,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.2';
+const APP_VERSION = '2.30.3';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3964,6 +3969,12 @@ let lastTissues = null;
 // ═══════════════════════════════════════════════
 // ALGO SWITCH
 // ═══════════════════════════════════════════════
+function setBrandIcon() {
+  const el = document.getElementById('brandIcon');
+  if (!el) return;
+  el.innerHTML = '<img src="icon-192.png" alt="" draggable="false">';
+}
+
 function setAlgo(a) {
   algo = a;
   const isBuh   = a === 'buh';
@@ -3993,7 +4004,7 @@ function setAlgo(a) {
   if (isTools) {
     document.getElementById('algoLabel').textContent    = 'TOOLS';
     document.getElementById('algoSubtitle').textContent = 'Dive Planning Tools & Calculators';
-    document.getElementById('brandIcon').textContent    = '🔧';
+    setBrandIcon();
     document.querySelector('.tabs-nav').style.display = 'none';
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tools').classList.add('active');
@@ -4010,7 +4021,7 @@ function setAlgo(a) {
   if (isBuh) {
     document.getElementById('algoLabel').textContent    = 'TEC';
     document.getElementById('algoSubtitle').textContent = 'Bühlmann ZH-L16C · Gradient Factors';
-    document.getElementById('brandIcon').textContent    = '🫧';
+    setBrandIcon();
     document.getElementById('plannerTitle').textContent = 'Bühlmann Dive Plan';
     document.getElementById('algoRow').style.display         = 'flex';
     document.getElementById('envRow').style.display           = 'flex';
@@ -4019,7 +4030,7 @@ function setAlgo(a) {
   } else {
     document.getElementById('algoLabel').textContent    = 'Rec';
     document.getElementById('algoSubtitle').textContent = 'Recreational Dive Planner';
-    document.getElementById('brandIcon').textContent    = '🤿';
+    setBrandIcon();
     document.getElementById('plannerTitle').textContent = 'Single Dive Plan';
     // Rec mode: hide TEC rows, show REC water/units row
     document.getElementById('algoRow').style.display          = 'none';
@@ -4288,7 +4299,7 @@ function setDecoAlgorithm(model, skipSave) {
           <option value="custom">Custom…</option>`;
         // Restore current mGF selection into the freshly rebuilt dropdown
         const _restoredOpt = Array.from(gfSel.options).find(o => o.value === `${mGF.low}/${mGF.high}`);
-        gfSel.value = _restoredOpt ? _restoredOpt.value : 'custom';
+        gfSel.value = _restoredOpt ? _restoredOpt.value : '20/85';
       }
     }
   }
@@ -6977,6 +6988,7 @@ function _doResetToDefaults(userDefaults) {
   if (altCustomRowRec) altCustomRowRec.style.display = 'none';
   altitudeM = 0; altSurfaceP = SEA_LEVEL_P; altAcclimatized = true;
   try { localStorage.removeItem('lspAltitude'); localStorage.removeItem('lspAcclimatized'); } catch(e) {}
+  try { localStorage.removeItem('gfCustomLow'); localStorage.removeItem('gfCustomHigh'); } catch(e) {}
   const badge = document.getElementById('altitudePressureDisplay'); if(badge) badge.textContent='';
 
   // Apply water vapor constant
@@ -17310,6 +17322,10 @@ var appSettings = {
       if (id === '__algo__') {
         return; // Already saved above
       }
+      // Only persist custom GF inputs when Custom preset is active (avoids stale values overriding preset on restore)
+      if ((id === 'gfLowInput' || id === 'gfHighInput') && document.getElementById('gfPresetSelect')?.value !== 'custom') {
+        return;
+      }
       
       const el = document.getElementById(id);
       if (el) {
@@ -17376,33 +17392,45 @@ var appSettings = {
   _restoreFields: function(values) {
     let restored = 0;
     const allPossible = this.getAllPossibleFields();
+    const gfPreset = values.gfPresetSelect;
+    const gfIsCustom = gfPreset === 'custom';
+    
+    const restoreOne = (id) => {
+      if (id === '__algo__' || id === 'gfPresetSelect' || !values.hasOwnProperty(id)) {
+        return;
+      }
+      // Stale custom GF dropdown values must not override a named preset on restore
+      if ((id === 'gfLowInput' || id === 'gfHighInput') && !gfIsCustom) {
+        return;
+      }
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = values[id];
+      if (id === 'gfLowInput' || id === 'gfHighInput') {
+        restored++;
+        return;
+      }
+      if (!window._zhlHeadless) {
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      restored++;
+    };
     
     allPossible.forEach(id => {
-      if (id === '__algo__' || !values.hasOwnProperty(id)) {
-        return; // Skip algorithm and non-existent values
-      }
-      
-      // Wait a bit more for dynamic fields to be created
-      const checkAndRestore = () => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.value = values[id];
-          // GF preset needs special handler to sync mGF state
-          if (id === 'gfPresetSelect' && typeof handleGFSelect === 'function') {
-            handleGFSelect(values[id]);
-          } else if (!window._zhlHeadless) {
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-          restored++;
-        }
-      };
-      
-      // Check immediately
-      checkAndRestore();
-      
-      // Also check after a short delay for dynamically created fields
-      setTimeout(checkAndRestore, 100);
+      restoreOne(id);
+      setTimeout(() => restoreOne(id), 100);
     });
+    
+    // Apply GF preset last so mGF and UI stay in sync
+    const applyGfPreset = () => {
+      const sel = document.getElementById('gfPresetSelect');
+      if (!sel || !gfPreset || typeof handleGFSelect !== 'function') return;
+      sel.value = gfPreset;
+      handleGFSelect(gfPreset);
+      restored++;
+    };
+    applyGfPreset();
+    setTimeout(applyGfPreset, 100);
     
     console.log('[LSP] ✅ Settings restored (' + restored + ' fields) - Algo: ' + (values['__algo__'] || 'padi'));
   },
@@ -18031,12 +18059,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Try to load immediately
   appSettings.load();
-  if (!localStorage.getItem('lspDiveSettingsv6')) {
-    var __lspDefaults = {descentRate:'20', ascentRate:'10', decoAscentRate:'3', surfaceAscentRate:'3', minStopTime:'2', stopRounding:'wholeminute', decoTransitMode:'multideco', waterVapor:'0.0577', minDecoProfileEnable:'no', minDeco9m:'1', minDeco6m:'3'};
+  if (!localStorage.getItem('lspDiveSettings_v6')) {
+    setGF(20, 85);
+    var __lspDefaults = {descentRate:'20', ascentRate:'10', decoAscentRate:'3', surfaceAscentRate:'3', minStopTime:'2', stopRounding:'wholeminute', decoTransitMode:'multideco', waterVapor:'0.0577', minDecoProfileEnable:'no', minDeco9m:'1', minDeco6m:'3', gfPresetSelect:'20/85'};
     Object.keys(__lspDefaults).forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.value = __lspDefaults[id];
     });
+    handleGFSelect('20/85');
   }
   updateWaterVapor(); // apply after settings loaded
   setDecoAlgorithm(document.getElementById('algorithmSelect')?.value || 'ZHLC_GF', true);
