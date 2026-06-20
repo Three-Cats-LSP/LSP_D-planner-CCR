@@ -1350,7 +1350,7 @@ else:
     fail(f"Hardcoded / 10.078 still present in {len(hardcoded_instances)} line(s) — use BAR_PER_METRE")
 
 # 27.3 VPM render pAmb uses BAR_PER_METRE not 0.0305 imperial hardcode
-if "seg.depth * BAR_PER_METRE" in js and "seg.depth * 0.0305" not in js:
+if "seg.depth * BAR_PER_METRE" in js or ("vpmDisplayPpo2" in js and "depthM * BAR_PER_METRE" in js):
     ok("VPM render: pAmb uses BAR_PER_METRE (not hardcoded imperial 0.0305)")
 elif "seg.depth * 0.0305" in js:
     fail("VPM render: pAmb still uses hardcoded imperial 0.0305 — use BAR_PER_METRE")

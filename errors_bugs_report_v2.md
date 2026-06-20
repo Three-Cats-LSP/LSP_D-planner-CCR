@@ -2,11 +2,26 @@
 
 **Repo:** `Three-Cats-LSP/LSP_D-planner-CCR`  
 **Version analysed:** v2.30.0 post-fix (commit `6825330`)  
-**Date:** 2026-06-20  
+**Fix commit:** 2026-06-20 — all 6 bugs addressed  
 **Audit result:** 271 checks, 0 failures  
 **Scope:** Cross-check and verification pass after first report was fixed. All 12 prior bugs confirmed resolved. New bugs found below.
 
 ---
+
+## Fix status (2026-06-20)
+
+| # | Status | Fix summary |
+|---|---|---|
+| BUG-13 | **FIXED** | `renderVPMResults()` uses `vpmDisplayPpo2()` with CCR setpoint via `getEffectivePpo2` |
+| BUG-14 | **FIXED** | `addGas()` detects `CCR …` labels; uses metabolic diluent rate instead of OC SAC |
+| BUG-15 | **FIXED** | APK links and export footers point to `d-planner-ccr` |
+| BUG-16 | **FIXED** | PWA install banner → "Install LSP D-Planner + CCR" |
+| BUG-17 | **FIXED** | `calcCNS()` reads `fHe` from `getBottomGasFractions()` for pSCR trimix |
+| BUG-18 | **FIXED** | In-app documentation, disclaimer, GitHub/APK labels updated to "+ CCR" |
+
+---
+
+## Original findings (post v1 fix baseline)
 
 ## HIGH
 
