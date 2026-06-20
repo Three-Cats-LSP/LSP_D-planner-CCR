@@ -2477,10 +2477,17 @@ if ctx_oc_start > 0 and "calcSettings.bailout" in ctx_oc_block and "return setti
 else:
     fail("ctxUseOCForPpo2 still references free settings identifier (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.22['\"]", js):
-    ok("APP_VERSION bumped to 2.30.22")
+calc_start = js.find("function calculate(levels, decoGases, settings, model)")
+ctx_oc_start = js.find("function ctxUseOCForPpo2")
+if calc_start > 0 and ctx_oc_start > calc_start:
+    ok("ctxUseOCForPpo2 defined inside VPMEngine.calculate (BUG-73)")
 else:
-    fail("APP_VERSION not bumped to 2.30.22")
+    fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
+
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.23['\"]", js):
+    ok("APP_VERSION bumped to 2.30.23")
+else:
+    fail("APP_VERSION not bumped to 2.30.23")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 55 — v2.30.22 fix (massive suite headless mode leak)
@@ -2506,6 +2513,17 @@ if os.path.isfile(massive_path):
         fail("tests-massive.html missing headless guard in calc() (BUG-74)")
 else:
     fail("tests-massive.html missing")
+
+massive_main_path = os.path.join(os.path.dirname(__file__), "tests-massive-main.html")
+if os.path.isfile(massive_main_path):
+    with open(massive_main_path, encoding="utf-8") as f:
+        massive_main = f.read()
+    if "MIN_APP_VERSION" in massive_main and "about:blank" in massive_main:
+        ok("tests-massive-main.html guards against stale cached index.html (BUG-73)")
+    else:
+        fail("tests-massive-main.html missing MIN_APP_VERSION / about:blank guard (BUG-73)")
+else:
+    fail("tests-massive-main.html missing")
 
 print("=" * 60)
 

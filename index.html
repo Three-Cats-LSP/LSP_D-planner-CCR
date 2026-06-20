@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.22';
+const APP_VERSION = '2.30.23';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -8542,9 +8542,6 @@ const VPMEngine = (() => {
             }
             return fO2 * pAmb;
         }
-        function ctxUseOCForPpo2(calcSettings) {
-            return calcSettings.bailout || calcSettings.circuit !== 'pSCR';
-        }
         function calculateOTU(ppO2, time) {
         if (ppO2 <= 0.5) return 0;
         return time * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
@@ -8580,6 +8577,9 @@ const VPMEngine = (() => {
         model = model || 'VPMB';
         if (!levels || levels.length === 0) {
             return { error: 'No bottom segments defined', stops: [], totalTime: 0 };
+        }
+        function ctxUseOCForPpo2(calcSettings) {
+            return calcSettings.bailout || calcSettings.circuit !== 'pSCR';
         }
         const stepSize = settings.stepSize || (settings.metric ? 3 : 10);
         const lastStop = settings.lastStop || (settings.metric ? 3 : 10);

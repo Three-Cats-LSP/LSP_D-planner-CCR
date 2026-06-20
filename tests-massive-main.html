@@ -308,7 +308,7 @@ iframe { display: none; }
 
 </div><!-- .container -->
 
-<iframe id="app-frame" src="index.html"></iframe>
+<iframe id="app-frame" src="about:blank"></iframe>
 
 <script>
 'use strict';
@@ -2977,7 +2977,22 @@ function renderResults(groups) {
 // ══════════════════════════════════════════════════════════════════════════════
 // ENGINE BOOT
 // ══════════════════════════════════════════════════════════════════════════════
+const MIN_APP_VERSION = '2.30.21'; // BUG-73: ctxUseOCForPpo2 ReferenceError in VPMEngine
 let iframeBootError = null;
+let iframeReloadAttempted = false;
+
+function parseAppVersion(v) {
+  return String(v || '0').split('.').map(n => parseInt(n, 10) || 0);
+}
+
+function appVersionAtLeast(v, min) {
+  const a = parseAppVersion(v), b = parseAppVersion(min);
+  for (let i = 0; i < 3; i++) {
+    if (a[i] > b[i]) return true;
+    if (a[i] < b[i]) return false;
+  }
+  return true;
+}
 
 function waitForEngine(iframe, timeout, cb) {
   const start = Date.now();
@@ -3014,6 +3029,19 @@ function waitForEngine(iframe, timeout, cb) {
   function check() {
     const found = tryGet();
     if (found) {
+      const ver = found.win.APP_VERSION || found.win.APPVERSION;
+      if (!appVersionAtLeast(ver, MIN_APP_VERSION)) {
+        if (!iframeReloadAttempted) {
+          iframeReloadAttempted = true;
+          iframe.src = 'index.html?v=' + MIN_APP_VERSION + '&ts=' + Date.now();
+          setTimeout(check, 500);
+          return;
+        }
+        return cb(new Error(
+          'Stale index.html v' + (ver || '?') + ' — need v' + MIN_APP_VERSION +
+          '+ (BUG-73). Hard refresh (Ctrl+Shift+R) or clear site data for threecats-lsp.com.'
+        ));
+      }
       // Wait 2s for deferred app init (appSettings.load retries, setTimeout callbacks)
       // to complete before starting tests. This prevents mid-test DOM thrashing.
       setTimeout(() => cb(null, found.engine, found.win), 2000);
@@ -3074,9 +3102,17 @@ async function startTests() {
   document.getElementById('summary').style.display = 'none';
   document.getElementById('results').innerHTML = '';
   iframeBootError = null;
+  iframeReloadAttempted = false;
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      if (reg) reg.update();
+    }).catch(() => {});
+  }
 
   const frame = document.getElementById('app-frame');
-  frame.src = 'index.html?ts=' + Date.now();
+  frame.src = 'index.html?v=' + MIN_APP_VERSION + '&ts=' + Date.now();
 
   waitForEngine(frame, 45000, async function(err, engine, win) {
     if (err) {
