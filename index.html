@@ -5736,6 +5736,29 @@ function loadTissuesWithCCR(tissues, fromDepth, toDepth, time, fO2, fHe, ccr, co
   return saturateLinearCCR(tissues, fromDepth, toDepth, time, fO2, fHe, cfg);
 }
 
+function isCcrOnLoopGasLabel(label) {
+  return typeof label === 'string' && label.toUpperCase().startsWith('CCR ');
+}
+function ccrDiluentSurfaceLpm() {
+  const ccr = getCCRSettingsFromDOM();
+  const metRate = ccr.scrMetabolicO2 || 0.85;
+  const bot = getBottomGasFractions();
+  return metRate / Math.max(0.01, bot.fO2 || 0.21);
+}
+function isCcrDiluentGasLabel(label) {
+  if (!label) return false;
+  if (isCcrOnLoopGasLabel(label)) return true;
+  const ccr = getCCRSettingsFromDOM();
+  if (!isRebreatherCircuit(ccr.circuit) || ccr.bailout) return false;
+  const bot = getBottomGasFractions();
+  return label.toUpperCase() === getGasLabel(bot.fO2, bot.fHe).toUpperCase();
+}
+function ccrGasLitres(label, depthM, durMin, sac) {
+  if (isCcrDiluentGasLabel(label)) return ccrDiluentSurfaceLpm() * durMin;
+  const absP = altSurfaceP + depthM * BAR_PER_METRE;
+  return sac * absP * durMin;
+}
+
 function toggleCircuitFields() {
   const circuit = document.getElementById('circuitSelect')?.value || 'OC';
   const isRB = circuit !== 'OC';
@@ -6849,9 +6872,6 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const fO2 = o2pct / 100;
     const fHe = hepct / 100;
     const fN2 = Math.max(0, 1 - fO2 - fHe);
-    if (_vpmOnLoop && seg && seg.setpoint === 0 && _vpmCcr.circuit === 'CCR') {
-      return ppO2Check(depthM, fN2, fHe);
-    }
     if (_vpmOnLoop) {
       const pAmb = surfP + depthM * BAR_PER_METRE;
       const sp = (seg && seg.setpoint > 0)
@@ -7029,8 +7049,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     if (!durMin || !mixRaw || mixRaw === '-') return;
     const gasKey = mixRaw; // labels now always in O2/He format (e.g. '50/00', '21/35', '100/00')
     const sac = (ph === 'bottom') ? sacBotVPM : sacDecoVPM;
-    const absP = surfP + depthM2 * BAR_PER_METRE;
-    gasConsVPM[gasKey] = (gasConsVPM[gasKey] || 0) + sac * absP * durMin;
+    gasConsVPM[gasKey] = (gasConsVPM[gasKey] || 0) + ccrGasLitres(gasKey, depthM2, durMin, sac);
   });
   const gasElVPM = document.getElementById('gasConsumptionSummary');
   if (gasElVPM && Object.keys(gasConsVPM).length) {
@@ -9195,6 +9214,23 @@ function runDecoSchedule() {
     gfL = 0.9;
     gfH = 0.9;
   }
+  let diveRuntimeMin = 0;
+  function zhlLoadLinear(tissues, from, to, t, fO2, fHe, onLoop) {
+    if (onLoop) {
+      const out = loadTissuesWithCCR(tissues, from, to, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin });
+      diveRuntimeMin += t;
+      return out;
+    }
+    return saturateLinear(tissues, from, to, t, Math.max(0, 1 - fO2 - fHe), fHe);
+  }
+  function zhlLoadConst(tissues, depth, t, fO2, fHe, onLoop) {
+    if (onLoop) {
+      const out = loadTissuesWithCCR(tissues, depth, depth, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin });
+      diveRuntimeMin += t;
+      return out;
+    }
+    return saturate(tissues, depth, t, Math.max(0, 1 - fO2 - fHe), fHe);
+  }
   function zhlOnLoopAt(depthM, gas) {
     if (!_zhlOnLoop) return false;
     const fO2 = gas.fO2 != null ? gas.fO2 : Math.max(0, 1 - gas.fN2 - (gas.fHe || 0));
@@ -9203,18 +9239,6 @@ function runDecoSchedule() {
     const sp = getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP);
     const loopPpo2 = getEffectivePpo2(pAmb, sp, bottomFO2, _ccrSettings, depthM, bottomFHe);
     return fO2 * pAmb <= loopPpo2 + 0.001;
-  }
-  function zhlLoadLinear(tissues, from, to, t, fO2, fHe, onLoop) {
-    if (onLoop) {
-      return loadTissuesWithCCR(tissues, from, to, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: rt });
-    }
-    return saturateLinear(tissues, from, to, t, Math.max(0, 1 - fO2 - fHe), fHe);
-  }
-  function zhlLoadConst(tissues, depth, t, fO2, fHe, onLoop) {
-    if (onLoop) {
-      return loadTissuesWithCCR(tissues, depth, depth, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: rt });
-    }
-    return saturate(tissues, depth, t, Math.max(0, 1 - fO2 - fHe), fHe);
   }
   function _ccrPpo2Opts(depthM, onLoop, fO2) {
     if (!onLoop || !_zhlOnLoop) return undefined;
@@ -9849,20 +9873,8 @@ function runDecoSchedule() {
   const BAR_PER_M = BAR_PER_METRE;
   // gasConsumed[gasLabel] = litres
   const gasConsumed = {};
-  function isCcrOnLoopGasLabel(label) {
-    return typeof label === 'string' && label.toUpperCase().startsWith('CCR ');
-  }
-  function ccrDiluentSurfaceLpm() {
-    const ccr = getCCRSettingsFromDOM();
-    const metRate = ccr.scrMetabolicO2 || 0.85;
-    const bot = getBottomGasFractions();
-    return metRate / Math.max(0.01, bot.fO2 || 0.21);
-  }
   function addGas(label, depthM, dur, sac) {
-    const litres = isCcrOnLoopGasLabel(label)
-      ? ccrDiluentSurfaceLpm() * dur
-      : sac * (altSurfaceP + depthM * BAR_PER_M) * dur;
-    gasConsumed[label] = (gasConsumed[label] || 0) + litres;
+    gasConsumed[label] = (gasConsumed[label] || 0) + ccrGasLitres(label, depthM, dur, sac);
   }
 
 
@@ -13357,7 +13369,7 @@ async function buildGasPlanPDF() {
   function drawHeader() {
     doc.setFillColor(0,90,140); doc.rect(0,0,PW,8,'F');
     doc.setFontSize(8); doc.setFont('DejaVuSans','bold'); doc.setTextColor(255,255,255);
-    doc.text('LSP D-PLANNER - GAS PLAN', ML, 5.5);
+    doc.text('LSP D-PLANNER + CCR - GAS PLAN', ML, 5.5);
     doc.setFont('DejaVuSans','normal');
     doc.text(ruleName, PW/2, 5.5, {align:'center'});
     doc.text(`${dateStr} ${timeStr}`, PW-MR, 5.5, {align:'right'});
@@ -16118,7 +16130,7 @@ async function exportPDF(opts) {
   let decoStopVal = planSumPdf.decoStop;
   let surfGFVal = planSumPdf.surfGF || '-';
   const algoTag = decoModelSel==='ZHLC_GF'?`GF${mGF.low}-${mGF.high}_Buhlmann`:decoModelSel==='VPMB'?`C${cons}_VPM-B`:`GFHi${mGF.high}_C${cons}_VPM-B_GFS`;
-  const fileName = `LSP_${isoDate}_Deco_${depthVal}${du}_${btVal}min_${algoTag}.pdf`;
+  const fileName = `LSP_CCR_${isoDate}_Deco_${depthVal}${du}_${btVal}min_${algoTag}.pdf`;
   const PW=210, PH=297, ML=14, MR=14, MT=10, MB=10, CW=182;
   let y=MT;
 
@@ -16136,7 +16148,7 @@ async function exportPDF(opts) {
   function drawHeader() {
     doc.setFillColor(0,85,170); doc.rect(0,0,PW,8,'F');
     doc.setFontSize(8); doc.setFont('DejaVuSans','bold'); doc.setTextColor(255,255,255);
-    doc.text('LSP D-PLANNER', ML, 5.5);
+    doc.text('LSP D-PLANNER + CCR', ML, 5.5);
     doc.setFont('DejaVuSans','normal');
     doc.setFontSize(8);
     const hdrMid = `${btVal}min @ ${depthVal}${du} | ${bottomGasVal} | ${gfStr} | ${algo} | ${densityLabel}`;

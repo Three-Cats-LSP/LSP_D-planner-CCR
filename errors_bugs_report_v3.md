@@ -2,11 +2,25 @@
 
 **Repo:** `Three-Cats-LSP/LSP_D-planner-CCR`  
 **Version analysed:** v2.30.0 post-fix-2 (commit `e001a09`)  
-**Date:** 2026-06-20  
+**Fix commit:** 2026-06-20 — all 4 report bugs + runtime TDZ crash fixed  
 **Audit result:** 271 checks, 0 failures  
 **Scope:** Third verification pass. All 6 bugs from report v2 confirmed fixed. New bugs found below.
 
 ---
+
+## Fix status (2026-06-20)
+
+| # | Status | Fix summary |
+|---|---|---|
+| BUG-19 | **FIXED** | VPM gas consumption uses shared `ccrGasLitres()` / `isCcrDiluentGasLabel()` for on-loop bottom diluent |
+| BUG-20 | **FIXED** | Deco + gas-plan PDF headers → `LSP D-PLANNER + CCR` |
+| BUG-21 | **FIXED** | Removed dead `seg.setpoint === 0` branch from `vpmDisplayPpo2()` |
+| BUG-22 | **FIXED** | PDF filename prefix → `LSP_CCR_` |
+| — | **FIXED** | Generate Schedule crash: `zhlLoadLinear`/`zhlLoadConst` used `rt` before `let rt` init — now uses `diveRuntimeMin` |
+
+---
+
+## Original findings (post v2 fix baseline)
 
 ## HIGH
 
