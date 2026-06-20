@@ -1,6 +1,6 @@
 /**
  * LSP D-Planner+CCR — shared browser test harness (dual-engine: VPMEngine + ZHLEngine)
- * Include before suite scripts: <script src="lsp-test-harness.js"></script>
+ * Include inline in test HTML (site sync may not deploy standalone .js files).
  */
 var LSPTestHarness = (function () {
   'use strict';

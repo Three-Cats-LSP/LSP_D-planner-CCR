@@ -2422,7 +2422,7 @@ else:
     fail("lsp-test-harness.js missing")
 
 for test_file, needle in [
-    ("tests.html", "lsp-test-harness.js"),
+    ("tests.html", "LSPTestHarness.waitForApp"),
     ("tests-extended.html", "LSPTestHarness.waitForApp"),
     ("tests-pscr-otu-cns.html", "LSPTestHarness.waitForApp"),
     ("tests-verify.html", "ZHLEngine"),
@@ -2456,10 +2456,31 @@ if emerg_start > 0 and "gpVolDisp(reqL)" in emerg_block:
 else:
     fail("Emergency gas block still shows raw litres as cu ft (BUG-72)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.19['\"]", js):
-    ok("APP_VERSION bumped to 2.30.19")
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 54 — v2.30.21 fix (ctxUseOCForPpo2 ReferenceError in VPMEngine)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if re.search(r"function ctxUseOCForPpo2\(calcSettings\)", js):
+    ok("ctxUseOCForPpo2 takes calcSettings param (BUG-73)")
 else:
-    fail("APP_VERSION not bumped to 2.30.19")
+    fail("ctxUseOCForPpo2 still missing calcSettings param (BUG-73)")
+
+if "ctxUseOCForPpo2(settings)" in js:
+    ok("VPM OTU/CNS paths pass settings into ctxUseOCForPpo2 (BUG-73)")
+else:
+    fail("ctxUseOCForPpo2 not called with settings (BUG-73)")
+
+ctx_oc_start = js.find("function ctxUseOCForPpo2")
+ctx_oc_block = js[ctx_oc_start:ctx_oc_start + 120] if ctx_oc_start > 0 else ""
+if ctx_oc_start > 0 and "calcSettings.bailout" in ctx_oc_block and "return settings." not in ctx_oc_block:
+    ok("ctxUseOCForPpo2 body uses calcSettings not free settings (BUG-73)")
+else:
+    fail("ctxUseOCForPpo2 still references free settings identifier (BUG-73)")
+
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.21['\"]", js):
+    ok("APP_VERSION bumped to 2.30.21")
+else:
+    fail("APP_VERSION not bumped to 2.30.21")
 
 print("=" * 60)
 

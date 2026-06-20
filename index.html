@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.19';
+const APP_VERSION = '2.30.21';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -8542,8 +8542,8 @@ const VPMEngine = (() => {
             }
             return fO2 * pAmb;
         }
-        function ctxUseOCForPpo2(ctx) {
-            return settings.bailout || settings.circuit !== 'pSCR';
+        function ctxUseOCForPpo2(calcSettings) {
+            return calcSettings.bailout || calcSettings.circuit !== 'pSCR';
         }
         function calculateOTU(ppO2, time) {
         if (ppO2 <= 0.5) return 0;
@@ -8649,7 +8649,7 @@ const VPMEngine = (() => {
                 const depth = fromDepth + (toDepth - fromDepth) * frac;
                 const pAmb = getAmbientPressure(depth, settings);
                 settings._scrRuntimeMin = ctx.runtime + frac * time;
-                const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(ctx));
+                const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(settings));
                 ctx.totalOTU += calculateOTU(ppO2, dt);
                 ctx.totalCNS += calculateCNS(ppO2, dt);
             }
@@ -8658,7 +8658,7 @@ const VPMEngine = (() => {
             if (time <= 0) return;
             const pAmb = getAmbientPressure(depth, settings);
             settings._scrRuntimeMin = ctx.runtime;
-            const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(ctx));
+            const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(settings));
             ctx.totalOTU += calculateOTU(ppO2, time);
             ctx.totalCNS += calculateCNS(ppO2, time);
         }
@@ -8750,7 +8750,7 @@ const VPMEngine = (() => {
                 ctx.runtime += effectiveMinStop;
             }
             settings._scrRuntimeMin = ctx.runtime;
-            const ppO2Stop = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, stopDepth, ctxUseOCForPpo2(ctx));
+            const ppO2Stop = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, stopDepth, ctxUseOCForPpo2(settings));
             ctx.totalOTU += calculateOTU(ppO2Stop, totalStopTime);
             ctx.totalCNS += calculateCNS(ppO2Stop, totalStopTime);
             appendPlan(ctx, {

@@ -72,7 +72,116 @@
 
 <iframe id="app-frame" src="about:blank"></iframe>
 
-<script src="lsp-test-harness.js"></script>
+<script>
+/* inlined from lsp-test-harness.js — keep in sync */
+var LSPTestHarness = (function () {
+  'use strict';
+
+  function clone(v) {
+    return JSON.parse(JSON.stringify(v));
+  }
+
+  function hookIframe(iframe, onErr) {
+    iframe.addEventListener('load', function () {
+      try {
+        var w = iframe.contentWindow;
+        if (!w || w.__lspHarnessHooked) return;
+        w.__lspHarnessHooked = true;
+        w.addEventListener('error', function (e) {
+          onErr((e && e.message) || 'Script error');
+        });
+        w.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason;
+          onErr((r && r.message) || String(r) || 'Unhandled rejection');
+        });
+      } catch (_) {}
+    });
+  }
+
+  function appReady(w) {
+    return !!(w
+      && w.VPMEngine && typeof w.VPMEngine.calculate === 'function'
+      && w.ZHLEngine && typeof w.ZHLEngine.calculate === 'function');
+  }
+
+  function readPhys(win) {
+    var surf = isFinite(win.altSurfaceP) ? win.altSurfaceP : 1.01325;
+    var bar = win.BAR_PER_METRE;
+    if (bar == null || !isFinite(bar)) bar = 0.1;
+    return { surf: surf, barPerM: bar };
+  }
+
+  function waitForApp(iframe, timeoutMs, cb) {
+    var bootErr = null;
+    var settled = false;
+    hookIframe(iframe, function (msg) { bootErr = msg; });
+
+    function finish(err, ctx) {
+      if (settled) return;
+      settled = true;
+      cb(err, ctx);
+    }
+
+    function check() {
+      try {
+        var w = iframe.contentWindow;
+        if (appReady(w)) {
+          w._zhlHeadless = true;
+          var phys = readPhys(w);
+          setTimeout(function () {
+            finish(null, {
+              win: w,
+              vpm: w.VPMEngine,
+              zhl: w.ZHLEngine,
+              version: w.APP_VERSION || null,
+              surf: phys.surf,
+              barPerM: phys.barPerM,
+            });
+          }, 1500);
+          return;
+        }
+      } catch (_) {}
+      if (bootErr) return finish(new Error('Boot: ' + bootErr));
+      if (Date.now() - start > timeoutMs) {
+        return finish(new Error('Timed out waiting for VPMEngine + ZHLEngine in index.html'));
+      }
+      setTimeout(check, 250);
+    }
+
+    var start = Date.now();
+    if (!iframe.src || iframe.src === 'about:blank') {
+      iframe.src = 'index.html?ts=' + Date.now();
+    }
+    setTimeout(check, 300);
+  }
+
+  function calc(ctx, levels, gases, settings, model) {
+    if (!ctx || !ctx.vpm || !ctx.zhl) throw new Error('Harness not booted — call waitForApp first');
+    var lv = clone(levels || []);
+    var gs = clone(gases || []);
+    var st = clone(settings || {});
+    var r = (model === 'ZHLC_GF')
+      ? ctx.zhl.calculate(lv, gs, st)
+      : ctx.vpm.calculate(lv, gs, st, model);
+    if (!r || typeof r !== 'object') throw new Error('Engine returned no result');
+    if (r.error) throw new Error(r.error);
+    return r;
+  }
+
+  function reloadApp(iframe) {
+    iframe.src = 'index.html?ts=' + Date.now();
+  }
+
+  return {
+    clone: clone,
+    waitForApp: waitForApp,
+    calc: calc,
+    readPhys: readPhys,
+    reloadApp: reloadApp,
+    appReady: appReady,
+  };
+})();
+</script>
 <script>
 // ─── INFRASTRUCTURE ──────────────────────────────────────────────────────────
 
@@ -604,6 +713,12 @@ function renderResults(groups) {
 function startTests() {
   var btn = document.getElementById('run-btn');
   var statusEl = document.getElementById('status');
+  if (typeof LSPTestHarness === 'undefined') {
+    statusEl.className = 'error';
+    statusEl.textContent = '✗ Test harness failed to load — refresh or redeploy tests.html';
+    if (btn) btn.disabled = false;
+    return;
+  }
   btn.disabled = true;
   statusEl.className = '';
   statusEl.textContent = 'Loading index.html…';
