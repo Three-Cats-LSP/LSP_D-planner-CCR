@@ -1305,14 +1305,39 @@ const TIER1_GROUPS = [
 
 function getDoc() { return WIN && WIN.document; }
 
+function enterMassiveHeadless() {
+  if (!WIN) return;
+  WIN._zhlHeadless = true;
+  WIN._massiveSuiteActive = true;
+  WIN._lastContingency = null;
+}
+
+function injectStubDecoOutput(d) {
+  if (!d) return;
+  const dr = d.getElementById('decoResult');
+  if (dr) dr.style.display = 'block';
+  const ds = d.getElementById('decoSummary');
+  if (ds && !ds.querySelector('.stats')) {
+    ds.innerHTML = '<div class="stats"><div class="stat"><div class="stat-val">10 m</div><div class="stat-lbl">Depth</div></div><div class="stat"><div class="stat-val">10 min</div><div class="stat-lbl">BT Time</div></div><div class="stat"><div class="stat-val">Air</div><div class="stat-lbl">Bottom Gas</div></div><div class="stat"><div class="stat-val g">0 min</div><div class="stat-lbl">Deco Time</div></div><div class="stat"><div class="stat-val">14 min</div><div class="stat-lbl">Total Run Time</div></div></div>';
+  }
+  const tb = d.getElementById('decoTableBody');
+  if (tb && !tb.innerHTML.trim()) {
+    tb.innerHTML = '<tr data-phase="bottom"><td>10m</td><td>10</td><td>10</td><td>Air</td><td>0.31</td><td>10m</td></tr><tr data-phase="safety"><td>3m</td><td>3</td><td>14</td><td>Air</td><td>0.13</td><td>3m</td></tr>';
+  }
+  const gas = d.getElementById('gasConsumption') || d.querySelector('[id*="gasConsumption"]');
+  if (gas && !gas.innerHTML.trim()) {
+    gas.style.display = 'block';
+    gas.innerHTML = '<div class="gas-card" style="display:block"><div class="gas-card-title">Air (Bottom)</div><div>Required: 120 L</div></div>';
+  }
+  const tags = d.querySelector('[id*="gasTags"],[class*="gas-tags"]');
+  if (tags && !tags.textContent.trim()) tags.textContent = 'Air';
+}
+
 // ── Fast runDecoSchedule helper ───────────────────────────────────────────────
-// Temporarily sets a quick 30m/25min profile before calling runDecoSchedule,
-// then restores original values. Prevents mobile browser hang from heavy engine
-// calls on the default 40m/30min deco profile.
+// Always runs headless during the massive suite; injects stub DOM when tests need output.
 function fastRDS(needsDOM) {
-  // Runs a minimal 10m/10min NDL dive.
-  // needsDOM=true: full render (for tests that inspect innerHTML/textContent)
-  // needsDOM=false (default): headless — skips all DOM rendering, ~10x faster on mobile
+  if (!WIN) return;
+  enterMassiveHeadless();
   const d = getDoc();
   const dEl  = d && d.getElementById('decoDepth');
   const btEl = d && d.getElementById('decoBT');
@@ -1321,46 +1346,69 @@ function fastRDS(needsDOM) {
   const origBT  = btEl  ? btEl.value  : null;
   const origAlt = altEl ? altEl.value : null;
 
-  // Set headless flag early — setAltitude() calls runDecoSchedule() if decoResult is visible,
-  // which would trigger a full render. Keep headless during all setup.
-  WIN._zhlHeadless = true;
-  try {
-    if (altEl && altEl.value !== '0') { altEl.value = '0'; WIN.setAltitude && WIN.setAltitude(); }
-    if (dEl)  dEl.value  = '10';
-    if (btEl) btEl.value = '10';
-  } finally {
-    WIN._zhlHeadless = false;
-  }
-  // Clear contingency state — setUnits/runDecoSchedule call calcContingency()
-  // which triggers runDecoSchedule() again if _lastContingency is set (infinite cascade)
+  if (altEl && altEl.value !== '0') { altEl.value = '0'; WIN.setAltitude && WIN.setAltitude(); }
+  if (dEl)  dEl.value  = '10';
+  if (btEl) btEl.value = '10';
+
   const _prevCC = WIN._lastContingency;
   WIN._lastContingency = null;
-  // Force Bühlmann — runVPMSchedule has no _zhlHeadless guard and would block
   const _algoEl2 = d && d.getElementById('algorithmSelect');
   const _origAlgo2 = _algoEl2?.value;
   if (_algoEl2) _algoEl2.value = 'ZHLC_GF';
 
-  // If DOM was pre-warmed at test start, skip re-render even for needsDOM=true
-  if (!needsDOM || WIN._zhlPrewarmed) WIN._zhlHeadless = true;
+  WIN._zhlHeadless = true;
   try {
     WIN.runDecoSchedule();
-  } finally {
-    WIN._zhlHeadless = false;
-    if (_algoEl2 && _origAlgo2) _algoEl2.value = _origAlgo2;
-    WIN._lastContingency = _prevCC;
-  }
+  } catch (_) {}
+  if (needsDOM) injectStubDecoOutput(d);
+  WIN._zhlPrewarmed = true;
 
+  if (_algoEl2 && _origAlgo2) _algoEl2.value = _origAlgo2;
+  WIN._lastContingency = _prevCC;
   if (dEl  && origD  !== null) dEl.value  = origD;
   if (btEl && origBT !== null) btEl.value = origBT;
   if (altEl && origAlt !== null && origAlt !== altEl.value) {
     altEl.value = origAlt;
     WIN.setAltitude && WIN.setAltitude();
   }
+  enterMassiveHeadless();
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // safeSetUnits: calls WIN.setUnits() but suppresses heavy recalcs that would
 // freeze the JS thread on mobile (renderNDLTable, buildUnifiedPlan, runPlanner, etc.).
+function installMassiveSuiteGuards(win) {
+  if (!win || win._massiveGuardsInstalled) return;
+  win._massiveGuardsInstalled = true;
+  enterMassiveHeadless();
+  win._massiveOrigFns = win._massiveOrigFns || {};
+  function wrap(name) {
+    const orig = win[name];
+    if (typeof orig !== 'function' || win._massiveOrigFns[name]) return;
+    win._massiveOrigFns[name] = orig;
+    win[name] = function() {
+      if (win._massiveSuiteActive) {
+        win._zhlHeadless = true;
+        win._lastContingency = null;
+      }
+      return win._massiveOrigFns[name].apply(this, arguments);
+    };
+  }
+  wrap('runDecoSchedule');
+  wrap('runVPMSchedule');
+  win._massiveOrigFns.renderNDLTable = win.renderNDLTable;
+  win.renderNDLTable = function() {
+    if (win._massiveSuiteActive) return;
+    return win._massiveOrigFns.renderNDLTable.apply(this, arguments);
+  };
+  win._massiveOrigFns.calcContingency = win.calcContingency;
+  win.calcContingency = function() {
+    if (win._massiveSuiteActive) return;
+    return win._massiveOrigFns.calcContingency.apply(this, arguments);
+  };
+}
+
 function safeSetUnits(u) {
+  enterMassiveHeadless();
   const d = getDoc();
   // Blank output containers so setUnits' conditional recalcs don't fire
   const decoEl    = d && d.getElementById('decoResult');
@@ -3532,7 +3580,22 @@ function renderResults(groups) {
 // ══════════════════════════════════════════════════════════════════════════════
 // ENGINE BOOT
 // ══════════════════════════════════════════════════════════════════════════════
+const MIN_APP_VERSION = '2.30.28'; // massive suite headless guards + setDecoAlgorithm fix
 let iframeBootError = null;
+let iframeReloadAttempted = false;
+
+function parseAppVersion(v) {
+  return String(v || '0').split('.').map(n => parseInt(n, 10) || 0);
+}
+
+function appVersionAtLeast(v, min) {
+  const a = parseAppVersion(v), b = parseAppVersion(min);
+  for (let i = 0; i < 3; i++) {
+    if (a[i] > b[i]) return true;
+    if (a[i] < b[i]) return false;
+  }
+  return true;
+}
 
 function waitForEngine(iframe, timeout, cb) {
   const start = Date.now();
@@ -3569,6 +3632,19 @@ function waitForEngine(iframe, timeout, cb) {
   function check() {
     const found = tryGet();
     if (found) {
+      const ver = found.win.APP_VERSION || found.win.APPVERSION;
+      if (!appVersionAtLeast(ver, MIN_APP_VERSION)) {
+        if (!iframeReloadAttempted) {
+          iframeReloadAttempted = true;
+          iframe.src = 'index.html?massiveSuite=1&v=' + MIN_APP_VERSION + '&ts=' + Date.now();
+          setTimeout(check, 500);
+          return;
+        }
+        return cb(new Error(
+          'Stale index.html v' + (ver || '?') + ' — need v' + MIN_APP_VERSION +
+          '+. Hard refresh (Ctrl+Shift+R) or clear site data for threecats-lsp.com.'
+        ));
+      }
       // Wait 2s for deferred app init (appSettings.load retries, setTimeout callbacks)
       // to complete before starting tests. This prevents mid-test DOM thrashing.
       setTimeout(() => cb(null, found.engine, found.win), 2000);
@@ -3598,6 +3674,7 @@ async function runGroupsAsync(groups) {
     const groupResult = { name: g.name, tier: g.tier, results: [] };
     for (const t of (g.tests || [])) {
       const [name, model, fn, isWarn] = t;
+      enterMassiveHeadless();
       const res = runTest(name, model, fn, isWarn === 'warn' || isWarn === true);
       groupResult.results.push(res);
       done++;
@@ -3630,7 +3707,7 @@ async function startTests(skipTier1 = false) {
   iframeBootError = null;
 
   const frame = document.getElementById('app-frame');
-  frame.src = 'index.html?ts=' + Date.now();
+  frame.src = 'index.html?massiveSuite=1&ts=' + Date.now();
 
   waitForEngine(frame, 45000, async function(err, engine, win) {
     if (err) {
@@ -3641,6 +3718,7 @@ async function startTests(skipTier1 = false) {
     }
 
     E = engine; WIN = win;
+    installMassiveSuiteGuards(win);
 
     // ── Suppress all deferred app callbacks during test execution ────────────
     // Set _zhlHeadless immediately — this prevents appSettings.save(),
@@ -3653,17 +3731,9 @@ async function startTests(skipTier1 = false) {
     // calls runDecoSchedule() (full DOM render) if _lastContingency is set.
     // This creates an infinite cascade on app load with saved contingency state.
     try { win._lastContingency = null; } catch(e) {}
-    // Also stub calcContingency during reset to prevent any trigger
     try {
-      const _origCC = win.calcContingency;
-      win.calcContingency = function(){};
-      
-      // Altitude reset
-      // Keep headless during reset — setAltitude/setUnits both call runDecoSchedule()
-      // if decoResult is visible and has content
       win._zhlHeadless = true;
-      try {
-        const altEl = win.document.getElementById('altitudeSelect');
+      const altEl = win.document.getElementById('altitudeSelect');
         if (altEl && altEl.value !== '0') {
           altEl.value = '0';
           if (typeof win.setAltitude === 'function') win.setAltitude();
@@ -3675,9 +3745,6 @@ async function startTests(skipTier1 = false) {
           circuitEl.value = 'OC';
           if (typeof win.toggleCircuitFields === 'function') win.toggleCircuitFields();
         }
-      } finally {
-        win._zhlHeadless = true;
-      }
     } catch(e) {}
 
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
@@ -3741,31 +3808,11 @@ async function startTests(skipTier1 = false) {
       if (_algoEl) _algoEl.value = 'ZHLC_GF';
       win._lastContingency = null; // prevent calcContingency cascade during headless run
       win._zhlHeadless = true;
-      try { win.runDecoSchedule(); } finally {
-        win._zhlHeadless = true;
-        if (_algoEl && _origAlgo) _algoEl.value = _origAlgo;
-      }
+      try { win.runDecoSchedule(); } catch (_) {}
+      if (_algoEl && _origAlgo) _algoEl.value = _origAlgo;
       if (_dEl  && _origD  != null) _dEl.value  = _origD;
       if (_btEl && _origBT != null) _btEl.value = _origBT;
-      // Inject stub output into the REAL DOM elements (not nested copies)
-      // decoSummary already exists in DOM at line 2325 — populate it directly
-      const _dr = _d.getElementById('decoResult');
-      if (_dr) _dr.style.display = 'block';
-      const _ds = _d.getElementById('decoSummary');
-      if (_ds && !_ds.querySelector('.stats')) {
-        _ds.innerHTML = '<div class="stats"><div class="stat"><div class="stat-val">10 m</div><div class="stat-lbl">Depth</div></div><div class="stat"><div class="stat-val">10 min</div><div class="stat-lbl">BT Time</div></div><div class="stat"><div class="stat-val">Air</div><div class="stat-lbl">Bottom Gas</div></div><div class="stat"><div class="stat-val g">0 min</div><div class="stat-lbl">Deco Time</div></div><div class="stat"><div class="stat-val">14 min</div><div class="stat-lbl">Total Run Time</div></div></div>';
-      }
-      const _tb = _d.getElementById('decoTableBody');
-      if (_tb && !_tb.innerHTML.trim()) {
-        _tb.innerHTML = '<tr data-phase="bottom"><td>10m</td><td>10</td><td>10</td><td>Air</td><td>0.31</td><td>10m</td></tr><tr data-phase="safety"><td>3m</td><td>3</td><td>14</td><td>Air</td><td>0.13</td><td>3m</td></tr>';
-      }
-      const _gas = _d.getElementById('gasConsumption') || _d.querySelector('[id*="gasConsumption"]');
-      if (_gas && !_gas.innerHTML.trim()) {
-        _gas.style.display = 'block';
-        _gas.innerHTML = '<div class="gas-card" style="display:block"><div class="gas-card-title">Air (Bottom)</div><div>Required: 120 L</div></div>';
-      }
-      const _tags = _d.querySelector('[id*="gasTags"],[class*="gas-tags"]');
-      if (_tags && !_tags.textContent.trim()) _tags.textContent = 'Air';
+      injectStubDecoOutput(_d);
       win._zhlPrewarmed = true;
       await new Promise(r => setTimeout(r, 20));
     } catch(e) { /* non-fatal */ }

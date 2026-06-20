@@ -1,129 +1,109 @@
 # LSP D-Planner+CCR — Errors & Bugs Report v21
 
-**App version audited:** v2.30.26  
+**App version:** v2.30.28  
 **Audit date:** 2026-06-21  
-**Previous report:** errors_bugs_report_v20.md (v2.30.26 — BUG-75 fixed, 0 open bugs)  
-**Audit tool:** audit.py — 353 checks, 0 failures  
-**Commits audited:** `bbc92a4` (v19 baseline) → `35e0059` (v2.30.26)
+**Previous report:** errors_bugs_report_v20.md (v2.30.26 — BUG-75 fixed)  
+**Audit tool:** audit.py — 363 checks, 0 failures  
+**Scope:** v2.30.25–26 refactor verification + BUG-76/BUG-77 fixes + verify test calibration.
 
 ---
 
-## Summary
+## Fix status
 
-v2.30.25 refactored ZHLEngine headless OTU/CNS into a shared
-`computePlanExposureTotals()` helper, replacing the inline `headlessPpo2`
-block. v2.30.26 fixed BUG-75 (`ccrDiluentSurfaceLpm` pSCR formula) and
-added CCR cross-validation tests.
-
-**All changes verified correct. 0 new bugs found.**
+| Bug | Status | Fix summary |
+|-----|--------|-------------|
+| BUG-75 | **FIXED** (v2.30.26) | `ccrDiluentSurfaceLpm()` pSCR branch: `metRate × PSCR_DEFAULT_BYPASS_RATIO` |
+| BUG-76 | **FIXED** (v2.30.28) | `tests-massive.html` hang at ~20/234 — `_zhlHeadless` leak triggered full DOM render |
+| BUG-77 | **FIXED** (v2.30.28) | pSCR OTU/CNS plan walk: segment-start `scrRuntimeMin`, ascent depth, shared VPM totals |
 
 ---
 
-## BUG-75 Fix Verification (v2.30.26, commit `fa2659a`)
-
-**Status:** ✅ Fixed and verified
+## BUG-75 — Verified fixed in v2.30.26
 
 ```js
-// Before (wrong):
-const fr = computePSCRFractions(pSurf, bot.fO2, bot.fHe, runtimeMin, ccr);
-const fO2Loop = Math.max(0.01, fr.fO2);
-return (metRate / fO2Loop) * PSCR_DEFAULT_BYPASS_RATIO;
-
-// After (correct):
 if (ccr.circuit === 'pSCR' && !ccr.bailout) {
   return metRate * PSCR_DEFAULT_BYPASS_RATIO;
 }
 ```
 
-`computePSCRFractions` and `fO2Loop` removed entirely from the pSCR branch.
 Result: `1.5 × 10 = 15 L/min` at default settings (was ~93 L/min for EAN32 at 40 m).
 
-**Regression coverage added:**
-- `tests-verify.html` section I — pSCR surface LPM ≈ 15 (not 93)
-- `tests-massive.html` — CCR/pSCR DOM cross-validation
-- `audit.py` GROUP 58 — static guard against `metRate / fO2Loop` pattern
+**Regression coverage:** `tests-verify.html` section I, `tests-massive.html`, audit.py GROUP 58.
 
 ---
 
-## v2.30.25 Refactor Verification (`ecb3a49`)
+## v2.30.25 refactor — `computePlanExposureTotals()` (verified)
 
-### `computePlanExposureTotals()` — new shared OTU/CNS integration helper
+Shared OTU/CNS integration for ZHLEngine headless path. Correctness confirmed for pSCR depletion, CCR setpoint phases, OC/bailout fallback, and cumulative `run` injection on plan segments.
 
-Replaces the inline `headlessPpo2`/`hCNSfrac`/`hOTU` block in `ZHLEngine.calculate()`.
-
-**Correctness verified:**
-
-- `mergeCCRSettings(settings)` used for config — all CCR fields with DOM fallbacks ✅
-- pSCR path: `getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin: run, bailout: false }, depth, fh)` — `run` is cumulative runtime per segment, correctly propagates depletion ✅
-- CCR path: `getEffectiveSetpointAtDepth(depth, cfg, surfP, phase)` → `getEffectivePpo2(pAmb, sp, ...)` — phase derived from `seg.type` ('descent'/'bottom'/'deco'/'stop'/'ascent') ✅
-- OC/bailout: `fo2 * pAmb` fallback ✅
-- `segFrac(val, fallback)`: integer percentage (e.g. `o2: 32` → `0.32`) and fractional (`o2: 0.32` → `0.32`) both handled correctly ✅
-- `run` field injected into every ZHLEngine plan segment (cumulative, monotone) before `computePlanExposureTotals` is called ✅
-- VPMEngine unaffected — continues to use `vpmAccumPpo2` internally; exposes `normPlan` with `run: seg.run ?? seg.runtime` to test harnesses ✅
-
-**No duplication between VPM and ZHL paths** — `computePlanExposureTotals` used only by ZHLEngine headless; VPM has its own integrated accumulation. ✅
+v2.30.28 extends this helper with `planSegDepthM()`, segment-start `scrRuntimeMin`, and VPM `buildResult()` totals from the same walk (BUG-77).
 
 ---
 
-## Full Audit — All Areas Clean
+## BUG-76 — Massive suite freezes at ~20/234
 
-### CCR engine logic
-- `mergeCCRSettings`: clean centralised config merge, used by all CCR helpers ✅
-- `computePSCRFractions` / `getEffectivePpo2` / `getEffectiveSetpointAtDepth`: unchanged, correct ✅
-- `vpmAccumPpo2` (9 call sites) / `ctxUseOCForPpo2(settings)`: unchanged, correct ✅
-- `addBailoutStressReserve`: correct depth distribution ✅
+**Symptom:** `tests-massive.html` auto-run stops at **20/234**. Progress bar frozen; browser tab unresponsive.
 
-### Gas plan / gas consumption
-- `ccrDiluentSurfaceLpm` pSCR: `metRate × PSCR_DEFAULT_BYPASS_RATIO = 15 L/min` ✅
-- `ccrDiluentSurfaceLpm` OC/CCR: `metRate / fO2Dil` (unchanged, correct) ✅
-- `sacDomToLpm` imperial conversion intact ✅
-- `gpVolDisp` imperial display intact ✅
+**Root cause:**
 
-### Exports
-- All export OTU/CNS paths unchanged; source from engine `totalCNS/totalOTU` ✅
-- ZHLEngine `totalOTU`/`totalCNS` now from `computePlanExposureTotals` — correct for CCR/pSCR/OC ✅
+1. `fastRDS()` cleared `_zhlHeadless` in a `finally` block after setup.
+2. Deferred app callbacks (`appSettings.load`, `setDecoAlgorithm`, `setAltitude`) ran with `_zhlHeadless === false`.
+3. Full DOM `runDecoSchedule()` on saved 40m/30min profile blocked the JS thread.
+4. `setDecoAlgorithm()` / `setCustomGF()` called `renderNDLTable()` unconditionally.
 
-### UI / settings / persistence
-- `appSettings.clear()` — all keys cleared ✅
-- Version sync: all four files at `2.30.26` ✅
+**Fix (v2.30.28):**
 
-### VPM vs Bühlmann parity
-- Both engines route CCR/pSCR OTU/CNS through `getEffectivePpo2` ✅
-- Both use cumulative runtime for pSCR depletion (`scrRuntimeMin`) ✅
-- OTU / CNS formulae consistent ✅
+| File | Change |
+|------|--------|
+| `index.html` | Early `_zhlHeadless` when `?massiveSuite=1`; guard `renderNDLTable()` in algo/GF setters |
+| `tests-massive.html` | `enterMassiveHeadless()`, `installMassiveSuiteGuards()`, headless-only `fastRDS()` + stub DOM |
+| `tests-massive-main.html` | Same headless guards on `runCalc()` |
 
-### Regression suite
-- `audit.py` 353 checks, 0 failures ✅
-- `tests-pscr-otu-cns.html` gas reference helpers updated for corrected BUG-75 formula ✅
-- `tests-massive.html` CCR cross-val recalibrated to DiveKit-aligned first-stop + RT (stop distribution effect on helium dives documented) ✅
-- BUG-75 regression (pSCR surface LPM value) now covered ✅
+**Regression coverage:** audit.py GROUP 60.
 
 ---
 
-## New Bugs Found
+## BUG-77 — pSCR OTU/CNS plan exposure walk
 
-**None.**
+**Symptom:** `tests-pscr-otu-cns.html` failures — VPM `totalOTU` vs plan recompute ≈ 0; ZHL CNS mismatch; VPM vs ZHL OTU diverge.
+
+**Root cause:**
+
+1. `depth=0` on VPM ascent segments (only `seg.depth` checked).
+2. `scrRuntimeMin` at end-of-segment → depleted loop → zero OTU on recompute.
+3. VPM `buildResult()` used inline `vpmAccumPpo2` instead of shared plan walk.
+
+**Fix (v2.30.28):**
+
+```js
+// planSegDepthM() — depth / endDepth / from-to midpoint
+// scrRuntimeMin = Math.max(0, runEnd - dur)
+// VPM buildResult → totalOTU/totalCNS from computePlanExposureTotals()
+window.computePlanExposureTotals = computePlanExposureTotals;
+```
+
+**Regression coverage:** `tests-pscr-otu-cns.html`, audit.py GROUP 59.
 
 ---
 
-## Carry-Over OC Main Bugs (out of scope for CCR repo)
+## Test calibration — `tests-verify.html` CCR section
 
-| Bug | Description | Repo |
-|-----|-------------|------|
-| BUG-40 | Bühlmann emergency gas `sz` not converted cu ft→L (~line 9789) | LSP_D-planner |
-| BUG-41 | `appSettings.clear()` only removes `lspDiveSettings_v3` (~line 16449) | LSP_D-planner |
+**Issue:** "Above setpoint depth: zero inert loading" used `pAmb = SP + ppH2O + 0.01` — above the crossover threshold, so `pN2 ≈ 0.01` bar is correct engine behaviour, not a bug.
+
+**Fix:** Test now uses `pAmb = sp + ppH2O` (at crossover) with epsilon tolerance. Badge display shows PASS/FAIL per test instead of section-wide WARN.
 
 ---
 
-## All CCR Repo Bugs — Cumulative Status
+## Open bugs
+
+**None in CCR repo.**
+
+---
+
+## Cumulative status
 
 | Report | Version | Bugs | Status |
 |--------|---------|------|--------|
-| v1–v13 | – v2.30.15 | BUG-01–68 | ✅ All fixed |
-| v14 | v2.30.15 | BUG-69–70 | ✅ Fixed |
-| v15 | v2.30.16 | BUG-71 | ✅ Fixed |
-| v16 | v2.30.17 | BUG-72 | ✅ Fixed |
-| v17 | v2.30.23 | BUG-73–74 | ✅ Fixed |
 | v18–v19 | v2.30.24 | BUG-75 | ✅ Fixed (v2.30.26) |
-| v20 | v2.30.26 | 0 bugs | ✅ Clean |
-| **v21** | **v2.30.26** | **0 new bugs** | **✅ Clean** |
+| v20 | v2.30.26 | BUG-75 + test calibration | ✅ Complete |
+| **v21** | **v2.30.28** | **BUG-76, BUG-77 + verify calibration** | **✅ Complete** |

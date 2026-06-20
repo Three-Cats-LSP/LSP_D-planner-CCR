@@ -2353,7 +2353,7 @@ if os.path.isfile(pscr_test_path):
         "PINNED_LOOP_PPO2",
         "PINNED_BOTTOM_OTU",
         "PINNED_DILUENT_BOTTOM_OTU",
-        "recomputeOtuFromPlan",
+        "recomputeExposureFromPlan",
         "VPMEngine.calculate",
         "ZHLEngine.calculate",
         "refGasLitresAmbient",
@@ -2481,10 +2481,10 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.26['\"]", js):
-    ok("APP_VERSION bumped to 2.30.26")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.28['\"]", js):
+    ok("APP_VERSION bumped to 2.30.28")
 else:
-    fail("APP_VERSION not bumped to 2.30.26")
+    fail("APP_VERSION not bumped to 2.30.28")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 57 — v2.30.25 fix (pSCR OTU/CNS plan integration)
@@ -2509,10 +2509,10 @@ pscr_test_path = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.htm
 if os.path.isfile(pscr_test_path):
     with open(pscr_test_path, encoding="utf-8") as f:
         pscr_test = f.read()
-    if "seg.runtime != null ? seg.runtime : 0" in pscr_test:
-        ok("tests-pscr-otu-cns.html recompute uses runtime fallback for scrRuntimeMin")
+    if "recomputeExposureFromPlan" in pscr_test and "computePlanExposureTotals" in pscr_test:
+        ok("tests-pscr-otu-cns.html uses shared computePlanExposureTotals for plan walk")
     else:
-        fail("tests-pscr-otu-cns.html missing runtime fallback in plan recompute")
+        fail("tests-pscr-otu-cns.html missing shared plan exposure recompute")
 else:
     fail("tests-pscr-otu-cns.html missing")
 
@@ -2532,26 +2532,26 @@ version_ok = True
 if os.path.isfile(pkg_path):
     with open(pkg_path, encoding="utf-8") as f:
         pkg = f.read()
-    if '"version": "2.30.26"' not in pkg:
+    if '"version": "2.30.28"' not in pkg:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(gradle_path):
     with open(gradle_path, encoding="utf-8") as f:
         gradle = f.read()
-    if 'versionName "2.30.26"' not in gradle or "versionCode 23026" not in gradle:
+    if 'versionName "2.30.28"' not in gradle or "versionCode 23028" not in gradle:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(sw_path):
     with open(sw_path, encoding="utf-8") as f:
         sw = f.read()
-    if "lsp-dplanner-ccr-v2.30.26" not in sw:
+    if "lsp-dplanner-ccr-v2.30.28" not in sw:
         version_ok = False
 else:
     version_ok = False
 if version_ok:
-    ok("All version files aligned at 2.30.26 (v17 BUG-74)")
+    ok("All version files aligned at 2.30.28 (v17 BUG-74)")
 else:
     fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
 
@@ -2572,8 +2572,81 @@ if os.path.isfile(verify_path):
         ok("tests-verify.html regression for pSCR ccrDiluentSurfaceLpm (BUG-75)")
     else:
         fail("tests-verify.html missing BUG-75 pSCR gas flow regression")
+    if "Above setpoint depth: zero inert loading" in verify_html and "pAmb = sp + ppH2O" in verify_html:
+        ok("tests-verify CCR zero-inert test uses setpoint crossover (not +0.01 bar)")
+    else:
+        fail("tests-verify CCR zero-inert test still uses pAmb above crossover threshold")
 else:
     fail("tests-verify.html missing")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 59 — v2.30.28 fix (errors_bugs_report_v21 BUG-77)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function planSegDepthM" in js and "scrRuntimeMin = Math.max(0, runEnd - dur)" in js:
+    ok("BUG-77 fixed: computePlanExposureTotals uses segment-start scrRuntimeMin + planSegDepthM")
+else:
+    fail("BUG-77: computePlanExposureTotals still uses end-of-segment scrRuntimeMin or depth=0 on VPM ascents")
+
+if "function buildResult(plan, runtime" in js and "totalOTU: exposure.totalOTU" in js and "computePlanExposureTotals(" in js:
+    ok("BUG-77 fixed: VPM buildResult totals from computePlanExposureTotals")
+else:
+    fail("BUG-77: VPM buildResult still uses inline vpmAccumPpo2 totals vs plan walk")
+
+pscr_test_path = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.html")
+if os.path.isfile(pscr_test_path):
+    with open(pscr_test_path, encoding="utf-8") as f:
+        pscr_test = f.read()
+    if "recomputeExposureFromPlan" in pscr_test and "computePlanExposureTotals" in pscr_test:
+        ok("tests-pscr-otu-cns.html uses shared computePlanExposureTotals for plan walk")
+    else:
+        fail("tests-pscr-otu-cns.html still duplicates plan exposure integration")
+else:
+    fail("tests-pscr-otu-cns.html missing")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 60 — v2.30.28 fix (errors_bugs_report_v21 BUG-76)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "massiveSuite" in js and "_massiveSuiteActive" in js:
+    ok("BUG-76 fixed: index.html early headless when massiveSuite=1")
+else:
+    fail("BUG-76: index.html missing massiveSuite early headless guard")
+
+if re.search(r"if\s*\(\s*!window\._zhlHeadless\s*\)\s*renderNDLTable\s*\(\s*\)", js):
+    ok("BUG-76 fixed: setDecoAlgorithm/setCustomGF skip renderNDLTable in headless mode")
+else:
+    fail("BUG-76: setDecoAlgorithm still calls renderNDLTable unconditionally")
+
+massive_path60 = os.path.join(os.path.dirname(__file__), "tests-massive.html")
+if os.path.isfile(massive_path60):
+    with open(massive_path60, encoding="utf-8") as f:
+        massive60 = f.read()
+    if "enterMassiveHeadless" in massive60 and "installMassiveSuiteGuards" in massive60:
+        ok("BUG-76 fixed: tests-massive.html enterMassiveHeadless + suite guards")
+    else:
+        fail("BUG-76: tests-massive.html missing enterMassiveHeadless / installMassiveSuiteGuards")
+    if "massiveSuite=1" in massive60 and "MIN_APP_VERSION" in massive60:
+        ok("BUG-76 fixed: tests-massive.html loads index with massiveSuite=1 + version guard")
+    else:
+        fail("BUG-76: tests-massive.html missing massiveSuite=1 or MIN_APP_VERSION")
+    if "WIN._zhlHeadless = false" not in massive60.split("function fastRDS")[1].split("function safeSetUnits")[0]:
+        ok("BUG-76 fixed: fastRDS never clears _zhlHeadless")
+    else:
+        fail("BUG-76: fastRDS still clears _zhlHeadless before runDecoSchedule")
+else:
+    fail("tests-massive.html missing")
+
+v21_path = os.path.join(os.path.dirname(__file__), "errors_bugs_report_v21.md")
+if os.path.isfile(v21_path):
+    with open(v21_path, encoding="utf-8") as f:
+        v21 = f.read()
+    if "BUG-76" in v21 and "BUG-77" in v21 and "v2.30.28" in v21:
+        ok("errors_bugs_report_v21.md documents BUG-76 and BUG-77 (v2.30.28)")
+    else:
+        fail("errors_bugs_report_v21.md incomplete")
+else:
+    fail("errors_bugs_report_v21.md missing")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 55 — v2.30.22 fix (massive suite headless mode leak)
@@ -2593,8 +2666,8 @@ massive_path = os.path.join(os.path.dirname(__file__), "tests-massive.html")
 if os.path.isfile(massive_path):
     with open(massive_path, encoding="utf-8") as f:
         massive = f.read()
-    if "keepHeadless" in massive and "win._zhlHeadless = true" in massive:
-        ok("tests-massive.html calc() reasserts headless during engine calls (BUG-74)")
+    if "keepHeadless" in massive and "enterMassiveHeadless" in massive:
+        ok("tests-massive.html calc() + enterMassiveHeadless guard (BUG-74)")
     else:
         fail("tests-massive.html missing headless guard in calc() (BUG-74)")
 else:
