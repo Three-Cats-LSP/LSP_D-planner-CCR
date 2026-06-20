@@ -2206,6 +2206,47 @@ if "LSP D-PLANNER + CCR - CNS O2 TRACKER" in js:
 else:
     fail("CNS text export header missing + CCR (BUG-50)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 45 — v2.30.12 fixes (errors_bugs_report_v10)
+# ══════════════════════════════════════════════════════════════════════════════
+
+pscr_sch_start = js.find("if (cfg.circuit === 'pSCR')")
+pscr_sch_block = js[pscr_sch_start:pscr_sch_start + 700] if pscr_sch_start > 0 else ""
+if "getCCRInertSchreinerParams" in js[pscr_sch_start - 200:pscr_sch_start + 50] or pscr_sch_start > 0:
+    if "rN2: ((pEnd - ppH2O) * fr1.fN2 - inspN2Start) * pressureRate" not in pscr_sch_block:
+        ok("pSCR Schreiner rate: no double pressureRate multiply (BUG-51)")
+    else:
+        fail("pSCR Schreiner rate still multiplies by pressureRate twice (BUG-51)")
+
+if "u.startsWith('PSCR ')" in js or 'startsWith("PSCR ")' in js:
+    ok("isCcrOnLoopGasLabel recognises pSCR prefix (BUG-52)")
+else:
+    fail("isCcrOnLoopGasLabel still CCR-only (BUG-52)")
+
+if "if (/^air$/i.test(s)) return 'Air';" in js:
+    ok("shortMix helpers preserve CCR/pSCR Air labels (BUG-53)")
+else:
+    fail("shortMix still collapses CCR Air to Air (BUG-53)")
+
+prev_ccr_start = js.find("const prevCCR = {")
+prev_ccr_block = js[prev_ccr_start:prev_ccr_start + 1200] if prev_ccr_start > 0 else ""
+if "diluentUseAsBailout:" in prev_ccr_block:
+    ok("ZHLEngine prevCCR saves diluentUseAsBailout (BUG-54)")
+else:
+    fail("ZHLEngine prevCCR missing diluentUseAsBailout (BUG-54)")
+
+tcf_start = js.find("function toggleCircuitFields")
+tcf_block = js[tcf_start:tcf_start + 700] if tcf_start > 0 else ""
+if "isCCR && bailoutOn" in tcf_block:
+    ok("toggleCircuitFields hides bailout GF until CCR bailout on (BUG-55)")
+else:
+    fail("ccrBailoutSettingsGroup still shown for pSCR/bailout-off (BUG-55)")
+
+if "PSCR_DEFAULT_BYPASS_RATIO" in js and "computePSCRFractions" in js[js.find("function ccrDiluentSurfaceLpm"):js.find("function ccrDiluentSurfaceLpm") + 600]:
+    ok("ccrDiluentSurfaceLpm uses pSCR loop fO2 + bypass ratio (BUG-56)")
+else:
+    fail("ccrDiluentSurfaceLpm still uses diluent fO2 only for pSCR (BUG-56)")
+
 print("=" * 60)
 
 if FAIL:

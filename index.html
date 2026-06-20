@@ -2055,7 +2055,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 <div class="field" id="ccrBailoutRow" style="display:none;">
 <label>Bailout mode</label>
-<select id="ccrBailoutToggle">
+<select id="ccrBailoutToggle" onchange="toggleCircuitFields()">
 <option selected="" value="off">Off — on loop</option>
 <option value="on">On — open circuit bailout</option>
 </select>
@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.11';
+const APP_VERSION = '2.30.12';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -4745,7 +4745,7 @@ function shortMixLabel(m) {
   if (!s) return '-';
   if (/^\d+\/\d+$/.test(s)) return s;
   if (s === '100%') return '100%';
-  if (/air/i.test(s)) return 'Air';
+  if (/^air$/i.test(s)) return 'Air';
   if (/^100/i.test(s)) return '100%';
   const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
   const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
@@ -5663,6 +5663,7 @@ function saturate(tissues, depthM, t, fN2, fHe) {
 // CCR / Rebreather shared physics (v2.30) — used by Bühlmann + VPM paths
 // ═══════════════════════════════════════════════════════════════════════════════
 const PSCR_MIN_PPO2 = 0.16;
+const PSCR_DEFAULT_BYPASS_RATIO = 10; // typical sport pSCR fresh:loop ~1:7–1:10
 
 function getCCRSettingsFromDOM() {
   const circuit = document.getElementById('circuitSelect')?.value || 'OC';
@@ -5823,8 +5824,8 @@ function getCCRInertSchreinerParams(pAmbStart, setpoint, fO2, fHe, pressureRate,
     return {
       inspN2Start,
       inspHeStart,
-      rN2: ((pEnd - ppH2O) * fr1.fN2 - inspN2Start) * pressureRate,
-      rHe: ((pEnd - ppH2O) * fr1.fHe - inspHeStart) * pressureRate,
+      rN2: (pEnd - ppH2O) * fr1.fN2 - inspN2Start,
+      rHe: (pEnd - ppH2O) * fr1.fHe - inspHeStart,
     };
   }
   if (!setpoint || setpoint <= 0 || pAmbStart <= setpoint + WATER_VAPOR) {
@@ -5938,13 +5939,23 @@ function loadTissuesWithCCR(tissues, fromDepth, toDepth, time, fO2, fHe, ccr, co
 }
 
 function isCcrOnLoopGasLabel(label) {
-  return typeof label === 'string' && label.toUpperCase().startsWith('CCR ');
+  if (typeof label !== 'string') return false;
+  const u = label.toUpperCase();
+  return u.startsWith('CCR ') || u.startsWith('PSCR ');
 }
-function ccrDiluentSurfaceLpm() {
+function ccrDiluentSurfaceLpm(depthM) {
   const ccr = getCCRSettingsFromDOM();
   const metRate = getCcrMetabolicO2Rate(ccr);
   const bot = getBottomGasFractions();
-  return metRate / Math.max(0.01, bot.fO2 || 0.21);
+  const fO2Dil = Math.max(0.01, bot.fO2 || 0.21);
+  if (ccr.circuit === 'pSCR' && !ccr.bailout) {
+    const dM = depthM != null ? depthM : 0;
+    const pAmb = altSurfaceP + dM * BAR_PER_METRE;
+    const fr = computePSCRFractions(pAmb, bot.fO2, bot.fHe, ccr.scrRuntimeMin || 0, ccr);
+    const fO2Loop = Math.max(0.01, fr.fO2);
+    return (metRate / fO2Loop) * PSCR_DEFAULT_BYPASS_RATIO;
+  }
+  return metRate / fO2Dil;
 }
 function isCcrDiluentGasLabel(label) {
   if (!label) return false;
@@ -5970,7 +5981,7 @@ function ccrGasLitres(label, depthM, durMin, sac) {
   if (isCcrDiluentGasLabel(label)) {
     const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
     const pSurf = altSurfaceP || 1.0;
-    return ccrDiluentSurfaceLpm() * (pAmb / pSurf) * durMin;
+    return ccrDiluentSurfaceLpm(depthM) * (pAmb / pSurf) * durMin;
   }
   const absP = altSurfaceP + depthM * BAR_PER_METRE;
   return sac * absP * durMin;
@@ -5986,7 +5997,8 @@ function toggleCircuitFields() {
   const ccrGrp = document.getElementById('ccrSettingsGroup');
   if (ccrGrp) ccrGrp.style.display = isRB ? '' : 'none';
   const boGrp = document.getElementById('ccrBailoutSettingsGroup');
-  if (boGrp) boGrp.style.display = isRB ? '' : 'none';
+  const bailoutOn = document.getElementById('ccrBailoutToggle')?.value === 'on';
+  if (boGrp) boGrp.style.display = (isCCR && bailoutOn) ? '' : 'none';
   ['ccrSpDescentRow', 'ccrSpBottomRow', 'ccrSpDecoRow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isCCR ? '' : 'none';
@@ -10888,6 +10900,7 @@ const ZHLEngine = (() => {
       sacDecoCcr: document.getElementById('ccrSacDeco')?.value,
       stressTimeMin: document.getElementById('ccrStressTime')?.value,
       problemSolveMin: document.getElementById('ccrProblemSolve')?.value,
+      diluentUseAsBailout: document.getElementById('diluentUseAsBailout')?.value,
     };
     if (s.circuit) setEl('circuitSelect', s.circuit);
     if (s.setpoint != null) {
@@ -11114,6 +11127,7 @@ const ZHLEngine = (() => {
     if (prevCCR.sacDecoCcr != null) setEl('ccrSacDeco', prevCCR.sacDecoCcr);
     if (prevCCR.stressTimeMin != null) setEl('ccrStressTime', prevCCR.stressTimeMin);
     if (prevCCR.problemSolveMin != null) setEl('ccrProblemSolve', prevCCR.problemSolveMin);
+    if (prevCCR.diluentUseAsBailout != null) setEl('diluentUseAsBailout', prevCCR.diluentUseAsBailout);
     if (typeof toggleCircuitFields === 'function') toggleCircuitFields();
     // Remove any dynamic deco gas cards we added for this headless call
     _addedDGIdxs.forEach(idx => { const card = document.getElementById(`dgCard_${idx}`); if (card) card.remove(); });
@@ -14138,7 +14152,7 @@ function buildExportText(mode) {
       if (!s) return '-';
       if (/^\d+\/\d+$/.test(s)) return s; // O2/He format already
       if (s === '100%') return '100%';          // pure O2
-      if (/air/i.test(s)) return 'Air';
+      if (/^air$/i.test(s)) return 'Air';
       if (/^100/i.test(s)) return '100%';       // legacy '100% O2' fallback
       const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
       const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
@@ -14304,7 +14318,7 @@ function buildExportText(mode) {
       if (!s) return '-';
       if (/^\d+\/\d+$/.test(s)) return s; // O2/He format already
       if (s === '100%') return '100%';          // pure O2
-      if (/air/i.test(s)) return 'Air';
+      if (/^air$/i.test(s)) return 'Air';
       if (/^100/i.test(s)) return '100%';       // legacy '100% O2' fallback
       const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
       const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
@@ -14339,7 +14353,7 @@ function buildExportText(mode) {
       if (!s) return '-';
       if (/^\d+\/\d+$/.test(s)) return s; // O2/He format already
       if (s === '100%') return '100%';          // pure O2
-      if (/air/i.test(s)) return 'Air';
+      if (/^air$/i.test(s)) return 'Air';
       if (/^100/i.test(s)) return '100%';       // legacy '100% O2' fallback
       const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
       const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
@@ -14546,7 +14560,7 @@ function buildSlateText() {
     if (!s) return '-';
     if (/^\d+\/\d+$/.test(s)) return s;
     if (s === '100%' || /^100/i.test(s)) return '100%';
-    if (/air/i.test(s)) return 'Air';
+    if (/^air$/i.test(s)) return 'Air';
     const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
     const pct = s.match(/(\d+)\s*%/); if (pct) return pct[1] + '/00';
     return s;
@@ -14671,7 +14685,7 @@ function buildContingencySlateText() {
     if (!s) return '-';
     if (/^\d+\/\d+$/.test(s)) return s;
     if (s === '100%' || /^100/i.test(s)) return '100%';
-    if (/air/i.test(s)) return 'Air';
+    if (/^air$/i.test(s)) return 'Air';
     const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
     const pct = s.match(/(\d+)\s*%/); if (pct) return pct[1] + '/00';
     return s;
@@ -14762,7 +14776,7 @@ function buildMessengerText(mode) {
       if (!s) return '-';
       if (/^\d+\/\d+$/.test(s)) return s; // O2/He format already
       if (s === '100%') return '100%';          // pure O2
-      if (/air/i.test(s)) return 'Air';
+      if (/^air$/i.test(s)) return 'Air';
       if (/^100/i.test(s)) return '100%';       // legacy fallback
       const ean = s.match(/(\d+)%/); if (ean) return ean[1] + '/00';
       return s;
@@ -14826,7 +14840,7 @@ function buildMessengerText(mode) {
     if (!s) return '-';
     if (/^\d+\/\d+$/.test(s)) return s; // O2/He format already
     if (s === '100%') return '100%';          // pure O2
-    if (/air/i.test(s)) return 'Air';
+    if (/^air$/i.test(s)) return 'Air';
     if (/^100/i.test(s)) return '100%';       // legacy fallback
     const ean = s.match(/[Ee][Aa][Nn]\s*(\d+)/); if (ean) return ean[1] + '/00';
     const pct = s.match(/(\d+)%/); if (pct) return pct[1] + '/00';
