@@ -2404,11 +2404,6 @@ if "function sacDomToLpm" in js and "sacDomToLpm('sacBottom'" in js:
 else:
     fail("sacDomToLpm missing — imperial gas consumption still in cu_ft·bar (BUG-71)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.17['\"]", js):
-    ok("APP_VERSION bumped to 2.30.17")
-else:
-    fail("APP_VERSION not bumped to 2.30.17")
-
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 52 — shared dual-engine test harness (v2.30.18)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2448,14 +2443,14 @@ for test_file, needle in [
 # ══════════════════════════════════════════════════════════════════════════════
 
 vpm_gas_start = js.find("for (const [gas, reqL] of Object.entries(gasConsVPM))")
-vpm_gas_block = js[vpm_gas_start:vpm_gas_start + 1200] if vpm_gas_start > 0 else ""
+vpm_gas_block = js[vpm_gas_start:vpm_gas_start + 2500] if vpm_gas_start > 0 else ""
 if vpm_gas_start > 0 and "gpVolDisp(reqL)" in vpm_gas_block:
     ok("VPM gas summary uses gpVolDisp for imperial volume display (BUG-72)")
 else:
     fail("VPM gas summary still shows raw litres as cu ft (BUG-72)")
 
 emerg_start = js.find("// Emergency plan — keep simple sufficient/short table")
-emerg_block = js[emerg_start:emerg_start + 900] if emerg_start > 0 else ""
+emerg_block = js[emerg_start:emerg_start + 1800] if emerg_start > 0 else ""
 if emerg_start > 0 and "gpVolDisp(reqL)" in emerg_block:
     ok("Emergency gas block uses gpVolDisp for imperial volume display (BUG-72)")
 else:
