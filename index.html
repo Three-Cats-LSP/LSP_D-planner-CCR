@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.24';
+const APP_VERSION = '2.30.25';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -8531,13 +8531,12 @@ const VPMEngine = (() => {
         function vpmAccumPpo2(pAmb, sp, fO2, fHe, settings, depthM, useOC) {
             if (sp > 0) return Math.min(sp, pAmb);
             if (!useOC && settings.circuit === 'pSCR' && !settings.bailout && typeof getEffectivePpo2 === 'function') {
-                const ccr = {
+                const ccr = mergeCCRSettings({
+                    ...settings,
                     circuit: 'pSCR',
                     bailout: false,
                     scrRuntimeMin: settings._scrRuntimeMin || 0,
-                    scrLoopVolume: settings.scrLoopVolume,
-                    scrMetabolicO2: settings.scrMetabolicO2,
-                };
+                });
                 return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
             }
             return fO2 * pAmb;
@@ -9380,8 +9379,13 @@ const VPMEngine = (() => {
             regeneratedRadiiN2:   state.regeneratedRadiiN2.slice(),
             regeneratedRadiiHe:   state.regeneratedRadiiHe.slice()
         } : null;
+        const normPlan = plan.map(seg => ({
+            ...seg,
+            time: seg.time != null ? seg.time : undefined,
+            run: seg.run != null ? seg.run : seg.runtime,
+        }));
         return {
-            plan,
+            plan: normPlan,
             totalRuntime: Math.ceil(runtime),
             totalOTU: Math.round(totalOTU),
             totalCNS: Math.round(totalCNS * 100) / 100,
@@ -10919,6 +10923,48 @@ function runDecoSchedule() {
   }
 }
 
+// Shared OTU/CNS integration from plan segments (headless harness + pSCR validation).
+function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP, barPerM) {
+  let otu = 0, cnsFrac = 0;
+  const cfg = mergeCCRSettings(settings || {});
+  const cnsLimits = { 6:720, 7:570, 8:450, 9:360, 10:300, 11:240, 12:210, 13:180, 14:150, 15:120, 16:45 };
+  function segFrac(val, fallback) {
+    if (val == null) return fallback;
+    return val > 1 ? val / 100 : val;
+  }
+  function addExposure(ppO2, dur) {
+    if (ppO2 <= 0.5 || dur <= 0) return;
+    otu += dur * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
+    const lo = Math.floor(ppO2 * 10), hi = lo + 1;
+    const lim = (cnsLimits[lo] || 0) + ((cnsLimits[hi] || 0) - (cnsLimits[lo] || 0)) * (ppO2 * 10 - lo);
+    cnsFrac += dur / (lim > 0 ? lim : 45);
+  }
+  (plan || []).forEach(seg => {
+    const dur = seg.time != null ? seg.time : (seg.dur || 0);
+    if (dur <= 0) return;
+    const depth = seg.depth != null ? seg.depth
+      : (seg.type === 'ascent' && seg.from != null && seg.to != null ? (seg.from + seg.to) / 2 : 0);
+    const fo2 = segFrac(seg.o2, defaultFO2);
+    const fh = segFrac(seg.he, defaultFHe);
+    const run = seg.run != null ? seg.run : (seg.runtime != null ? seg.runtime : 0);
+    const pAmb = (surfP || altSurfaceP || 1.01325) + depth * (barPerM || BAR_PER_METRE || 0.1);
+    const onLoop = isRebreatherCircuit(cfg.circuit) && !cfg.bailout;
+    let ppO2;
+    if (onLoop && cfg.circuit === 'pSCR') {
+      ppO2 = getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin: run, bailout: false }, depth, fh);
+    } else if (onLoop && cfg.circuit === 'CCR') {
+      const phase = seg.type === 'deco' || seg.type === 'stop' ? 'deco'
+        : (seg.type === 'descent' ? 'descent' : (seg.type === 'bottom' ? 'bottom' : 'ascent'));
+      const sp = getEffectiveSetpointAtDepth(depth, cfg, surfP || altSurfaceP, phase);
+      ppO2 = getEffectivePpo2(pAmb, sp, fo2, cfg, depth, fh);
+    } else {
+      ppO2 = fo2 * pAmb;
+    }
+    addExposure(ppO2, dur);
+  });
+  return { totalOTU: Math.round(otu), totalCNS: parseFloat((cnsFrac * 100).toFixed(1)) };
+}
+
 // ═══════════════════════════════════════════════
 // ZHL ENGINE — headless Bühlmann interface for test harnesses
 // Mirrors VPMEngine.calculate(levels, gases, settings, 'ZHLC_GF')
@@ -11129,81 +11175,6 @@ const ZHLEngine = (() => {
 
     const lp = window._lastPlan;
 
-    // ── Compute CNS/OTU from steps (not available from DOM-skipped render) ──
-    // BUGFIX (found via DiveKit 3-way comparison, June 2026): window._lastPlan.steps
-    // only contains ascent/deco segments — descent and bottom time are rendered
-    // straight to DOM in the live app and never pushed into `steps`. The original
-    // fallback below summed only `lp.steps`, silently omitting the largest share
-    // of O2 exposure on every dive (descent + full bottom time). Live-app DOM
-    // rendering (runDecoSchedule's non-headless path) computes this correctly by
-    // accumulating across the rendered table; this headless fallback now matches
-    // it by adding descent + bottom segments explicitly before summing steps.
-    if (lp && lp.totalCNS == null) {
-      let hCNSfrac = 0, hOTU = 0;
-      const hAltP = altSurfaceP || 1.01325;
-      const hBAR  = BAR_PER_METRE || 0.1;
-      const hCircuit = s.circuit || prevCCR.circuit || 'OC';
-      const hBailout = s.bailout != null ? s.bailout : (prevCCR.bailout === 'on');
-      const hPscrOnLoop = hCircuit === 'pSCR' && !hBailout;
-      const hCcrOnLoop = hCircuit === 'CCR' && !hBailout;
-      const hCcrConfig = {
-        circuit: 'CCR',
-        bailout: false,
-        descentSetpoint: parseFloat(s.descentSetpoint ?? prevCCR.descentSetpoint) || 0.7,
-        bottomSetpoint: parseFloat(s.bottomSetpoint) || parseFloat(prevCCR.bottomSetpoint) || 1.2,
-        decoSetpoint: parseFloat(s.decoSetpoint ?? s.setpoint ?? prevCCR.setpoint) || 1.3,
-        setpoint: parseFloat(s.setpoint ?? prevCCR.setpoint) || 1.3,
-      };
-      function headlessPpo2(depthM, fO2, fHe, runtimeMin, phase) {
-        const pAmb = hAltP + depthM * hBAR;
-        if (hPscrOnLoop && typeof getEffectivePpo2 === 'function') {
-          const ccr = {
-            circuit: 'pSCR',
-            bailout: false,
-            scrRuntimeMin: runtimeMin || 0,
-            scrLoopVolume: parseFloat(document.getElementById('ccrLoopVolume')?.value)
-              || parseFloat(document.getElementById('scrLoopVolume')?.value) || 10,
-            scrMetabolicO2: parseFloat(document.getElementById('ccrMetabolicO2')?.value)
-              || parseFloat(document.getElementById('scrMetabolicO2')?.value) || 1.5,
-          };
-          return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
-        }
-        if (hCcrOnLoop && typeof getEffectivePpo2 === 'function') {
-          const sp = getEffectiveSetpointAtDepth(depthM, hCcrConfig, hAltP, phase);
-          return getEffectivePpo2(pAmb, sp, fO2, hCcrConfig, depthM, fHe);
-        }
-        return fO2 * pAmb;
-      }
-      function addExposure(ppO2, dur) {
-        if (ppO2 > 0.5 && dur > 0) {
-          hOTU += dur * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
-          const lims = {6:720,7:570,8:450,9:360,10:300,11:240,12:210,13:180,14:150,15:120,16:45};
-          const lo = Math.floor(ppO2 * 10), hi = lo + 1;
-          const lim = (lims[lo] || 0) + ((lims[hi] || 0) - (lims[lo] || 0)) * (ppO2 * 10 - lo);
-          const safeLim = lim > 0 ? lim : 45; // ppO2>1.6: clamp to 45-min limit (matches segCNSfrac fix)
-          hCNSfrac += dur / safeLim;
-        }
-      }
-      // Descent: average depth = half of bottom depth (linear descent from surface)
-      const hDescentRate = s.descentRate || 20;
-      const hDescentTime = level.depth / hDescentRate;
-      addExposure(headlessPpo2(level.depth / 2, fO2bot, fHeBot, hDescentTime / 2, 'descent'), hDescentTime);
-      // Bottom: full level.time at full depth, on bottom gas
-      addExposure(headlessPpo2(level.depth, fO2bot, fHeBot, hDescentTime + level.time, 'bottom'), level.time);
-      // Ascent/deco steps
-      let hRuntime = hDescentTime + level.time;
-      (lp.steps || []).forEach(seg => {
-        const d   = seg.depth != null ? seg.depth : (seg.type === 'ascent' ? (seg.from + seg.to) / 2 : 0);
-        const fO2s = seg.fN2 !== undefined ? Math.max(0, 1 - seg.fN2 - (seg.fHe || 0)) : fO2bot;
-        const fHes = seg.fHe != null ? seg.fHe : fHeBot;
-        const phase = seg.type === 'deco' ? 'deco' : (seg.type === 'ascent' ? 'ascent' : undefined);
-        addExposure(headlessPpo2(d, fO2s, fHes, hRuntime, phase), seg.dur || 0);
-        hRuntime += seg.dur || 0;
-      });
-      lp.totalCNS = parseFloat((hCNSfrac * 100).toFixed(1));
-      lp.totalOTU = Math.round(hOTU);
-    }
-
     // ── Restore DOM state ─────────────────────────────────────────────────────
     mGF.low = prevGF.low; mGF.high = prevGF.high;
     if (units !== prevUnits) setUnits(prevUnits);
@@ -11271,13 +11242,17 @@ const ZHLEngine = (() => {
       }
     });
 
+    const exposure = computePlanExposureTotals(
+      plan, s, fO2bot, fHeBot, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
+    );
+
     return {
       plan,
       stops,
       totalRuntime: lp.rt || 0,
       tts: lp.tts || 0,
-      totalOTU: lp.totalOTU || 0,
-      totalCNS: lp.totalCNS || 0,
+      totalOTU: exposure.totalOTU,
+      totalCNS: exposure.totalCNS,
       finalTissues: lp.finalTissues || null,   // for ZHL repetitive dive carry
       depthUnit: isMetric ? 'm' : 'ft',
       error: null

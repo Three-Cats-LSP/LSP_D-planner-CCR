@@ -296,7 +296,7 @@ function recomputeOtuFromPlan(plan, defaultFO2, defaultFHe, pscr) {
     const depth = seg.depth || 0;
     const dur = seg.time || 0;
     if (dur <= 0) return;
-    const run = seg.run != null ? seg.run : 0;
+    const run = seg.run != null ? seg.run : (seg.runtime != null ? seg.runtime : 0);
     const fo2 = seg.o2 != null ? seg.o2 / 100 : defaultFO2;
     const fh  = seg.he  != null ? seg.he  / 100 : defaultFHe;
     const pp = WIN.getEffectivePpo2(
@@ -315,7 +315,7 @@ function recomputeCnsPctFromPlan(plan, defaultFO2, defaultFHe, pscr) {
     const depth = seg.depth || 0;
     const dur = seg.time || 0;
     if (dur <= 0) return;
-    const run = seg.run != null ? seg.run : 0;
+    const run = seg.run != null ? seg.run : (seg.runtime != null ? seg.runtime : 0);
     const fo2 = seg.o2 != null ? seg.o2 / 100 : defaultFO2;
     const fh  = seg.he  != null ? seg.he  / 100 : defaultFHe;
     const pp = WIN.getEffectivePpo2(

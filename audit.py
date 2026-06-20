@@ -1422,26 +1422,23 @@ else:
 # they only assert finiteness/ordering, never magnitude against a known value.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# 29.1 addExposure() helper present (refactored from inline duplicate logic)
-if re.search(r'function addExposure\(ppO2, dur\)', js):
-    ok("Headless CNS/OTU: addExposure() helper present (shared by descent/bottom/steps)")
+# 29.1 Plan-walk exposure helper (v2.30.25: replaces inline headlessPpo2 block)
+if "function computePlanExposureTotals" in js:
+    ok("Headless CNS/OTU: computePlanExposureTotals() plan-walk helper present")
 else:
-    fail("Headless CNS/OTU: addExposure() helper missing — descent/bottom fix may be reverted")
+    fail("Headless CNS/OTU: computePlanExposureTotals() missing — descent/bottom may be omitted")
 
-# 29.2 Descent exposure added before the steps loop
-if re.search(r'hDescentTime = level\.depth / hDescentRate', js) and \
-   (re.search(r'addExposure\(headlessPpo2\(level\.depth / 2', js) or
-    re.search(r'addExposure\(\(hAltP \+ \(level\.depth / 2\) \* hBAR\) \* fO2bot, hDescentTime\)', js)):
-    ok("Headless CNS/OTU: descent exposure (avg depth = level.depth/2) now included")
+# 29.2 Descent + bottom included via injected plan segments before steps
+if "type: 'descent'" in js and "type: 'bottom'" in js and "computePlanExposureTotals(" in js:
+    ok("Headless CNS/OTU: descent + bottom segments included in plan-walk exposure")
 else:
-    fail("Headless CNS/OTU: descent exposure missing — CNS/OTU will under-report vs live app")
+    fail("Headless CNS/OTU: descent/bottom exposure missing from plan-walk path")
 
-# 29.3 Bottom-time exposure added before the steps loop
-if re.search(r'addExposure\(headlessPpo2\(level\.depth,', js) or \
-   re.search(r'addExposure\(\(hAltP \+ level\.depth \* hBAR\) \* fO2bot, level\.time\)', js):
-    ok("Headless CNS/OTU: bottom-time exposure (full level.time at full depth) now included")
+# 29.3 ZHLEngine uses plan-walk after run patching (not pre-plan steps-only sum)
+if re.search(r'computePlanExposureTotals\(\s*plan, s, fO2bot', js):
+    ok("Headless CNS/OTU: ZHLEngine integrates exposure from assembled plan with run times")
 else:
-    fail("Headless CNS/OTU: bottom-time exposure missing — CNS/OTU will under-report vs live app, since bottom time is the majority of most dives' O2 exposure")
+    fail("Headless CNS/OTU: ZHLEngine missing post-plan exposure integration")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 30 — GF-LOW PRE-ANCHOR REGRESSION FIX (v2.10.9)
@@ -2334,9 +2331,9 @@ if "scrRuntimeMin: bt" in calc_cns_block:
 else:
     fail("calcCNS missing pSCR BT runtime proxy (BUG-67)")
 
-headless_ppo2_start = js.find("function headlessPpo2")
-headless_ppo2_block = js[headless_ppo2_start:headless_ppo2_start + 800] if headless_ppo2_start > 0 else ""
-if headless_ppo2_start > 0 and "getEffectivePpo2(pAmb, 0, fO2, ccr" in headless_ppo2_block:
+exp_start = js.find("function computePlanExposureTotals")
+exp_block = js[exp_start:exp_start + 2500] if exp_start > 0 else ""
+if exp_start > 0 and "getEffectivePpo2(pAmb, 0, fo2" in exp_block and "cfg.circuit === 'pSCR'" in exp_block:
     ok("ZHLEngine headless OTU/CNS uses getEffectivePpo2 for pSCR (BUG-68)")
 else:
     fail("ZHLEngine headless still uses raw diluent ppO2 for pSCR (BUG-68)")
@@ -2484,18 +2481,46 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.24['\"]", js):
-    ok("APP_VERSION bumped to 2.30.24")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.25['\"]", js):
+    ok("APP_VERSION bumped to 2.30.25")
 else:
-    fail("APP_VERSION not bumped to 2.30.24")
+    fail("APP_VERSION not bumped to 2.30.25")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 57 — v2.30.25 fix (pSCR OTU/CNS plan integration)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function computePlanExposureTotals" in js:
+    ok("computePlanExposureTotals helper exists for headless OTU/CNS (pSCR)")
+else:
+    fail("computePlanExposureTotals missing (pSCR OTU/CNS plan walk)")
+
+if "computePlanExposureTotals(" in js and "exposure.totalOTU" in js:
+    ok("ZHLEngine.calculate uses computePlanExposureTotals after plan assembly (pSCR)")
+else:
+    fail("ZHLEngine still uses pre-plan headless OTU/CNS path (pSCR)")
+
+if "run: seg.run != null ? seg.run : seg.runtime" in js:
+    ok("VPM buildResult exposes runtime as run on plan segments (pSCR)")
+else:
+    fail("VPM plan segments missing run alias from runtime (pSCR)")
+
+pscr_test_path = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.html")
+if os.path.isfile(pscr_test_path):
+    with open(pscr_test_path, encoding="utf-8") as f:
+        pscr_test = f.read()
+    if "seg.runtime != null ? seg.runtime : 0" in pscr_test:
+        ok("tests-pscr-otu-cns.html recompute uses runtime fallback for scrRuntimeMin")
+    else:
+        fail("tests-pscr-otu-cns.html missing runtime fallback in plan recompute")
+else:
+    fail("tests-pscr-otu-cns.html missing")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 56 — v2.30.24 fix (errors_bugs_report_v17)
 # ══════════════════════════════════════════════════════════════════════════════
 
-if "hCcrOnLoop" in js and "hCcrConfig" in js and re.search(
-    r"if \(hCcrOnLoop && typeof getEffectivePpo2 === 'function'\)", js
-):
+if exp_start > 0 and "cfg.circuit === 'CCR'" in exp_block and "getEffectiveSetpointAtDepth" in exp_block:
     ok("ZHLEngine headless CNS/OTU uses CCR setpoint path (v17 BUG-73)")
 else:
     fail("ZHLEngine headless still uses OC ppO2 for CCR dives (v17 BUG-73)")
@@ -2507,26 +2532,26 @@ version_ok = True
 if os.path.isfile(pkg_path):
     with open(pkg_path, encoding="utf-8") as f:
         pkg = f.read()
-    if '"version": "2.30.24"' not in pkg:
+    if '"version": "2.30.25"' not in pkg:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(gradle_path):
     with open(gradle_path, encoding="utf-8") as f:
         gradle = f.read()
-    if 'versionName "2.30.24"' not in gradle or "versionCode 23024" not in gradle:
+    if 'versionName "2.30.25"' not in gradle or "versionCode 23025" not in gradle:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(sw_path):
     with open(sw_path, encoding="utf-8") as f:
         sw = f.read()
-    if "lsp-dplanner-ccr-v2.30.24" not in sw:
+    if "lsp-dplanner-ccr-v2.30.25" not in sw:
         version_ok = False
 else:
     version_ok = False
 if version_ok:
-    ok("All version files aligned at 2.30.24 (v17 BUG-74)")
+    ok("All version files aligned at 2.30.25 (v17 BUG-74)")
 else:
     fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
 
