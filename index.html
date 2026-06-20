@@ -1695,7 +1695,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 BOTTOM GAS CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpBot_size_lbl">Size</label><input id="gpBot_size" max="30" min="1" oninput="calcGasPlan()" placeholder="12" step="0.5" type="number" value="12"/></div>
+<div class="field"><label id="gpBot_size_lbl">Size (L)</label><input id="gpBot_size" max="30" min="1" oninput="calcGasPlan()" placeholder="12" step="0.5" type="number" value="12"/></div>
 <div class="field"><label id="gpBot_fill_lbl">Fill bar</label><input id="gpBot_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpBot_reserve_lbl">Reserve bar</label><input id="gpBot_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1704,7 +1704,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpTravelRow" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#ff9f43;margin-bottom:10px;">🟠 TRAVEL GAS CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpTravel_size_lbl">Size</label><input id="gpTravel_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpTravel_size_lbl">Size (L)</label><input id="gpTravel_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpTravel_fill_lbl">Fill bar</label><input id="gpTravel_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpTravel_reserve_lbl">Reserve bar</label><input id="gpTravel_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1713,7 +1713,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpDg1Row" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:10px;">🟢 DECO GAS 1 CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpDg1_size_lbl">Size</label><input id="gpDg1_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpDg1_size_lbl">Size (L)</label><input id="gpDg1_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpDg1_fill_lbl">Fill bar</label><input id="gpDg1_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpDg1_reserve_lbl">Reserve bar</label><input id="gpDg1_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1722,7 +1722,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpDg2Row" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:10px;">🟢 DECO GAS 2 CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpDg2_size_lbl">Size</label><input id="gpDg2_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpDg2_size_lbl">Size (L)</label><input id="gpDg2_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpDg2_fill_lbl">Fill bar</label><input id="gpDg2_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpDg2_reserve_lbl">Reserve bar</label><input id="gpDg2_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -2162,7 +2162,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="botMODDisplay" placeholder="Enter depth &amp; gas" readonly="" style="cursor:default;" title="Calculated MOD using selected Bottom Gas and Max Bottom ppO₂" type="text"/>
 </div>
-<div class="field"><label>Size</label><input id="cylBot_size" max="30" min="1" placeholder="12" step="0.5" type="number" value="12"/></div>
+<div class="field"><label>Size (L)</label><input id="cylBot_size" max="30" min="1" placeholder="12" step="0.5" type="number" value="12"/></div>
 <div class="field"><label id="cylBot_pres_lbl">Bar</label><input id="cylBot_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylBot_reserve_lbl">Reserve bar</label><input id="cylBot_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure — gas kept in the cylinder as a safety margin. Used by the Gas Plan tab for rule-of-thirds / turn-pressure calculations." type="number" value="50"/></div>
 </div>
@@ -2203,7 +2203,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="travelGasMODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Auto mode: shows travel gas MOD — deepest depth where travel gas ppO₂ stays within the Bottom ppO₂ limit. Manual mode: shows what the auto depth would be for reference." type="text"/>
 </div>
 <div class="field">
-<label>Size</label>
+<label>Size (L)</label>
 <input id="cylTravelGas_size" max="30" min="1" placeholder="12" step="0.5" title="Travel gas cylinder volume in litres. Used to calculate gas consumption and remaining pressure." type="number" value="12"/>
 </div>
 <div class="field">
@@ -2263,7 +2263,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="dg1MODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Calculated MOD using selected gas and Max Deco ppO₂" type="text"/>
 </div>
-<div class="field"><label>Size</label><input id="cylDg1_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label>Size (L)</label><input id="cylDg1_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="cylDg1_pres_lbl">Bar</label><input id="cylDg1_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylDg1_reserve_lbl">Reserve bar</label><input id="cylDg1_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure kept in this deco cylinder. Used by the Gas Plan tab." type="number" value="50"/></div>
 </div>
@@ -2305,7 +2305,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="dg2MODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Calculated MOD using selected gas and Max Deco ppO₂" type="text"/>
 </div>
-<div class="field"><label>Size</label><input id="cylDg2_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label>Size (L)</label><input id="cylDg2_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="cylDg2_pres_lbl">Bar</label><input id="cylDg2_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylDg2_reserve_lbl">Reserve bar</label><input id="cylDg2_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure kept in this deco cylinder. Used by the Gas Plan tab." type="number" value="50"/></div>
 </div>
@@ -3453,7 +3453,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.0';
+const APP_VERSION = '2.30.1';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5381,7 +5381,7 @@ function setUnits(u) {
     convertNumericInput(id, v => Math.round(v * PSI_PER_BAR), v => Math.round(v / PSI_PER_BAR), 300, 4351);
   });
   ['gpBot_size_lbl','gpTravel_size_lbl','gpDg1_size_lbl','gpDg2_size_lbl'].forEach(id =>
-    setTxt(id, 'Size'));
+    setTxt(id, u === 'imperial' ? 'Size (cu ft)' : 'Size (L)'));
   ['gpBot_fill_lbl','gpTravel_fill_lbl','gpDg1_fill_lbl','gpDg2_fill_lbl'].forEach(id =>
     setTxt(id, u === 'imperial' ? 'Fill psi' : 'Fill bar'));
   ['gpBot_reserve_lbl','gpTravel_reserve_lbl','gpDg1_reserve_lbl','gpDg2_reserve_lbl',
@@ -5424,18 +5424,22 @@ function setUnits(u) {
   }
 
   // ── Cylinder label updates (fixed IDs with underscores) ──
-  setTxt('cylBot_pres_lbl',       'Bar');
-  setTxt('cylTravelGas_pres_lbl', 'Bar');
-  setTxt('cylDg1_pres_lbl',       'Bar');
-  setTxt('cylDg2_pres_lbl',       'Bar');
+  setTxt('cylBot_pres_lbl',       u === 'imperial' ? 'PSI' : 'Bar');
+  setTxt('cylTravelGas_pres_lbl', u === 'imperial' ? 'PSI' : 'Bar');
+  setTxt('cylDg1_pres_lbl',       u === 'imperial' ? 'PSI' : 'Bar');
+  setTxt('cylDg2_pres_lbl',       u === 'imperial' ? 'PSI' : 'Bar');
   // Dynamic deco gas card labels
-  document.querySelectorAll('[id^="cylDg"][id$="_pres_lbl"]').forEach(el => { el.textContent = 'Bar'; });
-  document.querySelectorAll('[id^="cylDg"][id$="_size"] ~ * label, label[id$="_size_lbl"]').forEach(el => { el.textContent = 'Size'; });
+  document.querySelectorAll('[id^="cylDg"][id$="_pres_lbl"]').forEach(el => { el.textContent = u === 'imperial' ? 'PSI' : 'Bar'; });
+  document.querySelectorAll('[id^="cylDg"][id$="_size"] ~ * label, label[id$="_size_lbl"]').forEach(el => { el.textContent = u === 'imperial' ? 'Size (cu ft)' : 'Size (L)'; });
   // Cyl size labels (static)
   document.querySelectorAll('.field label').forEach(lbl => {
     const t = lbl.textContent.trim();
-    if (/^Cyl\. Size/i.test(t) || t === 'Size' || t === 'Cyl. Size (L)' || t === 'Cyl. Size (cu ft)') lbl.textContent = 'Size';
-    if (/^Cyl\. bar/i.test(t) || /^Cyl\. psi/i.test(t) || t === 'Bar') lbl.textContent = 'Bar';
+    if (/^Cyl\. Size/i.test(t) || t === 'Size' || t === 'Cyl. Size (L)' || t === 'Cyl. Size (cu ft)' || /^Size \(/.test(t)) {
+      lbl.textContent = u === 'imperial' ? 'Size (cu ft)' : 'Size (L)';
+    }
+    if (/^Cyl\. bar/i.test(t) || /^Cyl\. psi/i.test(t) || t === 'Bar' || t === 'PSI') {
+      lbl.textContent = u === 'imperial' ? 'PSI' : 'Bar';
+    }
   });
   ['cylSizeUnit','cylinderSizeUnit','tankSizeUnit'].forEach(id => setTxt(id, u === 'imperial' ? 'cu ft' : 'L'));
   ['cylPressureUnit','tankPressureUnit'].forEach(id => setTxt(id, u === 'imperial' ? 'psi' : 'bar'));
@@ -9424,8 +9428,8 @@ function addDecoGasCard() {
         <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></span></label>
         <input type="text" id="dg${idx}MODDisplay" readonly style="cursor:default;" placeholder="Select gas" title="Calculated MOD using selected gas and Max Deco ppO₂">
       </div>
-      <div class="field"><label>Size</label><input type="number" id="cylDg${idx}_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
-      <div class="field"><label id="cylDg${idx}_pres_lbl">Bar</label><input type="number" id="cylDg${idx}_pres" value="200" min="0" max="300" step="10" placeholder="200"></div>
+      <div class="field"><label>${units === 'imperial' ? 'Size (cu ft)' : 'Size (L)'}</label><input type="number" id="cylDg${idx}_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
+      <div class="field"><label id="cylDg${idx}_pres_lbl">${units === 'imperial' ? 'PSI' : 'Bar'}</label><input type="number" id="cylDg${idx}_pres" value="200" min="0" max="300" step="10" placeholder="200"></div>
     </div>`;
 
   document.getElementById('decoGasCards').appendChild(card);
@@ -18064,8 +18068,27 @@ window.addEventListener('load', function() {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(r => console.log('[SW] registered, scope:', r.scope))
+      navigator.serviceWorker.register(`sw.js?v=${APP_VERSION}`, { updateViaCache: 'none' })
+        .then(r => {
+          console.log('[SW] registered, scope:', r.scope);
+          r.update();
+          if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
+          r.addEventListener('updatefound', () => {
+            const sw = r.installing;
+            if (!sw) return;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                sw.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+          let reloaded = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloaded) return;
+            reloaded = true;
+            window.location.reload();
+          });
+        })
         .catch(e => console.warn('[SW] registration failed:', e));
     });
   }
