@@ -4,9 +4,11 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
-## v2.30.0 — 2026-06-20  ★ Milestone
+## v2.30.0 — 2026-06-20  ★ Milestone (CCR edition — separate repo)
 
-Full rebreather planning — CCR, pSCR, bailout, and descent setpoint on v2.20.x foundation.
+First release of **LSP D-Planner + CCR** as a standalone product forked from LSP D-Planner v2.20.21. Open-circuit planning continues in the [main LSP D-Planner repo](https://github.com/Three-Cats-LSP/LSP_D-planner).
+
+Full rebreather planning — CCR, pSCR, bailout, and descent setpoint.
 
 ### Added
 

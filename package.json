@@ -1,7 +1,7 @@
 {
-  "name": "lsp-d-planner",
+  "name": "lsp-d-planner-ccr",
   "version": "2.30.0",
-  "description": "LSP D-Planner — decompression planning app",
+  "description": "LSP D-Planner + CCR — rebreather decompression planning (CCR, pSCR, bailout)",
   "private": true,
   "scripts": {
     "cap:sync": "npx cap sync android",

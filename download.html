@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LSP D-Planner — Download APK</title>
+  <title>LSP D-Planner + CCR — Download APK</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -48,12 +48,12 @@
 <body>
   <div class="card">
     <img alt="LSP D-Planner" class="logo" height="72" src="icon-192.png" width="72"/>
-    <h1>LSP D-Planner</h1>
+    <h1>LSP D-Planner + CCR</h1>
     <p>Decompression planning app for Android</p>
 
     <a class="btn" id="dlBtn"
-       href="https://threecats-lsp.com/d-planner/LSP_D-planner.apk"
-       download="LSP_D-planner.apk">
+       href="LSP_D-planner-CCR.apk"
+       download="LSP_D-planner-CCR.apk">
       ⬇ Download APK
     </a>
 
@@ -68,7 +68,7 @@
   <script>
     const btn = document.getElementById('dlBtn');
     const status = document.getElementById('status');
-    const APK_URL = 'https://threecats-lsp.com/d-planner/LSP_D-planner.apk';
+    const APK_URL = 'LSP_D-planner-CCR.apk';
 
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -85,7 +85,7 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'LSP_D-planner.apk';
+          a.download = 'LSP_D-planner-CCR.apk';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);

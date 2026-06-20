@@ -1,6 +1,6 @@
 {
-  "appId": "com.threecats.lsp.dplanner",
-  "appName": "LSP D-Planner",
+  "appId": "com.threecats.lsp.dplannerccr",
+  "appName": "LSP D-Planner + CCR",
   "webDir": "www",
   "android": {
     "buildOptions": {

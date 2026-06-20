@@ -92,14 +92,14 @@ jobs:
       - name: Place APK at output location
         run: |
           mkdir -p "Android Apk"
-          cp android/app/build/outputs/apk/debug/app-debug.apk "Android Apk/LSP_D-planner.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "Android Apk/LSP_D-planner-CCR.apk"
 
       - name: Commit APK back to main
         run: |
           git config user.email "sns@rvm.cc"
           git config user.name "Three Cats LSP"
-          git add "Android Apk/LSP_D-planner.apk"
-          git commit -m "build(android): update LSP_D-planner.apk v${{ steps.version.outputs.VERSION }} [skip ci]" --allow-empty
+          git add "Android Apk/LSP_D-planner-CCR.apk"
+          git commit -m "build(android): update LSP_D-planner-CCR.apk v${{ steps.version.outputs.VERSION }} [skip ci]" --allow-empty
           git checkout -- android/app/build.gradle
           git reset --hard HEAD
           git pull --rebase origin main

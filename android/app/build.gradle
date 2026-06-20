@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.threecats.lsp.dplanner"
+    namespace "com.threecats.lsp.dplannerccr"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.threecats.lsp.dplanner"
+        applicationId "com.threecats.lsp.dplannerccr"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 21012
