@@ -2379,6 +2379,27 @@ if os.path.isfile(pscr_test_path):
 else:
     fail("tests-pscr-otu-cns.html missing")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 50 — v2.30.16 fixes (errors_bugs_report_v14 BUG-69–70)
+# ══════════════════════════════════════════════════════════════════════════════
+
+surf_gf_start = js.find("function computeSurfaceGF")
+surf_gf_block = js[surf_gf_start:surf_gf_start + 600] if surf_gf_start > 0 else ""
+if surf_gf_start > 0 and "const P_surf = altSurfaceP" in surf_gf_block:
+    ok("computeSurfaceGF uses altSurfaceP for altitude-aware surface GF (BUG-69)")
+else:
+    fail("computeSurfaceGF still hardcodes P_surf=1.0 (BUG-69)")
+
+if "function addBailoutStressReserve" in js and "addBailoutStressReserve(" in js:
+    ok("addBailoutStressReserve splits stress reserve across deco phases (BUG-70)")
+else:
+    fail("addBailoutStressReserve missing — stress reserve still bottom-only (BUG-70)")
+
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.16['\"]", js):
+    ok("APP_VERSION bumped to 2.30.16")
+else:
+    fail("APP_VERSION not bumped to 2.30.16")
+
 print("=" * 60)
 
 if FAIL:

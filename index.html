@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.15';
+const APP_VERSION = '2.30.16';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -6101,6 +6101,26 @@ function getBailoutReserveMixLabel(depthM, fO2Bot, fHeBot) {
   return null;
 }
 
+/** Split stress/problem-solve reserve across bottom + deco stop depths with phase-appropriate bailout mix (BUG-70). */
+function addBailoutStressReserve(addGasFn, reserveMin, bottomDepthM, stopDepthsM, fO2Bot, fHeBot, sacStress) {
+  if (!reserveMin || reserveMin <= 0) return;
+  const seen = new Set();
+  const depths = [];
+  [bottomDepthM, ...(stopDepthsM || [])].forEach(d => {
+    if (d == null || d < 0) return;
+    const key = Math.round(d * 100);
+    if (seen.has(key)) return;
+    seen.add(key);
+    depths.push(d);
+  });
+  if (!depths.length) return;
+  const shareMin = reserveMin / depths.length;
+  depths.forEach(d => {
+    const label = getBailoutReserveMixLabel(d, fO2Bot, fHeBot);
+    if (label) addGasFn(label, d, shareMin, sacStress);
+  });
+}
+
 function validateCcrGasConfiguration() {
   if (!isCcrGasUiMode()) return { ok: true, errors: [], warnings: [] };
   const rawD = parseFloat(document.getElementById('decoDepth')?.value) || 0;
@@ -6247,11 +6267,11 @@ function ceiling(tissues, gfHigh) {
 // Matches MultiDeco/DiveKit's published "decozone" definition exactly.
 // Surface GF — maximum tissue loading ratio vs M-value at surface pressure.
 // Formula (tl5915 / Baker): surfGF_i = (pN2+pHe - P_surf) / (a_i + P_surf/b_i - P_surf)
-// where P_surf = 1.0 bar (sea-level ambient). Returns 0–100+ as a percentage.
+// where P_surf = altSurfaceP (actual surface ambient — altitude-aware). Returns 0–100+ as a percentage.
 // Negative values (all tissues undersaturated at surface) are clamped to 0.
 function computeSurfaceGF(tissues) {
   if (!tissues || !tissues.length) return null;
-  const P_surf = 1.0; // bar
+  const P_surf = altSurfaceP;
   let maxGF = -Infinity;
   tissues.forEach((t, i) => {
     const pTotal = (t.pN2 || 0) + (t.pHe || 0);
@@ -7503,11 +7523,12 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const reserveMin = (_vpmCcr.stressTimeMin || 0) + (_vpmCcr.problemSolveMin || 0);
     if (reserveMin > 0) {
       const botFracs = _vpmBotFracs || getBottomGasFractions();
-      const reserveLabel = getBailoutReserveMixLabel(depthM, botFracs.fO2, botFracs.fHe);
-      if (reserveLabel) {
-        const stressSac = _vpmCcr.sacStress || sacBotVPM;
-        gasConsVPM[reserveLabel] = (gasConsVPM[reserveLabel] || 0) + ccrGasLitres(reserveLabel, depthM, reserveMin, stressSac);
-      }
+      const stopDepths = (result.stops || []).map(s => s.depth).filter(d => d != null && d >= 0);
+      const stressSac = _vpmCcr.sacStress || sacBotVPM;
+      addBailoutStressReserve(
+        (label, d, min, sac) => { gasConsVPM[label] = (gasConsVPM[label] || 0) + ccrGasLitres(label, d, min, sac); },
+        reserveMin, depthM, stopDepths, botFracs.fO2, botFracs.fHe, stressSac
+      );
     }
   }
   const gasElVPM = document.getElementById('gasConsumptionSummary');
@@ -10525,10 +10546,11 @@ function runDecoSchedule() {
   if (_zhlOnLoop) {
     const reserveMin = (_ccrSettings.stressTimeMin || 0) + (_ccrSettings.problemSolveMin || 0);
     if (reserveMin > 0) {
-      const reserveLabel = getBailoutReserveMixLabel(depthM, bottomFO2, bottomFHe);
-      if (reserveLabel) {
-        addGas(reserveLabel, rawD, reserveMin, _ccrSettings.sacStress || sacBottom);
-      }
+      const stopDepths = collapsedMDP.filter(s => s.type === 'deco').map(s => s.depth);
+      addBailoutStressReserve(
+        addGas, reserveMin, rawD, stopDepths, bottomFO2, bottomFHe,
+        _ccrSettings.sacStress || sacBottom
+      );
     }
   }
   tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">

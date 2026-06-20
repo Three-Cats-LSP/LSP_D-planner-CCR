@@ -131,7 +131,7 @@ Single-file architecture — primary code in `index.html` (~18k lines). Capacito
 python audit.py index.html
 ```
 
-Static analysis: **320 checks** across 49 code groups (includes GROUP 48 v2.30.15 OTU/CNS guards + GROUP 49 pSCR validation suite).
+Static analysis: **323 checks** across 50 code groups (includes GROUP 50 v2.30.16 BUG-69–70 fixes).
 
 Pushes to `main` that touch app files trigger **Notify Site on Push** → auto-sync to [threecats-lsp.com/d-planner-ccr/](https://threecats-lsp.com/d-planner-ccr/) via the `threecats-lsp.com` repo.
 
@@ -149,7 +149,7 @@ Open any suite in a browser (loads `index.html` in a hidden iframe and runs agai
 | [`tests-extended.html`](tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first-stop depths | [Live](https://threecats-lsp.com/d-planner-ccr/tests-extended.html) |
 | [`tests-massive.html`](tests-massive.html) | Full regression — 300+ engine plans, UI/DOM, Tier 1–3, travel gas, altitude, gas plan, slate, presets, **T3-CCR MultiDeco cross-val** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive.html) |
 | [`tests-massive-main.html`](tests-massive-main.html) | Mobile-optimised massive suite — same scope minus heaviest Tier 3 groups; includes **T3-CCR** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive-main.html) |
-| `audit.py` | Static structural analysis — **320 checks**. Run: `python audit.py index.html` | — |
+| `audit.py` | Static structural analysis — **323 checks**. Run: `python audit.py index.html` | — |
 | `pSCR_gas_consumption_validation_v2.30.15.md` | pSCR gas draw vs metabolic O₂ / OTU-CNS end-to-end validation report (v2.30.15 sign-off) | — |
 | `pSCR_OTU_CNS_consistency_audit.md` | OTU/CNS code-path audit + test plan (companion to suite above) | — |
 
@@ -166,7 +166,7 @@ Bug reports: `errors_bugs_report.md` through `errors_bugs_report_v8.md` in repo 
 | `capacitor-bridge.js` | Android native file export bridge |
 | `download.html` | Android APK download page |
 | `manifest.json` | PWA manifest |
-| `audit.py` | Static analysis (320 checks) |
+| `audit.py` | Static analysis (323 checks) |
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java reference |
 | `android/` | Capacitor Android project |
@@ -181,6 +181,7 @@ Bug reports: `errors_bugs_report.md` through `errors_bugs_report_v8.md` in repo 
 
 | Version | Highlights |
 |---------|------------|
+| **2.30.16** | Surface GF uses `altSurfaceP` at altitude (BUG-69); stress reserve split across deco stop depths (BUG-70) |
 | **2.30.15** | pSCR OTU/CNS parity complete (BUG-64–68); dedicated `tests-pscr-otu-cns.html` + gas/toxicity validation report |
 | **2.30.9** | Imperial Bühlmann emergency gas capacity fix; `appSettings.clear()` key fix; faster settings restore (no double `change` burst) |
 | **2.30.8** | Tools panel HTML fix (panels no longer nested inside `#deco`); emoji brand icons restored |
