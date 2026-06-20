@@ -4782,7 +4782,11 @@ function buildDecoPlanHeaderLines() {
   if (d.circuit && d.circuit !== 'OC') lines.push(`Circuit     : ${d.ccrLabel}${d.ccrBailout ? ' (bailout)' : ''}`);
   if (d.isVPMExport) lines.push(`He Half-Time: ${d.heHtLabel}`);
   lines.push(`Depth       : ${d.depth}${d.du}    BT: ${d.bt} min`);
-  lines.push(`Bottom Gas  : ${d.bottomGas}    Water: ${d.density}`);
+  if (isCcrOnLoopProfile({ circuit: d.circuit, bailout: d.ccrBailout })) {
+    lines.push(`Loop gas    : ${loopMixLabelFor(d.bottomGasShort, { circuit: d.circuit, bailout: d.ccrBailout })} (on-loop from surface)    Water: ${d.density}`);
+  } else {
+    lines.push(`Bottom Gas  : ${d.bottomGas}    Water: ${d.density}`);
+  }
   if (d.travelGas) lines.push(`Travel Gas  : ${d.travelGas.gas} (switch @ ${d.travelGas.depth})`);
   lines.push(`Descent     : ${d.descentRate}${d.du}/min  Ascent: ${d.ascentRate}${d.du}/min  Deco: ${d.decoAscentRate}${d.du}/min  Surface: ${d.surfAscentRate}${d.du}/min`);
   lines.push(`Last Stop   : ${d.lastStop}${d.du}  Step: ${d.decoStep}${d.du}`);
@@ -4790,9 +4794,7 @@ function buildDecoPlanHeaderLines() {
   lines.push(`Altitude     : ${d.altLabel}  Acclimatized: ${d.acclLabel}${d.altRadii}`);
   if (d.minDecoEn) lines.push(`Min Deco Profile: ON  (9${d.depthUnit}: ${d.minDeco9m} min  6${d.depthUnit}: ${d.minDeco6m} min)`);
   if (d.vpmRepActive) lines.push(`Repetitive   : Yes  Surface Interval: ${d.vpmSI} min  (bubble state + tissue loading carried)`);
-  if (isCcrOnLoopProfile({ circuit: d.circuit, bailout: d.ccrBailout })) {
-    lines.push(`Diluent     : ${d.bottomGas} (on-loop — no OC deco switches)`);
-  } else {
+  if (!isCcrOnLoopProfile({ circuit: d.circuit, bailout: d.ccrBailout })) {
     d.decoGases.forEach((g, i) => lines.push(`Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
   }
   return lines;
@@ -4815,13 +4817,15 @@ function renderDecoPlanHeaderHtml(data, opts) {
   if (data.travelGas) {
     chips.push(`<span class="dpb-chip dpb-chip--travel"><span class="dpb-chip-lbl">Travel</span>${_escHtmlPre(data.travelGas.gas)} @ ${_escHtmlPre(data.travelGas.depth)}</span>`);
   }
-  chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Bottom</span>${_escHtmlPre(data.bottomGasShort)}</span>`);
+  if (isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout })) {
+    chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Loop</span>${_escHtmlPre(loopMixLabelFor(data.bottomGasShort, { circuit: data.circuit, bailout: data.ccrBailout }))} on-loop</span>`);
+  } else {
+    chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Bottom</span>${_escHtmlPre(data.bottomGasShort)}</span>`);
+  }
   if (data.circuit && data.circuit !== 'OC') {
     chips.unshift(`<span class="dpb-chip dpb-chip--travel"><span class="dpb-chip-lbl">Circuit</span>${_escHtmlPre(data.ccrLabel || data.circuit)}</span>`);
   }
-  if (isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout })) {
-    chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Diluent</span>${_escHtmlPre(data.bottomGasShort)} on-loop</span>`);
-  } else {
+  if (!isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout })) {
     data.decoGases.forEach((g, i) => {
       chips.push(`<span class="dpb-chip ${_dpbGasChipClass(g.gas)}"><span class="dpb-chip-lbl">Deco ${i + 1}</span>${_escHtmlPre(g.gas)} @ ${_escHtmlPre(g.depth)}</span>`);
     });
@@ -5765,6 +5769,14 @@ function isCcrOnLoopProfile(ccr) {
   const cfg = ccr || getCCRSettingsFromDOM();
   return isRebreatherCircuit(cfg.circuit) && !cfg.bailout;
 }
+/** Display label for on-loop rebreather gas (CCR Air / pSCR Air). OC/bailout → diluent unchanged. */
+function loopMixLabelFor(diluentLabel, ccr) {
+  const cfg = ccr || getCCRSettingsFromDOM();
+  if (!isRebreatherCircuit(cfg.circuit) || cfg.bailout) return diluentLabel;
+  if (typeof diluentLabel === 'string' && /^(CCR|pSCR)\s/i.test(diluentLabel)) return diluentLabel;
+  const prefix = cfg.circuit === 'pSCR' ? 'pSCR' : 'CCR';
+  return `${prefix} ${diluentLabel}`;
+}
 function ccrGasLitres(label, depthM, durMin, sac) {
   if (isCcrDiluentGasLabel(label)) return ccrDiluentSurfaceLpm() * durMin;
   const absP = altSurfaceP + depthM * BAR_PER_METRE;
@@ -5798,6 +5810,7 @@ if (typeof window !== 'undefined') {
   window.splitSegmentAtSetpoint = splitSegmentAtSetpoint;
   window.computePSCRFractions = computePSCRFractions;
   window.isCcrOnLoopProfile = isCcrOnLoopProfile;
+  window.loopMixLabelFor = loopMixLabelFor;
 }
 
 function ceiling(tissues, gfHigh) {
@@ -6909,7 +6922,9 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const o2pct = parseInt(gasParts[0]) || bottomO2pct;
     const hepct = parseInt(gasParts[1]) || 0;
     const gc = gasColor(o2pct);
-    const gasDisp = getGasLabel(o2pct/100, hepct/100);
+    const gasDisp = _vpmOnLoop
+      ? loopMixLabelFor(getGasLabel(o2pct/100, hepct/100), _vpmCcr)
+      : getGasLabel(o2pct/100, hepct/100);
 
     // Gas switch row
     if (!_vpmOnLoop && segGas !== prevGas && seg.type !== 'descent') {
@@ -9290,6 +9305,7 @@ function runDecoSchedule() {
   let bottomFHe = _botFracs.fHe;
   let bottomFO2 = _botFracs.fO2;
   const bottomMixLabel = getGasLabel(bottomFO2, bottomFHe);  // must come after _botFracs
+  const loopMixLabel = loopMixLabelFor(bottomMixLabel, _ccrSettings);
 
   // ── Calculate optimal switch depth from ppO2 limit ──
   // ppO2 = (SURFACE_P + depth * 0.1) * fO2  ≤  maxPPO2
@@ -9440,7 +9456,7 @@ function runDecoSchedule() {
   }
   if (stopDepths.length === 0 || stopDepths[stopDepths.length - 1] !== lastStop) stopDepths.push(lastStop);
 
-  let prevEngineGas = bottomMixLabel; // track gas for switch pause
+  let prevEngineGas = loopMixLabel; // track gas for switch pause
   let decoZoneEntered = false; // true once first ceiling-forced stop fires
 
   // firstSwitchDepth — find first deco gas switch depth
@@ -9510,7 +9526,7 @@ function runDecoSchedule() {
       }
       steps.push({
         type: 'ascent', from: cur, to: stopDepth,
-        dur: travelDur, gas: travelGas.label,
+        dur: travelDur, gas: travelOnLoop ? loopMixLabel : travelGas.label,
         pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0, _ccrPpo2Opts(cur, travelOnLoop, travelOnLoop ? bottomFO2 : undefined)), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
         decoTransit: decoZoneEntered && mdCompatMode
       });
@@ -9529,7 +9545,7 @@ function runDecoSchedule() {
     const stopFN2  = onLoop ? bottomFN2 : stopGas.fN2;
     const stopFHe  = onLoop ? bottomFHe : (stopGas.fHe || 0);
     const stopFO2  = onLoop ? bottomFO2 : (stopGas.fO2 != null ? stopGas.fO2 : Math.max(0, 1 - stopFN2 - stopFHe));
-    const gasLabel = onLoop ? (`CCR ${bottomMixLabel}`) : stopGas.label;
+    const gasLabel = onLoop ? loopMixLabel : stopGas.label;
 
     if (gasLabel !== prevEngineGas && switchPauseT > 0) {
       tissues = zhlLoadConst(tissues, cur, switchPauseT, stopFO2, stopFHe, onLoop);
@@ -9708,7 +9724,7 @@ function runDecoSchedule() {
     tissues = zhlLoadLinear(tissues, cur, 0, finalAscentDur, fFO2, fFHe, finalOnLoop);
     steps.push({
       type: 'ascent', from: cur, to: 0,
-      dur: finalAscentDur, gas: finalGas.label,
+      dur: finalAscentDur, gas: finalOnLoop ? loopMixLabel : finalGas.label,
       pO2: ppO2Check(cur, finalGas.fN2, finalGas.fHe || 0, _ccrPpo2Opts(cur, finalOnLoop, fFO2)), fN2: finalGas.fN2, fHe: finalGas.fHe || 0,
     });
     rt += finalAscentDur;
@@ -9859,8 +9875,8 @@ function runDecoSchedule() {
       gsT += s.dur;
     }
     // Prepend descent + bottom segment using bottom gas (covers 0 → bt)
-    if (!gasColorMap[bottomMixLabel]) { gasColorMap[bottomMixLabel] = gasColors[gcIdx++ % gasColors.length]; }
-    gasSegs.unshift({ fromT: 0, toT: bt, gas: bottomMixLabel, color: gasColorMap[bottomMixLabel] });
+    if (!gasColorMap[loopMixLabel]) { gasColorMap[loopMixLabel] = gasColors[gcIdx++ % gasColors.length]; }
+    gasSegs.unshift({ fromT: 0, toT: bt, gas: loopMixLabel, color: gasColorMap[loopMixLabel] });
     window._decoGasSegments = gasSegs;
     window._decoGasColorMap = gasColorMap;
   }
@@ -9883,7 +9899,7 @@ function runDecoSchedule() {
 
   tbody.innerHTML = '';
   const _decoTotalsEl = document.getElementById('decoTotals'); if (_decoTotalsEl) _decoTotalsEl.innerHTML = '';
-  let prevGas = bottomMixLabel;
+  let prevGas = loopMixLabel;
   let rowRT = 0;
   // ── EAD (Equivalent Air Depth) ──
   // EAD = (fN2 × (depth + 10) / 0.79) − 10  [metres]
@@ -9996,12 +10012,12 @@ function runDecoSchedule() {
     rowRT += bottomDescentTimeMin;
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), bottomDescentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), bottomDescentTimeMin);
-    addGas(bottomMixLabel, bottomMidM, bottomDescentTimeMin, sacBottom);
+    addGas(loopMixLabel, bottomMidM, bottomDescentTimeMin, sacBottom);
     tbody.innerHTML += `<tr class="asc-row" data-phase="descent">
       <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
       <td data-label="Depth" style="color:#ff8080;">${travelSwitchDisp}→${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
       <td data-label="Stop" style="color:#ff8080;"></td>
-      <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
+      <td data-label="Mix"><span style="color:var(--accent);">${loopMixLabel}</span></td>
       <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
       <td data-label="EAD" style="color:var(--muted);"></td>
@@ -10013,12 +10029,12 @@ function runDecoSchedule() {
     const descentPPO2 = rowDisplayPpo2(rawD / 2, bottomFN2, bottomFHe, bottomFO2);
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), descentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), descentTimeMin);
-    addGas(bottomMixLabel, rawD / 2, descentTimeMin, sacBottom);
+    addGas(loopMixLabel, rawD / 2, descentTimeMin, sacBottom);
     tbody.innerHTML += `<tr class="asc-row" data-phase="descent">
       <td><span style="font-size:18px;color:#ff8080;">↓</span></td>
       <td data-label="Depth" style="color:#ff8080;">0→${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
       <td data-label="Stop" style="color:#ff8080;"></td>
-      <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
+      <td data-label="Mix"><span style="color:var(--accent);">${loopMixLabel}</span></td>
       <td data-label="Run" style="color:#ff8080;">${fmtMM(rowRT)}</td>
       <td data-label="PPO2" style="color:var(--muted);">${descentPPO2}</td>
       <td data-label="EAD" style="color:var(--muted);"></td>
@@ -10033,12 +10049,12 @@ function runDecoSchedule() {
   const btCNS  = rowCNS(parseFloat(btPPO2), btAtDepthMin);
   totalCNSfrac += segCNSfrac(parseFloat(btPPO2), btAtDepthMin);
   totalOTU     += segOTU(parseFloat(btPPO2), btAtDepthMin);
-  addGas(bottomMixLabel, rawD, btAtDepthMin, sacBottom);
+  addGas(loopMixLabel, rawD, btAtDepthMin, sacBottom);
   tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">
     <td>🔵</td>
     <td data-label="Depth" style="color:var(--accent);">${dU?rawD+'m':mToFt(rawD)+'ft'}</td>
     <td data-label="Stop" style="color:var(--accent);">${fmtMM(btAtDepthMin)}</td>
-    <td data-label="Mix"><span style="color:var(--accent);">${bottomMixLabel}</span></td>
+    <td data-label="Mix"><span style="color:var(--accent);">${loopMixLabel}</span></td>
     <td data-label="Run" style="color:var(--accent);">${fmtMM(rowRT)}</td>
     <td data-label="PPO2" style="color:var(--muted);">${btPPO2}</td>
     <td data-label="EAD" style="color:var(--muted);"></td>
@@ -10062,7 +10078,7 @@ function runDecoSchedule() {
     const rtDisp = fmtMM(rowRT);
 
     // ── GAS SWITCH ROW ──
-    if (!_zhlOnLoop && s.gas && s.gas !== prevGas && s.gas !== bottomMixLabel) {
+    if (!_zhlOnLoop && s.gas && s.gas !== prevGas && s.gas !== bottomMixLabel && s.gas !== loopMixLabel) {
       const isO2        = s.fN2 === 0;
       const switchDepth = s.type === 'deco' ? s.depth : (s.from ?? s.depth);
       const switchDepthDisp = dU ? switchDepth+'m' : mToFt(switchDepth)+'ft';
@@ -14374,12 +14390,14 @@ function buildMessengerText(mode) {
       ? `${_algoShort} C+${_cons}`
       : `${_algoShort} GFHi${gfH} C+${_cons}`;
   result.push(`${depth}${du} / ${bt}min / ${_algoStr}`);
-  result.push(`Bottom Gas  : ${_msgBotDetail}`);
   const _msgGasHdr = buildDecoPlanHeaderData();
-  if (_msgGasHdr.travelGas) result.push(`Travel Gas  : ${_msgGasHdr.travelGas.gas} (switch @ ${_msgGasHdr.travelGas.depth})`);
   if (isCcrOnLoopProfile({ circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })) {
-    result.push(`Diluent     : ${_msgBotDetail} (on-loop)`);
+    result.push(`Loop gas    : ${loopMixLabelFor(_msgBotLabel, { circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })} (on-loop)`);
   } else {
+    result.push(`Bottom Gas  : ${_msgBotDetail}`);
+  }
+  if (_msgGasHdr.travelGas) result.push(`Travel Gas  : ${_msgGasHdr.travelGas.gas} (switch @ ${_msgGasHdr.travelGas.depth})`);
+  if (!isCcrOnLoopProfile({ circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })) {
     _msgGasHdr.decoGases.forEach((g, i) => result.push(`Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
   }
   const rndVal = (document.getElementById('stopRounding')?.value||'fractional')==='wholeminute'?'Yes':'No';
