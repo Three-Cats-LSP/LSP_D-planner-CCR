@@ -222,14 +222,13 @@ header { display: flex;
 .brand-icon { width: 44px; height: 44px;
  border-radius: 10px;
  display: flex; align-items: center; justify-content: center;
- font-size: 22px;
- line-height: 1;
- font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+ color: #00d9ff;
  background: linear-gradient(135deg, rgba(0,200,255,0.12), rgba(0,100,200,0.08));
  border: 1px solid var(--accent);
  transition: all 0.4s ease;
  animation: iconGlow 4s ease-in-out infinite;
 }
+.brand-icon svg { width: 26px; height: 26px; display: block; flex-shrink: 0; }
 @keyframes iconGlow { 0%,100% { box-shadow: 0 0 12px rgba(0,200,255,0.15); }
  50% { box-shadow: 0 0 24px rgba(0,200,255,0.3); }
 }
@@ -1307,7 +1306,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="headerTopRow" style="display:flex;flex-wrap:wrap;align-items:center;width:100%;padding:2px 0;border-bottom:1px solid var(--border);">
 <!-- Logo — left, fixed size -->
 <div style="display:flex;align-items:center;gap:12px;padding-left:14px;flex-shrink:0;flex-grow:0;">
-<div class="brand-icon" id="brandIcon">🫧</div>
+<div class="brand-icon" id="brandIcon" aria-hidden="true"></div>
 <div class="brand-text">
 <h1>LSP D-PLANNER · <span class="algo-label" id="algoLabel">Rec</span></h1>
 <p id="algoSubtitle">Recreational Dive Tables · RDP Reference</p>
@@ -3455,7 +3454,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.5';
+const APP_VERSION = '2.30.6';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3979,11 +3978,16 @@ let lastTissues = null;
 // ═══════════════════════════════════════════════
 // ALGO SWITCH
 // ═══════════════════════════════════════════════
+const BRAND_SVGS = {
+  padi: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="12" cy="8.5" rx="7" ry="5" stroke="currentColor" stroke-width="1.6"/><path d="M5 14.5c0 3.3 3.1 6 7 6s7-2.7 7-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 8.5h6M12 8.5V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  buh: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="13.5" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="17.5" cy="15.5" r="2" stroke="currentColor" stroke-width="1.5"/></svg>',
+  tools: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 19l9-9 2 2-9 9H5v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 8l3.5-3.5 1.5 1.5L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+};
+
 function setBrandIcon(mode) {
   const el = document.getElementById('brandIcon');
   if (!el) return;
-  const icons = { padi: '🤿', buh: '🫧', tools: '🔧' };
-  el.textContent = icons[mode] || icons.buh;
+  el.innerHTML = BRAND_SVGS[mode] || BRAND_SVGS.buh;
 }
 
 function setAlgo(a) {
