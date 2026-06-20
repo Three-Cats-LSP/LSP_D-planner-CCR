@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.17';
+const APP_VERSION = '2.30.19';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -7609,8 +7609,9 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const portionL = usableL != null ? usableL * fraction : null;
       const turnBar  = (hasCyl && isBottom && sizeL > 0) ? fillBar - (portionL / sizeL) : null;
 
-      const reqDisp  = Math.round(reqL);
-      const availDisp = usableL != null ? Math.round(usableL) : null;
+      const reqDisp  = gpVolDisp(reqL);
+      const availDisp = usableL != null ? gpVolDisp(usableL) : null;
+      const shortVolDisp = (litres) => gpVolDisp(Math.max(0, litres));
       const short = usableL != null && reqL > usableL;
       const tight = usableL != null && !short && reqL > usableL * 0.90;
       const sufficient = usableL != null && !short;
@@ -7618,10 +7619,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       // Sufficiency colour
       const sufCol = short ? 'var(--red)' : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
       const sufIcon = short ? '✗' : tight ? '⚠' : hasCyl ? '✓' : '—';
-      const sufTxt  = short ? `Short ${Math.round(reqL-(usableL||0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : 'No cyl data';
+      const sufTxt  = short ? `Short ${shortVolDisp(reqL - (usableL || 0))} ${volUnitV}` : tight ? 'Tight' : hasCyl ? 'OK' : 'No cyl data';
 
       // Thirds/Half portion in litres (bottom only)
-      const portionDispV = (isBottom && portionL != null) ? `${Math.round(portionL)} ${volUnitV}` : '—';
+      const portionDispV = (isBottom && portionL != null) ? `${gpVolDisp(portionL)} ${volUnitV}` : '—';
       const portionColorV = (isBottom && portionL != null) ? 'var(--accent)' : 'var(--muted)';
       // Turn pressure (bottom only)
       const turnDispV = (isBottom && turnBar != null) ? (units==='imperial'?Math.round(turnBar*14.5038):Math.round(turnBar)) : null;
@@ -7636,7 +7637,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const reqColorV   = short ? 'var(--red)'  : 'var(--text)';
       const availColorV = short ? 'var(--red)'  : tight ? 'var(--yellow)' : hasCyl ? 'var(--green)' : 'var(--muted)';
       const statusCellV = short
-        ? `<td style="color:var(--red);font-weight:700;">✗ short ${Math.round(reqL-(usableL||0))} ${volUnitV}</td>`
+        ? `<td style="color:var(--red);font-weight:700;">✗ short ${shortVolDisp(reqL - (usableL || 0))} ${volUnitV}</td>`
         : tight
           ? `<td style="color:var(--yellow);font-weight:700;">⚠ tight</td>`
           : (isBottom && turnDispV != null)
@@ -7664,7 +7665,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
           const maxTurnDisp = units === 'imperial' ? Math.round(maxTurnBar*14.5038) : Math.round(maxTurnBar);
           btSuggest = `Shorten BT to <strong>${maxBT} min</strong> and turn at <strong>${maxTurnDisp} ${presUnitV}</strong>, or use a larger cylinder / add a stage.`;
         }
-        warnings += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${reqDisp} ${volUnitV}, have ${availDisp} ${volUnitV}. Short by <strong>${Math.round(reqL-usableL)} ${volUnitV}</strong>.${btSuggest ? '<br>' + btSuggest : ''}</div></div>`;
+        warnings += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${reqDisp} ${volUnitV}, have ${availDisp} ${volUnitV}. Short by <strong>${shortVolDisp(reqL - usableL)} ${volUnitV}</strong>.${btSuggest ? '<br>' + btSuggest : ''}</div></div>`;
       }
     }
 
@@ -10860,9 +10861,12 @@ function runDecoSchedule() {
         const avail = sL>0&&fB>rB?(fB-rB)*sL:null;
         const short2 = avail!=null&&reqL>avail;
         const sufCol2 = short2?'var(--red)':avail!=null?'var(--green)':'var(--muted)';
-        const sufTxt2 = short2?`✗ short ${Math.round(reqL-(avail||0))} ${volUnitV2}`:avail!=null?'✓ OK':'—';
-        emergRows += `<tr><td style="font-weight:700;">${gas}</td><td style="color:${short2?'var(--red)':'var(--text)'};">${Math.round(reqL)} ${volUnitV2}</td><td style="color:${avail!=null?(short2?'var(--red)':'var(--green)'):'var(--muted)'};">${avail!=null?Math.round(avail)+' '+volUnitV2:'—'}</td><td style="color:${sufCol2};font-weight:700;">${sufTxt2}</td></tr>`;
-        if (short2) emergWarn += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${Math.round(reqL)} ${volUnitV2}, have ${Math.round(avail||0)} ${volUnitV2}.</div></div>`;
+        const reqDispE = gpVolDisp(reqL);
+        const availDispE = avail != null ? gpVolDisp(avail) : null;
+        const shortDispE = gpVolDisp(Math.max(0, reqL - (avail || 0)));
+        const sufTxt2 = short2?`✗ short ${shortDispE} ${volUnitV2}`:avail!=null?'✓ OK':'—';
+        emergRows += `<tr><td style="font-weight:700;">${gas}</td><td style="color:${short2?'var(--red)':'var(--text)'};">${reqDispE} ${volUnitV2}</td><td style="color:${avail!=null?(short2?'var(--red)':'var(--green)'):'var(--muted)'};">${availDispE != null ? availDispE+' '+volUnitV2 : '—'}</td><td style="color:${sufCol2};font-weight:700;">${sufTxt2}</td></tr>`;
+        if (short2) emergWarn += `<div class="alert dang" style="margin-top:6px;"><span>⚠</span><div><strong>${gas} insufficient</strong> — need ${reqDispE} ${volUnitV2}, have ${availDispE} ${volUnitV2}.</div></div>`;
       });
       const html2 = `<div style="margin-top:14px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">${cardTitle}</div>
