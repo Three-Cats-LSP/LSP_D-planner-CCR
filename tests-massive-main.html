@@ -2518,7 +2518,7 @@ const TIER3_GROUPS = [
       }],
       ['Tools sub-tabs do NOT contain Surf Int (moved out)', 'SCN', function(){
         const d = getDoc();
-        const tools = d.getElementById('toolsTab') || d.getElementById('tools') ||
+        const tools = d.getElementById('toolsTab') || d.getElementById('toolsPanel') ||
                       d.querySelector('[id*="tools"], [class*="tools"]');
         if (!tools) return 'Tools container not found — cannot verify removal (warn)';
         const subTabs = Array.from(tools.querySelectorAll('button, .tab, [role="tab"], a'));

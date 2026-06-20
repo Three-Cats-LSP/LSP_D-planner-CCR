@@ -2577,7 +2577,7 @@ const TIER3_GROUPS = [
       }],
       ['Tools sub-tabs do NOT contain Surf Int (moved out)', 'SCN', function(){
         const d = getDoc();
-        const tools = d.getElementById('toolsTab') || d.getElementById('tools') ||
+        const tools = d.getElementById('toolsTab') || d.getElementById('toolsPanel') ||
                       d.querySelector('[id*="tools"], [class*="tools"]');
         if (!tools) return 'Tools container not found — cannot verify removal (warn)';
         const subTabs = Array.from(tools.querySelectorAll('button, .tab, [role="tab"], a'));
@@ -2959,9 +2959,9 @@ const TIER3_GROUPS = [
   {
     tier: 3, name: 'T3-NEW-L · Tools Tab Navigation',
     tests: [
-      ['Tools panel #tools exists', 'SCN', function(){
+      ['Tools panel #toolsPanel exists', 'SCN', function(){
         const d = getDoc();
-        assert(d.getElementById('tools'), '#tools panel not found');
+        assert(d.getElementById('toolsPanel'), '#toolsPanel panel not found');
         return 'found ✓';
       }],
       ['tool-bestmix button present', 'SCN', function(){
