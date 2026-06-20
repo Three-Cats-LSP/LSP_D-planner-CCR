@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LSP D-Planner — Massive Test Suite</title>
+<title>LSP D-Planner + CCR — Massive Test Suite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
@@ -390,6 +390,32 @@ function maxStopDepth(r) { const ss = stopSegs(r); return ss.length ? Math.max(.
 function minStopDepth(r) { const ss = stopSegs(r); return ss.length ? Math.min(...ss.map(s => s.depth)) : Infinity; }
 function hasDescent(r) { return (r.plan || []).some(s => s.type === 'descent'); }
 function hasBottom(r) { return (r.plan || []).some(s => s.type === 'bottom'); }
+
+const MULTIDECO_CCR = {
+  C1: { rt: 49, firstStop: 15, stops: { 15: 0, 12: 1, 9: 3, 6: 4, 3: 7 },
+    levels: () => lv(40, 28, 21, 0),
+    settings: () => S({ circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7, gfLo: 50, gfHi: 80, ascentRate: 9, decoAscentRate: 9, surfaceAscentRate: 3 }) },
+  C2: { rt: 69, firstStop: 27, stops: { 27: 1, 24: 1, 21: 1, 18: 2, 15: 3, 12: 4, 9: 6, 6: 8, 3: 14 },
+    levels: () => lv(55, 22, 18, 45),
+    settings: () => S({ circuit: 'CCR', setpoint: 1.3, descentSetpoint: 0.7, gfLo: 35, gfHi: 75, ascentRate: 9, decoAscentRate: 9, surfaceAscentRate: 3 }) },
+};
+function ccrStopsMap(r) {
+  const m = {};
+  (r.stops || []).forEach(s => {
+    if (!s || s.time <= 0) return;
+    const d = Math.round(s.depth);
+    m[d] = (m[d] || 0) + Math.round(s.time);
+  });
+  return m;
+}
+function compareCCRMultiDeco(r, ref, label) {
+  const got = ccrStopsMap(r);
+  const gotDepths = Object.keys(got).map(Number).sort((a, b) => b - a);
+  const firstGot = gotDepths[0] || 0;
+  assert(Math.abs(firstGot - ref.firstStop) <= 3, `${label} first stop ${firstGot}m vs MultiDeco ${ref.firstStop}m`);
+  assert(Math.abs(r.totalRuntime - ref.rt) <= 5, `${label} RT ${r.totalRuntime} vs MultiDeco ${ref.rt} (±5 min)`);
+  return `first=${firstGot}m RT=${r.totalRuntime} ✓`;
+}
 
 // Shape + integrity validators
 function assertShape(r) {
@@ -2808,6 +2834,37 @@ const TIER3_GROUPS = [
         const botRow = gp.rows.find(r => r.kind === 'bottom');
         if (!botRow) return 'no bottom row found in _lastGasPlan — no bottom gas configured (warn)';
         return 'bottom row found ✓';
+      }],
+    ]
+  },
+
+  {
+    tier: 3, name: 'T3-CCR · CCR / Rebreather',
+    tests: [
+      ['CCR C1 air 40m/28min — ZHL vs MultiDeco', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const r = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        return compareCCRMultiDeco(r, ref, 'C1 ZHL');
+      }],
+      ['CCR deco shorter than OC (C1 profile)', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const oc = calc(ref.levels(), [], S({ gfLo: 50, gfHi: 80 }), 'ZHLC_GF');
+        const ccr = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        assert(ccr.totalRuntime < oc.totalRuntime, `CCR RT=${ccr.totalRuntime} must < OC RT=${oc.totalRuntime}`);
+        return `OC=${oc.totalRuntime} CCR=${ccr.totalRuntime} ✓`;
+      }],
+      ['pSCR C1 — differs from CCR on-loop', 'ZHLC_GF', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const ccr = calc(ref.levels(), [], ref.settings(), 'ZHLC_GF');
+        const pscr = calc(ref.levels(), [], Object.assign(ref.settings(), { circuit: 'pSCR', scrLoopVolume: 7, scrMetabolicO2: 0.85 }), 'ZHLC_GF');
+        assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ');
+        return `CCR=${ccr.totalRuntime} pSCR=${pscr.totalRuntime} ✓`;
+      }],
+      ['VPM CCR C1 produces valid plan', 'VPMB', function(){
+        const ref = MULTIDECO_CCR.C1;
+        const r = calc(ref.levels(), [], Object.assign(ref.settings(), { conservatism: 0 }), 'VPMB');
+        assert(decoStops(r).length > 0, 'VPM C1 should have stops');
+        return `RT=${r.totalRuntime} stops=${decoStops(r).length} ✓`;
       }],
     ]
   },

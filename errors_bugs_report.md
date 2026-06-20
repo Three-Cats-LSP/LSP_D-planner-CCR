@@ -2,10 +2,31 @@
 
 **Repo:** `Three-Cats-LSP/LSP_D-planner-CCR`  
 **Version analysed:** v2.30.0 (commit `d8ddf2e`)  
-**Date:** 2026-06-20  
-**Audit result:** 271 checks, 0 failures (audit.py passes — these are logic/consistency bugs not covered by audit)
+**Fix commit:** 2026-06-20 — all 12 bugs addressed  
+**Audit result:** 271 checks, 0 failures
 
 ---
+
+## Fix status (2026-06-20)
+
+| # | Status | Fix summary |
+|---|---|---|
+| BUG-01 | **FIXED** | `build.gradle` → `versionCode 23000`, `versionName "2.30.0"`; `#appVersionLabel` → 2.30.0 |
+| BUG-02 | **FIXED** | `variables.gradle` → API 35, `minSdk 21` |
+| BUG-03 | **FIXED** | `ppO2Check()` accepts CCR on-loop opts; Bühlmann stop rows use `_ccrPpo2Opts()` |
+| BUG-04 | **FIXED** | VPM path sets `settings._scrRuntimeMin` from `ctx.runtime` / `runtime` before tissue loads |
+| BUG-05 | **FIXED** | `sw.js` uses dynamic `APP_BASE` (`/LSP_D-planner-CCR/` or `/d-planner-ccr/`) |
+| BUG-06 | **FIXED** | `getEffectiveSetpointAtDepth(..., altSurfaceP)` at all reported call sites |
+| BUG-07 | **FIXED** | `getEffectivePpo2(..., fHe)` uses explicit He fraction for pSCR |
+| BUG-08 | **FIXED** | `calcCNS()` uses CCR setpoint via `getEffectivePpo2` when on-loop |
+| BUG-09 | **FIXED** | CCR test groups added to `tests-extended.html` and `tests-massive-main.html` |
+| BUG-10 | **FIXED** | `icon-512.png` added; manifest entry for 512×512 |
+| BUG-11 | **FIXED** | `download.html` alt text → "LSP D-Planner + CCR" |
+| BUG-12 | **FIXED** | Test page titles updated for CCR branding |
+
+---
+
+## Original findings (v2.30.0 baseline)
 
 ## CRITICAL
 

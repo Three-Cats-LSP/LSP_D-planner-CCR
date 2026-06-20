@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LSP D-Planner — Extended Algorithm Test Suite</title>
+<title>LSP D-Planner + CCR — Extended Algorithm Test Suite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
@@ -776,6 +776,35 @@ const GROUPS = [
       ['Warning if minimum stop depth exceeds configured last stop by too much', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings({ lastStop:3 }), 'ZHLC_GF'); const mn = minStopDepth(r); assert(mn >= 0, 'Negative min stop'); return 'min stop depth ' + mn; }, 'warn'],
       ['Warning if deco gases produce no identifiable switch segment', 'ZHLC_GF', function(){ const r = calc(level(50,30), EAN50_O2, makeSettings(), 'ZHLC_GF'); return hasGasSwitch(r) ? 'switch segment found' : 'No explicit switch segment visible; engine may encode switches implicitly'; }, 'warn'],
     ]
+  },
+
+  {
+    name: 'CCR / Rebreather',
+    tests: [
+      ['CCR 40m/28min requires deco (Bühlmann)', 'ZHLC_GF', function(){
+        const r = calc(level(40,28), NO_GASES, makeSettings({ circuit:'CCR', setpoint:1.3, descentSetpoint:0.7 }), 'ZHLC_GF');
+        assert(decoStops(r).length > 0 || totalStopTime(r) > 0, 'CCR dive should require deco');
+        return 'RT ' + pretty(r.totalRuntime);
+      }],
+      ['CCR deco shorter than OC same dive', 'ZHLC_GF', function(){
+        const oc = calc(level(40,28), NO_GASES, makeSettings({ gfLo:50, gfHi:80 }), 'ZHLC_GF');
+        const ccr = calc(level(40,28), NO_GASES, makeSettings({ circuit:'CCR', setpoint:1.3, gfLo:50, gfHi:80 }), 'ZHLC_GF');
+        assert(ccr.totalRuntime < oc.totalRuntime, 'CCR RT must be shorter than OC');
+        return 'OC=' + pretty(oc.totalRuntime) + ' CCR=' + pretty(ccr.totalRuntime);
+      }],
+      ['pSCR differs from CCR in VPM-B path', 'VPMB', function(){
+        const ccr = calc(level(40,20), NO_GASES, makeSettings({ circuit:'CCR', setpoint:1.3 }), 'VPMB');
+        const pscr = calc(level(40,20), NO_GASES, makeSettings({ circuit:'pSCR', setpoint:1.3, scrLoopVolume:7, scrMetabolicO2:0.85 }), 'VPMB');
+        assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ in VPM');
+        return 'CCR=' + pretty(ccr.totalRuntime) + ' pSCR=' + pretty(pscr.totalRuntime);
+      }],
+      ['getEffectivePpo2 uses setpoint on CCR at 40m', 'CORE', function(){
+        const pAmb = SURF + 40 * BAR;
+        const ppo2 = WIN.getEffectivePpo2(pAmb, 1.3, 0.21, { circuit:'CCR', setpoint:1.3 }, 40, 0);
+        assert(approx(ppo2, 1.3, 0.01), 'ppO2 should be setpoint 1.3, got ' + ppo2);
+        return 'ppO2=' + pretty(ppo2, 2);
+      }],
+    ]
   }
 ];
 
@@ -1042,7 +1071,7 @@ function exportLog() {
       else totalPass++;
     });
   });
-  lines.push('LSP D-Planner — Extended Test Log');
+  lines.push('LSP D-Planner + CCR — Extended Test Log');
   lines.push('Generated : ' + d.toLocaleString());
   lines.push('App Ver   : ' + (LAST_RESULTS.appVersion || '?'));
   lines.push('Duration  : ' + (LAST_RESULTS.elapsed || '?') + ' ms');

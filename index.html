@@ -2032,7 +2032,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div class="form-grid u0">
 <div class="field">
 <label>Circuit</label>
-<select id="circuitSelect" onchange="toggleCircuitFields();if(window._lastContingency) calcContingency();">
+<select id="circuitSelect" onchange="toggleCircuitFields();if(window._lastContingency) calcContingency();if(typeof calcCNS==='function') calcCNS();">
 <option selected="" value="OC">Open Circuit (OC)</option>
 <option value="CCR">Closed Circuit (CCR)</option>
 <option value="pSCR">Passive SCR (pSCR)</option>
@@ -3298,7 +3298,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <svg fill="none" height="16" viewbox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.828L8.293 21H12.5c.524 0 .968-.381 1.05-.9l.437-2.786h1.8c3.476 0 5.893-1.408 6.656-5.49.343-1.818.044-3.145-.22-4.907z" fill="#009cde"></path><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106z" fill="#003087" opacity="0.8"></path></svg>
           Support Development · Donate via PayPal
         </a></div>
-<p id="appVersionLabel" style="color: var(--muted); font-size:10px; margin-top:12px; letter-spacing:1px; opacity:0.6;">Version 2.10.12</p>
+<p id="appVersionLabel" style="color: var(--muted); font-size:10px; margin-top:12px; letter-spacing:1px; opacity:0.6;">Version 2.30.0</p>
 </div>
 </div>
 </div>
@@ -5661,14 +5661,16 @@ function splitSegmentAtSetpoint(fromDepth, toDepth, setpoint, surfP) {
   return [{ fromDepth, toDepth }];
 }
 
-function getEffectivePpo2(pAmb, setpoint, fO2, ccr, depthM) {
+function getEffectivePpo2(pAmb, setpoint, fO2, ccr, depthM, fHe) {
   const cfg = mergeCCRSettings(ccr);
   if (cfg.bailout || !isRebreatherCircuit(cfg.circuit)) return fO2 * pAmb;
   if (cfg.circuit === 'pSCR') {
-    const fr = computePSCRFractions(pAmb, fO2, 1 - fO2 - (ccr.fHe || 0), cfg.scrRuntimeMin, cfg);
+    const fHeVal = fHe != null ? fHe : 0;
+    const fr = computePSCRFractions(pAmb, fO2, fHeVal, cfg.scrRuntimeMin, cfg);
     return Math.max(PSCR_MIN_PPO2, fr.fO2 * pAmb);
   }
-  const sp = setpoint != null ? setpoint : getEffectiveSetpointAtDepth(depthM != null ? depthM : (pAmb - altSurfaceP) / BAR_PER_METRE, cfg);
+  const depthFromAmb = depthM != null ? depthM : (pAmb - altSurfaceP) / BAR_PER_METRE;
+  const sp = setpoint != null ? setpoint : getEffectiveSetpointAtDepth(depthFromAmb, cfg, altSurfaceP);
   const dilPpo2 = fO2 * pAmb;
   return Math.min(pAmb, Math.max(sp, dilPpo2));
 }
@@ -5710,7 +5712,7 @@ function saturateCCR(tissues, depthM, t, fO2, fHe, ccr) {
   if (t <= 0) return tissues;
   const cfg = mergeCCRSettings(ccr);
   const pAmb = depthBar(depthM);
-  const sp = getEffectiveSetpointAtDepth(depthM, cfg);
+  const sp = getEffectiveSetpointAtDepth(depthM, cfg, altSurfaceP);
   const segCcr = { ...cfg, setpoint: sp };
   const insp = getInspiredInertPressures(pAmb, sp, fO2, fHe, segCcr);
   return tissues.map((t0, i) => ({
@@ -6644,10 +6646,18 @@ function getActiveGas(curDepthM, bottomFN2, decoGases, getPPO2LimitFn, bottomLab
 
 // Truncate ppO2 to 1 decimal place (floor, not round) — 1.67 → 1.6
 
-function ppO2Check(depthM, fN2, fHe) {
+function ppO2Check(depthM, fN2, fHe, opts) {
   // He is inert: fO2 = 1 - fN2 - fHe (trimix-safe)
-  const o2frac = Math.max(0, 1 - fN2 - (fHe || 0));
-  return ((altSurfaceP + depthM * BAR_PER_METRE) * o2frac).toFixed(2);
+  const fHeVal = fHe || 0;
+  const o2frac = Math.max(0, 1 - fN2 - fHeVal);
+  const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
+  if (opts && opts.onLoop && opts.ccr && isRebreatherCircuit(opts.ccr.circuit) && !opts.ccr.bailout) {
+    const fO2 = opts.fO2 != null ? opts.fO2 : o2frac;
+    const surfP = opts.surfP != null ? opts.surfP : altSurfaceP;
+    const sp = opts.setpoint != null ? opts.setpoint : getEffectiveSetpointAtDepth(depthM, opts.ccr, surfP);
+    return getEffectivePpo2(pAmb, sp, fO2, opts.ccr, depthM, fHeVal).toFixed(2);
+  }
+  return (pAmb * o2frac).toFixed(2);
 }
 
 // ── VPM SCHEDULE RUNNER ──────────────────────────────────────────────
@@ -8138,6 +8148,7 @@ const VPMEngine = (() => {
             ctx.plan.push(segment);
         }
         function runAscentSegment(ctx, toDepth, rate) {
+            settings._scrRuntimeMin = ctx.runtime;
             const fromDepth = ctx.currentDepth;
             const segTime = loadTissuesLinear(
                 ctx.state, fromDepth, toDepth, rate,
@@ -8159,6 +8170,7 @@ const VPMEngine = (() => {
             return segTime;
         }
         function runRoundedDecoStop(ctx, stopDepth, nextStop) {
+            settings._scrRuntimeMin = ctx.runtime;
             let effectiveMinStop = (firstStop30sec && stopDepth === ctx.firstStopDepth) ? 0.5 : minStopTime;
             const roundedRuntime = (ctx.continuationFinalPhase && stopDepth <= 12)
                 ? ctx.runtime
@@ -8174,7 +8186,7 @@ const VPMEngine = (() => {
                 bailout: settings.bailout,
                 scrLoopVolume: settings.scrLoopVolume,
                 scrMetabolicO2: settings.scrMetabolicO2,
-                scrRuntimeMin: settings._scrRuntimeMin || 0,
+                scrRuntimeMin: ctx.runtime,
             };
             const insp = getInspiredInertPressures(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, ccr);
             const inspHe = insp.pHe;
@@ -8287,6 +8299,7 @@ const VPMEngine = (() => {
             ctx.currentGasLabel = `${level.o2}/${level.he}`;
             ctx.currentSP = getEffectiveSetpoint(level, isCCR, settings, level.depth);
             if (level.time <= 0) return;
+            settings._scrRuntimeMin = ctx.runtime;
             loadTissuesConstant(ctx.state, level.depth, level.time, ctx.currentO2, ctx.currentHe, settings, ctx.currentSP);
             ctx.runtime += level.time;
             addConstantExposure(ctx, level.depth, level.time);
@@ -8431,6 +8444,7 @@ const VPMEngine = (() => {
             if (model === 'VPMBE') extendedCompensation(state, settings);
             let rawCeiling = getVPMCeiling(state, settings);
             if (rawCeiling <= targetDepth) {
+                settings._scrRuntimeMin = runtime;
                 const ascTime = loadTissuesLinear(
                     state, currentDepth, targetDepth, ascentRate,
                     curO2, curHe, settings, curSP
@@ -8481,6 +8495,7 @@ const VPMEngine = (() => {
                 if (firstStopDepth < targetDepth + stepSize) firstStopDepth = targetDepth + stepSize;
                 state.firstStopDepth = firstStopDepth;
             }
+            settings._scrRuntimeMin = runtime;
             const ascTimeToFirst = loadTissuesLinear(
                 state, currentDepth, firstStopDepth, ascentRate,
                 curO2, curHe, settings, curSP
@@ -8530,6 +8545,7 @@ const VPMEngine = (() => {
                 const effectiveMinStop = (firstStop30sec && stopDepth === firstStopDepth) ? 0.5 : minStopTime;
                 let stopTime = 0;
                 while (!isClearToAscendVPM(state, nextStopClamped, firstStopDepth, model, settings) && stopTime < 999) {
+                    settings._scrRuntimeMin = runtime;
                     loadTissuesConstant(state, stopDepth, effectiveMinStop, curO2, curHe, settings, curSP);
                     stopTime += effectiveMinStop;
                 }
@@ -8548,6 +8564,7 @@ const VPMEngine = (() => {
                     setpoint: curSP > 0 ? curSP : 0
                 });
                 if (nextStopClamped < stopDepth) {
+                    settings._scrRuntimeMin = runtime;
                     const ascSegTime = loadTissuesLinear(state, stopDepth, nextStopClamped, decoAscentRate, curO2, curHe, settings, curSP);
                     runtime += Math.abs(stopDepth - nextStopClamped) / decoAscentRate;
                     const stepsA = Math.max(1, Math.ceil(Math.abs(stopDepth - nextStopClamped)));
@@ -8574,6 +8591,7 @@ const VPMEngine = (() => {
             const nextLevelOffLoop = isCCR && !!(level.oc || level.scr);
             const sp = (forcedOCMode || nextLevelOffLoop) ? 0 : getEffectiveSetpoint(level, isCCR, settings, depth);
             if (depth > currentDepth) {
+                settings._scrRuntimeMin = runtime;
                 const descTime = loadTissuesLinear(state, currentDepth, depth, descentRate, o2Frac, heFrac, settings, sp);
                 runtime += descTime;
                 const pAmbEnd = getAmbientPressure(depth, settings);
@@ -8598,6 +8616,7 @@ const VPMEngine = (() => {
             const descTimeFromLevel = Math.abs(depth - currentDepth) / descentRate;
             const bottomTime = Math.max(0, time - descTimeFromLevel);
             if (bottomTime > 0) {
+                settings._scrRuntimeMin = runtime;
                 loadTissuesConstant(state, depth, bottomTime, o2Frac, heFrac, settings, sp);
                 runtime += bottomTime;
                 const pAmbB = getAmbientPressure(depth, settings);
@@ -8632,6 +8651,7 @@ const VPMEngine = (() => {
         const totalOTUStartOfAscent = totalOTU;
         const totalCNSStartOfAscent = totalCNS;
         const depthStartOfAscent = currentDepth;
+        settings._scrRuntimeMin = runtimeStartOfAscent;
         const depthStartOfDecoZone = calcStartOfDecoZone(
             startOfAscentState,
             depthStartOfAscent,
@@ -8644,6 +8664,7 @@ const VPMEngine = (() => {
         const trialStartState = cloneVPMState(startOfAscentState);
         let runtimeStartOfDecoZone = runtimeStartOfAscent;
         if (depthStartOfDecoZone > 0 && depthStartOfDecoZone < depthStartOfAscent) {
+            settings._scrRuntimeMin = runtimeStartOfAscent;
             runtimeStartOfDecoZone += loadTissuesLinear(
                 trialStartState,
                 depthStartOfAscent,
@@ -9166,8 +9187,8 @@ function runDecoSchedule() {
     const fO2 = gas.fO2 != null ? gas.fO2 : Math.max(0, 1 - gas.fN2 - (gas.fHe || 0));
     if (gas.label === bottomMixLabel) return true;
     const pAmb = depthBar(depthM);
-    const sp = getEffectiveSetpointAtDepth(depthM, _ccrSettings);
-    const loopPpo2 = getEffectivePpo2(pAmb, sp, bottomFO2, _ccrSettings, depthM);
+    const sp = getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP);
+    const loopPpo2 = getEffectivePpo2(pAmb, sp, bottomFO2, _ccrSettings, depthM, bottomFHe);
     return fO2 * pAmb <= loopPpo2 + 0.001;
   }
   function zhlLoadLinear(tissues, from, to, t, fO2, fHe, onLoop) {
@@ -9181,6 +9202,16 @@ function runDecoSchedule() {
       return loadTissuesWithCCR(tissues, depth, depth, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: rt });
     }
     return saturate(tissues, depth, t, Math.max(0, 1 - fO2 - fHe), fHe);
+  }
+  function _ccrPpo2Opts(depthM, onLoop, fO2) {
+    if (!onLoop || !_zhlOnLoop) return undefined;
+    return {
+      onLoop: true,
+      ccr: _ccrSettings,
+      fO2: fO2,
+      setpoint: getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP),
+      surfP: altSurfaceP,
+    };
   }
 
   // Returns the ppO2 limit for a given fO2 based on O2 fraction bands
@@ -9424,7 +9455,7 @@ function runDecoSchedule() {
       steps.push({
         type: 'ascent', from: cur, to: stopDepth,
         dur: travelDur, gas: travelGas.label,
-        pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
+        pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0, _ccrPpo2Opts(cur, travelOnLoop, travelOnLoop ? bottomFO2 : undefined)), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
         decoTransit: decoZoneEntered && mdCompatMode
       });
       rt  += travelDur;
@@ -9525,7 +9556,7 @@ function runDecoSchedule() {
         }
       }
       const mustStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
     } else if (minStopT > 0 && minStopZoneDepth !== null && cur <= minStopZoneDepth && cur !== lastStop) {
       decoZoneEntered = true;
       let stopT = 0;
@@ -9565,7 +9596,7 @@ function runDecoSchedule() {
       }
       if (stopT > 0) {
         const minStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
       }
     } else if (cur === lastStop) {
       const isDecoNeeded = steps.some(s => s.type === 'deco');
@@ -9599,7 +9630,7 @@ function runDecoSchedule() {
         rt += stopT;
       }
       const lastStopDisplay = mdCompatMode ? stopT + transitToLastStop : stopT;
-      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
     }
     // No stop needed and not lastStop — continue ascending
   }
@@ -9622,7 +9653,7 @@ function runDecoSchedule() {
     steps.push({
       type: 'ascent', from: cur, to: 0,
       dur: finalAscentDur, gas: finalGas.label,
-      pO2: ppO2Check(cur, finalGas.fN2, finalGas.fHe || 0), fN2: finalGas.fN2, fHe: finalGas.fHe || 0,
+      pO2: ppO2Check(cur, finalGas.fN2, finalGas.fHe || 0, _ccrPpo2Opts(cur, finalOnLoop, fFO2)), fN2: finalGas.fN2, fHe: finalGas.fHe || 0,
     });
     rt += finalAscentDur;
     cur = 0;
@@ -15292,7 +15323,17 @@ function calcCNS() {
   const fO2    = parseFloat(document.getElementById('cnsO2')?.value)    || 21;
   const dives  = parseInt(document.getElementById('cnsDives')?.value)   || 1;
 
-  const ppo2 = (altSurfaceP + depth * BAR_PER_METRE) * (fO2 / 100);
+  const fO2frac = fO2 / 100;
+  const fHe = 0;
+  const pAmb = altSurfaceP + depth * BAR_PER_METRE;
+  const ccr = typeof getCCRSettingsFromDOM === 'function' ? getCCRSettingsFromDOM() : { circuit: 'OC' };
+  let ppo2;
+  if (isRebreatherCircuit(ccr.circuit) && !ccr.bailout) {
+    const sp = getEffectiveSetpointAtDepth(depth, ccr, altSurfaceP);
+    ppo2 = getEffectivePpo2(pAmb, sp, fO2frac, ccr, depth, fHe);
+  } else {
+    ppo2 = pAmb * fO2frac;
+  }
   const singleLimit = getCNSLimit(ppo2);
   const dailyLimit  = singleLimit * 2; // NOAA daily ≈ 2× single
 
