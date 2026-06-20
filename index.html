@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.16';
+const APP_VERSION = '2.30.17';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3533,6 +3533,7 @@ let contExtraBT = 0;      // contingency extra BT: 0 | 3 | 5 | 10
 let contExtraDepth = 0;   // contingency went deeper: 0 | 3 | 5 (metres)
 
 const SEA_LEVEL_P = 1.01325; // ISA sea-level pressure (bar)
+const CUFT_PER_LITRE = 0.0353147; // litres per cubic foot — SAC/cylinder conversions
 const OTU_EXPONENT = 0.8333;  // NOAA OTU formula exponent — single source of truth for both VPM and ZHL paths
 const SURFACE_P = 1.013;    // legacy constant — kept for compatibility; engine reads altSurfaceP
 let altSurfaceP   = 1.01325; // actual surface pressure at current altitude (bar)
@@ -5978,6 +5979,12 @@ function loopMixLabelFor(diluentLabel, ccr) {
   const prefix = cfg.circuit === 'pSCR' ? 'pSCR' : 'CCR';
   return `${prefix} ${diluentLabel}`;
 }
+/** Read SAC from DOM; always returns L/min (converts cu ft/min when units === 'imperial'). */
+function sacDomToLpm(inputId, defaultLpm) {
+  const raw = parseFloat(document.getElementById(inputId)?.value);
+  const val = Number.isFinite(raw) && raw > 0 ? raw : defaultLpm;
+  return units === 'imperial' ? val / CUFT_PER_LITRE : val;
+}
 function ccrGasLitres(label, depthM, durMin, sac) {
   if (isCcrDiluentGasLabel(label)) {
     const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
@@ -5985,7 +5992,7 @@ function ccrGasLitres(label, depthM, durMin, sac) {
     return ccrDiluentSurfaceLpm(depthM) * (pAmb / pSurf) * durMin;
   }
   const absP = altSurfaceP + depthM * BAR_PER_METRE;
-  return sac * absP * durMin;
+  return sac * absP * durMin; // sac must be L/min → litres at ambient
 }
 
 function toggleCircuitFields() {
@@ -7503,8 +7510,10 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
 
   // Gas Consumption — compute from rendered table rows
   const gasConsVPM = {};
-  const sacBotVPM  = parseFloat(document.getElementById('sacBottom')?.value) || 20;
-  const sacDecoVPM = parseFloat(document.getElementById('sacDeco')?.value) || 15;
+  const sacBotVPM  = sacDomToLpm('sacBottom', 20);
+  const sacDecoVPM = sacDomToLpm('sacDeco', 15);
+  const sacBottomDisp = parseFloat(document.getElementById('sacBottom')?.value) || 20;
+  const sacDecoDisp   = parseFloat(document.getElementById('sacDeco')?.value) || 15;
   document.querySelectorAll('#decoTableBody tr[data-phase]').forEach(tr => {
     const ph = tr.dataset.phase;
     if (ph === 'switch' || ph === 'totals') return;
@@ -7694,7 +7703,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
         </table>
       </div>
       ${gpNoteVPM?.innerHTML ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;">${gpNoteVPM.innerHTML}</div>` : ''}
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitVPM2} · deco: ${sacDeco} ${sacUnitVPM2}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottomDisp} ${sacUnitVPM2} · deco: ${sacDecoDisp} ${sacUnitVPM2}</div>
       </div></div>`;
     gasElVPM.innerHTML = ghtml;
     _applyGasWarningStyles(gasElVPM);
@@ -10409,8 +10418,10 @@ function runDecoSchedule() {
   }
 
   // ── SAC gas consumption ──
-  const sacBottom = parseFloat(document.getElementById('sacBottom')?.value) || 20;
-  const sacDeco   = parseFloat(document.getElementById('sacDeco')?.value)   || 15;
+  const sacBottom = sacDomToLpm('sacBottom', 20);
+  const sacDeco   = sacDomToLpm('sacDeco', 15);
+  const sacBottomDisp = parseFloat(document.getElementById('sacBottom')?.value) || 20;
+  const sacDecoDisp   = parseFloat(document.getElementById('sacDeco')?.value) || 15;
   const BAR_PER_M = BAR_PER_METRE;
   // gasConsumed[gasLabel] = litres
   const gasConsumed = {};
@@ -10824,7 +10835,7 @@ function runDecoSchedule() {
           </table>
         </div>
         ${gpNote ? gpNote.innerHTML ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;">${gpNote.innerHTML}</div>` : '' : ''}
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottom} ${sacUnitBHL2} · deco: ${sacDeco} ${sacUnitBHL2}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px;">SAC bottom: ${sacBottomDisp} ${sacUnitBHL2} · deco: ${sacDecoDisp} ${sacUnitBHL2}</div>
         </div></div>`;
       gasEl.innerHTML = html;
       gasEl.style.display = 'block';

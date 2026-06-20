@@ -2395,10 +2395,19 @@ if "function addBailoutStressReserve" in js and "addBailoutStressReserve(" in js
 else:
     fail("addBailoutStressReserve missing — stress reserve still bottom-only (BUG-70)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.16['\"]", js):
-    ok("APP_VERSION bumped to 2.30.16")
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 51 — v2.30.17 fix (errors_bugs_report_v15 BUG-71)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function sacDomToLpm" in js and "sacDomToLpm('sacBottom'" in js:
+    ok("sacDomToLpm converts imperial SAC to L/min before gas consumption (BUG-71)")
 else:
-    fail("APP_VERSION not bumped to 2.30.16")
+    fail("sacDomToLpm missing — imperial gas consumption still in cu_ft·bar (BUG-71)")
+
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.17['\"]", js):
+    ok("APP_VERSION bumped to 2.30.17")
+else:
+    fail("APP_VERSION not bumped to 2.30.17")
 
 print("=" * 60)
 
