@@ -1840,7 +1840,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;"><div id="decoCardSubtitle" style="font-size:10px;color:var(--muted);letter-spacing:.5px;"></div><span class="tip-icon" onclick="showTip('Decompression Schedule','Generates a full ascent profile with deco stops using Bühlmann ZH-L16C + Gradient Factors. Configure up to two decompression gases below — they switch automatically at the specified depths during ascent and are factored into tissue off-gassing.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></div>
 <div class="form-grid">
-<div class="field"><label id="decoDepthLbl">Depth (m)</label><input id="decoDepth" max="120" min="1" oninput="if(window._lastContingency) calcContingency()" step="1" type="number" value="40"/></div>
+<div class="field"><label id="decoDepthLbl">Depth (m)</label><input id="decoDepth" max="120" min="1" oninput="updateCcrGasValidation();updateGasMODDisplays();if(window._lastContingency) calcContingency()" step="1" type="number" value="40"/></div>
 <div class="field"><label>BT Time (min)</label><input id="decoBT" max="300" min="1" oninput="if(window._lastContingency) calcContingency()" step="1" type="number" value="30"/></div>
 <div class="field" style="display:flex;align-items:flex-end;gap:8px;">
 <button class="btn-export" id="presetsHeaderBtn" onclick="openDiveProfilePresets()" title="Save / load dive profile (depth &amp; BT)"><svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
@@ -2062,11 +2062,11 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="ccrDescentSetpoint" max="1.0" min="0.5" step="0.1" type="number" value="0.7"/>
 </div>
 <div class="field" id="ccrSpBottomRow" style="display:none;">
-<label>SP bottom (bar)</label>
-<input id="ccrBottomSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.2"/>
+<label>Active ppO₂ / SP bottom (bar)</label>
+<input id="ccrBottomSetpoint" max="1.6" min="0.7" oninput="updateGasMODDisplays();updateCcrGasValidation()" step="0.1" type="number" value="1.2"/>
 </div>
 <div class="field" id="ccrSpDecoRow" style="display:none;">
-<label>SP deco (bar)</label>
+<label>Decompression ppO₂ / SP deco (bar)</label>
 <input id="ccrDecoSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.3"/>
 </div>
 <div class="field" id="ccrLoopVolRow">
@@ -2115,11 +2115,18 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="scrLoopVolume" type="hidden" value="10"/>
 <input id="scrMetabolicO2" type="hidden" value="1.5"/>
 </div>
-<div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
-<div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 GAS MIX 1 — BOTTOM GAS</div>
+<div id="diluentGasCard" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
+<div id="diluentCardTitle" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 GAS MIX 1 — BOTTOM GAS</div>
 <div class="form-grid u0">
+<div class="field" id="diluentUseAsBailoutRow" style="display:none;">
+<label>Use as bailout</label>
+<select id="diluentUseAsBailout" onchange="updateCcrGasValidation();updateGasMODDisplays()">
+<option selected="" value="off">Off</option>
+<option value="on">On — diluent cylinder is bailout</option>
+</select>
+</div>
 <div class="field">
-<label>Gas Mix</label>
+<label id="diluentMixLabel">Gas Mix</label>
 <select id="decoGas" onchange="toggleDecoCustomO2('decoGas','decoCustomO2Field');toggleBottomTrimix();updateGasMODDisplays();if(window._lastContingency) calcContingency()">
 <option value="air">Air (21%)</option>
 <option value="ean32">EAN32 (32%)</option>
@@ -2205,9 +2212,10 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <button id="addTravelGasBtn" onclick="addTravelGas()" onmouseout="this.style.opacity='0.7'" onmouseover="this.style.opacity='1'" style="margin-top:8px;width:100%;padding:9px;background:none;border:1px dashed #ff9f43;border-radius:8px;color:#ff9f43;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;opacity:0.7;" title="Add a travel gas — breathed from surface to switch depth on descent, and above bottom gas MOD on ascent. Prevents O₂ toxicity in shallow water with high-O₂ bottom mixes.">
       + ADD TRAVEL GAS
     </button>
-<!-- Dynamic deco gas cards container -->
+<!-- Dynamic deco / bailout gas cards container -->
+<div id="bailoutMixesSection">
 <div id="decoGasCards">
-<!-- Gas Mix 2 — Deco Gas 1 -->
+<!-- Gas Mix 2 — Deco Gas 1 / Bailout Mix 1 -->
 <div class="deco-gas-card" id="dgCard_1" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
 <div class="dg-card-title" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);">🟢 GAS MIX 2 — DECO GAS 1 (optional)</div>
@@ -2292,11 +2300,12 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 </div>
 </div>
-<!-- Add Gas Mix button -->
+<!-- Add Gas Mix / Bailout Mix button -->
 <button id="addDecoGasBtn" onclick="addDecoGasCard()" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" style="margin-top:10px;width:100%;padding:9px;background:none;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;">
       + ADD GAS MIX
     </button>
 </div>
+<div id="ccrGasValidation" style="display:none;margin-top:10px;"></div>
 <button class="btn-calc" onclick="runDecoSchedule()" style="margin-top:8px;margin-bottom:0;">▶ GENERATE SCHEDULE</button>
 <!-- Feature B: VPM Repetitive Dive panel — hidden until first VPM result available -->
 <div id="vpmRepRow" style="display:none;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;">
@@ -4734,7 +4743,9 @@ function getDecoGasSwitches() {
 }
 
 function getDecoGasSwitchLines() {
-  return getDecoGasSwitches().map((g, i) => `Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`);
+  const ccrUi = typeof isCcrGasUiMode === 'function' && isCcrGasUiMode();
+  const prefix = ccrUi ? 'Bailout mix' : 'Deco Gas';
+  return getDecoGasSwitches().map((g, i) => `${prefix} ${i + 1}  : ${g.gas} (switch @ ${g.depth})`);
 }
 
 /** Structured dive plan header — shared by text export and on-screen banner. */
@@ -4839,7 +4850,8 @@ function buildDecoPlanHeaderLines() {
   if (isCcrOnLoopProfile({ circuit: d.circuit, bailout: d.ccrBailout })) {
     lines.push(`Loop gas    : ${loopMixLabelFor(d.bottomGasShort, { circuit: d.circuit, bailout: d.ccrBailout })} (on-loop from surface)    Water: ${d.density}`);
   } else {
-    lines.push(`Bottom Gas  : ${d.bottomGas}    Water: ${d.density}`);
+    const botPrefix = (d.circuit === 'CCR' || d.circuit === 'pSCR') ? 'Diluent     ' : 'Bottom Gas  ';
+    lines.push(`${botPrefix}: ${d.bottomGas}    Water: ${d.density}`);
   }
   if (d.travelGas) lines.push(`Travel Gas  : ${d.travelGas.gas} (switch @ ${d.travelGas.depth})`);
   lines.push(`Descent     : ${d.descentRate}${d.du}/min  Ascent: ${d.ascentRate}${d.du}/min  Deco: ${d.decoAscentRate}${d.du}/min  Surface: ${d.surfAscentRate}${d.du}/min`);
@@ -4849,7 +4861,8 @@ function buildDecoPlanHeaderLines() {
   if (d.minDecoEn) lines.push(`Min Deco Profile: ON  (9${d.depthUnit}: ${d.minDeco9m} min  6${d.depthUnit}: ${d.minDeco6m} min)`);
   if (d.vpmRepActive) lines.push(`Repetitive   : Yes  Surface Interval: ${d.vpmSI} min  (bubble state + tissue loading carried)`);
   if (!isCcrOnLoopProfile({ circuit: d.circuit, bailout: d.ccrBailout })) {
-    d.decoGases.forEach((g, i) => lines.push(`Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
+    const gasPrefix = (d.circuit === 'CCR' || d.circuit === 'pSCR') ? 'Bailout mix' : 'Deco Gas';
+    d.decoGases.forEach((g, i) => lines.push(`${gasPrefix} ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
   }
   return lines;
 }
@@ -4874,14 +4887,16 @@ function renderDecoPlanHeaderHtml(data, opts) {
   if (isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout })) {
     chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Loop</span>${_escHtmlPre(loopMixLabelFor(data.bottomGasShort, { circuit: data.circuit, bailout: data.ccrBailout }))} on-loop</span>`);
   } else {
-    chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">Bottom</span>${_escHtmlPre(data.bottomGasShort)}</span>`);
+    const botLbl = (data.circuit === 'CCR' || data.circuit === 'pSCR') ? 'Diluent' : 'Bottom';
+    chips.push(`<span class="dpb-chip dpb-chip--bottom"><span class="dpb-chip-lbl">${botLbl}</span>${_escHtmlPre(data.bottomGasShort)}</span>`);
   }
   if (data.circuit && data.circuit !== 'OC') {
     chips.unshift(`<span class="dpb-chip dpb-chip--travel"><span class="dpb-chip-lbl">Circuit</span>${_escHtmlPre(data.ccrLabel || data.circuit)}</span>`);
   }
   if (!isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout })) {
+    const chipPrefix = (data.circuit === 'CCR' || data.circuit === 'pSCR') ? 'Bailout' : 'Deco';
     data.decoGases.forEach((g, i) => {
-      chips.push(`<span class="dpb-chip ${_dpbGasChipClass(g.gas)}"><span class="dpb-chip-lbl">Deco ${i + 1}</span>${_escHtmlPre(g.gas)} @ ${_escHtmlPre(g.depth)}</span>`);
+      chips.push(`<span class="dpb-chip ${_dpbGasChipClass(g.gas)}"><span class="dpb-chip-lbl">${chipPrefix} ${i + 1}</span>${_escHtmlPre(g.gas)} @ ${_escHtmlPre(g.depth)}</span>`);
     });
   }
 
@@ -4930,13 +4945,29 @@ function drawDecoPlanBannerPdf(doc, y, layout, data, planSum, hasDeco) {
   const boxBorder = hasDeco ? [204, 68, 51] : [34, 136, 85];
 
   const chips = [];
+  const isCcr = data.circuit === 'CCR' || data.circuit === 'pSCR';
+  const onLoop = typeof isCcrOnLoopProfile === 'function'
+    && isCcrOnLoopProfile({ circuit: data.circuit, bailout: data.ccrBailout });
   if (data.travelGas) chips.push({ kind: 'travel', lbl: 'TRAVEL', val: `${data.travelGas.gas} @ ${data.travelGas.depth}` });
-  chips.push({ kind: 'bottom', lbl: 'BOTTOM', val: cleanPDF(data.bottomGasShort) });
-  data.decoGases.forEach((g, i) => chips.push({
-    kind: /^100/i.test(g.gas) ? 'o2' : 'deco',
-    lbl: `DECO ${i + 1}`,
-    val: `${g.gas} @ ${g.depth}`,
-  }));
+  if (onLoop) {
+    chips.push({
+      kind: 'bottom',
+      lbl: 'LOOP',
+      val: cleanPDF(typeof loopMixLabelFor === 'function'
+        ? loopMixLabelFor(data.bottomGasShort, { circuit: data.circuit, bailout: data.ccrBailout })
+        : data.bottomGasShort),
+    });
+  } else {
+    chips.push({ kind: 'bottom', lbl: isCcr ? 'DILUENT' : 'BOTTOM', val: cleanPDF(data.bottomGasShort) });
+  }
+  if (!onLoop) {
+    const decoLbl = isCcr ? 'BAILOUT' : 'DECO';
+    data.decoGases.forEach((g, i) => chips.push({
+      kind: /^100/i.test(g.gas) ? 'o2' : 'deco',
+      lbl: `${decoLbl} ${i + 1}`,
+      val: `${g.gas} @ ${g.depth}`,
+    }));
+  }
 
   const metaLines = [
     cleanPDF(`Descent ${data.descentRate}${data.du}/min · Ascent ${data.ascentRate}${data.du}/min · Deco ${data.decoAscentRate}${data.du}/min · Surface ${data.surfAscentRate}${data.du}/min`),
@@ -5605,6 +5636,7 @@ function getCCRSettingsFromDOM() {
     sacDecoCcr: parseFloat(document.getElementById('ccrSacDeco')?.value) || 25,
     stressTimeMin: parseFloat(document.getElementById('ccrStressTime')?.value) || 10,
     problemSolveMin: parseFloat(document.getElementById('ccrProblemSolve')?.value) || 3,
+    diluentUseAsBailout: document.getElementById('diluentUseAsBailout')?.value === 'on',
   };
 }
 
@@ -5891,6 +5923,121 @@ function toggleCircuitFields() {
   const bailoutEl = document.getElementById('ccrBailoutRow');
   if (bailoutEl) bailoutEl.style.display = isRB ? '' : 'none';
   if (isRB) _updateCcrAdvSummary();
+  updateCcrGasCardLabels();
+  updateCcrGasValidation();
+}
+
+function isCcrGasUiMode() {
+  const c = document.getElementById('circuitSelect')?.value || 'OC';
+  return c === 'CCR' || c === 'pSCR';
+}
+
+function updateCcrGasCardLabels() {
+  const ccrUi = isCcrGasUiMode();
+  const isCCR = (document.getElementById('circuitSelect')?.value || 'OC') === 'CCR';
+  const titleEl = document.getElementById('diluentCardTitle');
+  if (titleEl) {
+    titleEl.textContent = ccrUi ? '🔵 DILUENT' : '🔵 GAS MIX 1 — BOTTOM GAS';
+  }
+  const dilBailoutRow = document.getElementById('diluentUseAsBailoutRow');
+  if (dilBailoutRow) dilBailoutRow.style.display = isCCR ? '' : 'none';
+  const mixLbl = document.getElementById('diluentMixLabel');
+  if (mixLbl) mixLbl.textContent = ccrUi ? 'Diluent mix' : 'Gas Mix';
+  const botModLbl = document.querySelector('#diluentGasCard label[for="botMODDisplay"]');
+  const travelBtn = document.getElementById('addTravelGasBtn');
+  const travelCard = document.getElementById('travelGasCard');
+  if (ccrUi) {
+    if (travelBtn) travelBtn.style.display = 'none';
+    if (travelCard) travelCard.style.display = 'none';
+  } else if (travelBtn && (!travelCard || travelCard.style.display === 'none')) {
+    travelBtn.style.display = '';
+  }
+  const addBtn = document.getElementById('addDecoGasBtn');
+  if (addBtn) addBtn.textContent = ccrUi ? '+ ADD BAILOUT MIX' : '+ ADD GAS MIX';
+  if (typeof renumberDecoGasCards === 'function') renumberDecoGasCards();
+}
+
+function calcGasMODm(fO2, ppO2Limit) {
+  const o2AtMOD = typeof allowO2AtMOD !== 'undefined' ? allowO2AtMOD : true;
+  const lastStop = parseInt(document.getElementById('lastDecoStop')?.value, 10) || 3;
+  const o2MODm = Math.max(lastStop, 6);
+  if (fO2 >= 0.995 && o2AtMOD) return o2MODm;
+  if (fO2 <= 0) return 0;
+  return Math.floor((ppO2Limit / fO2 - 1) / BAR_PER_METRE);
+}
+
+function getConfiguredBailoutMixes() {
+  const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
+    || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+  const mixes = [];
+  const ids = typeof getAllDecoGasIds === 'function' ? getAllDecoGasIds() : [1, 2];
+  ids.forEach(cidx => {
+    const sel = document.getElementById(`dg${cidx}Mix`);
+    if (!sel || sel.value === 'none' || !sel.value) return;
+    const fracs = typeof getDecoCardFractions === 'function' ? getDecoCardFractions(cidx) : null;
+    if (!fracs) return;
+    mixes.push({
+      cidx,
+      label: getGasLabel(fracs.fO2, fracs.fHe),
+      fO2: fracs.fO2,
+      modM: calcGasMODm(fracs.fO2, activePpo2),
+    });
+  });
+  return mixes;
+}
+
+function validateCcrGasConfiguration() {
+  if (!isCcrGasUiMode()) return { ok: true, errors: [], warnings: [] };
+  const rawD = parseFloat(document.getElementById('decoDepth')?.value) || 0;
+  const depthM = units === 'metric' ? rawD : rawD / 3.28084;
+  if (depthM <= 0) return { ok: true, errors: [], warnings: [] };
+  const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
+    || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+  const bot = getBottomGasFractions();
+  const diluentMod = calcGasMODm(bot.fO2, activePpo2);
+  const du = units === 'imperial' ? 'ft' : 'm';
+  const depthDisp = units === 'imperial' ? Math.round(depthM * 3.28084) : Math.round(depthM);
+  const modDisp = units === 'imperial' ? Math.round(diluentMod * 3.28084) : diluentMod;
+  const errors = [];
+  const warnings = [];
+  if (depthM > diluentMod + 0.01) {
+    errors.push(`Diluent MOD (${modDisp}${du}) is shallower than dive depth (${depthDisp}${du}). Use a richer diluent or reduce depth.`);
+  }
+  const useDiluentBailout = document.getElementById('diluentUseAsBailout')?.value === 'on';
+  const bailoutMixes = getConfiguredBailoutMixes();
+  const bailoutAtDepth = bailoutMixes.filter(m => m.modM >= depthM - 0.01);
+  if (useDiluentBailout && diluentMod >= depthM - 0.01) {
+    // diluent cylinder counts as bailout at depth
+  } else if (bailoutAtDepth.length === 0) {
+    if (bailoutMixes.length === 0 && !useDiluentBailout) {
+      errors.push('Add at least one bailout mix with sufficient MOD, or enable "Use diluent as bailout".');
+    } else {
+      errors.push(`No bailout mix with enough MOD for ${depthDisp}${du}. Add or correct bailout mixtures.`);
+    }
+  }
+  if (bailoutMixes.length === 0 && !useDiluentBailout && errors.length === 0) {
+    warnings.push('No bailout mixes configured — add OC bailout cylinders for emergency open-circuit use.');
+  }
+  return { ok: errors.length === 0, errors, warnings };
+}
+
+function updateCcrGasValidation() {
+  const box = document.getElementById('ccrGasValidation');
+  if (!box) return;
+  if (!isCcrGasUiMode()) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  const v = validateCcrGasConfiguration();
+  box.style.display = '';
+  let html = '';
+  v.errors.forEach(msg => {
+    html += `<div class="alert dang" style="margin-top:0;"><span>⚠</span><div><strong>Validation error.</strong> ${msg}</div></div>`;
+  });
+  v.warnings.forEach(msg => {
+    html += `<div class="alert" style="margin-top:6px;background:var(--card2);"><span>ℹ</span><div>${msg}</div></div>`;
+  });
+  if (v.ok && v.warnings.length === 0) {
+    html = `<div class="alert" style="margin-top:0;background:rgba(38,208,124,0.08);border-color:var(--green);"><span>✓</span><div>Diluent and bailout MOD check passed for planned depth.</div></div>`;
+  }
+  box.innerHTML = html;
 }
 
 function toggleCcrAdvSettings(forceOpen) {
@@ -5945,6 +6092,9 @@ if (typeof window !== 'undefined') {
   window.isCcrOnLoopProfile = isCcrOnLoopProfile;
   window.loopMixLabelFor = loopMixLabelFor;
   window.toggleCcrAdvSettings = toggleCcrAdvSettings;
+  window.updateCcrGasCardLabels = updateCcrGasCardLabels;
+  window.updateCcrGasValidation = updateCcrGasValidation;
+  window.validateCcrGasConfiguration = validateCcrGasConfiguration;
 }
 
 function ceiling(tissues, gfHigh) {
@@ -9091,6 +9241,7 @@ function updateGasMODDisplays() {
   const ppO2Limit = parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
   const ppO2Deco  = parseFloat(document.getElementById('ppo2Deco')?.value)   || 1.6;
   const isMetric  = units !== 'imperial';
+  const ccrUi     = typeof isCcrGasUiMode === 'function' && isCcrGasUiMode();
   const o2AtMOD   = typeof allowO2AtMOD !== 'undefined' ? allowO2AtMOD : true;
   const lastStop  = parseInt(document.getElementById('lastDecoStop')?.value) || 3;
   const o2MODm    = Math.max(lastStop, 6); // 6 m is the standard O2 operating depth
@@ -9122,7 +9273,7 @@ function updateGasMODDisplays() {
     const botLabel = getGasLabel(botFO2, botFracs.fHe);
     const heNote   = botFracs.fHe > 0 ? '  (' + botLabel + ')' : '';
     botEl.value    = fmtDepth(botMOD) + heNote;
-    botEl.title    = tooltipText(botFO2, ppO2Limit, 'Bottom');
+    botEl.title    = tooltipText(botFO2, ppO2Limit, ccrUi ? 'Diluent' : 'Bottom');
   }
 
   // Loop over all deco gas cards
@@ -9134,11 +9285,16 @@ function updateGasMODDisplays() {
     const dgFracs = getDecoCardFractions(cidx);
     if (!dgFracs) { disp.value = '—'; continue; }
     const fO2 = dgFracs.fO2;
-    const mod = calcMOD(fO2, ppO2Deco);
+    const bailoutPpo2 = ccrUi
+      ? (parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
+        || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4)
+      : ppO2Deco;
+    const mod = calcMOD(fO2, bailoutPpo2);
     const heNote = dgFracs.fHe > 0 ? '  (' + getGasLabel(fO2, dgFracs.fHe) + ')' : '';
     disp.value = fmtDepth(mod) + heNote;
-    disp.title = tooltipText(fO2, ppO2Deco, 'Deco');
+    disp.title = tooltipText(fO2, bailoutPpo2, ccrUi ? 'Bailout' : 'Deco');
   }
+  if (typeof updateCcrGasValidation === 'function') updateCcrGasValidation();
 }
 
 
@@ -9151,11 +9307,16 @@ function _dgCardCount() {
 }
 
 function renumberDecoGasCards() {
+  const ccrUi = typeof isCcrGasUiMode === 'function' && isCcrGasUiMode();
   document.querySelectorAll('.deco-gas-card').forEach((card, i) => {
-    const n = i + 1; // 1-based deco gas index
-    const mixNum = n + 1; // Gas Mix N (bottom = 1, deco gases start at 2)
+    const n = i + 1;
+    const mixNum = n + 1;
     const titleEl = card.querySelector('.dg-card-title');
-    if (titleEl) titleEl.textContent = `🟢 GAS MIX ${mixNum} — DECO GAS ${n} (optional)`;
+    if (titleEl) {
+      titleEl.textContent = ccrUi
+        ? `🟠 BAILOUT MIX ${n}`
+        : `🟢 GAS MIX ${mixNum} — DECO GAS ${n} (optional)`;
+    }
   });
   const btn = document.getElementById('addDecoGasBtn');
   if (btn) btn.style.display = _dgCardCount() >= _DG_MAX ? 'none' : 'block';
@@ -9164,8 +9325,10 @@ function renumberDecoGasCards() {
 function addDecoGasCard() {
   if (_dgCardCount() >= _DG_MAX) return;
   const idx = _dgNextIdx++;
-  const n = _dgCardCount() + 1; // after insertion, this will be card n
+  const n = _dgCardCount() + 1;
   const mixNum = n + 1;
+  const ccrUi = typeof isCcrGasUiMode === 'function' && isCcrGasUiMode();
+  const cardTitle = ccrUi ? `🟠 BAILOUT MIX ${n}` : `🟢 GAS MIX ${mixNum} — DECO GAS ${n} (optional)`;
 
   const card = document.createElement('div');
   card.className = 'deco-gas-card';
@@ -9174,7 +9337,7 @@ function addDecoGasCard() {
 
   card.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="dg-card-title" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);">🟢 GAS MIX ${mixNum} — DECO GAS ${n} (optional)</div>
+      <div class="dg-card-title" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);">${cardTitle}</div>
       <button onclick="removeDecoGasCard(${idx})" title="Remove this gas"
         style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;"
         onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">✕</button>
@@ -9224,6 +9387,7 @@ function removeDecoGasCard(idx) {
   if (card) card.remove();
   renumberDecoGasCards();
   updateGasMODDisplays();
+  if (typeof updateCcrGasValidation === 'function') updateCcrGasValidation();
 }
 
 // ── End Dynamic Deco Gas Cards ──────────────────────────────────────────────
@@ -9349,6 +9513,14 @@ function updateTravelGasMOD() {
 function runDecoSchedule() {
   let _zhlPrevGF = null;
   try {
+  if (typeof validateCcrGasConfiguration === 'function' && isCcrGasUiMode()) {
+    const gasVal = validateCcrGasConfiguration();
+    if (!gasVal.ok) {
+      updateCcrGasValidation();
+      alert('Cannot generate schedule:\n\n' + (gasVal.errors[0] || 'CCR gas configuration is invalid.'));
+      return;
+    }
+  }
   const rawD   = parseFloat(document.getElementById('decoDepth').value) || 40;
   const depthM = units === 'metric' ? rawD : rawD / 3.28084;
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
@@ -14564,11 +14736,13 @@ function buildMessengerText(mode) {
   if (isCcrOnLoopProfile({ circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })) {
     result.push(`Loop gas    : ${loopMixLabelFor(_msgBotLabel, { circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })} (on-loop)`);
   } else {
-    result.push(`Bottom Gas  : ${_msgBotDetail}`);
+    const botLine = (_msgGasHdr.circuit === 'CCR' || _msgGasHdr.circuit === 'pSCR') ? 'Diluent     ' : 'Bottom Gas  ';
+    result.push(`${botLine}: ${_msgBotDetail}`);
   }
   if (_msgGasHdr.travelGas) result.push(`Travel Gas  : ${_msgGasHdr.travelGas.gas} (switch @ ${_msgGasHdr.travelGas.depth})`);
   if (!isCcrOnLoopProfile({ circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })) {
-    _msgGasHdr.decoGases.forEach((g, i) => result.push(`Deco Gas ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
+    const gasPrefix = (_msgGasHdr.circuit === 'CCR' || _msgGasHdr.circuit === 'pSCR') ? 'Bailout mix' : 'Deco Gas';
+    _msgGasHdr.decoGases.forEach((g, i) => result.push(`${gasPrefix} ${i + 1}  : ${g.gas} (switch @ ${g.depth})`));
   }
   const rndVal = (document.getElementById('stopRounding')?.value||'fractional')==='wholeminute'?'Yes':'No';
   const wvVal  = parseFloat(document.getElementById('waterVapor')?.value||'0.0627');
@@ -17001,7 +17175,7 @@ var appSettings = {
     'minStopTime', 'stopRounding', 'waterVapor', 'ppo2Bottom', 'ppo2Deco',
     'shallowGradient',
     'circuitSelect', 'ccrDecoSetpoint', 'ccrBottomSetpoint', 'ccrDescentSetpoint',
-    'ccrBailoutToggle', 'ccrBailoutGfLow', 'ccrBailoutGfHigh',
+    'ccrBailoutToggle', 'diluentUseAsBailout', 'ccrBailoutGfLow', 'ccrBailoutGfHigh',
     'ccrLoopVolume', 'ccrMetabolicO2', 'ccrSacStress', 'ccrSacDeco', 'ccrStressTime', 'ccrProblemSolve',
     'ccrSetpoint', 'scrLoopVolume', 'scrMetabolicO2',
     'minDecoProfileEnable', 'minDeco9m', 'minDeco6m',
