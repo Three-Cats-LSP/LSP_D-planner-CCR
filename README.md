@@ -6,7 +6,7 @@ This is a **separate product and repository**. The main [LSP D-Planner](https://
 
 Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**.
 
-🌐 **Live App (GitHub Pages)**: https://threecats-lsp.github.io/LSP_D-planner-CCR/
+🌐 **Live App (GitHub Pages)**: https://three-cats-lsp.github.io/LSP_D-planner-CCR/
 
 **Current version: 2.30.0**
 
@@ -39,7 +39,7 @@ All other features (Surf GF, prior-dive O₂ carry, shallow gradient, export/ban
 
 ## Web App
 
-Open https://threecats-lsp.github.io/LSP_D-planner-CCR/ in any modern browser — no install required.
+Open https://three-cats-lsp.github.io/LSP_D-planner-CCR/ in any modern browser — no install required.
 
 **Installation:** Add to home screen from your browser (Safari → Share → Add to Home Screen; Chrome → Install app).
 
