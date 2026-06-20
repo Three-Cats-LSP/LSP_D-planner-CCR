@@ -2341,6 +2341,44 @@ if headless_ppo2_start > 0 and "getEffectivePpo2(pAmb, 0, fO2, ccr" in headless_
 else:
     fail("ZHLEngine headless still uses raw diluent ppO2 for pSCR (BUG-68)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 49 — pSCR OTU/CNS dedicated test suite (v2.30.15 release validation)
+# ══════════════════════════════════════════════════════════════════════════════
+
+pscr_test_path = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.html")
+if os.path.isfile(pscr_test_path):
+    with open(pscr_test_path, encoding="utf-8") as f:
+        pscr_test = f.read()
+    ok("tests-pscr-otu-cns.html present")
+    for needle in [
+        "getEffectivePpo2",
+        "computePSCRFractions",
+        "PINNED_LOOP_PPO2",
+        "PINNED_BOTTOM_OTU",
+        "PINNED_DILUENT_BOTTOM_OTU",
+        "recomputeOtuFromPlan",
+        "VPMEngine.calculate",
+        "ZHLEngine.calculate",
+        "refGasLitresAmbient",
+        "20_E32",
+        "40_E32",
+        "60_E32",
+        "20_E36",
+        "40_E36",
+        "60_E36",
+    ]:
+        if needle in pscr_test:
+            ok(f"pSCR test suite references {needle}")
+        else:
+            fail(f"tests-pscr-otu-cns.html missing {needle}")
+    val_report = os.path.join(os.path.dirname(__file__), "pSCR_gas_consumption_validation_v2.30.15.md")
+    if os.path.isfile(val_report):
+        ok("pSCR_gas_consumption_validation_v2.30.15.md present")
+    else:
+        fail("pSCR_gas_consumption_validation_v2.30.15.md missing")
+else:
+    fail("tests-pscr-otu-cns.html missing")
+
 print("=" * 60)
 
 if FAIL:

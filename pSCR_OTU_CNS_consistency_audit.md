@@ -283,7 +283,9 @@ Compare `window._lastVPMResult?.totalOTU` or footer OTU to manual integration us
 
 ### 5.6 Test suite integration (recommended)
 
-Add to `tests-verify.html` Section I · CCR:
+**Dedicated suite:** `tests-pscr-otu-cns.html` (36 tests, v2.30.15) — supersedes the inline checklist below for automated CI/browser runs. Validation report: `pSCR_gas_consumption_validation_v2.30.15.md`.
+
+Add to `tests-verify.html` Section I · CCR (optional smoke):
 
 | Test ID | Description | Pass criterion |
 |---------|-------------|----------------|
