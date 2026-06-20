@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.10';
+const APP_VERSION = '2.30.11';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -14024,7 +14024,7 @@ async function buildGasPlanPDF() {
   });
 
   drawFooter();
-  const fileName = `LSP_${isoDate}_GasPlan_${gp.rule}.pdf`;
+  const fileName = `LSP_CCR_${isoDate}_GasPlan_${gp.rule}.pdf`;
   doc.save(fileName);
   showExportToast();
 }
@@ -14463,7 +14463,7 @@ function buildExportText(mode) {
     const statusEl = document.getElementById('cnsStatusText');
     const status   = statusEl ? clean(statusEl.textContent) : '';
 
-    lines.push('LSP D-PLANNER - CNS O2 TRACKER');
+    lines.push('LSP D-PLANNER + CCR - CNS O2 TRACKER');
     lines.push(hr);
     lines.push(`Depth         : ${depth}${du}`);
     lines.push(`BT Time      : ${bt} min`);
@@ -15531,7 +15531,7 @@ async function exportContingencyPDF(opts) {
   const depth = document.getElementById('decoDepth')?.value || '\u2014';
   const bt    = document.getElementById('decoBT')?.value    || '\u2014';
   const scenarioName = (c.label||'Emergency').replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_').substring(0,30);
-  const fileName = `LSP_${isoDate}_Emergency_${depth}${du}_${bt}min_${scenarioName}.pdf`;
+  const fileName = `LSP_CCR_${isoDate}_Emergency_${depth}${du}_${bt}min_${scenarioName}.pdf`;
 
   const PW=210, PH=297, ML=14, MR=14, MT=10, MB=10, CW=182;
   let y=MT;

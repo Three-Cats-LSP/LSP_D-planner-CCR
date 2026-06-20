@@ -2187,6 +2187,25 @@ if 'D-Planner+CCR' in html and 'apple-mobile-web-app-title' in html[:4000]:
 else:
     fail('apple-mobile-web-app-title still "D-Planner" (BUG-48)')
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 44 — v2.30.11 fixes (errors_bugs_report_v9 rewrite: BUG-49, BUG-50)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "LSP_CCR_${isoDate}_GasPlan_" in js:
+    ok("Gas Plan PDF filename uses LSP_CCR_ prefix (BUG-49)")
+else:
+    fail("Gas Plan PDF filename still uses LSP_ prefix (BUG-49)")
+
+if "LSP_CCR_${isoDate}_Emergency_" in js:
+    ok("Emergency PDF filename uses LSP_CCR_ prefix (BUG-49)")
+else:
+    fail("Emergency PDF filename still uses LSP_ prefix (BUG-49)")
+
+if "LSP D-PLANNER + CCR - CNS O2 TRACKER" in js:
+    ok("CNS text export header includes + CCR (BUG-50)")
+else:
+    fail("CNS text export header missing + CCR (BUG-50)")
+
 print("=" * 60)
 
 if FAIL:
