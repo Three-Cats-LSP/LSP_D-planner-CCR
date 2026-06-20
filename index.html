@@ -3453,7 +3453,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.1';
+const APP_VERSION = '2.30.2';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -6022,9 +6022,8 @@ function getBailoutReserveMixLabel(depthM, fO2Bot, fHeBot) {
   }
   const useDil = document.getElementById('diluentUseAsBailout')?.value === 'on';
   if (useDil) {
-    const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
-      || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
-    if (calcGasMODm(fO2Bot, activePpo2) >= depthM - 0.01) {
+    const bailoutPpo2 = getBailoutPpo2Limit();
+    if (calcGasMODm(fO2Bot, bailoutPpo2) >= depthM - 0.01) {
       return getGasLabel(fO2Bot, fHeBot);
     }
   }
@@ -7439,7 +7438,8 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     Object.keys(gasConsVPM).forEach((label, idx) => {
       const [sId,pId] = cylIds[idx] || [];
       if (!sId) return;
-      const sz = parseFloat(document.getElementById(sId)?.value) || 0;
+      const szRaw = parseFloat(document.getElementById(sId)?.value) || 0;
+      const sz = units === 'imperial' ? szRaw * 28.3168 : szRaw;
       const prRaw = parseFloat(document.getElementById(pId)?.value) || 0;
       const pr = units === 'imperial' ? prRaw / 14.5038 : prRaw;
       if (sz > 0 && pr > 0) cylCapVPM[label] = sz * pr;
@@ -18066,6 +18066,28 @@ window.addEventListener('load', function() {
 </script>
 <!-- PWA: service worker registration -->
 <script>
+  const SW_VERSION_KEY = 'lspSwVersion';
+  const SW_MIGRATION_FLAG = `lspSwMigrated:${APP_VERSION}`;
+  (async () => {
+    try {
+      const prev = localStorage.getItem(SW_VERSION_KEY);
+      if (prev === APP_VERSION || sessionStorage.getItem(SW_MIGRATION_FLAG) === '1') return;
+      sessionStorage.setItem(SW_MIGRATION_FLAG, '1');
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      if (window.caches && typeof caches.keys === 'function') {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter(k => /^lsp-dplanner-ccr-v/i.test(k)).map(k => caches.delete(k)));
+      }
+      localStorage.setItem(SW_VERSION_KEY, APP_VERSION);
+      window.location.reload();
+    } catch (e) {
+      console.warn('[SW] version migration failed:', e);
+    }
+  })();
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register(`sw.js?v=${APP_VERSION}`, { updateViaCache: 'none' })

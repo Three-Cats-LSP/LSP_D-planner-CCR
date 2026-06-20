@@ -69,9 +69,28 @@ When the diver bails out from CCR to OC, they breathe the diluent as an OC gas. 
 
 ## Summary Table
 
-| # | Severity | Area | Description |
-|---|---|---|---|
-| BUG-37 | MEDIUM | Gas plan/Imperial | Emergency gas plan: cylinder size not converted cu ft → L in imperial — sufficiency always wrong |
-| BUG-38 | MEDIUM | CCR/Gas reserve | `getBailoutReserveMixLabel` uses on-loop SP (1.2) not OC ppO₂ limit (1.4) for diluent-as-bailout MOD |
-| BUG-39 | LOW | Versioning | `package.json` and `build.gradle` still `2.30.0` after version bump to `2.30.1` |
+| # | Severity | Area | Description | Status |
+|---|---|---|---|---|
+| BUG-37 | MEDIUM | Gas plan/Imperial | Emergency gas plan: cylinder size not converted cu ft → L in imperial — sufficiency always wrong | FIXED |
+| BUG-38 | MEDIUM | CCR/Gas reserve | `getBailoutReserveMixLabel` uses on-loop SP (1.2) not OC ppO₂ limit (1.4) for diluent-as-bailout MOD | FIXED |
+| BUG-39 | LOW | Versioning | `package.json` and `build.gradle` still `2.30.0` after version bump to `2.30.1` | FIXED |
+
+---
+
+## FIXED in this pass (2026-06-21)
+
+### BUG-37 — Imperial emergency gas conversion
+
+**Fix:** Converted cylinder size cu ft → litres in VPM gas-capacity precompute path before `sz * bar` multiplication.
+
+### BUG-38 — Diluent-as-bailout MOD check
+
+**Fix:** `getBailoutReserveMixLabel()` now uses `getBailoutPpo2Limit()` (OC ppO₂ limit) for diluent reserve suitability.
+
+### BUG-39 — Version synchronization + Android build failure root cause
+
+**Fixes:**
+- Bumped `APP_VERSION` and SW cache version to `2.30.2`.
+- Bumped `package.json` and `android/app/build.gradle` to `2.30.2` (`versionCode 23002`).
+- Raised `android/variables.gradle` `minSdkVersion` to `22` to satisfy Cordova framework minSdk requirement from CI.
 
