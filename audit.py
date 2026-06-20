@@ -1430,13 +1430,15 @@ else:
 
 # 29.2 Descent exposure added before the steps loop
 if re.search(r'hDescentTime = level\.depth / hDescentRate', js) and \
-   re.search(r'addExposure\(\(hAltP \+ \(level\.depth / 2\) \* hBAR\) \* fO2bot, hDescentTime\)', js):
+   (re.search(r'addExposure\(headlessPpo2\(level\.depth / 2', js) or
+    re.search(r'addExposure\(\(hAltP \+ \(level\.depth / 2\) \* hBAR\) \* fO2bot, hDescentTime\)', js)):
     ok("Headless CNS/OTU: descent exposure (avg depth = level.depth/2) now included")
 else:
     fail("Headless CNS/OTU: descent exposure missing — CNS/OTU will under-report vs live app")
 
 # 29.3 Bottom-time exposure added before the steps loop
-if re.search(r'addExposure\(\(hAltP \+ level\.depth \* hBAR\) \* fO2bot, level\.time\)', js):
+if re.search(r'addExposure\(headlessPpo2\(level\.depth,', js) or \
+   re.search(r'addExposure\(\(hAltP \+ level\.depth \* hBAR\) \* fO2bot, level\.time\)', js):
     ok("Headless CNS/OTU: bottom-time exposure (full level.time at full depth) now included")
 else:
     fail("Headless CNS/OTU: bottom-time exposure missing — CNS/OTU will under-report vs live app, since bottom time is the majority of most dives' O2 exposure")
@@ -2299,10 +2301,45 @@ else:
     fail("VPM OTU/CNS still uses diluent fO2 × pAmb for pSCR (BUG-63)")
 
 vpm_ppo2_count = js.count("vpmAccumPpo2(")
-if vpm_ppo2_count >= 6:
+if vpm_ppo2_count >= 9:
     ok(f"VPM OTU/CNS accumulation wired through vpmAccumPpo2 ({vpm_ppo2_count} sites)")
 else:
     fail(f"VPM OTU/CNS not fully wired through vpmAccumPpo2 (found {vpm_ppo2_count})")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 48 — v2.30.15 fixes (pSCR OTU/CNS consistency audit BUG-64–68)
+# ══════════════════════════════════════════════════════════════════════════════
+
+exp_ctx_start = js.find("function addExposureToContext")
+exp_ctx_block = js[exp_ctx_start:exp_ctx_start + 700] if exp_ctx_start > 0 else ""
+if "vpmAccumPpo2" in exp_ctx_block and "ctxUseOCForPpo2" in exp_ctx_block:
+    ok("VPM continuation helpers use vpmAccumPpo2 (BUG-64)")
+else:
+    fail("addExposureToContext still uses diluent ppO2 (BUG-64)")
+
+if "scrRuntimeMin: seg && seg.runtime" in js or "scrRuntimeMin: seg.runtime" in js:
+    ok("vpmDisplayPpo2 uses segment runtime for pSCR loop ppO2 (BUG-65)")
+else:
+    fail("vpmDisplayPpo2 missing scrRuntimeMin from segment (BUG-65)")
+
+if "scrRuntimeMin: diveRuntimeMin" in js:
+    ok("Bühlmann _ccrPpo2Opts passes diveRuntimeMin (BUG-66)")
+else:
+    fail("_ccrPpo2Opts missing diveRuntimeMin for OTU/CNS (BUG-66)")
+
+calc_cns_start = js.find("function calcCNS")
+calc_cns_block = js[calc_cns_start:calc_cns_start + 1000] if calc_cns_start > 0 else ""
+if "scrRuntimeMin: bt" in calc_cns_block:
+    ok("calcCNS uses BT as pSCR scrRuntimeMin proxy (BUG-67)")
+else:
+    fail("calcCNS missing pSCR BT runtime proxy (BUG-67)")
+
+headless_ppo2_start = js.find("function headlessPpo2")
+headless_ppo2_block = js[headless_ppo2_start:headless_ppo2_start + 800] if headless_ppo2_start > 0 else ""
+if headless_ppo2_start > 0 and "getEffectivePpo2(pAmb, 0, fO2, ccr" in headless_ppo2_block:
+    ok("ZHLEngine headless OTU/CNS uses getEffectivePpo2 for pSCR (BUG-68)")
+else:
+    fail("ZHLEngine headless still uses raw diluent ppO2 for pSCR (BUG-68)")
 
 print("=" * 60)
 

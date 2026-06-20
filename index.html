@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.14';
+const APP_VERSION = '2.30.15';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -7319,7 +7319,11 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
       const sp = (seg && seg.setpoint > 0)
         ? seg.setpoint
         : getEffectiveSetpointAtDepth(depthM, _vpmCcr, surfP);
-      return getEffectivePpo2(pAmb, sp, fO2, _vpmCcr, depthM, fHe).toFixed(2);
+      const ccrDisp = {
+        ..._vpmCcr,
+        scrRuntimeMin: seg && seg.runtime != null ? seg.runtime : 0,
+      };
+      return getEffectivePpo2(pAmb, sp, fO2, ccrDisp, depthM, fHe).toFixed(2);
     }
     return ppO2Check(depthM, fN2, fHe);
   }
@@ -8493,21 +8497,24 @@ const VPMEngine = (() => {
         };
         return getEffectiveSetpointAtDepth(depthM != null ? depthM : 0, ccr, surfP);
     }
-    function vpmAccumPpo2(pAmb, sp, fO2, fHe, settings, depthM, useOC) {
-        if (sp > 0) return Math.min(sp, pAmb);
-        if (!useOC && settings.circuit === 'pSCR' && !settings.bailout && typeof getEffectivePpo2 === 'function') {
-            const ccr = {
-                circuit: 'pSCR',
-                bailout: false,
-                scrRuntimeMin: settings._scrRuntimeMin || 0,
-                scrLoopVolume: settings.scrLoopVolume,
-                scrMetabolicO2: settings.scrMetabolicO2,
-            };
-            return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
+        function vpmAccumPpo2(pAmb, sp, fO2, fHe, settings, depthM, useOC) {
+            if (sp > 0) return Math.min(sp, pAmb);
+            if (!useOC && settings.circuit === 'pSCR' && !settings.bailout && typeof getEffectivePpo2 === 'function') {
+                const ccr = {
+                    circuit: 'pSCR',
+                    bailout: false,
+                    scrRuntimeMin: settings._scrRuntimeMin || 0,
+                    scrLoopVolume: settings.scrLoopVolume,
+                    scrMetabolicO2: settings.scrMetabolicO2,
+                };
+                return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
+            }
+            return fO2 * pAmb;
         }
-        return fO2 * pAmb;
-    }
-    function calculateOTU(ppO2, time) {
+        function ctxUseOCForPpo2(ctx) {
+            return settings.bailout || settings.circuit !== 'pSCR';
+        }
+        function calculateOTU(ppO2, time) {
         if (ppO2 <= 0.5) return 0;
         return time * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
     }
@@ -8610,7 +8617,8 @@ const VPMEngine = (() => {
                 const frac = s / steps;
                 const depth = fromDepth + (toDepth - fromDepth) * frac;
                 const pAmb = getAmbientPressure(depth, settings);
-                const ppO2 = ctx.currentSP > 0 ? Math.min(ctx.currentSP, pAmb) : ctx.currentO2 * pAmb;
+                settings._scrRuntimeMin = ctx.runtime + frac * time;
+                const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(ctx));
                 ctx.totalOTU += calculateOTU(ppO2, dt);
                 ctx.totalCNS += calculateCNS(ppO2, dt);
             }
@@ -8618,7 +8626,8 @@ const VPMEngine = (() => {
         function addConstantExposure(ctx, depth, time) {
             if (time <= 0) return;
             const pAmb = getAmbientPressure(depth, settings);
-            const ppO2 = ctx.currentSP > 0 ? Math.min(ctx.currentSP, pAmb) : ctx.currentO2 * pAmb;
+            settings._scrRuntimeMin = ctx.runtime;
+            const ppO2 = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, depth, ctxUseOCForPpo2(ctx));
             ctx.totalOTU += calculateOTU(ppO2, time);
             ctx.totalCNS += calculateCNS(ppO2, time);
         }
@@ -8709,7 +8718,8 @@ const VPMEngine = (() => {
                 totalStopTime += effectiveMinStop;
                 ctx.runtime += effectiveMinStop;
             }
-            const ppO2Stop = ctx.currentSP > 0 ? Math.min(ctx.currentSP, pAmb) : ctx.currentO2 * pAmb;
+            settings._scrRuntimeMin = ctx.runtime;
+            const ppO2Stop = vpmAccumPpo2(pAmb, ctx.currentSP, ctx.currentO2, ctx.currentHe, settings, stopDepth, ctxUseOCForPpo2(ctx));
             ctx.totalOTU += calculateOTU(ppO2Stop, totalStopTime);
             ctx.totalCNS += calculateCNS(ppO2Stop, totalStopTime);
             appendPlan(ctx, {
@@ -9740,7 +9750,7 @@ function runDecoSchedule() {
     if (!onLoop || !_zhlOnLoop) return undefined;
     return {
       onLoop: true,
-      ccr: _ccrSettings,
+      ccr: { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin },
       fO2: fO2,
       setpoint: getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP, phase),
       surfP: altSurfaceP,
@@ -11094,6 +11104,25 @@ const ZHLEngine = (() => {
       let hCNSfrac = 0, hOTU = 0;
       const hAltP = altSurfaceP || 1.01325;
       const hBAR  = BAR_PER_METRE || 0.1;
+      const hCircuit = s.circuit || prevCCR.circuit || 'OC';
+      const hBailout = s.bailout != null ? s.bailout : (prevCCR.bailout === 'on');
+      const hPscrOnLoop = hCircuit === 'pSCR' && !hBailout;
+      function headlessPpo2(depthM, fO2, fHe, runtimeMin) {
+        const pAmb = hAltP + depthM * hBAR;
+        if (hPscrOnLoop && typeof getEffectivePpo2 === 'function') {
+          const ccr = {
+            circuit: 'pSCR',
+            bailout: false,
+            scrRuntimeMin: runtimeMin || 0,
+            scrLoopVolume: parseFloat(document.getElementById('ccrLoopVolume')?.value)
+              || parseFloat(document.getElementById('scrLoopVolume')?.value) || 10,
+            scrMetabolicO2: parseFloat(document.getElementById('ccrMetabolicO2')?.value)
+              || parseFloat(document.getElementById('scrMetabolicO2')?.value) || 1.5,
+          };
+          return getEffectivePpo2(pAmb, 0, fO2, ccr, depthM, fHe);
+        }
+        return fO2 * pAmb;
+      }
       function addExposure(ppO2, dur) {
         if (ppO2 > 0.5 && dur > 0) {
           hOTU += dur * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
@@ -11107,16 +11136,17 @@ const ZHLEngine = (() => {
       // Descent: average depth = half of bottom depth (linear descent from surface)
       const hDescentRate = s.descentRate || 20;
       const hDescentTime = level.depth / hDescentRate;
-      addExposure((hAltP + (level.depth / 2) * hBAR) * fO2bot, hDescentTime);
+      addExposure(headlessPpo2(level.depth / 2, fO2bot, fHeBot, hDescentTime / 2), hDescentTime);
       // Bottom: full level.time at full depth, on bottom gas
-      addExposure((hAltP + level.depth * hBAR) * fO2bot, level.time);
-      // Ascent/deco steps (unchanged from original — already correct for these segments)
+      addExposure(headlessPpo2(level.depth, fO2bot, fHeBot, hDescentTime + level.time), level.time);
+      // Ascent/deco steps
+      let hRuntime = hDescentTime + level.time;
       (lp.steps || []).forEach(seg => {
         const d   = seg.depth != null ? seg.depth : (seg.type === 'ascent' ? (seg.from + seg.to) / 2 : 0);
         const fO2s = seg.fN2 !== undefined ? Math.max(0, 1 - seg.fN2 - (seg.fHe || 0)) : fO2bot;
-        const pAmb = hAltP + d * hBAR;
-        const ppO2 = fO2s * pAmb;
-        addExposure(ppO2, seg.dur || 0);
+        const fHes = seg.fHe != null ? seg.fHe : fHeBot;
+        addExposure(headlessPpo2(d, fO2s, fHes, hRuntime), seg.dur || 0);
+        hRuntime += seg.dur || 0;
       });
       lp.totalCNS = parseFloat((hCNSfrac * 100).toFixed(1));
       lp.totalOTU = Math.round(hOTU);
@@ -15962,7 +15992,10 @@ function calcCNS() {
   let ppo2;
   if (isRebreatherCircuit(ccr.circuit) && !ccr.bailout) {
     const sp = getEffectiveSetpointAtDepth(depth, ccr, altSurfaceP);
-    ppo2 = getEffectivePpo2(pAmb, sp, fO2frac, ccr, depth, fHe);
+    const ccrForPpo2 = ccr.circuit === 'pSCR'
+      ? { ...ccr, scrRuntimeMin: bt }
+      : ccr;
+    ppo2 = getEffectivePpo2(pAmb, sp, fO2frac, ccrForPpo2, depth, fHe);
   } else {
     ppo2 = pAmb * fO2frac;
   }
