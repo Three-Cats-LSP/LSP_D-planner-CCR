@@ -12,9 +12,9 @@
 <meta content="#030c18" id="theme-color-active" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="D-Planner" name="apple-mobile-web-app-title"/>
+<meta content="D-Planner+CCR" name="apple-mobile-web-app-title"/>
 <!-- Description -->
-<meta content="Professional dive planner with Rec NDL tables and Bühlmann ZH-L16C decompression algorithm." name="description"/>
+<meta content="Professional CCR/pSCR dive planner with Bühlmann ZH-L16C decompression, setpoint scheduling, and OC bailout gas management." name="description"/>
 <!-- Favicon (inline SVG) -->
 <link href="icon-192.png" rel="icon" type="image/png"/>
 <link href="icon-192.png" rel="apple-touch-icon"/>
@@ -1697,7 +1697,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div>
 <!-- Bottom gas cylinder -->
 <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
-<div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 BOTTOM GAS CYLINDER</div>
+<div id="gpBotRowTitle" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 BOTTOM GAS CYLINDER</div>
 <div class="form-grid u0">
 <div class="field"><label id="gpBot_size_lbl">Size (L)</label><input id="gpBot_size" max="30" min="1" oninput="calcGasPlan()" placeholder="12" step="0.5" type="number" value="12"/></div>
 <div class="field"><label id="gpBot_fill_lbl">Fill bar</label><input id="gpBot_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.9';
+const APP_VERSION = '2.30.10';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5747,11 +5747,17 @@ function getEffectiveSetpointAtDepth(depthM, ccr, surfP, phase) {
   return decoSP;
 }
 
+function getCcrMetabolicO2Rate(ccr) {
+  const cfg = ccr || (typeof getCCRSettingsFromDOM === 'function' ? getCCRSettingsFromDOM() : {});
+  const v = parseFloat(cfg.scrMetabolicO2);
+  return v > 0 ? v : 1.5;
+}
+
 function computePSCRFractions(pAmb, fO2, fHe, runtimeMin, ccr) {
   const fInert = Math.max(0, 1 - fO2 - fHe);
   if (fInert <= 0.001) return { fO2: 1, fHe: 0, fN2: 0 };
   const loopVol = ccr.scrLoopVolume || 7.0;
-  const metO2 = ccr.scrMetabolicO2 || 0.85;
+  const metO2 = getCcrMetabolicO2Rate(ccr);
   const o2Consumed = metO2 * Math.max(0, runtimeMin || 0);
   const loopO2BarLiters = fO2 * loopVol * pAmb;
   const minLoopO2 = PSCR_MIN_PPO2 * loopVol * pAmb;
@@ -5936,7 +5942,7 @@ function isCcrOnLoopGasLabel(label) {
 }
 function ccrDiluentSurfaceLpm() {
   const ccr = getCCRSettingsFromDOM();
-  const metRate = ccr.scrMetabolicO2 || 0.85;
+  const metRate = getCcrMetabolicO2Rate(ccr);
   const bot = getBottomGasFractions();
   return metRate / Math.max(0.01, bot.fO2 || 0.21);
 }
@@ -5961,7 +5967,11 @@ function loopMixLabelFor(diluentLabel, ccr) {
   return `${prefix} ${diluentLabel}`;
 }
 function ccrGasLitres(label, depthM, durMin, sac) {
-  if (isCcrDiluentGasLabel(label)) return ccrDiluentSurfaceLpm() * durMin;
+  if (isCcrDiluentGasLabel(label)) {
+    const pAmb = altSurfaceP + depthM * BAR_PER_METRE;
+    const pSurf = altSurfaceP || 1.0;
+    return ccrDiluentSurfaceLpm() * (pAmb / pSurf) * durMin;
+  }
   const absP = altSurfaceP + depthM * BAR_PER_METRE;
   return sac * absP * durMin;
 }
@@ -6015,6 +6025,10 @@ function updateCcrGasCardLabels() {
   }
   const addBtn = document.getElementById('addDecoGasBtn');
   if (addBtn) addBtn.textContent = ccrUi ? '+ ADD BAILOUT MIX' : '+ ADD GAS MIX';
+  const gpBotTitle = document.getElementById('gpBotRowTitle');
+  if (gpBotTitle) {
+    gpBotTitle.textContent = ccrUi ? '🔵 DILUENT CYLINDER' : '🔵 BOTTOM GAS CYLINDER';
+  }
   if (typeof renumberDecoGasCards === 'function') renumberDecoGasCards();
 }
 
@@ -6079,8 +6093,11 @@ function validateCcrGasConfiguration() {
   const rawD = parseFloat(document.getElementById('decoDepth')?.value) || 0;
   const depthM = units === 'metric' ? rawD : rawD / 3.28084;
   if (depthM <= 0) return { ok: true, errors: [], warnings: [] };
-  const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
-    || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+  const circuit = document.getElementById('circuitSelect')?.value || 'OC';
+  const activePpo2 = circuit === 'pSCR'
+    ? getBailoutPpo2Limit()
+    : (parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
+       || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4);
   const bot = getBottomGasFractions();
   const diluentMod = calcGasMODm(bot.fO2, activePpo2);
   const du = units === 'imperial' ? 'ft' : 'm';
@@ -13550,7 +13567,17 @@ function gpRequiredFor(label) {
   if (gc[label] != null) return gc[label];
   // Case-insensitive fallback
   const key = Object.keys(gc).find(k => k.toLowerCase() === label.toLowerCase());
-  return key ? gc[key] : null;
+  if (key) return gc[key];
+  // CCR/pSCR: consumption keyed as "CCR Air" / "pSCR Air" while Gas Plan uses diluent label
+  if (typeof loopMixLabelFor === 'function' && typeof getCCRSettingsFromDOM === 'function') {
+    const loopKey = loopMixLabelFor(label, getCCRSettingsFromDOM());
+    if (loopKey !== label) {
+      if (gc[loopKey] != null) return gc[loopKey];
+      const loopMatch = Object.keys(gc).find(k => k.toLowerCase() === loopKey.toLowerCase());
+      if (loopMatch) return gc[loopMatch];
+    }
+  }
+  return null;
 }
 
 // Sync main cylinder inputs → Gas Plan cylinder fields before calcGasPlan()

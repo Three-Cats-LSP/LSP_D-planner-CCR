@@ -2142,6 +2142,51 @@ if "setTimeout(() => restoreOne(id), 100)" not in restore_block:
 else:
     fail("_restoreFields() still restores every field twice (BUG-42)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 43 — v2.30.10 fixes (errors_bugs_report_v9)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "scrMetabolicO2 || 0.85" not in js:
+    ok("CCR metabolic O2 fallback is 1.5 L/min, not 0.85 (BUG-43)")
+else:
+    fail("scrMetabolicO2 still falls back to 0.85 L/min (BUG-43)")
+
+if "getCcrMetabolicO2Rate" in js:
+    ok("getCcrMetabolicO2Rate() shared helper present")
+else:
+    fail("getCcrMetabolicO2Rate() helper missing (BUG-43)")
+
+val_ccr_start = js.find("function validateCcrGasConfiguration")
+val_ccr_block = js[val_ccr_start:val_ccr_start + 600] if val_ccr_start > 0 else ""
+if "circuit === 'pSCR'" in val_ccr_block and "getBailoutPpo2Limit()" in val_ccr_block:
+    ok("validateCcrGasConfiguration: pSCR diluent MOD uses ppo2Bottom (BUG-44)")
+else:
+    fail("validateCcrGasConfiguration: pSCR still uses ccrBottomSetpoint for MOD (BUG-44)")
+
+gp_req_start = js.find("function gpRequiredFor")
+gp_req_block = js[gp_req_start:gp_req_start + 700] if gp_req_start > 0 else ""
+if "loopMixLabelFor" in gp_req_block:
+    ok("gpRequiredFor(): resolves CCR/pSCR loop mix labels (BUG-45)")
+else:
+    fail("gpRequiredFor(): missing loopMixLabelFor lookup (BUG-45)")
+
+ccr_lit_start = js.find("function ccrGasLitres")
+ccr_lit_block = js[ccr_lit_start:ccr_lit_start + 450] if ccr_lit_start > 0 else ""
+if "pAmb / pSurf" in ccr_lit_block or "(pAmb / pSurf)" in ccr_lit_block:
+    ok("ccrGasLitres(): diluent scaled by ambient pressure (BUG-46)")
+else:
+    fail("ccrGasLitres(): diluent still flat surface L/min (BUG-46)")
+
+if 'name="description"' in html and "CCR" in html[:3000]:
+    ok("<meta description> mentions CCR (BUG-47)")
+else:
+    fail("<meta description> still OC-only text (BUG-47)")
+
+if 'D-Planner+CCR' in html and 'apple-mobile-web-app-title' in html[:4000]:
+    ok('apple-mobile-web-app-title is "D-Planner+CCR" (BUG-48)')
+else:
+    fail('apple-mobile-web-app-title still "D-Planner" (BUG-48)')
+
 print("=" * 60)
 
 if FAIL:
