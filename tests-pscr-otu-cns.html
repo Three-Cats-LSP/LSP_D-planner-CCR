@@ -272,20 +272,15 @@ function refBottomPhase(sc) {
   };
 }
 
-/** Mirrors ccrDiluentSurfaceLpm + ccrGasLitres for pSCR diluent (surface fraction estimate) */
+/** pSCR diluent litres — metRate × bypass, depth via ccrGasLitres (BUG-75) */
 function refGasLitresAmbient(depth, durMin, fO2, fHe, scrRuntimeMin) {
   const pSurf = SURF;
-  const fr = WIN.computePSCRFractions(pSurf, fO2, fHe, scrRuntimeMin, ccrAtRuntime(scrRuntimeMin));
-  const fO2Loop = Math.max(0.01, fr.fO2);
-  const surfLpm = (MET_DEFAULT / fO2Loop) * BYPASS;
+  const surfLpm = MET_DEFAULT * BYPASS;
   return surfLpm * (pAmb(depth) / pSurf) * durMin;
 }
 
 function refGasSurfaceEquiv(depth, durMin, fO2, fHe, scrRuntimeMin) {
-  const pSurf = SURF;
-  const fr = WIN.computePSCRFractions(pSurf, fO2, fHe, scrRuntimeMin, ccrAtRuntime(scrRuntimeMin));
-  const fO2Loop = Math.max(0.01, fr.fO2);
-  const surfLpm = (MET_DEFAULT / fO2Loop) * BYPASS;
+  const surfLpm = MET_DEFAULT * BYPASS;
   return surfLpm * durMin;
 }
 

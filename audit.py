@@ -2241,10 +2241,10 @@ if "isRB && bailoutOn" in tcf_block:
 else:
     fail("ccrBailoutSettingsGroup still shown for pSCR/bailout-off (BUG-55)")
 
-if "PSCR_DEFAULT_BYPASS_RATIO" in js and "computePSCRFractions" in js[js.find("function ccrDiluentSurfaceLpm"):js.find("function ccrDiluentSurfaceLpm") + 600]:
-    ok("ccrDiluentSurfaceLpm uses pSCR loop fO2 + bypass ratio (BUG-56)")
+if "PSCR_DEFAULT_BYPASS_RATIO" in js and "metRate * PSCR_DEFAULT_BYPASS_RATIO" in js[js.find("function ccrDiluentSurfaceLpm"):js.find("function ccrDiluentSurfaceLpm") + 400]:
+    ok("ccrDiluentSurfaceLpm pSCR: metRate × bypass ratio (BUG-75)")
 else:
-    fail("ccrDiluentSurfaceLpm still uses diluent fO2 only for pSCR (BUG-56)")
+    fail("ccrDiluentSurfaceLpm pSCR still uses (metRate/fO2Loop)×bypass (BUG-75)")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 46 — v2.30.13 fixes (errors_bugs_report_v11)
@@ -2252,15 +2252,15 @@ else:
 
 cdl_start = js.find("function ccrDiluentSurfaceLpm")
 cdl_block = js[cdl_start:cdl_start + 650] if cdl_start > 0 else ""
-if "computePSCRFractions(pSurf" in cdl_block and "altSurfaceP + dM * BAR_PER_METRE" not in cdl_block:
-    ok("ccrDiluentSurfaceLpm pSCR: surface fO2Loop, depth scaled once in ccrGasLitres (BUG-57)")
+if "metRate / fO2Loop" not in cdl_block and "altSurfaceP + dM * BAR_PER_METRE" not in cdl_block:
+    ok("ccrDiluentSurfaceLpm pSCR: depth scaled once in ccrGasLitres (BUG-57)")
 else:
-    fail("ccrDiluentSurfaceLpm pSCR still double-scales depth (BUG-57)")
+    fail("ccrDiluentSurfaceLpm pSCR still double-scales depth or uses fO2Loop divisor (BUG-57)")
 
-if "decoBT" in cdl_block and "runtimeMin" in cdl_block:
-    ok("ccrDiluentSurfaceLpm pSCR: BT fallback when scrRuntimeMin=0 (BUG-58)")
+if "function ccrGasLitres" in js and "ccrDiluentSurfaceLpm(depthM) * (pAmb / pSurf)" in js:
+    ok("ccrGasLitres scales pSCR diluent once by ambient/surface pressure (BUG-58 path)")
 else:
-    fail("ccrDiluentSurfaceLpm pSCR missing scrRuntimeMin/BT estimate (BUG-58)")
+    fail("ccrGasLitres missing single depth scale for pSCR diluent (BUG-58)")
 
 tcf_start = js.find("function toggleCircuitFields")
 tcf_block = js[tcf_start:tcf_start + 700] if tcf_start > 0 else ""
@@ -2481,10 +2481,10 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.25['\"]", js):
-    ok("APP_VERSION bumped to 2.30.25")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.26['\"]", js):
+    ok("APP_VERSION bumped to 2.30.26")
 else:
-    fail("APP_VERSION not bumped to 2.30.25")
+    fail("APP_VERSION not bumped to 2.30.26")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 57 — v2.30.25 fix (pSCR OTU/CNS plan integration)
@@ -2532,28 +2532,48 @@ version_ok = True
 if os.path.isfile(pkg_path):
     with open(pkg_path, encoding="utf-8") as f:
         pkg = f.read()
-    if '"version": "2.30.25"' not in pkg:
+    if '"version": "2.30.26"' not in pkg:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(gradle_path):
     with open(gradle_path, encoding="utf-8") as f:
         gradle = f.read()
-    if 'versionName "2.30.25"' not in gradle or "versionCode 23025" not in gradle:
+    if 'versionName "2.30.26"' not in gradle or "versionCode 23026" not in gradle:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(sw_path):
     with open(sw_path, encoding="utf-8") as f:
         sw = f.read()
-    if "lsp-dplanner-ccr-v2.30.25" not in sw:
+    if "lsp-dplanner-ccr-v2.30.26" not in sw:
         version_ok = False
 else:
     version_ok = False
 if version_ok:
-    ok("All version files aligned at 2.30.25 (v17 BUG-74)")
+    ok("All version files aligned at 2.30.26 (v17 BUG-74)")
 else:
     fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 58 — v2.30.26 fix (errors_bugs_report_v18/v19 BUG-75)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if cdl_start > 0 and "metRate / fO2Loop" not in cdl_block:
+    ok("BUG-75 fixed: pSCR ccrDiluentSurfaceLpm no longer divides by fO2Loop")
+else:
+    fail("BUG-75 still present: ccrDiluentSurfaceLpm uses metRate/fO2Loop")
+
+verify_path = os.path.join(os.path.dirname(__file__), "tests-verify.html")
+if os.path.isfile(verify_path):
+    with open(verify_path, encoding="utf-8") as f:
+        verify_html = f.read()
+    if "BUG-75" in verify_html and "ccrDiluentSurfaceLpm" in verify_html:
+        ok("tests-verify.html regression for pSCR ccrDiluentSurfaceLpm (BUG-75)")
+    else:
+        fail("tests-verify.html missing BUG-75 pSCR gas flow regression")
+else:
+    fail("tests-verify.html missing")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 55 — v2.30.22 fix (massive suite headless mode leak)
@@ -2601,6 +2621,17 @@ if os.path.isfile(tests_html_path):
         fail("tests.html No-Deco tests still use default GF conservatism")
 else:
     fail("tests.html missing")
+
+massive_html_path = os.path.join(os.path.dirname(__file__), "tests-massive.html")
+if os.path.isfile(massive_html_path):
+    with open(massive_html_path, encoding="utf-8") as f:
+        massive_html = f.read()
+    if "firstStop: 36" in massive_html and "ref.stops[rd]" not in massive_html:
+        ok("tests-massive.html CCR cross-val uses DiveKit first-stop pins (no MultiDeco per-stop table)")
+    else:
+        fail("tests-massive.html CCR cross-val still pinned to MultiDeco per-stop tables")
+else:
+    fail("tests-massive.html missing")
 
 print("=" * 60)
 

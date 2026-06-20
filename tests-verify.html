@@ -708,6 +708,20 @@ const SECTIONS = [
       assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ');
       return `CCR=${ccr.totalRuntime}min pSCR=${pscr.totalRuntime}min ✓`;
     }],
+    ['pSCR ccrDiluentSurfaceLpm ≈ metRate × bypass, not /fO2Loop (BUG-75)', () => {
+      const d = WIN.document;
+      const sel = d.getElementById('circuitSelect');
+      const prev = sel ? sel.value : null;
+      if (sel) sel.value = 'pSCR';
+      WIN.toggleCircuitFields?.();
+      const met = parseFloat(d.getElementById('scrMetabolicO2')?.value) || 1.5;
+      const lpm = WIN.ccrDiluentSurfaceLpm(40);
+      if (sel && prev != null) { sel.value = prev; WIN.toggleCircuitFields?.(); }
+      const expected = met * 10;
+      assert(Math.abs(lpm - expected) < 0.2, `got ${lpm} L/min, expected ~${expected} (not fO2Loop-scaled)`);
+      assert(lpm < 30, `pSCR surface LPM ${lpm} still ~6× too high (BUG-75)`);
+      return `surf LPM=${lpm.toFixed(1)} = ${met}×10 ✓`;
+    }],
     ['VPM CCR 40m/28min produces valid plan', () => {
       const r = WIN.VPMEngine.calculate(lv(40, 28, 21, 0), [], S({
         circuit: 'CCR', setpoint: 1.3, conservatism: 0,

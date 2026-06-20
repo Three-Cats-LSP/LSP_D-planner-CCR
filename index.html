@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.25';
+const APP_VERSION = '2.30.26';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5950,12 +5950,7 @@ function ccrDiluentSurfaceLpm(depthM) {
   const bot = getBottomGasFractions();
   const fO2Dil = Math.max(0.01, bot.fO2 || 0.21);
   if (ccr.circuit === 'pSCR' && !ccr.bailout) {
-    const pSurf = altSurfaceP || 1.0;
-    let runtimeMin = ccr.scrRuntimeMin || 0;
-    if (!runtimeMin) runtimeMin = parseFloat(document.getElementById('decoBT')?.value) || 0;
-    const fr = computePSCRFractions(pSurf, bot.fO2, bot.fHe, runtimeMin, ccr);
-    const fO2Loop = Math.max(0.01, fr.fO2);
-    return (metRate / fO2Loop) * PSCR_DEFAULT_BYPASS_RATIO;
+    return metRate * PSCR_DEFAULT_BYPASS_RATIO;
   }
   return metRate / fO2Dil;
 }
