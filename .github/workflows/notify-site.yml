@@ -20,9 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger site sync
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
         run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.SYNC_TOKEN }}" \
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "::error::SYNC_TOKEN secret is not configured on this repo."
+            echo "Add the same SYNC_TOKEN used by Three-Cats-LSP/LSP_D-planner so threecats-lsp.com auto-syncs."
+            exit 1
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: token ${SYNC_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/Three-Cats-LSP/threecats-lsp.com/dispatches \
             -d '{"event_type":"sync-d-planner-ccr"}'
