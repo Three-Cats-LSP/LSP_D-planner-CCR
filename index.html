@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.8';
+const APP_VERSION = '2.30.9';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -10696,7 +10696,8 @@ function runDecoSchedule() {
     gasLabels.forEach((label, idx) => {
       const [sId, pId] = cylIds[idx] || [];
       if (!sId) return;
-      const sz  = parseFloat(document.getElementById(sId)?.value) || 0;
+      const szRaw = parseFloat(document.getElementById(sId)?.value) || 0;
+      const sz  = units === 'imperial' ? szRaw * 28.3168 : szRaw;
       const prRaw = parseFloat(document.getElementById(pId)?.value) || 0;
       // Pressure input is in bar (metric) or psi (imperial) — always calc in bar
       const pr = units === 'imperial' ? prRaw / 14.5038 : prRaw;
@@ -17453,7 +17454,6 @@ var appSettings = {
     
     allPossible.forEach(id => {
       restoreOne(id);
-      setTimeout(() => restoreOne(id), 100);
     });
     
     // Apply GF preset last so mGF and UI stay in sync
@@ -17465,7 +17465,6 @@ var appSettings = {
       restored++;
     };
     applyGfPreset();
-    setTimeout(applyGfPreset, 100);
     
     console.log('[LSP] ✅ Settings restored (' + restored + ' fields) - Algo: ' + (values['__algo__'] || 'padi'));
   },
@@ -17473,7 +17472,10 @@ var appSettings = {
   // Clear all saved values
   clear: function() {
     try {
+      localStorage.removeItem('lspDiveSettings_v6');
       localStorage.removeItem('lspDiveSettings_v3');
+      localStorage.removeItem('lspDiveSettings_v2');
+      localStorage.removeItem('lspDiveSettings');
       console.log('[LSP] ✅ Settings cleared');
     } catch(e) {
       console.warn('[LSP] Clear failed:', e.message);

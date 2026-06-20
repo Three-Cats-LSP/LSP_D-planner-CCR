@@ -2117,6 +2117,31 @@ if js.find('splitSegmentAtSetpoint') >= 0:
 else:
     fail("splitSegmentAtSetpoint() not found")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 42 — v2.30.9 fixes (errors_bugs_report_v8)
+# ══════════════════════════════════════════════════════════════════════════════
+
+buh_cap_start = js.find("const cylCapacity = {}; // gas label")
+buh_cap_block = js[buh_cap_start:buh_cap_start + 500] if buh_cap_start > 0 else ""
+if "28.3168" in buh_cap_block or "GP_CUFT_PER_L" in buh_cap_block:
+    ok("Buhlmann cylCapacity: cylinder size converted cu ft → L in imperial mode")
+else:
+    fail("Buhlmann cylCapacity: missing imperial cu ft → L conversion (BUG-40)")
+
+clear_start = js.find("clear: function()")
+clear_block = js[clear_start:clear_start + 400] if clear_start > 0 else ""
+if "lspDiveSettings_v6" in clear_block:
+    ok("appSettings.clear() removes lspDiveSettings_v6")
+else:
+    fail("appSettings.clear() still removes wrong storage key (BUG-41)")
+
+restore_start = js.find("_restoreFields: function")
+restore_block = js[restore_start:restore_start + 1200] if restore_start > 0 else ""
+if "setTimeout(() => restoreOne(id), 100)" not in restore_block:
+    ok("_restoreFields(): no duplicate deferred restore pass")
+else:
+    fail("_restoreFields() still restores every field twice (BUG-42)")
+
 print("=" * 60)
 
 if FAIL:
