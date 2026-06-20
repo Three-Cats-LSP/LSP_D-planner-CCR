@@ -278,6 +278,24 @@ header { display: flex;
  cursor: pointer;
 }
 
+#ccrBailoutGfLow, #ccrBailoutGfHigh { background: var(--bg-alt) !important;
+ border: 1px solid var(--border) !important;
+ color: var(--text) !important;
+ transition: all 0.2s;
+ cursor: pointer;
+ min-width: 58px;
+ max-width: 64px;
+ width: 64px;
+}
+
+.ccr-adv-stack { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+.ccr-adv-row { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+.ccr-adv-row > label { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 11px; line-height: 1.35; }
+.ccr-adv-row > input[type="number"],
+.ccr-adv-row > select:not(.ccr-bo-gf-select) { flex: 0 0 88px; width: 88px; max-width: 88px; }
+.ccr-adv-gf-pair { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.ccr-adv-gf-pair .algo-label-text { font-size: 10px; }
+
 #gfLowInput:focus, #gfHighInput:focus { border-color: var(--accent) !important;
  background: var(--card) !important;
 }
@@ -1677,7 +1695,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 BOTTOM GAS CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpBot_size_lbl">Cyl. Size (L)</label><input id="gpBot_size" max="30" min="1" oninput="calcGasPlan()" placeholder="12" step="0.5" type="number" value="12"/></div>
+<div class="field"><label id="gpBot_size_lbl">Size</label><input id="gpBot_size" max="30" min="1" oninput="calcGasPlan()" placeholder="12" step="0.5" type="number" value="12"/></div>
 <div class="field"><label id="gpBot_fill_lbl">Fill bar</label><input id="gpBot_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpBot_reserve_lbl">Reserve bar</label><input id="gpBot_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1686,7 +1704,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpTravelRow" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#ff9f43;margin-bottom:10px;">🟠 TRAVEL GAS CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpTravel_size_lbl">Cyl. Size (L)</label><input id="gpTravel_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpTravel_size_lbl">Size</label><input id="gpTravel_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpTravel_fill_lbl">Fill bar</label><input id="gpTravel_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpTravel_reserve_lbl">Reserve bar</label><input id="gpTravel_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1695,7 +1713,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpDg1Row" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:10px;">🟢 DECO GAS 1 CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpDg1_size_lbl">Cyl. Size (L)</label><input id="gpDg1_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpDg1_size_lbl">Size</label><input id="gpDg1_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpDg1_fill_lbl">Fill bar</label><input id="gpDg1_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpDg1_reserve_lbl">Reserve bar</label><input id="gpDg1_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -1704,7 +1722,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="gpDg2Row" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;display:none;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:10px;">🟢 DECO GAS 2 CYLINDER</div>
 <div class="form-grid u0">
-<div class="field"><label id="gpDg2_size_lbl">Cyl. Size (L)</label><input id="gpDg2_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="gpDg2_size_lbl">Size</label><input id="gpDg2_size" max="30" min="1" oninput="calcGasPlan()" placeholder="11" step="0.5" type="number" value="11"/></div>
 <div class="field"><label id="gpDg2_fill_lbl">Fill bar</label><input id="gpDg2_fill" max="300" min="0" oninput="calcGasPlan()" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="gpDg2_reserve_lbl">Reserve bar</label><input id="gpDg2_reserve" max="300" min="0" oninput="calcGasPlan()" placeholder="50" step="10" type="number" value="50"/></div>
 </div>
@@ -2056,56 +2074,56 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <div id="ccrAdvSettingsBody" style="display:none;margin-top:8px;">
 <div id="ccrSettingsGroup" style="display:none;">
 <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">CCR Settings</div>
-<div class="form-grid u0">
-<div class="field" id="ccrSpDescentRow" style="display:none;">
-<label>SP descent (bar)</label>
+<div class="ccr-adv-stack">
+<div class="ccr-adv-row" id="ccrSpDescentRow" style="display:none;">
+<label>SP descent (bar) <span class="tip-icon" onclick="showTip('SP Descent','Partial pressure of O₂ maintained in the loop during descent. A lower setpoint reduces O₂ uptake before reaching bottom depth.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrDescentSetpoint" max="1.0" min="0.5" step="0.1" type="number" value="0.7"/>
 </div>
-<div class="field" id="ccrSpBottomRow" style="display:none;">
-<label>Active ppO₂ / SP bottom (bar)</label>
+<div class="ccr-adv-row" id="ccrSpBottomRow" style="display:none;">
+<label>Active ppO₂ / SP bottom (bar) <span class="tip-icon" onclick="showTip('Active ppO₂','Constant partial pressure of O₂ maintained on-loop during the bottom phase. Also used for diluent MOD checks on CCR.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrBottomSetpoint" max="1.6" min="0.7" oninput="updateGasMODDisplays();updateCcrGasValidation()" step="0.1" type="number" value="1.2"/>
 </div>
-<div class="field" id="ccrSpDecoRow" style="display:none;">
-<label>Decompression ppO₂ / SP deco (bar)</label>
+<div class="ccr-adv-row" id="ccrSpDecoRow" style="display:none;">
+<label>Decompression ppO₂ / SP deco (bar) <span class="tip-icon" onclick="showTip('Decompression ppO₂','Setpoint used on-loop during decompression stops and ascent after the bottom phase.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrDecoSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.3"/>
 </div>
-<div class="field" id="ccrLoopVolRow">
-<label>Loop volume (L)</label>
+<div class="ccr-adv-row" id="ccrLoopVolRow">
+<label>Loop volume (L) <span class="tip-icon" onclick="showTip('Loop Volume','Internal loop volume in litres. Used for pSCR inspired-gas calculations and loop O₂ fraction modelling.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrLoopVolume" max="15" min="3" step="0.5" type="number" value="10"/>
 </div>
-<div class="field" id="ccrMetabolicRow">
-<label>Metabolic O₂ (L/min)</label>
+<div class="ccr-adv-row" id="ccrMetabolicRow">
+<label>Metabolic O₂ (L/min) <span class="tip-icon" onclick="showTip('Metabolic O₂','Diver O₂ consumption rate at the surface (L/min). Drives estimated diluent consumption for on-loop CCR/pSCR gas planning.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrMetabolicO2" max="2.5" min="0.5" step="0.05" type="number" value="1.5"/>
 </div>
-<div class="field">
-<label>SAC stress (L/min)</label>
+<div class="ccr-adv-row">
+<label>SAC stress (L/min) <span class="tip-icon" onclick="showTip('SAC Stress','Open-circuit SAC assumed during a stressed bailout at depth. Used with Stress time and Problem solving to reserve bailout cylinder volume.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrSacStress" max="80" min="10" step="1" type="number" value="50"/>
 </div>
-<div class="field">
-<label>SAC deco (L/min)</label>
+<div class="ccr-adv-row">
+<label>SAC deco (L/min) <span class="tip-icon" onclick="showTip('SAC Deco (Bailout)','Open-circuit SAC used for bailout/deco cylinder consumption estimates when breathing OC bailout mixes on a rebreather dive plan.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrSacDeco" max="40" min="5" step="1" type="number" value="25"/>
 </div>
-<div class="field">
-<label>Stress time (min)</label>
+<div class="ccr-adv-row">
+<label>Stress time (min) <span class="tip-icon" onclick="showTip('Stress Time','Minutes of stressed open-circuit breathing at bottom depth reserved against bailout cylinders in the gas consumption estimate.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrStressTime" max="30" min="1" step="1" type="number" value="10"/>
 </div>
-<div class="field">
-<label>Problem solving (min)</label>
+<div class="ccr-adv-row">
+<label>Problem solving (min) <span class="tip-icon" onclick="showTip('Problem Solving','Additional minutes at depth for problem-solving before ascending on bailout. Added to Stress time for bailout gas reserve calculations.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="ccrProblemSolve" max="15" min="1" step="1" type="number" value="3"/>
 </div>
 </div>
 </div>
 <div id="ccrBailoutSettingsGroup" style="display:none;margin-top:12px;">
-<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Bailout Settings</div>
-<div class="form-grid u0">
-<div class="field">
-<label>BO GF Low (%)</label>
-<input id="ccrBailoutGfLow" max="100" min="20" step="5" type="number" value="50"/>
-</div>
-<div class="field">
-<label>BO GF High (%)</label>
-<input id="ccrBailoutGfHigh" max="100" min="50" step="5" type="number" value="85"/>
-</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Bailout Settings <span class="tip-icon" onclick="showTip('Bailout Gradient Factors','Gradient factors applied when Bailout mode is ON — the planner switches to open-circuit deco using these GF values instead of the main plan GF.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></div>
+<div class="ccr-adv-gf-pair">
+<span class="algo-label-text u1">Low:</span>
+<select class="u7 ccr-bo-gf-select" id="ccrBailoutGfLow">
+<option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50" selected="">50</option><option value="55">55</option><option value="60">60</option><option value="65">65</option><option value="70">70</option><option value="75">75</option><option value="80">80</option><option value="85">85</option><option value="90">90</option><option value="95">95</option><option value="100">100</option>
+</select>
+<span class="algo-label-text u1">High:</span>
+<select class="u7 ccr-bo-gf-select" id="ccrBailoutGfHigh">
+<option value="50">50</option><option value="55">55</option><option value="60">60</option><option value="65">65</option><option value="70">70</option><option value="75">75</option><option value="80">80</option><option value="85" selected="">85</option><option value="90">90</option><option value="95">95</option><option value="100">100</option>
+</select>
 </div>
 </div>
 </div>
@@ -2151,8 +2169,8 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="botMODDisplay" placeholder="Enter depth &amp; gas" readonly="" style="cursor:default;" title="Calculated MOD using selected Bottom Gas and Max Bottom ppO₂" type="text"/>
 </div>
-<div class="field"><label>Cyl. Size (L)</label><input id="cylBot_size" max="30" min="1" placeholder="12" step="0.5" type="number" value="12"/></div>
-<div class="field"><label id="cylBot_pres_lbl">Cyl. bar</label><input id="cylBot_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
+<div class="field"><label>Size</label><input id="cylBot_size" max="30" min="1" placeholder="12" step="0.5" type="number" value="12"/></div>
+<div class="field"><label id="cylBot_pres_lbl">Bar</label><input id="cylBot_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylBot_reserve_lbl">Reserve bar</label><input id="cylBot_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure — gas kept in the cylinder as a safety margin. Used by the Gas Plan tab for rule-of-thirds / turn-pressure calculations." type="number" value="50"/></div>
 </div>
 </div>
@@ -2192,11 +2210,11 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="travelGasMODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Auto mode: shows travel gas MOD — deepest depth where travel gas ppO₂ stays within the Bottom ppO₂ limit. Manual mode: shows what the auto depth would be for reference." type="text"/>
 </div>
 <div class="field">
-<label>Cyl. Size (L)</label>
+<label>Size</label>
 <input id="cylTravelGas_size" max="30" min="1" placeholder="12" step="0.5" title="Travel gas cylinder volume in litres. Used to calculate gas consumption and remaining pressure." type="number" value="12"/>
 </div>
 <div class="field">
-<label id="cylTravelGas_pres_lbl">Cyl. bar</label>
+<label id="cylTravelGas_pres_lbl">Bar</label>
 <input id="cylTravelGas_pres" max="300" min="0" placeholder="200" step="10" title="Travel gas cylinder fill pressure in bar. Together with cylinder size, used to estimate gas consumption as a % of fill." type="number" value="200"/>
 </div>
 <div class="field">
@@ -2245,15 +2263,15 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="dg1TrimixHe" max="90" min="0" oninput="updateGasMODDisplays()" placeholder="35" step="1" type="number" value="35"/>
 </div>
 <div class="field">
-<label>Optimal Switch Depth</label>
+<label>Switch Depth <span class="tip-icon" onclick="showTip('Switch Depth','Depth at which this gas becomes optimal to breathe during ascent (or the recommended OC bailout depth). Calculated from O₂ fraction and ppO₂ limits when you generate a schedule; manual override available in Auto/Manual mode.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input class="switch-depth-display" id="dg1SwitchDepthDisplay" placeholder="Calculate to see" readonly="" style="cursor:default;" type="text"/>
 </div>
 <div class="field">
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="dg1MODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Calculated MOD using selected gas and Max Deco ppO₂" type="text"/>
 </div>
-<div class="field"><label>Cyl. Size (L)</label><input id="cylDg1_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
-<div class="field"><label id="cylDg1_pres_lbl">Cyl. bar</label><input id="cylDg1_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
+<div class="field"><label>Size</label><input id="cylDg1_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="cylDg1_pres_lbl">Bar</label><input id="cylDg1_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylDg1_reserve_lbl">Reserve bar</label><input id="cylDg1_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure kept in this deco cylinder. Used by the Gas Plan tab." type="number" value="50"/></div>
 </div>
 </div>
@@ -2287,15 +2305,15 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <input id="dg2TrimixHe" max="90" min="0" oninput="updateGasMODDisplays()" placeholder="35" step="1" type="number" value="35"/>
 </div>
 <div class="field">
-<label>Optimal Switch Depth</label>
+<label>Switch Depth <span class="tip-icon" onclick="showTip('Switch Depth','Depth at which this gas becomes optimal to breathe during ascent (or the recommended OC bailout depth). Calculated from O₂ fraction and ppO₂ limits when you generate a schedule; manual override available in Auto/Manual mode.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input class="switch-depth-display" id="dg2SwitchDepthDisplay" placeholder="Calculate to see" readonly="" style="cursor:default;" type="text"/>
 </div>
 <div class="field">
 <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
 <input id="dg2MODDisplay" placeholder="Select gas" readonly="" style="cursor:default;" title="Calculated MOD using selected gas and Max Deco ppO₂" type="text"/>
 </div>
-<div class="field"><label>Cyl. Size (L)</label><input id="cylDg2_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
-<div class="field"><label id="cylDg2_pres_lbl">Cyl. bar</label><input id="cylDg2_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
+<div class="field"><label>Size</label><input id="cylDg2_size" max="30" min="1" placeholder="11" step="0.5" type="number" value="11"/></div>
+<div class="field"><label id="cylDg2_pres_lbl">Bar</label><input id="cylDg2_pres" max="300" min="0" placeholder="200" step="10" type="number" value="200"/></div>
 <div class="field"><label id="cylDg2_reserve_lbl">Reserve bar</label><input id="cylDg2_reserve" max="300" min="0" placeholder="50" step="10" title="Reserve pressure kept in this deco cylinder. Used by the Gas Plan tab." type="number" value="50"/></div>
 </div>
 </div>
@@ -5370,7 +5388,7 @@ function setUnits(u) {
     convertNumericInput(id, v => Math.round(v * PSI_PER_BAR), v => Math.round(v / PSI_PER_BAR), 300, 4351);
   });
   ['gpBot_size_lbl','gpTravel_size_lbl','gpDg1_size_lbl','gpDg2_size_lbl'].forEach(id =>
-    setTxt(id, u === 'imperial' ? 'Cyl. Size (cu ft)' : 'Cyl. Size (L)'));
+    setTxt(id, 'Size'));
   ['gpBot_fill_lbl','gpTravel_fill_lbl','gpDg1_fill_lbl','gpDg2_fill_lbl'].forEach(id =>
     setTxt(id, u === 'imperial' ? 'Fill psi' : 'Fill bar'));
   ['gpBot_reserve_lbl','gpTravel_reserve_lbl','gpDg1_reserve_lbl','gpDg2_reserve_lbl',
@@ -5413,17 +5431,18 @@ function setUnits(u) {
   }
 
   // ── Cylinder label updates (fixed IDs with underscores) ──
-  setTxt('cylBot_pres_lbl',       u === 'imperial' ? 'Cyl. psi'    : 'Cyl. bar');
-  setTxt('cylTravelGas_pres_lbl', u === 'imperial' ? 'Cyl. psi'    : 'Cyl. bar');
-  setTxt('cylDg1_pres_lbl',       u === 'imperial' ? 'Cyl. psi'    : 'Cyl. bar');
-  setTxt('cylDg2_pres_lbl',       u === 'imperial' ? 'Cyl. psi'    : 'Cyl. bar');
+  setTxt('cylBot_pres_lbl',       'Bar');
+  setTxt('cylTravelGas_pres_lbl', 'Bar');
+  setTxt('cylDg1_pres_lbl',       'Bar');
+  setTxt('cylDg2_pres_lbl',       'Bar');
   // Dynamic deco gas card labels
-  document.querySelectorAll('[id^="cylDg"][id$="_pres_lbl"]').forEach(el => { el.textContent = u === 'imperial' ? 'Cyl. psi' : 'Cyl. bar'; });
-  document.querySelectorAll('[id^="cylDg"][id$="_size"] ~ * label, label[id$="_size_lbl"]').forEach(el => { el.textContent = u === 'imperial' ? 'Cyl. Size (cu ft)' : 'Cyl. Size (L)'; });
+  document.querySelectorAll('[id^="cylDg"][id$="_pres_lbl"]').forEach(el => { el.textContent = 'Bar'; });
+  document.querySelectorAll('[id^="cylDg"][id$="_size"] ~ * label, label[id$="_size_lbl"]').forEach(el => { el.textContent = 'Size'; });
   // Cyl size labels (static)
   document.querySelectorAll('.field label').forEach(lbl => {
     const t = lbl.textContent.trim();
-    if (t === 'Cyl. Size (L)' || t === 'Cyl. Size (cu ft)') lbl.textContent = u === 'imperial' ? 'Cyl. Size (cu ft)' : 'Cyl. Size (L)';
+    if (/^Cyl\. Size/i.test(t) || t === 'Size' || t === 'Cyl. Size (L)' || t === 'Cyl. Size (cu ft)') lbl.textContent = 'Size';
+    if (/^Cyl\. bar/i.test(t) || /^Cyl\. psi/i.test(t) || t === 'Bar') lbl.textContent = 'Bar';
   });
   ['cylSizeUnit','cylinderSizeUnit','tankSizeUnit'].forEach(id => setTxt(id, u === 'imperial' ? 'cu ft' : 'L'));
   ['cylPressureUnit','tankPressureUnit'].forEach(id => setTxt(id, u === 'imperial' ? 'psi' : 'bar'));
@@ -5682,8 +5701,9 @@ function getEffectiveSetpointAtDepth(depthM, ccr, surfP, phase) {
   if (phase === 'bottom') return bottomSP;
   if (phase === 'deco' || phase === 'ascent') return decoSP;
   const pAmb = (surfP || altSurfaceP) + depthM * BAR_PER_METRE;
-  if (pAmb <= decoSP + WATER_VAPOR) return descSP;
-  return bottomSP;
+  if (pAmb <= descSP + WATER_VAPOR) return descSP;
+  if (pAmb <= bottomSP + WATER_VAPOR) return bottomSP;
+  return decoSP;
 }
 
 function computePSCRFractions(pAmb, fO2, fHe, runtimeMin, ccr) {
@@ -5966,9 +5986,12 @@ function calcGasMODm(fO2, ppO2Limit) {
   return Math.floor((ppO2Limit / fO2 - 1) / BAR_PER_METRE);
 }
 
+function getBailoutPpo2Limit() {
+  return parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+}
+
 function getConfiguredBailoutMixes() {
-  const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
-    || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+  const ocPpo2 = getBailoutPpo2Limit();
   const mixes = [];
   const ids = typeof getAllDecoGasIds === 'function' ? getAllDecoGasIds() : [1, 2];
   ids.forEach(cidx => {
@@ -5980,7 +6003,7 @@ function getConfiguredBailoutMixes() {
       cidx,
       label: getGasLabel(fracs.fO2, fracs.fHe),
       fO2: fracs.fO2,
-      modM: calcGasMODm(fracs.fO2, activePpo2),
+      modM: calcGasMODm(fracs.fO2, ocPpo2),
     });
   });
   return mixes;
@@ -7128,7 +7151,7 @@ function runVPMSchedule(depthM, bt, descentRate, ascentRate, decoAscentRate, sur
 
   const levels = [{
     depth: depthM, time: bt, o2: bottomO2pct, he: bottomHePct,
-    setpoint: settings.setpoint,
+    setpoint: settings.bottomSetpoint ?? settings.setpoint ?? 1.2,
     oc: settings.bailout,
   }];
 
@@ -8354,8 +8377,10 @@ const VPMEngine = (() => {
         const surfP = settings ? getSurfacePressure(settings) : altSurfaceP;
         const ccr = {
             circuit: settings?.circuit || 'CCR',
-            setpoint: level.setpoint || settings?.setpoint || 1.3,
-            descentSetpoint: settings?.descentSetpoint || 0.7,
+            descentSetpoint: settings?.descentSetpoint ?? 0.7,
+            bottomSetpoint: settings?.bottomSetpoint ?? 1.2,
+            decoSetpoint: settings?.decoSetpoint ?? settings?.setpoint ?? 1.3,
+            setpoint: settings?.setpoint ?? 1.3,
             bailout: false,
         };
         return getEffectiveSetpointAtDepth(depthM != null ? depthM : 0, ccr, surfP);
@@ -9285,10 +9310,7 @@ function updateGasMODDisplays() {
     const dgFracs = getDecoCardFractions(cidx);
     if (!dgFracs) { disp.value = '—'; continue; }
     const fO2 = dgFracs.fO2;
-    const bailoutPpo2 = ccrUi
-      ? (parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
-        || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4)
-      : ppO2Deco;
+    const bailoutPpo2 = ccrUi ? getBailoutPpo2Limit() : ppO2Deco;
     const mod = calcMOD(fO2, bailoutPpo2);
     const heNote = dgFracs.fHe > 0 ? '  (' + getGasLabel(fO2, dgFracs.fHe) + ')' : '';
     disp.value = fmtDepth(mod) + heNote;
@@ -9366,15 +9388,15 @@ function addDecoGasCard() {
         <input type="number" id="dg${idx}TrimixHe" value="35" min="0" max="90" step="1" oninput="updateGasMODDisplays()" placeholder="35">
       </div>
       <div class="field">
-        <label>Optimal Switch Depth</label>
+        <label>Switch Depth <span class="tip-icon" onclick="showTip('Switch Depth','Depth at which this gas becomes optimal to breathe during ascent (or the recommended OC bailout depth). Calculated from O₂ fraction and ppO₂ limits when you generate a schedule; manual override available in Auto/Manual mode.')"><svg fill="none" height="11" viewbox="0 0 11 11" width="11" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"></circle><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.1"></path><circle cx="5.5" cy="7.4" fill="currentColor" r="0.55"></circle></svg></span></label>
         <input type="text" id="dg${idx}SwitchDepthDisplay" class="switch-depth-display" readonly style="cursor:default;" placeholder="Calculate to see">
       </div>
       <div class="field">
         <label>MOD <span class="tip-icon" onclick="showTip('MOD','Maximum Operating Depth — calculated from the selected gas O2 fraction and current ppO2 limit. Not table-based.')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4.1 3.8 Q4.1 2.4 5.5 2.4 Q6.9 2.4 6.9 3.7 Q6.9 4.6 5.5 5.3 L5.5 6.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="5.5" cy="7.4" r="0.55" fill="currentColor"/></svg></span></label>
         <input type="text" id="dg${idx}MODDisplay" readonly style="cursor:default;" placeholder="Select gas" title="Calculated MOD using selected gas and Max Deco ppO₂">
       </div>
-      <div class="field"><label>Cyl. Size (L)</label><input type="number" id="cylDg${idx}_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
-      <div class="field"><label id="cylDg${idx}_pres_lbl">Cyl. bar</label><input type="number" id="cylDg${idx}_pres" value="200" min="0" max="300" step="10" placeholder="200"></div>
+      <div class="field"><label>Size</label><input type="number" id="cylDg${idx}_size" value="11" min="1" max="30" step="0.5" placeholder="11"></div>
+      <div class="field"><label id="cylDg${idx}_pres_lbl">Bar</label><input type="number" id="cylDg${idx}_pres" value="200" min="0" max="300" step="10" placeholder="200"></div>
     </div>`;
 
   document.getElementById('decoGasCards').appendChild(card);
@@ -9528,8 +9550,8 @@ function runDecoSchedule() {
   const decoRate        = Math.max(1, parseInt(document.getElementById('decoAscentRate').value)    || 9);
   const surfaceRate     = Math.max(1, parseInt(document.getElementById('surfaceAscentRate').value) || 9);
   const descentRate = Math.max(1, parseInt(document.getElementById('descentRate').value) || 22);
-  const gfL    = mGF.low  / 100;
-  const gfH    = mGF.high / 100;
+  let gfL    = mGF.low  / 100;
+  let gfH    = mGF.high / 100;
   const ppo2Bottom = parseFloat(document.getElementById('ppo2Bottom').value) || 1.4;
   const ppo2Deco   = parseFloat(document.getElementById('ppo2Deco').value)   || 1.6;
   const minStopT   = parseFloat(document.getElementById('minStopTime').value) || 1;
@@ -10239,8 +10261,13 @@ function runDecoSchedule() {
   const BAR_PER_M = BAR_PER_METRE;
   // gasConsumed[gasLabel] = litres
   const gasConsumed = {};
+  function resolveSacForGas(label, phaseSac) {
+    if (!isRebreatherCircuit(_ccrSettings.circuit)) return phaseSac;
+    if (isCcrDiluentGasLabel(label)) return phaseSac;
+    return _ccrSettings.sacDecoCcr || phaseSac;
+  }
   function addGas(label, depthM, dur, sac) {
-    gasConsumed[label] = (gasConsumed[label] || 0) + ccrGasLitres(label, depthM, dur, sac);
+    gasConsumed[label] = (gasConsumed[label] || 0) + ccrGasLitres(label, depthM, dur, resolveSacForGas(label, sac));
   }
 
 
@@ -10368,6 +10395,18 @@ function runDecoSchedule() {
   totalCNSfrac += segCNSfrac(parseFloat(btPPO2), btAtDepthMin);
   totalOTU     += segOTU(parseFloat(btPPO2), btAtDepthMin);
   addGas(loopMixLabel, rawD, btAtDepthMin, sacBottom);
+  if (_zhlOnLoop) {
+    const reserveMin = (_ccrSettings.stressTimeMin || 0) + (_ccrSettings.problemSolveMin || 0);
+    if (reserveMin > 0) {
+      const mixes = getConfiguredBailoutMixes();
+      const useDil = document.getElementById('diluentUseAsBailout')?.value === 'on';
+      const reserveLabel = mixes.length ? mixes[0].label
+        : (useDil ? getGasLabel(bottomFO2, bottomFHe) : null);
+      if (reserveLabel) {
+        addGas(reserveLabel, rawD, reserveMin, _ccrSettings.sacStress || sacBottom);
+      }
+    }
+  }
   tbody.innerHTML += `<tr class="asc-row" data-phase="bottom">
     <td>🔵</td>
     <td data-label="Depth" style="color:var(--accent);">${dU?rawD+'m':mToFt(rawD)+'ft'}</td>

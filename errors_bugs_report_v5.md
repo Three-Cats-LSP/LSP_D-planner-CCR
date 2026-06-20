@@ -125,12 +125,40 @@ BUG-25 from report v4 was partially fixed by removing the old `ccrSetpointRow`, 
 
 ## Summary Table
 
-| # | Severity | Area | Description |
-|---|---|---|---|
-| BUG-27 | CRITICAL | Bailout/GF | `gfL`/`gfH` declared `const` then reassigned — bailout GF silently has zero effect |
-| BUG-28 | HIGH | CCR/Display | Depth-based SP fallback returns `descSP=0.7` at 3 m last stop — wrong ppO₂ display, CNS, and export |
-| BUG-29 | HIGH | VPM/CCR | VPM engine uses `decoSetpoint` for entire dive — `bottomSetpoint` ignored, shorter deco than correct |
-| BUG-30 | HIGH | CCR/Gas UI | Bailout MOD validation uses CCR bottom SP (1.2) not OC ppO₂ limit (1.4) — valid bailout gases incorrectly blocked |
-| BUG-31 | MEDIUM | CCR/Gas plan | `sacStress`, `sacDecoCcr`, `stressTimeMin`, `problemSolveMin` stored but never used in any calculation |
-| BUG-32 | LOW | pSCR/UX | pSCR mode shows all CCR setpoint fields (bottom, deco, descent SP) which have zero effect on pSCR |
+| # | Severity | Area | Description | Status |
+|---|---|---|---|---|
+| BUG-27 | CRITICAL | Bailout/GF | `gfL`/`gfH` declared `const` then reassigned — bailout GF silently has zero effect | FIXED |
+| BUG-28 | HIGH | CCR/Display | Depth-based SP fallback returns `descSP=0.7` at 3 m last stop — wrong ppO₂ display, CNS, and export | FIXED |
+| BUG-29 | HIGH | VPM/CCR | VPM engine uses `decoSetpoint` for entire dive — `bottomSetpoint` ignored, shorter deco than correct | FIXED |
+| BUG-30 | HIGH | CCR/Gas UI | Bailout MOD uses CCR bottom SP (1.2) not OC ppO₂ limit (1.4) — valid bailout gases incorrectly blocked | FIXED |
+| BUG-31 | MEDIUM | CCR/Gas plan | `sacStress`, `sacDecoCcr`, `stressTimeMin`, `problemSolveMin` stored but never used in any calculation | FIXED |
+| BUG-32 | LOW | pSCR/UX | pSCR mode shows all CCR setpoint fields (bottom, deco, descent SP) which have zero effect on pSCR | FIXED |
+
+---
+
+## FIXED in this pass (2026-06-20)
+
+### BUG-27 — Bailout GF `const gfL`/`gfH` reassignment
+
+**Fix:** Declared `gfL` and `gfH` as `let` in `runDecoSchedule()` so bailout GF overrides apply to the Bühlmann engine.
+
+### BUG-28 — `getEffectiveSetpointAtDepth()` depth fallback returned descent SP at shallow deco stops
+
+**Fix:** No-phase fallback now steps descSP → bottomSP → decoSP by ambient pressure instead of returning descent SP at last stop depths.
+
+### BUG-29 — VPM bottom phase used deco setpoint
+
+**Fix:** VPM `levels[0].setpoint` uses `bottomSetpoint`; VPM `getEffectiveSetpoint()` passes full phase setpoints to `getEffectiveSetpointAtDepth()`.
+
+### BUG-30 — Bailout MOD used CCR bottom SP instead of OC ppO₂ limit
+
+**Fix:** Bailout mix MOD display and validation use `ppo2Bottom` via `getBailoutPpo2Limit()`. Diluent MOD still uses active loop setpoint.
+
+### BUG-31 — Adv. Settings SAC/stress fields unused
+
+**Fix:** `sacDecoCcr` used for OC bailout gas consumption; stress + problem-solving minutes reserve gas on primary bailout mix at bottom depth using `sacStress`.
+
+### BUG-32 — pSCR setpoint fields visible
+
+**Status:** Already fixed — setpoint rows hidden when `circuit !== 'CCR'` in `toggleCircuitFields()`.
 
