@@ -2237,8 +2237,8 @@ else:
 
 tcf_start = js.find("function toggleCircuitFields")
 tcf_block = js[tcf_start:tcf_start + 700] if tcf_start > 0 else ""
-if "isCCR && bailoutOn" in tcf_block:
-    ok("toggleCircuitFields hides bailout GF until CCR bailout on (BUG-55)")
+if "isRB && bailoutOn" in tcf_block:
+    ok("toggleCircuitFields hides bailout GF until rebreather bailout on (BUG-55/59)")
 else:
     fail("ccrBailoutSettingsGroup still shown for pSCR/bailout-off (BUG-55)")
 
@@ -2246,6 +2246,48 @@ if "PSCR_DEFAULT_BYPASS_RATIO" in js and "computePSCRFractions" in js[js.find("f
     ok("ccrDiluentSurfaceLpm uses pSCR loop fO2 + bypass ratio (BUG-56)")
 else:
     fail("ccrDiluentSurfaceLpm still uses diluent fO2 only for pSCR (BUG-56)")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 46 — v2.30.13 fixes (errors_bugs_report_v11)
+# ══════════════════════════════════════════════════════════════════════════════
+
+cdl_start = js.find("function ccrDiluentSurfaceLpm")
+cdl_block = js[cdl_start:cdl_start + 650] if cdl_start > 0 else ""
+if "computePSCRFractions(pSurf" in cdl_block and "altSurfaceP + dM * BAR_PER_METRE" not in cdl_block:
+    ok("ccrDiluentSurfaceLpm pSCR: surface fO2Loop, depth scaled once in ccrGasLitres (BUG-57)")
+else:
+    fail("ccrDiluentSurfaceLpm pSCR still double-scales depth (BUG-57)")
+
+if "decoBT" in cdl_block and "runtimeMin" in cdl_block:
+    ok("ccrDiluentSurfaceLpm pSCR: BT fallback when scrRuntimeMin=0 (BUG-58)")
+else:
+    fail("ccrDiluentSurfaceLpm pSCR missing scrRuntimeMin/BT estimate (BUG-58)")
+
+tcf_start = js.find("function toggleCircuitFields")
+tcf_block = js[tcf_start:tcf_start + 700] if tcf_start > 0 else ""
+if "isRB && bailoutOn" in tcf_block:
+    ok("toggleCircuitFields shows bailout GF for pSCR bailout-on (BUG-59)")
+else:
+    fail("ccrBailoutSettingsGroup still CCR-only (BUG-59)")
+
+if "settings.circuit !== 'pSCR'" in js and "offLoopPath" in js:
+    ok("VPM offLoopPath excludes normal pSCR on-loop (BUG-60)")
+else:
+    fail("VPM still treats pSCR as offLoopPath (BUG-60)")
+
+vpm_gas_start = js.find("const gasConsVPM = {}")
+vpm_gas_block = js[vpm_gas_start:vpm_gas_start + 800] if vpm_gas_start > 0 else ""
+if "endParseDepthM(depthRaw)" in vpm_gas_block:
+    ok("VPM gas consumption parses arrow depth cells (BUG-61)")
+else:
+    fail("VPM gas consumption still parseFloat depth as 0 (BUG-61)")
+
+clear_start = js.find("clear: function()")
+clear_block = js[clear_start:clear_start + 700] if clear_start > 0 else ""
+if "waterDensity" in clear_block and "lspUserAdvDefaults" in clear_block:
+    ok("appSettings.clear() removes extended localStorage keys (BUG-62)")
+else:
+    fail("appSettings.clear() still misses app-owned keys (BUG-62)")
 
 print("=" * 60)
 

@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.12';
+const APP_VERSION = '2.30.13';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -5949,9 +5949,10 @@ function ccrDiluentSurfaceLpm(depthM) {
   const bot = getBottomGasFractions();
   const fO2Dil = Math.max(0.01, bot.fO2 || 0.21);
   if (ccr.circuit === 'pSCR' && !ccr.bailout) {
-    const dM = depthM != null ? depthM : 0;
-    const pAmb = altSurfaceP + dM * BAR_PER_METRE;
-    const fr = computePSCRFractions(pAmb, bot.fO2, bot.fHe, ccr.scrRuntimeMin || 0, ccr);
+    const pSurf = altSurfaceP || 1.0;
+    let runtimeMin = ccr.scrRuntimeMin || 0;
+    if (!runtimeMin) runtimeMin = parseFloat(document.getElementById('decoBT')?.value) || 0;
+    const fr = computePSCRFractions(pSurf, bot.fO2, bot.fHe, runtimeMin, ccr);
     const fO2Loop = Math.max(0.01, fr.fO2);
     return (metRate / fO2Loop) * PSCR_DEFAULT_BYPASS_RATIO;
   }
@@ -5998,7 +5999,7 @@ function toggleCircuitFields() {
   if (ccrGrp) ccrGrp.style.display = isRB ? '' : 'none';
   const boGrp = document.getElementById('ccrBailoutSettingsGroup');
   const bailoutOn = document.getElementById('ccrBailoutToggle')?.value === 'on';
-  if (boGrp) boGrp.style.display = (isCCR && bailoutOn) ? '' : 'none';
+  if (boGrp) boGrp.style.display = (isRB && bailoutOn) ? '' : 'none';
   ['ccrSpDescentRow', 'ccrSpBottomRow', 'ccrSpDecoRow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isCCR ? '' : 'none';
@@ -7487,7 +7488,7 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const mixRaw = tds[3]?.textContent?.trim() || '';
     const stopRaw = tds[2]?.textContent?.trim() || '';
     const depthRaw = tds[1]?.textContent?.trim() || '';
-    const depthM2 = parseFloat(depthRaw) || 0;
+    const depthM2 = endParseDepthM(depthRaw) ?? (parseFloat(depthRaw) || 0);
     const durMin = (() => { const p = stopRaw.split(':'); return p.length===2 ? parseInt(p[0]) + parseInt(p[1])/60 : parseFloat(stopRaw)||0; })();
     if (!durMin || !mixRaw || mixRaw === '-') return;
     const gasKey = mixRaw; // labels now always in O2/He format (e.g. '50/00', '21/35', '100/00')
@@ -8928,7 +8929,7 @@ const VPMEngine = (() => {
         function runInterLevelDecoAscent(targetDepth) {
             calcCrushing(state, settings);
             applyNuclearRegeneration(state, runtime);
-            const offLoopPath = isCCR && (forcedOCMode || curSP <= 0);
+            const offLoopPath = isCCR && settings.circuit !== 'pSCR' && (forcedOCMode || curSP <= 0);
             const interLevelConservatism = offLoopPath ? Math.max(0, conservatism - 1) : conservatism;
             calcAllowableGradients(state, model, settings, interLevelConservatism);
             if (model === 'VPMBE') extendedCompensation(state, settings);
@@ -17513,10 +17514,16 @@ var appSettings = {
   // Clear all saved values
   clear: function() {
     try {
-      localStorage.removeItem('lspDiveSettings_v6');
-      localStorage.removeItem('lspDiveSettings_v3');
-      localStorage.removeItem('lspDiveSettings_v2');
-      localStorage.removeItem('lspDiveSettings');
+      [
+        'lspDiveSettings_v6', 'lspDiveSettings_v5', 'lspDiveSettings_v4',
+        'lspDiveSettings_v3', 'lspDiveSettings_v2', 'lspDiveSettings',
+        'lspDiveDefaults_v2',
+        'waterDensity', 'waterDensityCustom',
+        'lspAltitude', 'lspAcclimatized',
+        'gfCustomLow', 'gfCustomHigh',
+        'lspCcrAdvOpen', 'lspEnvOpen', 'lspAdvancedOpen',
+        'lspUserAdvDefaults', 'decoTableView', 'diveTheme',
+      ].forEach(k => localStorage.removeItem(k));
       console.log('[LSP] ✅ Settings cleared');
     } catch(e) {
       console.warn('[LSP] Clear failed:', e.message);
