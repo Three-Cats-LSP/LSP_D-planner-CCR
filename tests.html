@@ -229,11 +229,17 @@ function makeSettings(overrides) {
     ppO2High: 1.6,
     o2MaxDepth: 6,
     conservatism: 0,
+    gfLo: 30,
     gfHi: 85,
     gfs: 85,
     firstStop30sec: false,
     extendedStops: false,
   }, overrides || {});
+}
+
+// NDL tests: GF 100/100 — "no deco" means no tissue ceiling, not GF 30/85 conservatism.
+function ndlSettings(overrides) {
+  return makeSettings(Object.assign({ gfLo: 100, gfHi: 100 }, overrides || {}));
 }
 
 function makeLevel(depth, time, o2, he) {
@@ -297,21 +303,21 @@ var GROUPS = [
     name: 'Bühlmann: No-Deco Dives',
     tests: [
       ['20m / 20min → 0 deco stops', function() {
-        var r = calc(makeLevel(20, 20), NODECO, makeSettings(), 'ZHLC_GF');
+        var r = calc(makeLevel(20, 20), NODECO, ndlSettings(), 'ZHLC_GF');
         assert(!r.error, r.error);
         var deco = (r.stops || []).filter(function(s){ return s.time > 0; });
         assert(deco.length === 0, 'Expected 0 stops, got ' + deco.length);
         return 'RT=' + r.totalRuntime.toFixed(1) + ' min';
       }],
       ['15m / 60min → 0 deco stops', function() {
-        var r = calc(makeLevel(15, 60), NODECO, makeSettings(), 'ZHLC_GF');
+        var r = calc(makeLevel(15, 60), NODECO, ndlSettings(), 'ZHLC_GF');
         assert(!r.error, r.error);
         var deco = (r.stops || []).filter(function(s){ return s.time > 0; });
         assert(deco.length === 0, 'Expected 0 stops, got ' + deco.length);
         return 'RT=' + r.totalRuntime.toFixed(1) + ' min';
       }],
       ['10m / 90min → 0 deco stops', function() {
-        var r = calc(makeLevel(10, 90), NODECO, makeSettings(), 'ZHLC_GF');
+        var r = calc(makeLevel(10, 90), NODECO, ndlSettings(), 'ZHLC_GF');
         assert(!r.error, r.error);
         var deco = (r.stops || []).filter(function(s){ return s.time > 0; });
         assert(deco.length === 0, 'Got ' + deco.length + ' stops');

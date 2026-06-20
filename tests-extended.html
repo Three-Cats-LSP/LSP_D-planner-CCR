@@ -545,6 +545,10 @@ function makeSettings(overrides) {
   }, overrides || {});
 }
 
+function ndlSettings(overrides) {
+  return makeSettings(Object.assign({ gfLo: 100, gfHi: 100 }, overrides || {}));
+}
+
 const NO_GASES = [];
 const EAN50 = [gas(50, 0)];
 const EAN50_O2 = [gas(50, 0), gas(100, 0)];
@@ -664,8 +668,8 @@ const GROUPS = [
   {
     name: 'Bühlmann NDL and Deco',
     tests: [
-      ['20m / 20min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(20,20), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops: ' + decoStops(r).length); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
-      ['15m / 60min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(15,60), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops'); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
+      ['20m / 20min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(20,20), NO_GASES, ndlSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops: ' + decoStops(r).length); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
+      ['15m / 60min stays no-deco', 'ZHLC_GF', function(){ const r = calc(level(15,60), NO_GASES, ndlSettings(), 'ZHLC_GF'); assert(decoStops(r).length === 0, 'Unexpected deco stops'); return 'RT ' + pretty(r.totalRuntime) + ' min'; }],
       ['40m / 25min requires decompression', 'ZHLC_GF', function(){ const r = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(decoStops(r).length > 0 || totalStopTime(r) > 0, 'No deco generated'); return decoStops(r).length + ' stops, RT ' + pretty(r.totalRuntime); }],
       ['50m / 30min runtime exceeds bottom time', 'ZHLC_GF', function(){ const r = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(r.totalRuntime > 30, 'RT <= BT'); return 'RT ' + pretty(r.totalRuntime); }],
       ['50m / 30min runtime > 40m / 25min runtime', 'ZHLC_GF', function(){ const a = calc(level(40,25), NO_GASES, makeSettings(), 'ZHLC_GF'); const b = calc(level(50,30), NO_GASES, makeSettings(), 'ZHLC_GF'); assert(b.totalRuntime > a.totalRuntime, 'Deeper/longer dive produced less runtime'); return pretty(a.totalRuntime) + ' → ' + pretty(b.totalRuntime); }],

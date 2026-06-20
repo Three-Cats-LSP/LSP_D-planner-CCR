@@ -2566,6 +2566,17 @@ if os.path.isfile(massive_main_path):
 else:
     fail("tests-massive-main.html missing")
 
+tests_html_path = os.path.join(os.path.dirname(__file__), "tests.html")
+if os.path.isfile(tests_html_path):
+    with open(tests_html_path, encoding="utf-8") as f:
+        tests_html = f.read()
+    if "function ndlSettings" in tests_html and "ndlSettings()" in tests_html:
+        ok("tests.html NDL group uses GF 100/100 via ndlSettings()")
+    else:
+        fail("tests.html No-Deco tests still use default GF conservatism")
+else:
+    fail("tests.html missing")
+
 print("=" * 60)
 
 if FAIL:
