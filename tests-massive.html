@@ -369,17 +369,23 @@ const TX_DECO = [g(50), g(100)];
 // Engine wrapper — routes ZHLC_GF to ZHLEngine (Bühlmann), all others to VPMEngine
 function calc(levels, gases, settings, model) {
   TOTAL_ENGINE_CALLS++;
+  const keepHeadless = !!(WIN && WIN._zhlHeadless);
+  if (WIN) WIN._zhlHeadless = true;
   let r;
-  if (model === 'ZHLC_GF') {
-    // ZHLEngine wraps the live Bühlmann engine in the iframe
-    if (!WIN || !WIN.ZHLEngine) throw new Error('ZHLEngine not available — iframe not loaded');
-    r = WIN.ZHLEngine.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()));
-  } else {
-    r = E.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()), model);
+  try {
+    if (model === 'ZHLC_GF') {
+      // ZHLEngine wraps the live Bühlmann engine in the iframe
+      if (!WIN || !WIN.ZHLEngine) throw new Error('ZHLEngine not available — iframe not loaded');
+      r = WIN.ZHLEngine.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()));
+    } else {
+      r = E.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()), model);
+    }
+    assert(r && typeof r === 'object', 'No result object');
+    if (r.error) throw new Error('Engine error: ' + r.error);
+    return r;
+  } finally {
+    if (WIN) WIN._zhlHeadless = keepHeadless || true;
   }
-  assert(r && typeof r === 'object', 'No result object');
-  if (r.error) throw new Error('Engine error: ' + r.error);
-  return r;
 }
 
 // Result inspectors
@@ -3655,11 +3661,14 @@ async function startTests(skipTier1 = false) {
         }
         // Units reset
         if (typeof win.setUnits === 'function' && win.units !== 'metric') win.setUnits('metric');
+        const circuitEl = win.document.getElementById('circuitSelect');
+        if (circuitEl && circuitEl.value !== 'OC') {
+          circuitEl.value = 'OC';
+          if (typeof win.toggleCircuitFields === 'function') win.toggleCircuitFields();
+        }
       } finally {
-        win._zhlHeadless = false;
+        win._zhlHeadless = true;
       }
-      
-      win.calcContingency = _origCC;
     } catch(e) {}
 
     SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
@@ -3724,7 +3733,7 @@ async function startTests(skipTier1 = false) {
       win._lastContingency = null; // prevent calcContingency cascade during headless run
       win._zhlHeadless = true;
       try { win.runDecoSchedule(); } finally {
-        win._zhlHeadless = false;
+        win._zhlHeadless = true;
         if (_algoEl && _origAlgo) _algoEl.value = _origAlgo;
       }
       if (_dEl  && _origD  != null) _dEl.value  = _origD;

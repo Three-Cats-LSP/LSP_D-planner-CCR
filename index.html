@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.21';
+const APP_VERSION = '2.30.22';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -9698,7 +9698,7 @@ function updateTravelGasMOD() {
 function runDecoSchedule() {
   let _zhlPrevGF = null;
   try {
-  if (typeof validateCcrGasConfiguration === 'function' && isCcrGasUiMode()) {
+  if (!window._zhlHeadless && typeof validateCcrGasConfiguration === 'function' && isCcrGasUiMode()) {
     const gasVal = validateCcrGasConfiguration();
     if (!gasVal.ok) {
       updateCcrGasValidation();
@@ -11111,12 +11111,13 @@ const ZHLEngine = (() => {
     }
 
     // ── Run the Bühlmann engine (headless — skip DOM rendering) ─────────────
+    const _headlessEntry = !!window._zhlHeadless;
     window._zhlHeadless = true;
     window._lastPlan = null;
     try {
       runDecoSchedule();
     } catch(e) {
-      window._zhlHeadless = false;
+      window._zhlHeadless = _headlessEntry;
       window._zhlRepState = null;   // clear on error path too
       window._priorDiveCarry = _prevPriorDiveCarry; // restore on error path too
       mGF.low = prevGF.low; mGF.high = prevGF.high;
@@ -11124,7 +11125,7 @@ const ZHLEngine = (() => {
       if (algoEl) algoEl.value = prevAlgo;
       return { error: e.message, stops: [], plan: [], totalRuntime: 0 };
     }
-    window._zhlHeadless = false;
+    window._zhlHeadless = _headlessEntry;
 
     const lp = window._lastPlan;
 

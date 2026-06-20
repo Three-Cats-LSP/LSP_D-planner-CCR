@@ -2477,10 +2477,35 @@ if ctx_oc_start > 0 and "calcSettings.bailout" in ctx_oc_block and "return setti
 else:
     fail("ctxUseOCForPpo2 still references free settings identifier (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.21['\"]", js):
-    ok("APP_VERSION bumped to 2.30.21")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.22['\"]", js):
+    ok("APP_VERSION bumped to 2.30.22")
 else:
-    fail("APP_VERSION not bumped to 2.30.21")
+    fail("APP_VERSION not bumped to 2.30.22")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 55 — v2.30.22 fix (massive suite headless mode leak)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "_headlessEntry = !!window._zhlHeadless" in js and "window._zhlHeadless = _headlessEntry" in js:
+    ok("ZHLEngine.calculate preserves _zhlHeadless across calls (BUG-74)")
+else:
+    fail("ZHLEngine.calculate still clears _zhlHeadless after headless runs (BUG-74)")
+
+if re.search(r"!window\._zhlHeadless && typeof validateCcrGasConfiguration", js):
+    ok("runDecoSchedule skips CCR alert when headless (BUG-74)")
+else:
+    fail("runDecoSchedule may alert() during headless test runs (BUG-74)")
+
+massive_path = os.path.join(os.path.dirname(__file__), "tests-massive.html")
+if os.path.isfile(massive_path):
+    with open(massive_path, encoding="utf-8") as f:
+        massive = f.read()
+    if "keepHeadless" in massive and "win._zhlHeadless = true" in massive:
+        ok("tests-massive.html calc() reasserts headless during engine calls (BUG-74)")
+    else:
+        fail("tests-massive.html missing headless guard in calc() (BUG-74)")
+else:
+    fail("tests-massive.html missing")
 
 print("=" * 60)
 
