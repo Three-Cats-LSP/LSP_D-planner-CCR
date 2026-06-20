@@ -89,5 +89,25 @@ The Bühlmann path (lines ~10392–10401) adds a gas reserve for `stressTimeMin 
 | BUG-33 | HIGH | VPM/Gas plan | VPM deco gas cylinder lookup uses wrong DOM IDs — cyl 1 & 2 always blank in gas plan |
 | BUG-34 | HIGH | Gas plan | Stress/reserve gas picks `mixes[0]` without depth check — may assign reserve to a gas not breathable at dive depth |
 | BUG-35 | MEDIUM | VPM/Gas plan | VPM gas consumption ignores `sacDecoCcr` for bailout deco gases — inconsistent with Bühlmann path |
-| BUG-36 | MEDIUM | VPM/Gas plan | VPM gas plan has no stress/problem-solve bailout reserve — Bühlmann and VPM gas plans diverge |
+| BUG-36 | MEDIUM | VPM/Gas plan | VPM gas plan has no stress/problem-solve bailout reserve — Bühlmann and VPM gas plans diverge | FIXED |
+
+---
+
+## FIXED in this pass (2026-06-20)
+
+### BUG-33 — VPM deco cylinder DOM IDs
+
+**Fix:** `decoGas1Mix`/`decoGas2Mix` → `dg1Mix`/`dg2Mix` and matching custom O₂ field IDs in `_cylDefsVPM`.
+
+### BUG-34 — Stress reserve picked wrong bailout mix
+
+**Fix:** Added `getBailoutReserveMixLabel()` — selects deepest-capable mix at dive depth (or diluent when enabled).
+
+### BUG-35 — VPM ignored `sacDecoCcr`
+
+**Fix:** VPM gas loop uses shared `resolveCcrSacForGas()` (same as Bühlmann path).
+
+### BUG-36 — VPM missing stress/problem-solve reserve
+
+**Fix:** VPM gas consumption adds stress reserve on on-loop CCR dives, matching Bühlmann.
 

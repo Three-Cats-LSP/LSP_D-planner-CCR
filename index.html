@@ -6002,6 +6002,31 @@ function getConfiguredBailoutMixes() {
   return mixes;
 }
 
+function resolveCcrSacForGas(label, phaseSac, ccr) {
+  const cfg = ccr || (typeof getCCRSettingsFromDOM === 'function' ? getCCRSettingsFromDOM() : null);
+  if (!cfg || !isRebreatherCircuit(cfg.circuit)) return phaseSac;
+  if (typeof isCcrDiluentGasLabel === 'function' && isCcrDiluentGasLabel(label)) return phaseSac;
+  return cfg.sacDecoCcr || phaseSac;
+}
+
+/** Deepest-capable bailout mix label for stress/problem-solve reserve at depth. */
+function getBailoutReserveMixLabel(depthM, fO2Bot, fHeBot) {
+  const mixes = getConfiguredBailoutMixes();
+  const atDepth = mixes.filter(m => m.modM >= depthM - 0.01);
+  if (atDepth.length) {
+    return atDepth.reduce((best, m) => (!best || m.modM > best.modM) ? m : best).label;
+  }
+  const useDil = document.getElementById('diluentUseAsBailout')?.value === 'on';
+  if (useDil) {
+    const activePpo2 = parseFloat(document.getElementById('ccrBottomSetpoint')?.value)
+      || parseFloat(document.getElementById('ppo2Bottom')?.value) || 1.4;
+    if (calcGasMODm(fO2Bot, activePpo2) >= depthM - 0.01) {
+      return getGasLabel(fO2Bot, fHeBot);
+    }
+  }
+  return null;
+}
+
 function validateCcrGasConfiguration() {
   if (!isCcrGasUiMode()) return { ok: true, errors: [], warnings: [] };
   const rawD = parseFloat(document.getElementById('decoDepth')?.value) || 0;
@@ -7389,9 +7414,20 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const durMin = (() => { const p = stopRaw.split(':'); return p.length===2 ? parseInt(p[0]) + parseInt(p[1])/60 : parseFloat(stopRaw)||0; })();
     if (!durMin || !mixRaw || mixRaw === '-') return;
     const gasKey = mixRaw; // labels now always in O2/He format (e.g. '50/00', '21/35', '100/00')
-    const sac = (ph === 'bottom') ? sacBotVPM : sacDecoVPM;
+    const sac = resolveCcrSacForGas(gasKey, (ph === 'bottom') ? sacBotVPM : sacDecoVPM, _vpmCcr);
     gasConsVPM[gasKey] = (gasConsVPM[gasKey] || 0) + ccrGasLitres(gasKey, depthM2, durMin, sac);
   });
+  if (_vpmOnLoop) {
+    const reserveMin = (_vpmCcr.stressTimeMin || 0) + (_vpmCcr.problemSolveMin || 0);
+    if (reserveMin > 0) {
+      const botFracs = _vpmBotFracs || getBottomGasFractions();
+      const reserveLabel = getBailoutReserveMixLabel(depthM, botFracs.fO2, botFracs.fHe);
+      if (reserveLabel) {
+        const stressSac = _vpmCcr.sacStress || sacBotVPM;
+        gasConsVPM[reserveLabel] = (gasConsVPM[reserveLabel] || 0) + ccrGasLitres(reserveLabel, depthM, reserveMin, stressSac);
+      }
+    }
+  }
   const gasElVPM = document.getElementById('gasConsumptionSummary');
   if (gasElVPM && Object.keys(gasConsVPM).length) {
     const cylIds = [['cylBot_size','cylBot_pres'],['cylDg1_size','cylDg1_pres'],['cylDg2_size','cylDg2_pres'],['cylTravelGas_size','cylTravelGas_pres']];
@@ -7420,8 +7456,8 @@ function renderVPMResults(result, settings, depthM, bt, bottomO2pct, bottomHePct
     const _cylDefsVPM = [
       { ids:['cylBot_size','cylBot_pres','cylBot_reserve'],                   label: gasLabels[0] || null,                                              isBottom: true  },
       { ids:['cylTravelGas_size','cylTravelGas_pres','cylTravelGas_reserve'], label: (getTravelGasInfo()?.label || null),                                isBottom: false },
-      { ids:['cylDg1_size','cylDg1_pres','cylDg1_reserve'],                   label: (getDecoGasLabel('decoGas1Mix','decoGas1Custom') || null),           isBottom: false },
-      { ids:['cylDg2_size','cylDg2_pres','cylDg2_reserve'],                   label: (getDecoGasLabel('decoGas2Mix','decoGas2Custom') || null),           isBottom: false },
+      { ids:['cylDg1_size','cylDg1_pres','cylDg1_reserve'],                   label: (getDecoGasLabel('dg1Mix','dg1CustomO2') || null),           isBottom: false },
+      { ids:['cylDg2_size','cylDg2_pres','cylDg2_reserve'],                   label: (getDecoGasLabel('dg2Mix','dg2CustomO2') || null),           isBottom: false },
     ];
     const _cylByLabelVPM = {};
     _cylDefsVPM.forEach(cyl => {
@@ -10254,13 +10290,8 @@ function runDecoSchedule() {
   const BAR_PER_M = BAR_PER_METRE;
   // gasConsumed[gasLabel] = litres
   const gasConsumed = {};
-  function resolveSacForGas(label, phaseSac) {
-    if (!isRebreatherCircuit(_ccrSettings.circuit)) return phaseSac;
-    if (isCcrDiluentGasLabel(label)) return phaseSac;
-    return _ccrSettings.sacDecoCcr || phaseSac;
-  }
   function addGas(label, depthM, dur, sac) {
-    gasConsumed[label] = (gasConsumed[label] || 0) + ccrGasLitres(label, depthM, dur, resolveSacForGas(label, sac));
+    gasConsumed[label] = (gasConsumed[label] || 0) + ccrGasLitres(label, depthM, dur, resolveCcrSacForGas(label, sac, _ccrSettings));
   }
 
 
@@ -10391,10 +10422,7 @@ function runDecoSchedule() {
   if (_zhlOnLoop) {
     const reserveMin = (_ccrSettings.stressTimeMin || 0) + (_ccrSettings.problemSolveMin || 0);
     if (reserveMin > 0) {
-      const mixes = getConfiguredBailoutMixes();
-      const useDil = document.getElementById('diluentUseAsBailout')?.value === 'on';
-      const reserveLabel = mixes.length ? mixes[0].label
-        : (useDil ? getGasLabel(bottomFO2, bottomFHe) : null);
+      const reserveLabel = getBailoutReserveMixLabel(depthM, bottomFO2, bottomFHe);
       if (reserveLabel) {
         addGas(reserveLabel, rawD, reserveMin, _ccrSettings.sacStress || sacBottom);
       }
