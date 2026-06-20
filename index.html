@@ -2038,30 +2038,82 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <option value="pSCR">Passive SCR (pSCR)</option>
 </select>
 </div>
-<div class="field" id="ccrSetpointRow" style="display:none;">
-<label>High Setpoint (bar)</label>
-<input id="ccrSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.3"/>
-</div>
-<div class="field" id="ccrDescentSetpointRow" style="display:none;">
-<label>Descent Setpoint (bar)</label>
-<input id="ccrDescentSetpoint" max="1.0" min="0.5" step="0.1" type="number" value="0.7"/>
-</div>
 <div class="field" id="ccrBailoutRow" style="display:none;">
-<label>Bailout (OC + GF 90/90)</label>
+<label>Bailout mode</label>
 <select id="ccrBailoutToggle">
 <option selected="" value="off">Off — on loop</option>
 <option value="on">On — open circuit bailout</option>
 </select>
 </div>
-<div class="field" id="scrFieldsRow" style="display:none;">
-<label>pSCR Loop Volume (L)</label>
-<input id="scrLoopVolume" max="15" min="3" step="0.5" type="number" value="7"/>
 </div>
-<div class="field" id="scrFieldsRow2" style="display:none;">
-<label>pSCR Metabolic O₂ (L/min)</label>
-<input id="scrMetabolicO2" max="2" min="0.5" step="0.05" type="number" value="0.85"/>
+<!-- ── Rebreather Adv. Settings (collapsible, inside REBREATHER card) ── -->
+<div id="ccrAdvSettingsSection" style="display:none;margin-top:10px;">
+<button id="ccrAdvSettingsToggle" onclick="toggleCcrAdvSettings()" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" style="display:flex;align-items:center;gap:7px;width:100%;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 12px;cursor:pointer;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:left;transition:all .2s;">
+<span id="ccrAdvSettingsChevron" style="transition:transform .25s;display:inline-block;">▶</span>
+<span>Adv. Settings</span>
+<span id="ccrAdvSettingsSummary" style="margin-left:auto;font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.7;"></span>
+</button>
+<div id="ccrAdvSettingsBody" style="display:none;margin-top:8px;">
+<div id="ccrSettingsGroup" style="display:none;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">CCR Settings</div>
+<div class="form-grid u0">
+<div class="field" id="ccrSpDescentRow" style="display:none;">
+<label>SP descent (bar)</label>
+<input id="ccrDescentSetpoint" max="1.0" min="0.5" step="0.1" type="number" value="0.7"/>
+</div>
+<div class="field" id="ccrSpBottomRow" style="display:none;">
+<label>SP bottom (bar)</label>
+<input id="ccrBottomSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.2"/>
+</div>
+<div class="field" id="ccrSpDecoRow" style="display:none;">
+<label>SP deco (bar)</label>
+<input id="ccrDecoSetpoint" max="1.6" min="0.7" step="0.1" type="number" value="1.3"/>
+</div>
+<div class="field" id="ccrLoopVolRow">
+<label>Loop volume (L)</label>
+<input id="ccrLoopVolume" max="15" min="3" step="0.5" type="number" value="10"/>
+</div>
+<div class="field" id="ccrMetabolicRow">
+<label>Metabolic O₂ (L/min)</label>
+<input id="ccrMetabolicO2" max="2.5" min="0.5" step="0.05" type="number" value="1.5"/>
+</div>
+<div class="field">
+<label>SAC stress (L/min)</label>
+<input id="ccrSacStress" max="80" min="10" step="1" type="number" value="50"/>
+</div>
+<div class="field">
+<label>SAC deco (L/min)</label>
+<input id="ccrSacDeco" max="40" min="5" step="1" type="number" value="25"/>
+</div>
+<div class="field">
+<label>Stress time (min)</label>
+<input id="ccrStressTime" max="30" min="1" step="1" type="number" value="10"/>
+</div>
+<div class="field">
+<label>Problem solving (min)</label>
+<input id="ccrProblemSolve" max="15" min="1" step="1" type="number" value="3"/>
 </div>
 </div>
+</div>
+<div id="ccrBailoutSettingsGroup" style="display:none;margin-top:12px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Bailout Settings</div>
+<div class="form-grid u0">
+<div class="field">
+<label>BO GF Low (%)</label>
+<input id="ccrBailoutGfLow" max="100" min="20" step="5" type="number" value="50"/>
+</div>
+<div class="field">
+<label>BO GF High (%)</label>
+<input id="ccrBailoutGfHigh" max="100" min="50" step="5" type="number" value="85"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- legacy ids kept for saved-settings compat (hidden) -->
+<input id="ccrSetpoint" type="hidden" value="1.3"/>
+<input id="scrLoopVolume" type="hidden" value="10"/>
+<input id="scrMetabolicO2" type="hidden" value="1.5"/>
 </div>
 <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
 <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔵 GAS MIX 1 — BOTTOM GAS</div>
@@ -4754,8 +4806,10 @@ function buildDecoPlanHeaderData() {
   const _expMdp6m = document.getElementById('minDeco6m')?.value || '3';
   const _depthUnit = units === 'imperial' ? 'ft' : 'm';
   const _ccrHdr = getCCRSettingsFromDOM();
-  const _ccrLabel = _ccrHdr.bailout ? 'BAILOUT OC'
-    : _ccrHdr.circuit === 'CCR' ? `CCR SP ${_ccrHdr.setpoint}`
+  const _ccrLabel = _ccrHdr.bailout
+    ? `BAILOUT OC GF ${_ccrHdr.bailoutGfLow}/${_ccrHdr.bailoutGfHigh}`
+    : _ccrHdr.circuit === 'CCR'
+      ? `CCR SP ${_ccrHdr.descentSetpoint}/${_ccrHdr.bottomSetpoint}/${_ccrHdr.decoSetpoint}`
     : _ccrHdr.circuit === 'pSCR' ? 'pSCR'
     : 'OC';
 
@@ -5523,13 +5577,34 @@ function getCCRSettingsFromDOM() {
   const circuit = document.getElementById('circuitSelect')?.value || 'OC';
   const bailoutEl = document.getElementById('ccrBailoutToggle');
   const bailout = bailoutEl ? (bailoutEl.type === 'checkbox' ? bailoutEl.checked : bailoutEl.value === 'on') : false;
+  const decoSP = parseFloat(document.getElementById('ccrDecoSetpoint')?.value)
+    || parseFloat(document.getElementById('ccrSetpoint')?.value) || 1.3;
+  const loopVol = parseFloat(document.getElementById('ccrLoopVolume')?.value)
+    || parseFloat(document.getElementById('scrLoopVolume')?.value) || 10;
+  const metO2 = parseFloat(document.getElementById('ccrMetabolicO2')?.value)
+    || parseFloat(document.getElementById('scrMetabolicO2')?.value) || 1.5;
+  // Keep hidden legacy fields in sync for saved presets / exports
+  const legSp = document.getElementById('ccrSetpoint');
+  const legVol = document.getElementById('scrLoopVolume');
+  const legMet = document.getElementById('scrMetabolicO2');
+  if (legSp) legSp.value = String(decoSP);
+  if (legVol) legVol.value = String(loopVol);
+  if (legMet) legMet.value = String(metO2);
   return {
     circuit,
-    setpoint: parseFloat(document.getElementById('ccrSetpoint')?.value) || 1.3,
+    setpoint: decoSP,
+    decoSetpoint: decoSP,
+    bottomSetpoint: parseFloat(document.getElementById('ccrBottomSetpoint')?.value) || 1.2,
     descentSetpoint: parseFloat(document.getElementById('ccrDescentSetpoint')?.value) || 0.7,
     bailout,
-    scrLoopVolume: parseFloat(document.getElementById('scrLoopVolume')?.value) || 7.0,
-    scrMetabolicO2: parseFloat(document.getElementById('scrMetabolicO2')?.value) || 0.85,
+    bailoutGfLow: parseInt(document.getElementById('ccrBailoutGfLow')?.value, 10) || 50,
+    bailoutGfHigh: parseInt(document.getElementById('ccrBailoutGfHigh')?.value, 10) || 85,
+    scrLoopVolume: loopVol,
+    scrMetabolicO2: metO2,
+    sacStress: parseFloat(document.getElementById('ccrSacStress')?.value) || 50,
+    sacDecoCcr: parseFloat(document.getElementById('ccrSacDeco')?.value) || 25,
+    stressTimeMin: parseFloat(document.getElementById('ccrStressTime')?.value) || 10,
+    problemSolveMin: parseFloat(document.getElementById('ccrProblemSolve')?.value) || 3,
   };
 }
 
@@ -5538,11 +5613,20 @@ function mergeCCRSettings(settings) {
   const s = settings || {};
   return {
     circuit: s.circuit || dom.circuit || 'OC',
-    setpoint: s.setpoint != null ? s.setpoint : dom.setpoint,
+    setpoint: s.setpoint != null ? s.setpoint : (s.decoSetpoint != null ? s.decoSetpoint : dom.setpoint),
+    decoSetpoint: s.decoSetpoint != null ? s.decoSetpoint : (s.setpoint != null ? s.setpoint : dom.decoSetpoint),
+    bottomSetpoint: s.bottomSetpoint != null ? s.bottomSetpoint : dom.bottomSetpoint,
     descentSetpoint: s.descentSetpoint != null ? s.descentSetpoint : dom.descentSetpoint,
     bailout: s.bailout != null ? s.bailout : dom.bailout,
+    bailoutGfLow: s.bailoutGfLow != null ? s.bailoutGfLow : dom.bailoutGfLow,
+    bailoutGfHigh: s.bailoutGfHigh != null ? s.bailoutGfHigh : dom.bailoutGfHigh,
     scrLoopVolume: s.scrLoopVolume != null ? s.scrLoopVolume : dom.scrLoopVolume,
     scrMetabolicO2: s.scrMetabolicO2 != null ? s.scrMetabolicO2 : dom.scrMetabolicO2,
+    sacStress: s.sacStress != null ? s.sacStress : dom.sacStress,
+    sacDecoCcr: s.sacDecoCcr != null ? s.sacDecoCcr : dom.sacDecoCcr,
+    stressTimeMin: s.stressTimeMin != null ? s.stressTimeMin : dom.stressTimeMin,
+    problemSolveMin: s.problemSolveMin != null ? s.problemSolveMin : dom.problemSolveMin,
+    ccrPhase: s.ccrPhase || dom.ccrPhase || null,
     scrRuntimeMin: s.scrRuntimeMin || 0,
   };
 }
@@ -5556,14 +5640,18 @@ function depthAtSetpointCrossing(setpoint, surfP) {
   return Math.max(0, (setpoint + WATER_VAPOR - (surfP || altSurfaceP)) / BAR_PER_METRE);
 }
 
-function getEffectiveSetpointAtDepth(depthM, ccr, surfP) {
+function getEffectiveSetpointAtDepth(depthM, ccr, surfP, phase) {
   if (!ccr || ccr.bailout || !isRebreatherCircuit(ccr.circuit)) return 0;
   if (ccr.circuit === 'pSCR') return 0;
-  const highSP = ccr.setpoint != null ? ccr.setpoint : 1.3;
   const descSP = ccr.descentSetpoint != null ? ccr.descentSetpoint : 0.7;
+  const bottomSP = ccr.bottomSetpoint != null ? ccr.bottomSetpoint : 1.2;
+  const decoSP = ccr.decoSetpoint != null ? ccr.decoSetpoint : (ccr.setpoint != null ? ccr.setpoint : 1.3);
+  if (phase === 'descent') return descSP;
+  if (phase === 'bottom') return bottomSP;
+  if (phase === 'deco' || phase === 'ascent') return decoSP;
   const pAmb = (surfP || altSurfaceP) + depthM * BAR_PER_METRE;
-  if (pAmb <= highSP + WATER_VAPOR) return descSP;
-  return highSP;
+  if (pAmb <= decoSP + WATER_VAPOR) return descSP;
+  return bottomSP;
 }
 
 function computePSCRFractions(pAmb, fO2, fHe, runtimeMin, ccr) {
@@ -5699,7 +5787,8 @@ function saturateLinearCCR(tissues, fromDepth, toDepth, t, fO2, fHe, ccr) {
   if (t <= 0) return tissues;
   const cfg = mergeCCRSettings(ccr);
   const surfP = altSurfaceP;
-  const sp = getEffectiveSetpointAtDepth((fromDepth + toDepth) / 2, cfg, surfP);
+  const phase = cfg.ccrPhase || null;
+  const sp = getEffectiveSetpointAtDepth((fromDepth + toDepth) / 2, cfg, surfP, phase);
   const segments = splitSegmentAtSetpoint(fromDepth, toDepth, sp, surfP);
   let out = tissues;
   const totalTime = t;
@@ -5710,7 +5799,7 @@ function saturateLinearCCR(tissues, fromDepth, toDepth, t, fO2, fHe, ccr) {
     const pEndAmb = depthBar(seg.toDepth);
     const R = (pEndAmb - p0Amb) / segTime;
     const midDepth = (seg.fromDepth + seg.toDepth) / 2;
-    const segSP = getEffectiveSetpointAtDepth(midDepth, cfg, surfP);
+    const segSP = getEffectiveSetpointAtDepth(midDepth, cfg, surfP, phase);
     const segCcr = { ...cfg, setpoint: segSP };
     out = out.map((t0, i) => ({
       pN2: schreinerLinearCCR(t0.pN2, ZHL16C[i][0], segTime, p0Amb, R, segSP, fO2, fHe, segCcr, false),
@@ -5724,7 +5813,8 @@ function saturateCCR(tissues, depthM, t, fO2, fHe, ccr) {
   if (t <= 0) return tissues;
   const cfg = mergeCCRSettings(ccr);
   const pAmb = depthBar(depthM);
-  const sp = getEffectiveSetpointAtDepth(depthM, cfg, altSurfaceP);
+  const phase = cfg.ccrPhase || null;
+  const sp = getEffectiveSetpointAtDepth(depthM, cfg, altSurfaceP, phase);
   const segCcr = { ...cfg, setpoint: sp };
   const insp = getInspiredInertPressures(pAmb, sp, fO2, fHe, segCcr);
   return tissues.map((t0, i) => ({
@@ -5788,16 +5878,59 @@ function toggleCircuitFields() {
   const isRB = circuit !== 'OC';
   const isCCR = circuit === 'CCR';
   const isPSCR = circuit === 'pSCR';
-  ['ccrSetpointRow', 'ccrDescentSetpointRow'].forEach(id => {
+  const advSec = document.getElementById('ccrAdvSettingsSection');
+  if (advSec) advSec.style.display = isRB ? '' : 'none';
+  const ccrGrp = document.getElementById('ccrSettingsGroup');
+  if (ccrGrp) ccrGrp.style.display = isRB ? '' : 'none';
+  const boGrp = document.getElementById('ccrBailoutSettingsGroup');
+  if (boGrp) boGrp.style.display = isRB ? '' : 'none';
+  ['ccrSpDescentRow', 'ccrSpBottomRow', 'ccrSpDecoRow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isCCR ? '' : 'none';
   });
   const bailoutEl = document.getElementById('ccrBailoutRow');
   if (bailoutEl) bailoutEl.style.display = isRB ? '' : 'none';
-  ['scrFieldsRow', 'scrFieldsRow2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = isPSCR ? '' : 'none';
-  });
+  if (isRB) _updateCcrAdvSummary();
+}
+
+function toggleCcrAdvSettings(forceOpen) {
+  const body = document.getElementById('ccrAdvSettingsBody');
+  const chevron = document.getElementById('ccrAdvSettingsChevron');
+  const btn = document.getElementById('ccrAdvSettingsToggle');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  const open = forceOpen !== undefined ? forceOpen : !isOpen;
+  body.style.display = open ? '' : 'none';
+  if (chevron) chevron.style.transform = open ? 'rotate(90deg)' : '';
+  if (btn) {
+    btn.style.borderColor = open ? 'var(--accent)' : 'var(--border)';
+    btn.style.color = open ? 'var(--accent)' : 'var(--muted)';
+  }
+  _updateCcrAdvSummary();
+  try { localStorage.setItem('lspCcrAdvOpen', open ? '1' : '0'); } catch(e) {}
+}
+
+function _updateCcrAdvSummary() {
+  const el = document.getElementById('ccrAdvSettingsSummary');
+  if (!el) return;
+  const body = document.getElementById('ccrAdvSettingsBody');
+  if (body && body.style.display !== 'none') { el.textContent = ''; return; }
+  const circuit = document.getElementById('circuitSelect')?.value || 'OC';
+  if (circuit === 'OC') { el.textContent = ''; return; }
+  const parts = [];
+  if (circuit === 'CCR') {
+    const ds = document.getElementById('ccrDescentSetpoint')?.value;
+    const bs = document.getElementById('ccrBottomSetpoint')?.value;
+    const dec = document.getElementById('ccrDecoSetpoint')?.value;
+    if (ds && bs && dec) parts.push(`SP ${ds}/${bs}/${dec}`);
+  }
+  const bo = document.getElementById('ccrBailoutToggle')?.value;
+  if (bo === 'on') {
+    const glo = document.getElementById('ccrBailoutGfLow')?.value || '50';
+    const ghi = document.getElementById('ccrBailoutGfHigh')?.value || '85';
+    parts.push(`BO GF ${glo}/${ghi}`);
+  }
+  el.textContent = parts.length ? parts.join(' · ') : 'defaults';
 }
 
 if (typeof window !== 'undefined') {
@@ -5811,6 +5944,7 @@ if (typeof window !== 'undefined') {
   window.computePSCRFractions = computePSCRFractions;
   window.isCcrOnLoopProfile = isCcrOnLoopProfile;
   window.loopMixLabelFor = loopMixLabelFor;
+  window.toggleCcrAdvSettings = toggleCcrAdvSettings;
 }
 
 function ceiling(tissues, gfHigh) {
@@ -6562,11 +6696,21 @@ function _doResetToDefaults(userDefaults) {
     decoBT:           '25',
     decoGas:          'air',
     circuitSelect:    'OC',
-    ccrSetpoint:      '1.3',
+    ccrDecoSetpoint:  '1.3',
+    ccrBottomSetpoint:'1.2',
     ccrDescentSetpoint: '0.7',
     ccrBailoutToggle: 'off',
-    scrLoopVolume:    '7',
-    scrMetabolicO2:   '0.85',
+    ccrBailoutGfLow:  '50',
+    ccrBailoutGfHigh: '85',
+    ccrLoopVolume:    '10',
+    ccrMetabolicO2:   '1.5',
+    ccrSacStress:     '50',
+    ccrSacDeco:       '25',
+    ccrStressTime:    '10',
+    ccrProblemSolve:  '3',
+    ccrSetpoint:      '1.3',
+    scrLoopVolume:    '10',
+    scrMetabolicO2:   '1.5',
     // Deco gases
     dg1Mix:           'ean50',
     dg2Mix:           'o2',
@@ -9243,23 +9387,25 @@ function runDecoSchedule() {
   const _zhlOnLoop = isRebreatherCircuit(_ccrSettings.circuit) && !_ccrSettings.bailout;
   if (_ccrSettings.bailout) {
     _zhlPrevGF = { low: mGF.low, high: mGF.high };
-    mGF.low = 90;
-    mGF.high = 90;
-    gfL = 0.9;
-    gfH = 0.9;
+    const boLo = _ccrSettings.bailoutGfLow ?? 50;
+    const boHi = _ccrSettings.bailoutGfHigh ?? 85;
+    mGF.low = boLo;
+    mGF.high = boHi;
+    gfL = boLo / 100;
+    gfH = boHi / 100;
   }
   let diveRuntimeMin = 0;
-  function zhlLoadLinear(tissues, from, to, t, fO2, fHe, onLoop) {
+  function zhlLoadLinear(tissues, from, to, t, fO2, fHe, onLoop, phase) {
     if (onLoop) {
-      const out = loadTissuesWithCCR(tissues, from, to, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin });
+      const out = loadTissuesWithCCR(tissues, from, to, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin, ccrPhase: phase });
       diveRuntimeMin += t;
       return out;
     }
     return saturateLinear(tissues, from, to, t, Math.max(0, 1 - fO2 - fHe), fHe);
   }
-  function zhlLoadConst(tissues, depth, t, fO2, fHe, onLoop) {
+  function zhlLoadConst(tissues, depth, t, fO2, fHe, onLoop, phase) {
     if (onLoop) {
-      const out = loadTissuesWithCCR(tissues, depth, depth, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin });
+      const out = loadTissuesWithCCR(tissues, depth, depth, t, fO2, fHe, { ..._ccrSettings, scrRuntimeMin: diveRuntimeMin, ccrPhase: phase });
       diveRuntimeMin += t;
       return out;
     }
@@ -9274,13 +9420,13 @@ function runDecoSchedule() {
     }
     return getActiveGas(depthM, bottomFN2, decoGases, getPPO2Limit, bottomMixLabel);
   }
-  function _ccrPpo2Opts(depthM, onLoop, fO2) {
+  function _ccrPpo2Opts(depthM, onLoop, fO2, phase) {
     if (!onLoop || !_zhlOnLoop) return undefined;
     return {
       onLoop: true,
       ccr: _ccrSettings,
       fO2: fO2,
-      setpoint: getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP),
+      setpoint: getEffectiveSetpointAtDepth(depthM, _ccrSettings, altSurfaceP, phase),
       surfP: altSurfaceP,
     };
   }
@@ -9407,15 +9553,15 @@ function runDecoSchedule() {
   const descentTime = depthM / descentRate;
   if (travelInfo && travelSwitchM > 0 && travelSwitchM < depthM) {
     const travelDescentTime = travelSwitchM / descentRate;
-    tissues = zhlLoadLinear(tissues, 0, travelSwitchM, travelDescentTime, 1 - travelInfo.fN2, 0, _zhlOnLoop);
+    tissues = zhlLoadLinear(tissues, 0, travelSwitchM, travelDescentTime, 1 - travelInfo.fN2, 0, _zhlOnLoop, 'descent');
     const bottomDescentTime = (depthM - travelSwitchM) / descentRate;
-    tissues = zhlLoadLinear(tissues, travelSwitchM, depthM, bottomDescentTime, bottomFO2, bottomFHe, _zhlOnLoop);
+    tissues = zhlLoadLinear(tissues, travelSwitchM, depthM, bottomDescentTime, bottomFO2, bottomFHe, _zhlOnLoop, 'descent');
   } else {
-    tissues = zhlLoadLinear(tissues, 0, depthM, descentTime, bottomFO2, bottomFHe, _zhlOnLoop);
+    tissues = zhlLoadLinear(tissues, 0, depthM, descentTime, bottomFO2, bottomFHe, _zhlOnLoop, 'descent');
   }
 
   const btAtDepth = Math.max(0, bt - descentTime);
-  tissues = zhlLoadConst(tissues, depthM, btAtDepth, bottomFO2, bottomFHe, _zhlOnLoop);
+  tissues = zhlLoadConst(tissues, depthM, btAtDepth, bottomFO2, bottomFHe, _zhlOnLoop, 'bottom');
   const tissuesAtBottom = [...tissues]; // snapshot for ceiling graph overlay
 
   // ── Decozone start (GF-INDEPENDENT) ──────────────────────────────────────
@@ -9522,12 +9668,12 @@ function runDecoSchedule() {
       } else {
         const tFO2 = travelOnLoop ? bottomFO2 : (travelGas.fO2 != null ? travelGas.fO2 : Math.max(0, 1 - travelGas.fN2 - (travelGas.fHe || 0)));
         const tFHe = travelOnLoop ? bottomFHe : (travelGas.fHe || 0);
-        tissues = zhlLoadLinear(tissues, cur, stopDepth, travelDur, tFO2, tFHe, travelOnLoop);
+        tissues = zhlLoadLinear(tissues, cur, stopDepth, travelDur, tFO2, tFHe, travelOnLoop, decoZoneEntered ? 'deco' : 'bottom');
       }
       steps.push({
         type: 'ascent', from: cur, to: stopDepth,
         dur: travelDur, gas: travelOnLoop ? loopMixLabel : travelGas.label,
-        pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0, _ccrPpo2Opts(cur, travelOnLoop, travelOnLoop ? bottomFO2 : undefined)), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
+        pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0, _ccrPpo2Opts(cur, travelOnLoop, travelOnLoop ? bottomFO2 : undefined, decoZoneEntered ? 'deco' : 'bottom')), fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
         decoTransit: decoZoneEntered && mdCompatMode
       });
       rt  += travelDur;
@@ -9548,7 +9694,7 @@ function runDecoSchedule() {
     const gasLabel = onLoop ? loopMixLabel : stopGas.label;
 
     if (gasLabel !== prevEngineGas && switchPauseT > 0) {
-      tissues = zhlLoadConst(tissues, cur, switchPauseT, stopFO2, stopFHe, onLoop);
+      tissues = zhlLoadConst(tissues, cur, switchPauseT, stopFO2, stopFHe, onLoop, 'deco');
       rt += switchPauseT;
     }
     prevEngineGas = gasLabel;
@@ -9594,7 +9740,7 @@ function runDecoSchedule() {
       const rtOnArrival = rt;
       let stopT = 0;
       while (ceiling(tissues, gfForClear) > ceilTarget && stopT < 360) {
-        tissues = zhlLoadConst(tissues, cur, holdStep, stopFO2, stopFHe, onLoop);
+        tissues = zhlLoadConst(tissues, cur, holdStep, stopFO2, stopFHe, onLoop, 'deco');
         stopT += holdStep; rt += holdStep;
       }
       if (isFirstDecoStop) {
@@ -9605,10 +9751,10 @@ function runDecoSchedule() {
         const actualStop = Math.max(rawRounded, minFirstStop);
         if (actualStop > stopT) {
           const extra = actualStop - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           rt += extra; stopT = actualStop;
         }
-        if (stopT < 1/60) { tissues = zhlLoadConst(tissues, cur, 1/60 - stopT, stopFO2, stopFHe, onLoop); rt += 1/60 - stopT; stopT = 1/60; }
+        if (stopT < 1/60) { tissues = zhlLoadConst(tissues, cur, 1/60 - stopT, stopFO2, stopFHe, onLoop, 'deco'); rt += 1/60 - stopT; stopT = 1/60; }
       } else {
         let roundedStop;
         {
@@ -9617,18 +9763,18 @@ function runDecoSchedule() {
         }
         if (roundedStop > stopT) {
           const extra = roundedStop - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           rt += extra; stopT = roundedStop;
         }
         // Enforce minimum stop time — every non-first deco stop gets at least minStopT
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           rt += extra; stopT = minStopT;
         }
       }
       const mustStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+      steps.push({ type: 'deco', depth: cur, dur: mustStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2, 'deco')), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
     } else if (minStopT > 0 && minStopZoneDepth !== null && cur <= minStopZoneDepth && cur !== lastStop) {
       decoZoneEntered = true;
       let stopT = 0;
@@ -9644,11 +9790,11 @@ function runDecoSchedule() {
         stopT = needed;
       }
       if (stopT > 0) {
-        tissues = zhlLoadConst(tissues, cur, stopT, stopFO2, stopFHe, onLoop);
+        tissues = zhlLoadConst(tissues, cur, stopT, stopFO2, stopFHe, onLoop, 'deco');
         rt += stopT;
       }
       while (ceiling(tissues, gfForClear) > ceilTarget && stopT < 360) {
-        tissues = zhlLoadConst(tissues, cur, minStopT, stopFO2, stopFHe, onLoop);
+        tissues = zhlLoadConst(tissues, cur, minStopT, stopFO2, stopFHe, onLoop, 'deco');
         stopT += minStopT; rt += minStopT;
       }
       if (!isFirstDecoStop) {
@@ -9657,18 +9803,18 @@ function runDecoSchedule() {
         const roundedStop = totalAtLevel - transitDur;
         if (roundedStop > stopT) {
           const extra = roundedStop - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           rt += extra; stopT = roundedStop;
         }
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           rt += extra; stopT = minStopT;
         }
       }
       if (stopT > 0) {
         const minStopDisplay = (mdCompatMode && !isFirstDecoStop) ? stopT + transitDur : stopT;
-        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+        steps.push({ type: 'deco', depth: cur, dur: minStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2, 'deco')), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
       }
     } else if (cur === lastStop) {
       const isDecoNeeded = steps.some(s => s.type === 'deco');
@@ -9678,7 +9824,7 @@ function runDecoSchedule() {
       if (isDecoNeeded) {
         transitToLastStop = (stopDepths.length > 1) ? (stopDepths[stopDepths.length - 2] - lastStop) / decoRate : 0;
         while (ceiling(tissues, gfAt(0)) > 0.01 && stopT < 180) {
-          tissues = zhlLoadConst(tissues, cur, minStopT, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, minStopT, stopFO2, stopFHe, onLoop, 'deco');
           stopT += minStopT; rt += minStopT;
         }
         let roundedLastStop;
@@ -9688,21 +9834,21 @@ function runDecoSchedule() {
         }
         if (roundedLastStop > stopT) {
           const extra = roundedLastStop - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           stopT += extra; rt += extra;
         }
         if (stopT < minStopT) {
           const extra = minStopT - stopT;
-          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop);
+          tissues = zhlLoadConst(tissues, cur, extra, stopFO2, stopFHe, onLoop, 'deco');
           stopT += extra; rt += extra;
         }
       } else {
         stopT = Math.max(3, minStopT);
-        tissues = zhlLoadConst(tissues, cur, stopT, stopFO2, stopFHe, onLoop);
+        tissues = zhlLoadConst(tissues, cur, stopT, stopFO2, stopFHe, onLoop, 'deco');
         rt += stopT;
       }
       const lastStopDisplay = mdCompatMode ? stopT + transitToLastStop : stopT;
-      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2)), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
+      steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2, 'deco')), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
     }
     // No stop needed and not lastStop — continue ascending
   }
@@ -9721,11 +9867,11 @@ function runDecoSchedule() {
     const finalOnLoop = zhlOnLoopAt(cur, finalGas);
     const fFO2 = finalOnLoop ? bottomFO2 : (finalGas.fO2 != null ? finalGas.fO2 : Math.max(0, 1 - finalGas.fN2 - (finalGas.fHe || 0)));
     const fFHe = finalOnLoop ? bottomFHe : (finalGas.fHe || 0);
-    tissues = zhlLoadLinear(tissues, cur, 0, finalAscentDur, fFO2, fFHe, finalOnLoop);
+    tissues = zhlLoadLinear(tissues, cur, 0, finalAscentDur, fFO2, fFHe, finalOnLoop, 'deco');
     steps.push({
       type: 'ascent', from: cur, to: 0,
       dur: finalAscentDur, gas: finalOnLoop ? loopMixLabel : finalGas.label,
-      pO2: ppO2Check(cur, finalGas.fN2, finalGas.fHe || 0, _ccrPpo2Opts(cur, finalOnLoop, fFO2)), fN2: finalGas.fN2, fHe: finalGas.fHe || 0,
+      pO2: ppO2Check(cur, finalGas.fN2, finalGas.fHe || 0, _ccrPpo2Opts(cur, finalOnLoop, fFO2, 'deco')), fN2: finalGas.fN2, fHe: finalGas.fHe || 0,
     });
     rt += finalAscentDur;
     cur = 0;
@@ -9974,9 +10120,9 @@ function runDecoSchedule() {
     const s = totalSec % 60;
     return `${m}:${String(s).padStart(2,'0')}`;
   }
-  function rowDisplayPpo2(depthM, fN2, fHe, fO2) {
+  function rowDisplayPpo2(depthM, fN2, fHe, fO2, phase) {
     const fo2 = fO2 != null ? fO2 : Math.max(0, 1 - fN2 - (fHe || 0));
-    if (_zhlOnLoop) return ppO2Check(depthM, fN2, fHe, _ccrPpo2Opts(depthM, true, fo2));
+    if (_zhlOnLoop) return ppO2Check(depthM, fN2, fHe, _ccrPpo2Opts(depthM, true, fo2, phase || 'bottom'));
     return ((depthM * BAR_PER_METRE + altSurfaceP) * fo2).toFixed(2);
   }
 
@@ -10008,7 +10154,7 @@ function runDecoSchedule() {
     // --- Phase 2: bottom gas, switch depth → bottom ---
     const bottomDescentTimeMin = (depthM - travelSwitchMrow) / descentRate;
     const bottomMidM = (travelSwitchMrow + depthM) / 2;
-    const descentPPO2 = rowDisplayPpo2(bottomMidM, bottomFN2, bottomFHe, bottomFO2);
+    const descentPPO2 = rowDisplayPpo2(bottomMidM, bottomFN2, bottomFHe, bottomFO2, 'descent');
     rowRT += bottomDescentTimeMin;
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), bottomDescentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), bottomDescentTimeMin);
@@ -10026,7 +10172,7 @@ function runDecoSchedule() {
   } else {
     // No travel gas — single descent row as before
     rowRT += descentTimeMin;
-    const descentPPO2 = rowDisplayPpo2(rawD / 2, bottomFN2, bottomFHe, bottomFO2);
+    const descentPPO2 = rowDisplayPpo2(rawD / 2, bottomFN2, bottomFHe, bottomFO2, 'descent');
     totalCNSfrac += segCNSfrac(parseFloat(descentPPO2), descentTimeMin);
     totalOTU     += segOTU(parseFloat(descentPPO2), descentTimeMin);
     addGas(loopMixLabel, rawD / 2, descentTimeMin, sacBottom);
@@ -10045,7 +10191,7 @@ function runDecoSchedule() {
   // ── BOTTOM ROW ──
   const btAtDepthMin = Math.max(0, bt - descentTimeMin);
   rowRT += btAtDepthMin;
-  const btPPO2 = rowDisplayPpo2(rawD, bottomFN2, bottomFHe, bottomFO2);
+  const btPPO2 = rowDisplayPpo2(rawD, bottomFN2, bottomFHe, bottomFO2, 'bottom');
   const btCNS  = rowCNS(parseFloat(btPPO2), btAtDepthMin);
   totalCNSfrac += segCNSfrac(parseFloat(btPPO2), btAtDepthMin);
   totalOTU     += segOTU(parseFloat(btPPO2), btAtDepthMin);
@@ -10431,18 +10577,35 @@ const ZHLEngine = (() => {
     setEl('ppo2Deco',        s.ppO2Deco        || 1.6);
     const prevCCR = {
       circuit: document.getElementById('circuitSelect')?.value,
-      setpoint: document.getElementById('ccrSetpoint')?.value,
+      setpoint: document.getElementById('ccrDecoSetpoint')?.value || document.getElementById('ccrSetpoint')?.value,
       descentSetpoint: document.getElementById('ccrDescentSetpoint')?.value,
+      bottomSetpoint: document.getElementById('ccrBottomSetpoint')?.value,
       bailout: document.getElementById('ccrBailoutToggle')?.value,
-      scrLoopVolume: document.getElementById('scrLoopVolume')?.value,
-      scrMetabolicO2: document.getElementById('scrMetabolicO2')?.value,
+      bailoutGfLow: document.getElementById('ccrBailoutGfLow')?.value,
+      bailoutGfHigh: document.getElementById('ccrBailoutGfHigh')?.value,
+      scrLoopVolume: document.getElementById('ccrLoopVolume')?.value || document.getElementById('scrLoopVolume')?.value,
+      scrMetabolicO2: document.getElementById('ccrMetabolicO2')?.value || document.getElementById('scrMetabolicO2')?.value,
+      sacStress: document.getElementById('ccrSacStress')?.value,
+      sacDecoCcr: document.getElementById('ccrSacDeco')?.value,
+      stressTimeMin: document.getElementById('ccrStressTime')?.value,
+      problemSolveMin: document.getElementById('ccrProblemSolve')?.value,
     };
     if (s.circuit) setEl('circuitSelect', s.circuit);
-    if (s.setpoint != null) setEl('ccrSetpoint', s.setpoint);
+    if (s.setpoint != null) {
+      setEl('ccrDecoSetpoint', s.setpoint);
+      setEl('ccrSetpoint', s.setpoint);
+    }
     if (s.descentSetpoint != null) setEl('ccrDescentSetpoint', s.descentSetpoint);
+    if (s.bottomSetpoint != null) setEl('ccrBottomSetpoint', s.bottomSetpoint);
     if (s.bailout != null) setEl('ccrBailoutToggle', s.bailout ? 'on' : 'off');
-    if (s.scrLoopVolume != null) setEl('scrLoopVolume', s.scrLoopVolume);
-    if (s.scrMetabolicO2 != null) setEl('scrMetabolicO2', s.scrMetabolicO2);
+    if (s.bailoutGfLow != null) setEl('ccrBailoutGfLow', s.bailoutGfLow);
+    if (s.bailoutGfHigh != null) setEl('ccrBailoutGfHigh', s.bailoutGfHigh);
+    if (s.scrLoopVolume != null) { setEl('ccrLoopVolume', s.scrLoopVolume); setEl('scrLoopVolume', s.scrLoopVolume); }
+    if (s.scrMetabolicO2 != null) { setEl('ccrMetabolicO2', s.scrMetabolicO2); setEl('scrMetabolicO2', s.scrMetabolicO2); }
+    if (s.sacStress != null) setEl('ccrSacStress', s.sacStress);
+    if (s.sacDecoCcr != null) setEl('ccrSacDeco', s.sacDecoCcr);
+    if (s.stressTimeMin != null) setEl('ccrStressTime', s.stressTimeMin);
+    if (s.problemSolveMin != null) setEl('ccrProblemSolve', s.problemSolveMin);
 
     // ── GF: set via mGF global (Bühlmann reads from mGF, not settings) ──────
     const prevGF = { low: mGF.low, high: mGF.high };
@@ -10640,11 +10803,18 @@ const ZHLEngine = (() => {
     if (decoGasEl) decoGasEl.value = prevDecoGasVal;
     prevDGVals.forEach(({ id, val }) => { const el = document.getElementById(id); if (el && val != null) el.value = val; });
     if (prevCCR.circuit != null) setEl('circuitSelect', prevCCR.circuit);
-    if (prevCCR.setpoint != null) setEl('ccrSetpoint', prevCCR.setpoint);
+    if (prevCCR.setpoint != null) { setEl('ccrDecoSetpoint', prevCCR.setpoint); setEl('ccrSetpoint', prevCCR.setpoint); }
     if (prevCCR.descentSetpoint != null) setEl('ccrDescentSetpoint', prevCCR.descentSetpoint);
+    if (prevCCR.bottomSetpoint != null) setEl('ccrBottomSetpoint', prevCCR.bottomSetpoint);
     if (prevCCR.bailout != null) setEl('ccrBailoutToggle', prevCCR.bailout);
-    if (prevCCR.scrLoopVolume != null) setEl('scrLoopVolume', prevCCR.scrLoopVolume);
-    if (prevCCR.scrMetabolicO2 != null) setEl('scrMetabolicO2', prevCCR.scrMetabolicO2);
+    if (prevCCR.bailoutGfLow != null) setEl('ccrBailoutGfLow', prevCCR.bailoutGfLow);
+    if (prevCCR.bailoutGfHigh != null) setEl('ccrBailoutGfHigh', prevCCR.bailoutGfHigh);
+    if (prevCCR.scrLoopVolume != null) { setEl('ccrLoopVolume', prevCCR.scrLoopVolume); setEl('scrLoopVolume', prevCCR.scrLoopVolume); }
+    if (prevCCR.scrMetabolicO2 != null) { setEl('ccrMetabolicO2', prevCCR.scrMetabolicO2); setEl('scrMetabolicO2', prevCCR.scrMetabolicO2); }
+    if (prevCCR.sacStress != null) setEl('ccrSacStress', prevCCR.sacStress);
+    if (prevCCR.sacDecoCcr != null) setEl('ccrSacDeco', prevCCR.sacDecoCcr);
+    if (prevCCR.stressTimeMin != null) setEl('ccrStressTime', prevCCR.stressTimeMin);
+    if (prevCCR.problemSolveMin != null) setEl('ccrProblemSolve', prevCCR.problemSolveMin);
     if (typeof toggleCircuitFields === 'function') toggleCircuitFields();
     // Remove any dynamic deco gas cards we added for this headless call
     _addedDGIdxs.forEach(idx => { const card = document.getElementById(`dgCard_${idx}`); if (card) card.remove(); });
@@ -16830,8 +17000,10 @@ var appSettings = {
     'descentRate', 'ascentRate', 'decoAscentRate', 'surfaceAscentRate', 'decoStep', 'lastDecoStop',
     'minStopTime', 'stopRounding', 'waterVapor', 'ppo2Bottom', 'ppo2Deco',
     'shallowGradient',
-    'circuitSelect', 'ccrSetpoint', 'ccrDescentSetpoint', 'ccrBailoutToggle',
-    'scrLoopVolume', 'scrMetabolicO2',
+    'circuitSelect', 'ccrDecoSetpoint', 'ccrBottomSetpoint', 'ccrDescentSetpoint',
+    'ccrBailoutToggle', 'ccrBailoutGfLow', 'ccrBailoutGfHigh',
+    'ccrLoopVolume', 'ccrMetabolicO2', 'ccrSacStress', 'ccrSacDeco', 'ccrStressTime', 'ccrProblemSolve',
+    'ccrSetpoint', 'scrLoopVolume', 'scrMetabolicO2',
     'minDecoProfileEnable', 'minDeco9m', 'minDeco6m',
     'algorithmSelect', 'conservatismSelect', 'gfPresetSelect', 'gfLowInput', 'gfHighInput',
     'heHalfTimeMode',
@@ -17579,6 +17751,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const open = adv === '1';
     toggleAdvancedSettings(open);
   } catch(e) { toggleAdvancedSettings(false); }
+
+  // ── Restore rebreather adv. settings collapse state ───────────────────────
+  try {
+    const ccrAdv = localStorage.getItem('lspCcrAdvOpen');
+    toggleCcrAdvSettings(ccrAdv === '1');
+  } catch(e) { toggleCcrAdvSettings(false); }
+
   const vEl = document.getElementById('appVersionLabel');
   if (vEl) vEl.textContent = 'Version ' + APP_VERSION;
   const vMain = document.getElementById('mainVersionLabel');

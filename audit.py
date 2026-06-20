@@ -761,7 +761,7 @@ else:
 # 17.10 vpmSurfaceInterval and vpmRepMode in DECO_FIELDS (persistence)
 deco_fields_idx2 = html.find("DECO_FIELDS:")
 if deco_fields_idx2 > 0:
-    deco_fields_block2 = html[deco_fields_idx2:deco_fields_idx2 + 800]
+    deco_fields_block2 = html[deco_fields_idx2:deco_fields_idx2 + 1200]
     for field_id, description in [
         ("vpmSurfaceInterval", "VPM repetitive surface interval input"),
         ("vpmRepMode",         "VPM repetitive dive checkbox"),
