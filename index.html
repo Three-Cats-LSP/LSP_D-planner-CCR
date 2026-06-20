@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.3';
+const APP_VERSION = '2.30.4';
 window.APP_VERSION = APP_VERSION;
 // _zhlPrewarmed: set true by test harness after first headless run to skip
 // DOM warm-up cost on subsequent calls. Kept as a no-op flag for compatibility.
@@ -3964,6 +3964,19 @@ let stopDepthM = 6;
     let allowO2AtMOD = true;
 let stopDurMin = 3;
 let mGF        = { low: 20, high: 85 }; // matches default preset 20/85
+window._gfSyncSilent = false; // suppress gfLow/gfHigh onchange while setGF syncs programmatically
+
+function _findGfPresetOption(low, high) {
+  const sel = document.getElementById('gfPresetSelect');
+  if (!sel) return null;
+  const isVPMBGFS = document.getElementById('algorithmSelect')?.value === 'VPMB_GFS';
+  const presetVal = isVPMBGFS ? `hi/${high}` : `${low}/${high}`;
+  return Array.from(sel.options).find(o => o.value === presetVal) || null;
+}
+
+function syncGfPresetFromValues() {
+  if (typeof setGF === 'function') setGF(mGF.low, mGF.high);
+}
 let lastTissues = null;
 
 // ═══════════════════════════════════════════════
@@ -4382,7 +4395,9 @@ function handleGFSelect(val) {
         highEl.style.display = '';
         // Use current mGF.high first; fall back to last saved custom value
         const curHigh = (typeof mGF !== 'undefined' && mGF.high) ? String(mGF.high) : localStorage.getItem('gfCustomHigh') || '85';
+        window._gfSyncSilent = true;
         highEl.value = curHigh;
+        window._gfSyncSilent = false;
       }
       setCustomGF();
     }
@@ -4399,8 +4414,10 @@ function handleGFSelect(val) {
     // falling back to last saved custom values only if mGF is at defaults.
     const curLow  = (typeof mGF !== 'undefined' && mGF.low)  ? String(mGF.low)  : localStorage.getItem('gfCustomLow')  || '20';
     const curHigh = (typeof mGF !== 'undefined' && mGF.high) ? String(mGF.high) : localStorage.getItem('gfCustomHigh') || '85';
+    window._gfSyncSilent = true;
     if (lowInput)  lowInput.value  = curLow;
     if (highInput) highInput.value = curHigh;
+    window._gfSyncSilent = false;
     setCustomGF();
   } else if (val && val.startsWith('hi/')) {
     // VPM-B/GFS Hi-only preset
@@ -4420,23 +4437,19 @@ function setGF(low, high) {
   mGF.low = low;
   mGF.high = high;
 
-  // Sync input fields
+  // Sync input fields (silent — programmatic updates must not fire setCustomGF via onchange)
   const lowInput  = document.getElementById('gfLowInput');
   const highInput = document.getElementById('gfHighInput');
+  window._gfSyncSilent = true;
   if (lowInput)  lowInput.value  = low;
   if (highInput) highInput.value = high;
+  window._gfSyncSilent = false;
 
   // Sync GF dropdown
   const sel = document.getElementById('gfPresetSelect');
   if (sel) {
     const isVPMBGFS = document.getElementById('algorithmSelect')?.value === 'VPMB_GFS';
-    let opt;
-    if (isVPMBGFS) {
-      // Match hi/N format for VPM-B/GFS
-      opt = Array.from(sel.options).find(o => o.value === `hi/${high}`);
-    } else {
-      opt = Array.from(sel.options).find(o => o.value === `${low}/${high}`);
-    }
+    const opt = _findGfPresetOption(low, high);
     sel.value = opt ? opt.value : 'custom';
     const customRow = document.getElementById('gfCustomRow');
     if (!opt) {
@@ -4445,9 +4458,13 @@ function setGF(low, high) {
         // Custom for VPM-B/GFS: only show High
         const lowField = document.getElementById('gfLowPair');
         if (lowField) lowField.style.display = 'none';
+        window._gfSyncSilent = true;
         if (highInput) highInput.value = high;
+        window._gfSyncSilent = false;
       } else {
+        window._gfSyncSilent = true;
         if (lowInput && highInput) { lowInput.value = low; highInput.value = high; }
+        window._gfSyncSilent = false;
       }
     } else {
       if (customRow) customRow.style.display = 'none';
@@ -4474,6 +4491,7 @@ function setGF(low, high) {
 }
 
 function setCustomGF(commit) {
+  if (window._gfSyncSilent) return;
   // commit=true (onchange): clamp + apply immediately
   // commit=false (oninput): just update mGF preview, no clamping mid-type
   const clamp = (commit !== false);
@@ -4503,6 +4521,13 @@ function setCustomGF(commit) {
   mGF.low  = low;
   mGF.high = high;
 
+  // If the values match a named preset, use that instead of Custom
+  const matched = _findGfPresetOption(low, high);
+  if (matched) {
+    setGF(low, high);
+    return;
+  }
+
   // Save custom values for restoration
   if (lowVal  !== '') localStorage.setItem('gfCustomLow',  lowVal);
   if (highVal !== '') localStorage.setItem('gfCustomHigh', highVal);
@@ -4510,6 +4535,8 @@ function setCustomGF(commit) {
   // Ensure dropdown shows Custom
   const sel = document.getElementById('gfPresetSelect');
   if (sel && sel.value !== 'custom') sel.value = 'custom';
+  const customRow = document.getElementById('gfCustomRow');
+  if (customRow) customRow.style.display = 'flex';
 
   renderNDLTable();
 
@@ -18070,6 +18097,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   updateWaterVapor(); // apply after settings loaded
   setDecoAlgorithm(document.getElementById('algorithmSelect')?.value || 'ZHLC_GF', true);
+  syncGfPresetFromValues();
   // Sync He half-time mode to ZHL16C_HE_HT array and VPMEngine on startup
   updateHeHalfTime();
   // Apply persisted END column state on load (button label + table class)
@@ -18081,6 +18109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     appSettings.load();
     updateWaterVapor();
     updateHeHalfTime(); // re-sync after VPMEngine fully ready
+    syncGfPresetFromValues();
   }, 1000);
 });
 
@@ -18091,6 +18120,7 @@ window.addEventListener('load', function() {
     console.log('[LSP] Final retry load');
     appSettings.load();
     updateWaterVapor();
+    syncGfPresetFromValues();
   }, 500);
 });
 </script>
