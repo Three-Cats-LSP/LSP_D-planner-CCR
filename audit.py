@@ -2409,6 +2409,40 @@ if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.17['\"]", js):
 else:
     fail("APP_VERSION not bumped to 2.30.17")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 52 — shared dual-engine test harness (v2.30.18)
+# ══════════════════════════════════════════════════════════════════════════════
+
+harness_path = os.path.join(os.path.dirname(__file__), "lsp-test-harness.js")
+if os.path.isfile(harness_path):
+    with open(harness_path, encoding="utf-8") as f:
+        harness = f.read()
+    ok("lsp-test-harness.js present")
+    for needle in ["waitForApp", "ZHLEngine", "VPMEngine", "model === 'ZHLC_GF'"]:
+        if needle in harness:
+            ok(f"lsp-test-harness.js defines {needle}")
+        else:
+            fail(f"lsp-test-harness.js missing {needle}")
+else:
+    fail("lsp-test-harness.js missing")
+
+for test_file, needle in [
+    ("tests.html", "lsp-test-harness.js"),
+    ("tests-extended.html", "LSPTestHarness.waitForApp"),
+    ("tests-pscr-otu-cns.html", "LSPTestHarness.waitForApp"),
+    ("tests-verify.html", "ZHLEngine"),
+]:
+    p = os.path.join(os.path.dirname(__file__), test_file)
+    if os.path.isfile(p):
+        with open(p, encoding="utf-8") as f:
+            body = f.read()
+        if needle in body:
+            ok(f"{test_file} wired to dual-engine harness")
+        else:
+            fail(f"{test_file} missing dual-engine wiring ({needle})")
+    else:
+        fail(f"{test_file} missing")
+
 print("=" * 60)
 
 if FAIL:

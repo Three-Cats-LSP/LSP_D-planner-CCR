@@ -14,6 +14,8 @@ on:
       - 'tests-massive.html'
       - 'tests-massive-main.html'
       - 'tests-verify.html'
+      - 'tests-pscr-otu-cns.html'
+      - 'lsp-test-harness.js'
 
 jobs:
   notify:

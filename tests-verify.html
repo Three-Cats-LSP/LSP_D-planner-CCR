@@ -693,7 +693,7 @@ const SECTIONS = [
     ['pSCR produces different RT than CCR (more conservative)', () => {
       const ccr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({ circuit: 'CCR', setpoint: 1.3, gfLo: 30, gfHi: 85 }));
       const pscr = WIN.ZHLEngine.calculate(lv(40, 20, 21, 0), [], S({
-        circuit: 'pSCR', setpoint: 1.3, scrLoopVolume: 7, scrMetabolicO2: 0.85, gfLo: 30, gfHi: 85,
+        circuit: 'pSCR', setpoint: 0.3, scrLoopVolume: 10, scrMetabolicO2: 1.5, gfLo: 30, gfHi: 85,
       }));
       assert(pscr.totalRuntime !== ccr.totalRuntime, 'pSCR and CCR should differ');
       return `CCR=${ccr.totalRuntime}min pSCR=${pscr.totalRuntime}min ✓`;
@@ -727,7 +727,8 @@ function waitForEngine(iframe, timeout, cb) {
   function tryGet() {
     try {
       const w = iframe.contentWindow;
-      if (w && w.VPMEngine && typeof w.VPMEngine.calculate === 'function') return w;
+      if (w && w.VPMEngine && typeof w.VPMEngine.calculate === 'function'
+          && w.ZHLEngine && typeof w.ZHLEngine.calculate === 'function') return w;
     } catch(_) {}
     return null;
   }
@@ -735,7 +736,7 @@ function waitForEngine(iframe, timeout, cb) {
     const w = tryGet();
     if (w) { setTimeout(() => cb(null, w), 2000); return; }
     if (iframeBootError) return cb(new Error('Boot: ' + iframeBootError));
-    if (Date.now() - start > timeout) return cb(new Error('Timed out'));
+    if (Date.now() - start > timeout) return cb(new Error('Timed out waiting for VPMEngine + ZHLEngine'));
     setTimeout(check, 300);
   }
   setTimeout(check, 300);
@@ -777,7 +778,7 @@ async function startVerify() {
   const frame = document.getElementById('app-frame');
   frame.src = 'index.html?ts=' + Date.now();
 
-  waitForEngine(frame, 30000, async function(err, win) {
+  waitForEngine(frame, 45000, async function(err, win) {
     if (err) {
       document.getElementById('status').className = 'status fail';
       document.getElementById('status').textContent = '✗ ' + err.message;

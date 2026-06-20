@@ -370,11 +370,13 @@ iframe { display: none; }
   </div>
 </div>
 
-<iframe id="app-frame" src="index.html"></iframe>
+<iframe id="app-frame" src="about:blank"></iframe>
 
+<script src="lsp-test-harness.js"></script>
 <script>
 let E = null;
 let WIN = null;
+let HARNESS_CTX = null;
 let SURF = null;
 let BAR = null;
 let ONLY_FAILURES = false;
@@ -440,10 +442,7 @@ const EAN50_O2 = [gas(50, 0), gas(100, 0)];
 const TRIMIX_DECO = [gas(50,0), gas(100,0)];
 
 function calc(levels, gases, settings, model) {
-  const res = E.calculate(clone(levels), clone(gases || []), clone(settings || makeSettings()), model);
-  assert(res && typeof res === 'object', 'No result object returned');
-  if (res.error) throw new Error(res.error);
-  return res;
+  return LSPTestHarness.calc(HARNESS_CTX, levels, gases, settings || makeSettings(), model);
 }
 
 function runTest(name, model, fn) {
@@ -984,8 +983,7 @@ function startTests() {
   const frame = document.getElementById('app-frame');
   frame.src = 'index.html?ts=' + Date.now();
 
-  iframeBootError = null;
-  waitForEngine(frame, 30000, function(err, engine, win) {
+  LSPTestHarness.waitForApp(frame, 45000, function(err, ctx) {
     if (err) {
       statusEl.className = 'error';
       statusEl.textContent = '✗ ' + err.message + ' — keep this file beside index.html';
@@ -993,16 +991,16 @@ function startTests() {
       return;
     }
 
-    E = engine;
-    WIN = win;
-    SURF = isFinite(win.altSurfaceP) ? win.altSurfaceP : (isFinite(win.SURFACE_P) ? win.SURFACE_P : 1.01325);
-    const rawBAR = win.BAR_PER_METRE;
-    BAR = (rawBAR !== undefined && rawBAR !== null && isFinite(rawBAR)) ? ((rawBAR > 1) ? (1 / rawBAR) : rawBAR) : 0.10000;
+    HARNESS_CTX = ctx;
+    E = ctx.vpm;
+    WIN = ctx.win;
+    SURF = ctx.surf;
+    BAR = ctx.barPerM;
 
-    document.getElementById('meta-version').textContent = 'APPVERSION: ' + (win.APPVERSION || '—');
+    document.getElementById('meta-version').textContent = 'APP: ' + (ctx.version || '—');
     document.getElementById('meta-surface').textContent = 'altSurfaceP: ' + pretty(SURF, 4);
     document.getElementById('meta-bar').textContent = 'BAR/m: ' + pretty(BAR, 5);
-    document.getElementById('meta-engine').textContent = 'ENGINE: VPMEngine';
+    document.getElementById('meta-engine').textContent = 'ENGINE: VPMEngine + ZHLEngine';
 
     statusEl.className = 'ready';
     statusEl.textContent = '✓ Engine ready — running extended regression suite…';
@@ -1012,7 +1010,7 @@ function startTests() {
     const elapsed = Math.round(performance.now() - t0);
     LAST_RESULTS = {
       generatedAt: new Date().toISOString(),
-      appVersion: win.APPVERSION || null,
+      appVersion: ctx.version || null,
       surfaceP: SURF,
       barPerMetre: BAR,
       elapsed: elapsed,

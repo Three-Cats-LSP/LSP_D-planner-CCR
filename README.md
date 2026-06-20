@@ -131,7 +131,7 @@ Single-file architecture — primary code in `index.html` (~18k lines). Capacito
 python audit.py index.html
 ```
 
-Static analysis: **324 checks** across 51 code groups (includes GROUP 51 v2.30.17 imperial SAC fix).
+Static analysis: **333 checks** across 52 code groups (includes GROUP 52 dual-engine test harness).
 
 Pushes to `main` that touch app files trigger **Notify Site on Push** → auto-sync to [threecats-lsp.com/d-planner-ccr/](https://threecats-lsp.com/d-planner-ccr/) via the `threecats-lsp.com` repo.
 
@@ -146,10 +146,11 @@ Open any suite in a browser (loads `index.html` in a hidden iframe and runs agai
 | [`tests.html`](tests.html) | Core regression — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases | [Live](https://threecats-lsp.com/d-planner-ccr/tests.html) |
 | [`tests-verify.html`](tests-verify.html) | **Math Verification** — ZHL-16C + VPM-B vs Baker/FORTRAN reference; sections A–H **+ Section I · CCR / Rebreather** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-verify.html) |
 | [`tests-pscr-otu-cns.html`](tests-pscr-otu-cns.html) | **pSCR OTU/CNS & gas validation** — 36 safety-critical tests (20/40/60 m × EAN32/EAN36); guards `getEffectivePpo2` regression | [Live](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) |
+| `lsp-test-harness.js` | Shared dual-engine boot helper (`VPMEngine` + `ZHLEngine`) — included by all test suites | — |
 | [`tests-extended.html`](tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first-stop depths | [Live](https://threecats-lsp.com/d-planner-ccr/tests-extended.html) |
 | [`tests-massive.html`](tests-massive.html) | Full regression — 300+ engine plans, UI/DOM, Tier 1–3, travel gas, altitude, gas plan, slate, presets, **T3-CCR MultiDeco cross-val** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive.html) |
 | [`tests-massive-main.html`](tests-massive-main.html) | Mobile-optimised massive suite — same scope minus heaviest Tier 3 groups; includes **T3-CCR** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive-main.html) |
-| `audit.py` | Static structural analysis — **324 checks**. Run: `python audit.py index.html` | — |
+| `audit.py` | Static structural analysis — **333 checks**. Run: `python audit.py index.html` | — |
 | `pSCR_gas_consumption_validation_v2.30.15.md` | pSCR gas draw vs metabolic O₂ / OTU-CNS end-to-end validation report (v2.30.15 sign-off) | — |
 | `pSCR_OTU_CNS_consistency_audit.md` | OTU/CNS code-path audit + test plan (companion to suite above) | — |
 
@@ -166,7 +167,7 @@ Bug reports: `errors_bugs_report.md` through `errors_bugs_report_v8.md` in repo 
 | `capacitor-bridge.js` | Android native file export bridge |
 | `download.html` | Android APK download page |
 | `manifest.json` | PWA manifest |
-| `audit.py` | Static analysis (324 checks) |
+| `audit.py` | Static analysis (333 checks) |
 | `vpmb.py` | VPM-B Python reference engine |
 | `VpmbEngine.java` | VPM-B Java reference |
 | `android/` | Capacitor Android project |

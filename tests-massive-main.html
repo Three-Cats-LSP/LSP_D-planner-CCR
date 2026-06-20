@@ -2991,7 +2991,8 @@ function waitForEngine(iframe, timeout, cb) {
     try {
       const w = iframe.contentWindow;
       if (!w) return null;
-      if (w.VPMEngine && typeof w.VPMEngine.calculate === 'function') return {engine: w.VPMEngine, win: w};
+      if (w.VPMEngine && typeof w.VPMEngine.calculate === 'function'
+          && w.ZHLEngine && typeof w.ZHLEngine.calculate === 'function') return {engine: w.VPMEngine, win: w};
       // scan globals
       try {
         const keys = Object.getOwnPropertyNames(w);
@@ -3013,7 +3014,7 @@ function waitForEngine(iframe, timeout, cb) {
       return;
     }
     if (iframeBootError) return cb(new Error('Boot error: ' + iframeBootError));
-    if (Date.now() - start > timeout) return cb(new Error('Timed out waiting for engine'));
+    if (Date.now() - start > timeout) return cb(new Error('Timed out waiting for VPMEngine + ZHLEngine'));
     setTimeout(check, 300);
   }
 
@@ -3071,7 +3072,7 @@ async function startTests() {
   const frame = document.getElementById('app-frame');
   frame.src = 'index.html?ts=' + Date.now();
 
-  waitForEngine(frame, 30000, async function(err, engine, win) {
+  waitForEngine(frame, 45000, async function(err, engine, win) {
     if (err) {
       statusEl.className = 'error';
       statusEl.textContent = '✗ ' + err.message + ' — keep this file beside index.html';

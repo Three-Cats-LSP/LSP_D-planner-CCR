@@ -51,7 +51,7 @@
 <body>
 <h1>pSCR OTU/CNS VALIDATION</h1>
 <div class="subtitle">
-  Safety-critical regression suite · v2.30.15 · getEffectivePpo2 / computePSCRFractions<br>
+  Safety-critical regression suite · dual-engine harness · getEffectivePpo2 / computePSCRFractions<br>
   Scenarios: 20 m / 40 m / 60 m × EAN32 &amp; EAN36 · VPM-B + Bühlmann ZHL-16C+GF · metabolic gas draw
 </div>
 
@@ -61,8 +61,9 @@
   <div class="meta" id="meta"></div>
 </div>
 <div id="results"></div>
-<iframe id="app-frame" src="index.html"></iframe>
+<iframe id="app-frame" src="about:blank"></iframe>
 
+<script src="lsp-test-harness.js"></script>
 <script>
 // ─── Constants (must match index.html) ───────────────────────────────────────
 const SURF = 1.01325;
@@ -351,35 +352,6 @@ const SECTIONS = [
 ];
 
 // ─── Runner ───────────────────────────────────────────────────────────────────
-let iframeBootError = null;
-
-function waitForEngine(iframe, timeout, cb) {
-  const start = Date.now();
-  iframe.onload = function() {
-    try {
-      const w = iframe.contentWindow;
-      if (w && !w.__lspHooked) {
-        w.__lspHooked = true;
-        w.addEventListener('error', e => { iframeBootError = e.message || 'Error'; });
-      }
-    } catch (_) {}
-  };
-  function tryGet() {
-    try {
-      const w = iframe.contentWindow;
-      if (w && w.VPMEngine && w.ZHLEngine && w.getEffectivePpo2 && w.computePSCRFractions) return w;
-    } catch (_) {}
-    return null;
-  }
-  function check() {
-    const w = tryGet();
-    if (w) { setTimeout(() => cb(null, w), 1500); return; }
-    if (iframeBootError) return cb(new Error('Boot: ' + iframeBootError));
-    if (Date.now() - start > timeout) return cb(new Error('Timed out waiting for index.html engines'));
-    setTimeout(check, 300);
-  }
-  setTimeout(check, 300);
-}
 
 function runTest(fn) {
   try {
@@ -393,7 +365,7 @@ function runTest(fn) {
 function renderSection(sec, results) {
   let html = `<div class="section"><div class="section-title">${sec.title}</div>`;
   if (sec.desc) html += `<div class="section-desc">${sec.desc}</div>`;
-  sec.tests.forEach(([name, fn], i) => {
+  sec.tests.forEach(([name], i) => {
     const r = results[i];
     const cls = r.pass ? 'pass' : 'fail';
     html += `<div class="test-row ${cls}">
@@ -417,15 +389,16 @@ function startTests() {
   meta.textContent = '';
 
   const iframe = document.getElementById('app-frame');
-  if (!iframe.src || iframe.src.endsWith('tests-pscr-otu-cns.html')) iframe.src = 'index.html';
+  iframe.src = 'index.html?ts=' + Date.now();
 
-  waitForEngine(iframe, 45000, (err, w) => {
+  LSPTestHarness.waitForApp(iframe, 45000, (err, ctx) => {
     if (err) {
       status.className = 'status fail';
       status.textContent = err.message;
       return;
     }
-    WIN = w;
+    WIN = ctx.win;
+    meta.textContent = 'APP: ' + (ctx.version || '—');
     status.textContent = 'Running…';
     let passed = 0, failed = 0, total = 0;
     let out = '';
@@ -443,7 +416,7 @@ function startTests() {
     status.textContent = failed
       ? `${failed} FAILED · ${passed}/${total} passed`
       : `ALL ${total} TESTS PASSED`;
-    meta.textContent = `v2.30.15 · ${SCENARIOS.length} dive profiles × 6 groups`;
+    meta.textContent = (ctx.version || '—') + ' · ' + SCENARIOS.length + ' dive profiles × 6 groups';
   });
 }
 </script>
