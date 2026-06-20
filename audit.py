@@ -2289,6 +2289,21 @@ if "waterDensity" in clear_block and "lspUserAdvDefaults" in clear_block:
 else:
     fail("appSettings.clear() still misses app-owned keys (BUG-62)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 47 — v2.30.14 fixes (errors_bugs_report_v12)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function vpmAccumPpo2" in js and "getEffectivePpo2(pAmb, 0, fO2, ccr" in js:
+    ok("VPM OTU/CNS uses getEffectivePpo2 for pSCR loop ppO2 (BUG-63)")
+else:
+    fail("VPM OTU/CNS still uses diluent fO2 × pAmb for pSCR (BUG-63)")
+
+vpm_ppo2_count = js.count("vpmAccumPpo2(")
+if vpm_ppo2_count >= 6:
+    ok(f"VPM OTU/CNS accumulation wired through vpmAccumPpo2 ({vpm_ppo2_count} sites)")
+else:
+    fail(f"VPM OTU/CNS not fully wired through vpmAccumPpo2 (found {vpm_ppo2_count})")
+
 print("=" * 60)
 
 if FAIL:
