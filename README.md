@@ -1,201 +1,161 @@
 # LSP D-Planner + CCR
 
-**Rebreather edition** of [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner) — closed-circuit (CCR), passive SCR (pSCR), bailout, and descent-setpoint planning on top of the v2.20.x open-circuit foundation.
+**Rebreather decompression planner** — CCR, pSCR, bailout and open-circuit planning on Bühlmann ZHL-16C + GF and VPM-B / VPM-B/GFS.
 
-This is a **separate product and repository**. The main [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner) stays on the stable open-circuit release line (v2.20.x) without rebreather code.
+Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**. A separate product from [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner) (open-circuit line, v2.20.x), maintained in its own repository to keep the OC release clean.
 
-Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**.
+🌐 **Live app:** https://threecats-lsp.com/d-planner-ccr/  
+📦 **GitHub Pages mirror:** https://three-cats-lsp.github.io/LSP_D-planner-CCR/  
+📲 **Android APK:** https://threecats-lsp.com/d-planner-ccr/download.html  
 
-🌐 **Live App**: https://threecats-lsp.com/d-planner-ccr/
-
-📦 **GitHub Pages mirror**: https://three-cats-lsp.github.io/LSP_D-planner-CCR/
-
-**Current version: 2.30.9**
+**Current version: 2.30.30** — Safety Sign-Off release. 85 audit findings (BUG-01–85) closed across 28 independent verification passes. 383/383 `audit.py` checks passing. See [SAFETY_CERTIFICATION_v2.30.30.md](SAFETY_CERTIFICATION_v2.30.30.md).
 
 ---
 
 ## Diver's Toolkit
 
-| App | Purpose |
-|-----|---------|
-| **[LSP D-Planner](https://threecats-lsp.com/d-planner/)** | Open-circuit decompression planning |
-| **LSP D-Planner + CCR** | Rebreather planning (this app) |
-| **[T-Viewer](https://threecats-lsp.com/t-viewer/)** | Open and share exported dive plan TXT/PDF files |
-| **[Get In Water](https://threecats-lsp.com/get-in-water/)** | Trip packing checklists |
+| App | Description | Link |
+|-----|-------------|------|
+| **[LSP D-Planner](https://threecats-lsp.com/d-planner/)** | Open-circuit decompression planning — Bühlmann, VPM-B, Rec/Tec | [Repo](https://github.com/Three-Cats-LSP/LSP_D-planner) |
+| **LSP D-Planner + CCR** ← *this app* | Rebreather planning — CCR, pSCR, bailout | [Repo](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR) |
+| **[T-Viewer](https://threecats-lsp.com/t-viewer/)** | Open and share exported dive plan TXT/PDF files | — |
+| **[Get In Water](https://threecats-lsp.com/get-in-water/)** | Dive trip packing checklists | [Repo](https://github.com/Three-Cats-LSP/Get-In-Water) |
 
-All apps live on the [Diver's Toolkit hub](https://threecats-lsp.com).
+All apps at the [Diver's Toolkit hub](https://threecats-lsp.com).
 
 ---
 
-## What's different from LSP D-Planner?
-
-Built from LSP D-Planner **v2.20.21** with rebreather-specific additions only in this repo:
+## What CCR adds over LSP D-Planner
 
 | Feature | Description |
 |---------|-------------|
-| **CCR (closed circuit)** | Diluent-aware tissue loading, setpoint crossing, loop vs OC deco gas logic |
-| **pSCR (passive SCR)** | GUE-style O₂ drop model (loop volume + metabolic O₂, 0.16 bar floor) |
-| **Bailout mode** | OC ascent with GF 90/90 (Bühlmann) for emergency planning |
-| **Descent setpoint** | Default 0.7 bar until high setpoint depth |
-| **Rebreather Adv. Settings** | SAC stress/deco CCR, stress time, problem-solve reserve wired into gas plan |
-| **Dual engines** | Bühlmann ZH-L16C + GF **and** VPM-B / VPM-B/GFS — both with full CCR paths |
+| **CCR (closed circuit)** | Phase-aware setpoints (descent / bottom / deco), diluent-aware tissue loading, setpoint crossing |
+| **pSCR (passive SCR)** | GUE-style loop O₂ depletion model — loop volume, metabolic O₂, 0.16 bar floor, runtime-tracked |
+| **Bailout** | OC emergency ascent with configurable bailout GF (default 50/85) |
+| **Rebreather Adv. Settings** | Stress SAC, deco CCR SAC, stress time, problem-solve reserve — all wired into gas plan |
+| **Diluent & bailout gas UI** | Separate diluent and bailout gas cards with MOD validation |
+| **Dual-engine CCR/pSCR** | Bühlmann and VPM both compute OTU/CNS via shared plan-walk engine, segment-accurate |
+| **Circuit-aware exports** | Plans labelled DECO PLAN (OC) vs DECO PLAN (CCR); filenames include circuit tag |
 
-Everything else from the v2.20.x base is included: Surf GF, prior-dive O₂ carry, shallow gradient, export/banner, presets, contingency plans, imperial units, travel gas, altitude, and the full **Tools** mode (Best Mix, MOD, END, EAD/Gas tables, unit converter, knowledge base).
-
----
-
-## App Modes
-
-Three top-level modes (header switcher):
-
-| Mode | Description |
-|------|-------------|
-| **Rec** | PADI RDP recreational planner — NDL tables, pressure groups, nitrox |
-| **Tec** | Full technical decompression planning — trimix, multi-gas, Bühlmann + VPM |
-| **Tools** | Standalone calculators and reference tables (no dive schedule) |
-
-**Tec sub-tabs:** Deco Schedule · Dive Planner · Surf Int · Avg Depth · Multi Dive · CNS O₂ · NDL Tables
-
-**Tools sub-tabs:** Best Mix · MOD · END Calc · EAD Table · Gas Table · Unit Converter · Knowledge
+Everything from LSP D-Planner OC is also here: GF presets, trimix, travel gas, altitude, repetitive dives, gas consumption, emergency contingency, PDF/TXT/slate export, Android app.
 
 ---
 
-## Rebreather Planning (Tec)
+## Algorithms
 
-Configure under **Circuit** on the Deco Schedule card:
+| Algorithm | Notes |
+|-----------|-------|
+| **Bühlmann ZHL-16C + GF** | 16 compartments. GF Low/High via presets or custom (20/85, 30/85, 50/85, GUE, custom). Shallow gradient toggle. |
+| **VPM-B** | Varying Permeability Model. Conservatism +0 to +5. Altitude-adjusted critical radii. |
+| **VPM-B/GFS** | VPM-B deep stops + GF High at shallow stops. |
 
-- **OC** — standard open-circuit (same as main LSP D-Planner)
-- **CCR** — on-loop setpoints (descent / bottom / deco), diluent-as-bailout option, loop gas in profile and export
-- **pSCR** — passive SCR with loop volume and metabolic O₂; setpoint fields hidden (not applicable)
-- **Bailout** — OC breathing from bailout gas with GF 90/90
-
-Shared CCR physics used by both Bühlmann and VPM engines: `getInspiredInertPressures()`, `splitSegmentAtSetpoint()`, `getEffectivePpo2()`, `loadTissuesWithCCR()`.
-
-Gas validation checks MOD at the correct ppO₂ limit (on-loop setpoint vs OC bailout limit). Stress/problem-solve reserve gas is included in the gas plan when configured.
+All algorithms support CCR, pSCR, bailout, trimix, altitude, and repetitive dives.
 
 ---
 
 ## Web App
 
-Open https://threecats-lsp.com/d-planner-ccr/ in any modern browser — no install required.
+Open https://threecats-lsp.com/d-planner-ccr/ in any modern browser — no install required. Add to your home screen for native-app feel.
 
-**Installation (PWA):**
-1. Open the live URL on your phone, tablet, or computer
-2. **Safari (iPhone / iPad):** Share → **Add to Home Screen**
-3. **Chrome (Android):** Menu → **Install app** / **Add to Home screen**
-4. **Chrome (desktop):** Install icon in the address bar
-
-Service worker caches static assets; HTML is always fetched fresh. Hard-refresh after deploy if you see an old version.
+**Install as PWA:**
+1. **Safari (iPhone/iPad):** Share → Add to Home Screen → Add
+2. **Chrome (Android):** ⋮ → Install app / Add to Home Screen → confirm
+3. **Chrome (desktop):** Click install icon in address bar, or ⋮ → Install
 
 ---
 
-## Android APK
+## Android App
 
-Separate Android package (`com.threecats.lsp.dplannerccr`) — can be installed **alongside** the standard LSP D-Planner APK.
+Built with [Capacitor](https://capacitorjs.com). Direct APK — no Play Store needed.
 
-📲 **[Download APK](https://threecats-lsp.com/d-planner-ccr/download.html)**
+**Requirements:** Android 5.1+ (API 22)
 
-**Build locally:**
-```bash
-npm install
-npm run cap:sync
-npm run cap:open    # opens Android Studio
-```
+**Install:**
+1. Download APK from https://threecats-lsp.com/d-planner-ccr/download.html
+2. Allow "Install from unknown sources" in your Android settings
+3. Open the downloaded APK and install
 
-APK builds are also published under `Android Apk/` by CI on release.
+**Build stack:** AGP 8.6.1 · Gradle 9.5.1 · JDK 17 · compileSdk/targetSdk 35 · minSdk 22 · Capacitor 6
 
 ---
 
-## Decompression Algorithms
+## Gas Planning
 
-- **Bühlmann ZH-L16C + Gradient Factors** — 16-compartment dissolved-gas model; GF presets (20/85 default) or custom; CCR-aware tissue loading and bailout GF 90/90
-- **VPM-B** — bubble-mechanics model; conservatism +0 to +5; CCR setpoint phases wired for bottom and deco
-- **VPM-B/GFS** — VPM deep stops + GF High at shallow/surface stops
-
----
-
-## Output and Export
-
-Same export stack as LSP D-Planner v2.20.x: Copy preview modal, Deco Slate, TXT, PDF (section picker), named presets (20 max), contingency/emergency plans with gas sufficiency checks.
-
-CCR plans label loop gas, setpoints, and bailout switches in the deco table, profile graph, banner, and text export.
+- **Diluent cylinder** — size, pressure, reserve; consumption via metabolic bypass rate (pSCR) or diluent injection rate (CCR)
+- **Bailout gases** — up to 4 deco gas cards; deepest-capable gas selected automatically for each stop in the stress reserve
+- **Stress/problem-solve reserve** — configurable minutes, distributed across bottom depth + every deco stop using the appropriate gas at each depth
+- **Gas rule** — rule of thirds or half tank; imperial or metric
+- **SAC rates** — bottom, deco, CCR deco (separate), stress — all saved per settings profile
 
 ---
 
-## Development
+## Export
 
-Single-file architecture — primary code in `index.html` (~18k lines). Capacitor bridge in `capacitor-bridge.js`, offline caching in `sw.js`.
+| Format | Contents |
+|--------|----------|
+| **Copy** | Plain text preview → clipboard |
+| **Deco Slate** | Compact monospaced format for writing on a slate |
+| **TXT** | Full plan to Downloads (Android) or browser download |
+| **PDF — Dive Plan** | Section picker: Gas Consumption, Dive Profile, Deco Slate, GF Curve, Tissue Saturation |
+| **PDF — Emergency Plan** | Emergency Gas, Ascent Schedule, Dive Profile, GF Curve, Tissue Saturation, Emergency Slate |
 
-**Before every commit:**
-```bash
-python audit.py index.html
-```
-
-Static analysis: **335 checks** across 53 code groups (includes GROUP 53 v2.30.19 imperial gas display fix).
-
-Pushes to `main` that touch app files trigger **Notify Site on Push** → auto-sync to [threecats-lsp.com/d-planner-ccr/](https://threecats-lsp.com/d-planner-ccr/) via the `threecats-lsp.com` repo.
-
----
-
-## Quality & Testing
-
-Open any suite in a browser (loads `index.html` in a hidden iframe and runs against the live engine).
-
-| Suite | Repo | Live |
-|-------|------|------|
-| [`tests.html`](tests.html) | Core regression — engine presence, NDL, deco, VPM-B, CNS/OTU, edge cases | [Live](https://threecats-lsp.com/d-planner-ccr/tests.html) |
-| [`tests-verify.html`](tests-verify.html) | **Math Verification** — ZHL-16C + VPM-B vs Baker/FORTRAN reference; sections A–H **+ Section I · CCR / Rebreather** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-verify.html) |
-| [`tests-pscr-otu-cns.html`](tests-pscr-otu-cns.html) | **pSCR OTU/CNS & gas validation** — 36 safety-critical tests (20/40/60 m × EAN32/EAN36); guards `getEffectivePpo2` regression | [Live](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) |
-| `lsp-test-harness.js` | Shared dual-engine boot helper (`VPMEngine` + `ZHLEngine`) — included by all test suites | — |
-| [`tests-extended.html`](tests-extended.html) | Extended algorithm suite — GF, trimix, conservatism ordering, first-stop depths | [Live](https://threecats-lsp.com/d-planner-ccr/tests-extended.html) |
-| [`tests-massive.html`](tests-massive.html) | Full regression — 300+ engine plans, UI/DOM, Tier 1–3, travel gas, altitude, gas plan, slate, presets, **T3-CCR MultiDeco cross-val** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive.html) |
-| [`tests-massive-main.html`](tests-massive-main.html) | Mobile-optimised massive suite — same scope minus heaviest Tier 3 groups; includes **T3-CCR** | [Live](https://threecats-lsp.com/d-planner-ccr/tests-massive-main.html) |
-| `audit.py` | Static structural analysis — **335 checks**. Run: `python audit.py index.html` | — |
-| `pSCR_gas_consumption_validation_v2.30.15.md` | pSCR gas draw vs metabolic O₂ / OTU-CNS end-to-end validation report (v2.30.15 sign-off) | — |
-| `pSCR_OTU_CNS_consistency_audit.md` | OTU/CNS code-path audit + test plan (companion to suite above) | — |
-
-Bug reports: `errors_bugs_report.md` through `errors_bugs_report_v8.md` in repo root.
+All exports include circuit tag (OC/CCR/pSCR) and algorithm label.
 
 ---
 
-## Repository Structure
+## Decompression Algorithms — Presets
 
-| Path | Purpose |
-|------|---------|
-| `index.html` | Self-contained web app |
-| `sw.js` | Service worker — offline cache, network-first HTML |
-| `capacitor-bridge.js` | Android native file export bridge |
-| `download.html` | Android APK download page |
-| `manifest.json` | PWA manifest |
-| `audit.py` | Static analysis (335 checks) |
-| `vpmb.py` | VPM-B Python reference engine |
-| `VpmbEngine.java` | VPM-B Java reference |
-| `android/` | Capacitor Android project |
-| `Android Apk/` | Latest built APK (CI) |
-| `Knowledge Base/` | Reference PDFs, MultiDeco cross-reference data, Baker FORTRAN source |
-| `tests*.html` | Browser test suites (see above) |
-| `errors_bugs_report_v*.md` | Verification pass bug reports |
+| Preset | GF Lo | GF Hi | Transit | Rounding | Water Vapor |
+|--------|-------|-------|---------|----------|-------------|
+| GUE DecPlanner | 20 | 85 | MultiDeco | Whole min | 0.0577 |
+| MultiDeco | 30 | 85 | MultiDeco | Whole min | 0.0577 |
+| Abysner | 30 | 85 | Schreiner | Fractional | 0.0627 |
+| Subsurface | 35 | 75 | Schreiner | Whole min | 0.0627 |
+| DiveKit | 45 | 85 | MultiDeco | Whole min | 0.0577 |
 
 ---
 
-## Recent releases (v2.30.x)
+## Tools (in-app)
 
-| Version | Highlights |
-|---------|------------|
-| **2.30.19** | Imperial gas volume display uses `gpVolDisp()` in VPM and emergency blocks (BUG-72) |
-| **2.30.17** | Imperial SAC converted to L/min before gas consumption / Gas Plan cross-check (BUG-71) |
-| **2.30.16** | Surface GF uses `altSurfaceP` at altitude (BUG-69); stress reserve split across deco stop depths (BUG-70) |
-| **2.30.15** | pSCR OTU/CNS parity complete (BUG-64–68); dedicated `tests-pscr-otu-cns.html` + gas/toxicity validation report |
-| **2.30.9** | Imperial Bühlmann emergency gas capacity fix; `appSettings.clear()` key fix; faster settings restore (no double `change` burst) |
-| **2.30.8** | Tools panel HTML fix (panels no longer nested inside `#deco`); emoji brand icons restored |
-| **2.30.0** | ★ Milestone — CCR repo split; full rebreather planning shipped |
-
-Full history: [`CHANGELOG.md`](CHANGELOG.md)
+- **MOD Calculator** — ppO₂ limits, altitude-aware
+- **Best Mix** — optimal O₂% for target depth and ppO₂
+- **END Calculator** — narcotic equivalent depth, N₂ or N₂+O₂ model
+- **EAD Table** — 22–40% O₂ at 12–38 m
+- **Gas Table** — fO₂, fN₂, ppO₂, EAD, MOD for common mixes
+- **Unit Converter** — depth, pressure, volume, SAC rate
+- **Knowledge** — algorithm background, pSCR physiology, altitude correction, GF guidance
 
 ---
 
-## License & disclaimer
+## Test Suites
 
-Same terms as [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner).
+| Suite | Tests | Scope |
+|-------|-------|-------|
+| [`tests-pscr-otu-cns.html`](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) | 36 | pSCR OTU/CNS & gas draw — Sections A–F |
+| [`tests-verify.html`](https://threecats-lsp.com/d-planner-ccr/tests-verify.html) | 68 | Baker/FORTRAN cross-val, Section I CCR/Rebreather |
+| [`tests-massive.html`](https://threecats-lsp.com/d-planner-ccr/tests-massive.html) | 376+ | Full engine plans, gas plan, T3-CCR MultiDeco RT |
+| [`tests-massive-main.html`](https://threecats-lsp.com/d-planner-ccr/tests-massive-main.html) | 376+ | Mobile-optimised |
+| [`tests-extended.html`](https://threecats-lsp.com/d-planner-ccr/tests-extended.html) | — | GF, trimix, conservatism ordering |
+| [`tests.html`](https://threecats-lsp.com/d-planner-ccr/tests.html) | — | Core engine, NDL, VPM-B, CNS/OTU |
+| `audit.py` | **383** | Static analysis — 383/383 passing |
 
-For **trained mixed-gas and rebreather divers only**. Not a substitute for proper certification, equipment checks, or dive planning discipline. Verify all plans against your dive computer and training agency standards.
+---
+
+## Safety & Verification
+
+- **28 independent audit passes** (v2.30.0 → v2.30.30)
+- **85 verified findings closed** (BUG-01 through BUG-85)
+- **Full audit trail:** `errors_bugs_report_v1.md` through `errors_bugs_report_v28.md`
+- **[Safety certification memo](SAFETY_CERTIFICATION_v2.30.30.md)** — approved for production, 2026-06-21
+
+This app is planning software for **trained rebreather and mixed-gas divers**. It is not a substitute for diver training, pre-dive equipment checks, or a calibrated dive computer.
+
+---
+
+## License
+
+MIT — free to use, modify, and distribute. No account, no ads, no subscription.
+
+---
+
+*Three Cats LSP · [threecats-lsp.com](https://threecats-lsp.com)*
