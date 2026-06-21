@@ -194,15 +194,15 @@ const SCENARIOS = [
   { id:'60_E36', depth:60, o2:36, he:0, bt:20, label:'60 m · EAN36 · 20 min' },
 ];
 
-/** Pinned loop ppO₂ @ end of bottom (Python cross-check, altSurfaceP≈1.013 bar, loop 10 L, ṀO₂ 1.5) */
+/** Pinned loop ppO₂ @ end of bottom — true 0.16 bar ppO₂ floor (depleted loop) */
 const PINNED_LOOP_PPO2 = {
-  '20_E32': 0.4864, '40_E32': 0.8106, '60_E32': 1.1348,
-  '20_E36': 0.4864, '40_E36': 0.8106, '60_E36': 1.1348,
+  '20_E32': 0.16, '40_E32': 0.16, '60_E32': 0.16,
+  '20_E36': 0.16, '40_E36': 0.16, '60_E36': 0.16,
 };
-/** Pinned bottom-phase OTU only (ppO₂ from corrected loop model, duration = BT) */
+/** Pinned bottom-phase OTU @ loop ppO₂ (≤0.5 bar → 0 OTU) */
 const PINNED_BOTTOM_OTU = {
-  '20_E32': 0.0, '40_E32': 20.2, '60_E32': 24.4,
-  '20_E36': 0.0, '40_E36': 16.8, '60_E36': 24.4,
+  '20_E32': 0.0, '40_E32': 0.0, '60_E32': 0.0,
+  '20_E36': 0.0, '40_E36': 0.0, '60_E36': 0.0,
 };
 /** Diluent-only bottom OTU (fO2×pAmb integration — engine must stay well below) */
 const PINNED_DILUENT_BOTTOM_OTU = {
@@ -308,6 +308,10 @@ const SECTIONS = [
     () => {
       const fO2 = fO2frac(sc.o2);
       const ref = refBottomPhase(sc);
+      const fr = WIN.computePSCRFractions(pAmb(sc.depth), fO2, sc.he / 100, ref.rt, ccrAtRuntime(ref.rt));
+      const expected = Math.max(PSCR_MIN, fr.fO2 * pAmb(sc.depth));
+      assert(near(ref.ppLoop, expected, 0.002),
+        `loop ppO₂=${ref.ppLoop.toFixed(4)} vs computePSCRFractions ${expected.toFixed(4)}`);
       const pinned = PINNED_LOOP_PPO2[sc.id];
       assert(near(ref.ppLoop, pinned, 0.002),
         `loop ppO₂=${ref.ppLoop.toFixed(4)} expected ${pinned}`);
@@ -423,6 +427,37 @@ const SECTIONS = [
       return `VPM=${vpm.totalOTU} · ZHL=${zhl.totalOTU} OTU ✓`;
     },
   ]),
+},
+{
+  title: 'G · pSCR trimix fraction normalization',
+  badge: 'badge-pscr',
+  desc: 'Trimix diluent fractions must sum to 1.0 at runtime 0 and after metabolic depletion (issue #1).',
+  tests: [
+    ['40 m 18/45 — fresh loop preserves diluent fractions', () => {
+      const fr = WIN.computePSCRFractions(pAmb(40), 0.18, 0.45, 0, ccrAtRuntime(0));
+      const sum = fr.fO2 + fr.fHe + fr.fN2;
+      assert(near(sum, 1, 0.001), `sum=${sum}`);
+      assert(near(fr.fO2, 0.18, 0.001), `fO2=${fr.fO2}`);
+      assert(near(fr.fHe, 0.45, 0.001), `fHe=${fr.fHe}`);
+      assert(near(fr.fN2, 0.37, 0.001), `fN2=${fr.fN2}`);
+      return `18/45/37 at runtime 0 ✓`;
+    }],
+    ['40 m 18/45 @ 4 bar — depleted fractions still sum to 1', () => {
+      const fr = WIN.computePSCRFractions(4.0, 0.18, 0.45, 30, ccrAtRuntime(30));
+      const sum = fr.fO2 + fr.fHe + fr.fN2;
+      assert(near(sum, 1, 0.001), `sum=${sum} (pre-fix was ~2.0)`);
+      return `sum=${sum.toFixed(4)} ✓`;
+    }],
+    ['60 m 18/45 — inspired inert pressures use normalized fractions', () => {
+      const pA = pAmb(60);
+      const insp = WIN.getInspiredInertPressures(pA, 0, 0.18, 0.45, ccrAtRuntime(0));
+      const ppH2O = WIN.WATER_VAPOR || 0.0627;
+      const pInert = pA - ppH2O;
+      assert(near(insp.pHe / pInert, 0.45, 0.01), `pHe fraction ${(insp.pHe/pInert).toFixed(3)}`);
+      assert(near(insp.pN2 / pInert, 0.37, 0.01), `pN2 fraction ${(insp.pN2/pInert).toFixed(3)}`);
+      return `He/N2 inspired fractions match diluent ✓`;
+    }],
+  ],
 },
 ];
 

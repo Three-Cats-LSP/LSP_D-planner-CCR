@@ -91,9 +91,8 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          // Network failed — serve cached version as offline fallback
           return caches.match(event.request, { ignoreSearch: true })
-            || caches.match(OFFLINE_INDEX, { ignoreSearch: true });
+            .then(cached => cached || caches.match(OFFLINE_INDEX, { ignoreSearch: true }));
         })
     );
     return;

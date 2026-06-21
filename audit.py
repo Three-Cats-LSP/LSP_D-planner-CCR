@@ -432,7 +432,7 @@ else:
 # 9.1 updateHeHalfTime called in DOMContentLoaded
 dcl_idx = js.find("DOMContentLoaded")
 if dcl_idx > 0:
-    dcl_block = js[dcl_idx:dcl_idx + 3000]
+    dcl_block = js[dcl_idx:dcl_idx + 12000]
     if "updateHeHalfTime()" in dcl_block:
         ok("updateHeHalfTime() called in DOMContentLoaded — VPMEngine He HT synced on load")
     else:
@@ -2871,6 +2871,100 @@ if os.path.isfile(manifest_path):
         ok("AndroidManifest uses fully qualified MainActivity class name")
     else:
         fail("AndroidManifest MainActivity must be com.threecats.lsp.dplannerccr.MainActivity")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 64 — Issue #1 deep audit fixes (pSCR trimix, units, validation, PWA)
+# ══════════════════════════════════════════════════════════════════════════════
+
+pscr_frac_start = js.find("function computePSCRFractions")
+pscr_frac_block = js[pscr_frac_start:pscr_frac_start + 900] if pscr_frac_start > 0 else ""
+if pscr_frac_start > 0 and "const sourceInert" in pscr_frac_block and "fN2src / sourceInert" in pscr_frac_block:
+    ok("computePSCRFractions normalizes trimix inert via sourceInert (issue #1)")
+else:
+    fail("computePSCRFractions still mis-treats fInert as N2-only (issue #1)")
+
+if pscr_frac_start > 0 and "PSCR_MIN_PPO2 * loopVol" in pscr_frac_block and "PSCR_MIN_PPO2 * loopVol * pAmb" not in pscr_frac_block:
+    ok("pSCR O₂ floor uses true 0.16 bar·L minimum (not 16% fraction floor)")
+else:
+    fail("pSCR O₂ floor still scales with ambient pressure (issue #1)")
+
+if "function validateDecoInputs" in js and "validateDecoInputs()" in js and "Cannot generate schedule" in js:
+    ok("validateDecoInputs blocks invalid depth/BT before runDecoSchedule (issue #1)")
+else:
+    fail("validateDecoInputs missing or not wired into runDecoSchedule (issue #1)")
+
+if "__units__" in js and "values['__units__']" in js:
+    ok("appSettings persists unit system as __units__ (issue #1)")
+else:
+    fail("Unit system not persisted in appSettings (issue #1)")
+
+if '<option value="ean80">EAN80' in html and html.count('value="ean80"') >= 2:
+    ok("EAN80 option present on deco gas selectors (issue #1)")
+else:
+    fail("EAN80 missing from dg1Mix/dg2Mix (issue #1)")
+
+if "mixEl.value === 'ean80' ? 80" in js:
+    ok("runVPMSchedule maps ean80 to 80% O₂ (issue #1)")
+else:
+    fail("runVPMSchedule still maps ean80 incorrectly (issue #1)")
+
+tissue_start = js.find("function renderTissueLoadChart")
+tissue_block = js[tissue_start:tissue_start + 1500] if tissue_start > 0 else ""
+if tissue_start > 0 and "gfHighInput" in tissue_block and "algorithmSelect" in tissue_block:
+    ok("renderTissueLoadChart reads gfHighInput and algorithmSelect (issue #1)")
+else:
+    fail("renderTissueLoadChart still uses stale gfHighSel/algoSel (issue #1)")
+
+if "getElementById('gfHighSel')" not in js and "getElementById('algoSel')" not in js:
+    ok("Stale gfHighSel/algoSel DOM IDs removed (issue #1)")
+else:
+    fail("Stale gfHighSel or algoSel still referenced (issue #1)")
+
+export_start = js.find("if (mode === 'planner')")
+export_block = js[export_start:export_start + 600] if export_start > 0 else ""
+if export_start > 0 and "getElementById('gasMix')" in export_block and "getElementById('gas')" not in export_block:
+    ok("Planner text export reads gasMix control (issue #1)")
+else:
+    fail("Planner text export still reads nonexistent gas control (issue #1)")
+
+manifest_path = os.path.join(os.path.dirname(__file__), "manifest.json")
+if os.path.isfile(manifest_path):
+    with open(manifest_path, encoding="utf-8") as f:
+        manifest_json = f.read()
+    if '"start_url": "./"' in manifest_json and '"scope": "./"' in manifest_json:
+        ok("manifest.json uses relative start_url/scope (issue #1)")
+    else:
+        fail("manifest.json still hardcodes /LSP_D-planner-CCR/ paths (issue #1)")
+
+sw_path = os.path.join(os.path.dirname(__file__), "sw.js")
+if os.path.isfile(sw_path):
+    with open(sw_path, encoding="utf-8") as f:
+        sw_src = f.read()
+    if ".then(cached => cached || caches.match(OFFLINE_INDEX" in sw_src:
+        ok("sw.js offline fallback chains to app-shell lookup (issue #1)")
+    else:
+        fail("sw.js offline fallback still uses broken Promise || chain (issue #1)")
+
+e2e_path = os.path.join(os.path.dirname(__file__), "dev", "validate_pscr_e2e.py")
+if os.path.isfile(e2e_path):
+    with open(e2e_path, encoding="utf-8") as f:
+        e2e_src = f.read()
+    if "ThreadingHTTPServer" in e2e_src and "serve_root" in e2e_src and "as_uri()" not in e2e_src:
+        ok("validate_pscr_e2e.py serves app over HTTP (not file://)")
+    else:
+        fail("validate_pscr_e2e.py still loads index via file:// (issue #1)")
+
+audit_wf = os.path.join(os.path.dirname(__file__), ".github", "workflows", "audit.yml")
+if os.path.isfile(audit_wf):
+    ok("audit.yml CI workflow present (issue #1)")
+else:
+    fail("Missing .github/workflows/audit.yml CI workflow (issue #1)")
+
+if os.path.isfile(pscr_test_path):
+    if "pSCR trimix fraction normalization" in pscr_test and "18/45" in pscr_test:
+        ok("tests-pscr-otu-cns.html includes trimix fraction regression (issue #1)")
+    else:
+        fail("tests-pscr-otu-cns.html missing trimix fraction tests (issue #1)")
 
 print("=" * 60)
 

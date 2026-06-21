@@ -7,7 +7,10 @@ import os
 import re
 import subprocess
 import sys
+import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -49,6 +52,21 @@ def ref_gas_surface_equiv(bt_min: float) -> tuple[float, float]:
     return surf_lpm * bt_min, met_o2
 
 
+@contextmanager
+def serve_root(root: Path, port: int = 8765):
+    prev = os.getcwd()
+    os.chdir(root)
+    server = ThreadingHTTPServer(("127.0.0.1", port), SimpleHTTPRequestHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{port}/"
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+        os.chdir(prev)
+
+
 def run_audit() -> dict:
     proc = subprocess.run(
         [sys.executable, str(ROOT / "audit.py")],
@@ -68,8 +86,6 @@ def run_audit() -> dict:
 
 def run_playwright_validation() -> dict:
     from playwright.sync_api import sync_playwright
-
-    file_url = INDEX.as_uri()
 
     js_eval_profile = """
     (profile) => {
@@ -167,31 +183,33 @@ def run_playwright_validation() -> dict:
 
     results = {"profiles": [], "pscr_suite": None, "app_version": None}
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    with serve_root(ROOT) as base_url:
+        app_url = urljoin(base_url, "index.html")
+        pscr_url = urljoin(base_url, "tests-pscr-otu-cns.html")
 
-        page.goto(file_url + "?massiveSuite=1", wait_until="domcontentloaded", timeout=180000)
-        page.wait_for_function(
-            """() => window.VPMEngine && window.ZHLEngine && window.getEffectivePpo2""",
-            timeout=180000,
-        )
-        page.evaluate("window._zhlHeadless = true")
-        page.wait_for_timeout(3000)
-        results["app_version"] = page.evaluate("window.APP_VERSION")
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        for prof in PROFILES:
-            raw = page.evaluate(js_eval_profile, prof)
-            checks = validate_profile(prof, raw)
-            results["profiles"].append({"profile": prof, "data": raw, "checks": checks})
+            page.goto(app_url + "?massiveSuite=1", wait_until="domcontentloaded", timeout=180000)
+            page.wait_for_function(
+                """() => window.VPMEngine && window.ZHLEngine && window.getEffectivePpo2""",
+                timeout=180000,
+            )
+            page.evaluate("window._zhlHeadless = true")
+            page.wait_for_timeout(3000)
+            results["app_version"] = page.evaluate("window.APP_VERSION")
 
-        # Run automated pSCR test suite
-        pscr_url = PSCR_TEST.as_uri()
-        page.set_default_timeout(240000)
-        page.goto(pscr_url, wait_until="domcontentloaded", timeout=180000)
-        suite = page.evaluate(js_run_pscr_suite)
-        results["pscr_suite"] = suite
-        browser.close()
+            for prof in PROFILES:
+                raw = page.evaluate(js_eval_profile, prof)
+                checks = validate_profile(prof, raw)
+                results["profiles"].append({"profile": prof, "data": raw, "checks": checks})
+
+            page.set_default_timeout(240000)
+            page.goto(pscr_url, wait_until="domcontentloaded", timeout=180000)
+            suite = page.evaluate(js_run_pscr_suite)
+            results["pscr_suite"] = suite
+            browser.close()
 
     return results
 
