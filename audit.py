@@ -411,6 +411,10 @@ if deco_fields_idx > 0:
         ("dg1TrimixHe",     "Deco gas 1 trimix He input"),
         ("dg2TrimixO2",     "Deco gas 2 trimix O2 input"),
         ("dg2TrimixHe",     "Deco gas 2 trimix He input"),
+        ("dg1Mix",          "Deco gas 1 mix selector"),
+        ("dg1CustomO2",     "Deco gas 1 custom O2 input"),
+        ("dg2Mix",          "Deco gas 2 mix selector"),
+        ("dg2CustomO2",     "Deco gas 2 custom O2 input"),
     ]
     for field_id, description in required_fields:
         if field_id in deco_fields_block:
@@ -2481,10 +2485,10 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.29['\"]", js):
-    ok("APP_VERSION bumped to 2.30.29")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.30['\"]", js):
+    ok("APP_VERSION bumped to 2.30.30")
 else:
-    fail("APP_VERSION not bumped to 2.30.29")
+    fail("APP_VERSION not bumped to 2.30.30")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 57 — v2.30.25 fix (pSCR OTU/CNS plan integration)
@@ -2532,26 +2536,26 @@ version_ok = True
 if os.path.isfile(pkg_path):
     with open(pkg_path, encoding="utf-8") as f:
         pkg = f.read()
-    if '"version": "2.30.29"' not in pkg:
+    if '"version": "2.30.30"' not in pkg:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(gradle_path):
     with open(gradle_path, encoding="utf-8") as f:
         gradle = f.read()
-    if 'versionName "2.30.29"' not in gradle or "versionCode 23029" not in gradle:
+    if 'versionName "2.30.30"' not in gradle or "versionCode 23030" not in gradle:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(sw_path):
     with open(sw_path, encoding="utf-8") as f:
         sw = f.read()
-    if "lsp-dplanner-ccr-v2.30.29" not in sw:
+    if "lsp-dplanner-ccr-v2.30.30" not in sw:
         version_ok = False
 else:
     version_ok = False
 if version_ok:
-    ok("All version files aligned at 2.30.29 (v17 BUG-74)")
+    ok("All version files aligned at 2.30.30 (v17 BUG-74)")
 else:
     fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
 

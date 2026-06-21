@@ -3,7 +3,7 @@
 **App version:** v2.30.30  
 **Audit date:** 2026-06-21  
 **Previous report:** errors_bugs_report_v21.md (v2.30.28 — BUG-76/BUG-77)  
-**Audit tool:** audit.py — 377 checks, 0 failures  
+**Audit tool:** audit.py — 381 checks, 0 failures  
 **Scope:** v2.30.28–v2.30.30 fixes (massive suite, CCR C3, ZHL/pSCR OTU/CNS plan walk).
 
 ---
@@ -17,6 +17,7 @@
 | BUG-80 | **FIXED** (v2.30.29) | ZHL headless OTU/CNS: plan walk uses Bühlmann step `pO2` |
 | BUG-81 | **FIXED** (v2.30.30) | Massive main: 109× VPM `(w\|\|E).calculate is not a function` |
 | BUG-82 | **FIXED** (v2.30.30) | ZHL pSCR OTU: single-sample bottom integration vs plan walk (tests-pscr Section D/F) |
+| BUG-77 | **FIXED** (v2.30.30) | Deco gas 1/2 mix selectors in `DECO_FIELDS` (persist on reload) |
 
 ---
 
@@ -29,15 +30,10 @@
 - VPMEngine uses `computePlanExposureTotals()` with segment-start `scrRuntimeMin` (BUG-77 integration).
 
 ### BUG-77 — Deco gas persistence in `DECO_FIELDS`
-**Status:** ⚠️ Partially open
+**Status:** ✅ Fixed (v2.30.30)
 
-- `'decoGas'` and `'decoCustomO2'` added to `DECO_FIELDS`. ✓
-- `'dg1Mix'`, `'dg2Mix'`, `'dg1CustomO2'`, `'dg2CustomO2'` **still absent** — deco gas 1/2 mix selectors revert on reload.
-
-**Fix (still needed):** Add to `DECO_FIELDS`:
-```js
-'dg1Mix', 'dg1CustomO2', 'dg2Mix', 'dg2CustomO2',
-```
+- `'decoGas'` and `'decoCustomO2'` added in v2.30.28. ✓
+- `'dg1Mix'`, `'dg2Mix'`, `'dg1CustomO2'`, `'dg2CustomO2'` added in v2.30.30. ✓
 
 ---
 
@@ -124,9 +120,7 @@ C3 ZHL RT 83 vs ref 98 (±5 min)
 
 ## Open bugs
 
-| Bug | Severity | Description |
-|-----|----------|-------------|
-| BUG-77 (partial) | LOW | `dg1Mix` / `dg2Mix` not in `DECO_FIELDS` — deco gas mix selectors not persisted on reload |
+_No open bugs in v2.30.30 scope._
 
 ---
 
