@@ -89,6 +89,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Verify MainActivity is packaged in APK
+        run: |
+          unzip -p android/app/build/outputs/apk/debug/app-debug.apk classes*.dex | strings | grep -q 'dplannerccr/MainActivity' \
+            || (echo 'FATAL: MainActivity missing from APK dex — launch will crash' && exit 1)
+          echo 'MainActivity found in APK dex'
+
       - name: Place APK at output location
         run: |
           mkdir -p "Android Apk"
@@ -111,4 +117,4 @@ jobs:
             -H "Authorization: token ${{ secrets.SYNC_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/Three-Cats-LSP/threecats-lsp.com/dispatches \
-            -d '{"event_type":"sync-apk-d-planner"}'
+            -d '{"event_type":"sync-apk-d-planner-ccr"}'

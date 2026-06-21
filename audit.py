@@ -2854,6 +2854,24 @@ if os.path.isfile(gradle_path):
     else:
         fail("Android build.gradle applicationId/namespace mismatch")
 
+build_apk_path = os.path.join(os.path.dirname(__file__), ".github", "workflows", "build-apk.yml")
+if os.path.isfile(build_apk_path):
+    with open(build_apk_path, encoding="utf-8") as f:
+        build_apk = f.read()
+    if 'sync-apk-d-planner-ccr' in build_apk and not re.search(r'sync-apk-d-planner(?!-ccr)', build_apk):
+        ok("build-apk.yml dispatches sync-apk-d-planner-ccr (site APK sync)")
+    else:
+        fail("build-apk.yml must dispatch sync-apk-d-planner-ccr, not sync-apk-d-planner")
+
+manifest_path = os.path.join(os.path.dirname(__file__), "android", "app", "src", "main", "AndroidManifest.xml")
+if os.path.isfile(manifest_path):
+    with open(manifest_path, encoding="utf-8") as f:
+        manifest = f.read()
+    if 'android:name="com.threecats.lsp.dplannerccr.MainActivity"' in manifest:
+        ok("AndroidManifest uses fully qualified MainActivity class name")
+    else:
+        fail("AndroidManifest MainActivity must be com.threecats.lsp.dplannerccr.MainActivity")
+
 print("=" * 60)
 
 if FAIL:
