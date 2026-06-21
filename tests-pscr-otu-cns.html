@@ -289,7 +289,9 @@ function recomputeExposureFromPlan(plan, defaultFO2, defaultFHe, pscr) {
   if (typeof WIN.computePlanExposureTotals !== 'function') {
     throw new Error('computePlanExposureTotals missing on window');
   }
-  return WIN.computePlanExposureTotals(plan, pscr, defaultFO2, defaultFHe, SURF, BAR);
+  const surfP = WIN.altSurfaceP != null ? WIN.altSurfaceP : SURF;
+  const barPerM = WIN.BAR_PER_METRE != null ? WIN.BAR_PER_METRE : BAR;
+  return WIN.computePlanExposureTotals(plan, pscr, defaultFO2, defaultFHe, surfP, barPerM);
 }
 
 function assert(cond, msg) { if (!cond) throw new Error(msg); }

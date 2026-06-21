@@ -2481,10 +2481,10 @@ if calc_start > 0 and ctx_oc_start > calc_start:
 else:
     fail("ctxUseOCForPpo2 still at module scope outside calculate (BUG-73)")
 
-if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.28['\"]", js):
-    ok("APP_VERSION bumped to 2.30.28")
+if re.search(r"APP_VERSION\s*=\s*['\"]2\.30\.29['\"]", js):
+    ok("APP_VERSION bumped to 2.30.29")
 else:
-    fail("APP_VERSION not bumped to 2.30.28")
+    fail("APP_VERSION not bumped to 2.30.29")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 57 — v2.30.25 fix (pSCR OTU/CNS plan integration)
@@ -2532,26 +2532,26 @@ version_ok = True
 if os.path.isfile(pkg_path):
     with open(pkg_path, encoding="utf-8") as f:
         pkg = f.read()
-    if '"version": "2.30.28"' not in pkg:
+    if '"version": "2.30.29"' not in pkg:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(gradle_path):
     with open(gradle_path, encoding="utf-8") as f:
         gradle = f.read()
-    if 'versionName "2.30.28"' not in gradle or "versionCode 23028" not in gradle:
+    if 'versionName "2.30.29"' not in gradle or "versionCode 23029" not in gradle:
         version_ok = False
 else:
     version_ok = False
 if os.path.isfile(sw_path):
     with open(sw_path, encoding="utf-8") as f:
         sw = f.read()
-    if "lsp-dplanner-ccr-v2.30.28" not in sw:
+    if "lsp-dplanner-ccr-v2.30.29" not in sw:
         version_ok = False
 else:
     version_ok = False
 if version_ok:
-    ok("All version files aligned at 2.30.28 (v17 BUG-74)")
+    ok("All version files aligned at 2.30.29 (v17 BUG-74)")
 else:
     fail("Version mismatch across APP_VERSION / sw.js / package.json / build.gradle (v17 BUG-74)")
 
@@ -2583,7 +2583,7 @@ else:
 # GROUP 59 — v2.30.28 fix (errors_bugs_report_v21 BUG-77)
 # ══════════════════════════════════════════════════════════════════════════════
 
-if "function planSegDepthM" in js and "scrRuntimeMin = Math.max(0, runEnd - dur)" in js:
+if "function planSegDepthM" in js and ("runStart + frac * dur" in js or "scrRuntimeMin = Math.max(0, runEnd - dur)" in js):
     ok("BUG-77 fixed: computePlanExposureTotals uses segment-start scrRuntimeMin + planSegDepthM")
 else:
     fail("BUG-77: computePlanExposureTotals still uses end-of-segment scrRuntimeMin or depth=0 on VPM ascents")
@@ -2601,6 +2601,36 @@ if os.path.isfile(pscr_test_path):
         ok("tests-pscr-otu-cns.html uses shared computePlanExposureTotals for plan walk")
     else:
         fail("tests-pscr-otu-cns.html still duplicates plan exposure integration")
+else:
+    fail("tests-pscr-otu-cns.html missing")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 61 — v2.30.29 fix (ZHL CNS plan re-integration / BUG-66)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function accumulateHeadlessPlanExposure" in js and "totalCNS: _headlessExposure.totalCNS" in js:
+    ok("BUG-66 fixed: headless Bühlmann OTU/CNS before _zhlHeadless return")
+else:
+    fail("BUG-66: runDecoSchedule missing headless OTU/CNS accumulation")
+
+if "pO2:   s.pO2" in js or "pO2: s.pO2" in js:
+    ok("ZHLEngine plan preserves diveRuntimeMin-baked pO2 from Bühlmann steps")
+else:
+    fail("ZHLEngine plan mapping drops step pO2 (CNS plan walk mismatch)")
+
+if "isFinite(baked)" in js and "seg.pO2" in js:
+    ok("computePlanExposureTotals uses baked step pO2 when present")
+else:
+    fail("computePlanExposureTotals ignores Bühlmann step pO2")
+
+pscr_test61 = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.html")
+if os.path.isfile(pscr_test61):
+    with open(pscr_test61, encoding="utf-8") as f:
+        pscr61 = f.read()
+    if "WIN.altSurfaceP" in pscr61 and "WIN.BAR_PER_METRE" in pscr61:
+        ok("tests-pscr-otu-cns.html recompute uses live altSurfaceP/BAR_PER_METRE")
+    else:
+        fail("tests-pscr-otu-cns.html still uses hardcoded SURF/BAR for recompute")
 else:
     fail("tests-pscr-otu-cns.html missing")
 
@@ -2696,6 +2726,7 @@ else:
     fail("tests.html missing")
 
 massive_html_path = os.path.join(os.path.dirname(__file__), "tests-massive.html")
+massive_html = ""
 if os.path.isfile(massive_html_path):
     with open(massive_html_path, encoding="utf-8") as f:
         massive_html = f.read()
@@ -2703,8 +2734,53 @@ if os.path.isfile(massive_html_path):
         ok("tests-massive.html CCR cross-val uses DiveKit first-stop pins (no MultiDeco per-stop table)")
     else:
         fail("tests-massive.html CCR cross-val still pinned to MultiDeco per-stop tables")
+    if "C3: { rt: 83" in massive_html:
+        ok("tests-massive.html CCR C3 RT pinned to LSP engine (83 min, DiveKit first stop)")
+    else:
+        fail("tests-massive.html CCR C3 RT pin missing or stale (expected rt: 83)")
+    if "function refreshFrameWin" in massive_html and "_suiteRunId" in massive_html:
+        ok("tests-massive.html iframe run guard + refreshFrameWin present")
+    else:
+        fail("tests-massive.html missing iframe hardening (refreshFrameWin / _suiteRunId)")
 else:
     fail("tests-massive.html missing")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 62 — v2.30.29 fix (errors_bugs_report_v22 BUG-78)
+# ══════════════════════════════════════════════════════════════════════════════
+
+massive78 = massive_html if os.path.isfile(massive_html_path) else ""
+if massive78 and "serviceWorker" in massive78 and "SKIP_WAITING" in massive78:
+    ok("BUG-78 fixed: tests-massive.html SW skip-waiting before iframe load")
+else:
+    fail("BUG-78: tests-massive.html missing service worker guard")
+
+if massive78 and "MIN_APP_VERSION + '&ts='" in massive78:
+    ok("BUG-78 fixed: tests-massive.html cache-busts iframe with MIN_APP_VERSION")
+else:
+    fail("BUG-78: tests-massive.html iframe src missing version cache-bust")
+
+massive_main78_path = os.path.join(os.path.dirname(__file__), "tests-massive-main.html")
+if os.path.isfile(massive_main78_path):
+    with open(massive_main78_path, encoding="utf-8") as f:
+        massive_main78 = f.read()
+    if "function refreshFrameWin" in massive_main78 and "_suiteRunId" in massive_main78:
+        ok("BUG-78 fixed: tests-massive-main.html refreshFrameWin + run guard")
+    else:
+        fail("BUG-78: tests-massive-main.html missing iframe hardening")
+else:
+    fail("tests-massive-main.html missing")
+
+v22_path = os.path.join(os.path.dirname(__file__), "errors_bugs_report_v22.md")
+if os.path.isfile(v22_path):
+    with open(v22_path, encoding="utf-8") as f:
+        v22 = f.read()
+    if "BUG-78" in v22 and "BUG-79" in v22 and "BUG-80" in v22 and "v2.30.29" in v22:
+        ok("errors_bugs_report_v22.md documents BUG-78, BUG-79, BUG-80 (v2.30.29)")
+    else:
+        fail("errors_bugs_report_v22.md incomplete")
+else:
+    fail("errors_bugs_report_v22.md missing")
 
 print("=" * 60)
 

@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.28';
+const APP_VERSION = '2.30.29';
 window.APP_VERSION = APP_VERSION;
 // Test harness: skip DOM recalc storms when loaded inside tests-massive.html iframe
 (function() {
@@ -10284,6 +10284,9 @@ function runDecoSchedule() {
   // the headless early-return below) so it's available in both headless tests
   // and the live DOM-rendered footer.
   const ttsMin = Math.max(0, rt - bt);
+  const _headlessExposure = accumulateHeadlessPlanExposure(
+    depthM, bt, descentRate, bottomFN2, bottomFHe, bottomFO2, _zhlOnLoop, collapsedMDP, _ccrSettings
+  );
   window._lastPlan = {
     rt: runTimeMin,
     tts: Math.round(ttsMin * 10) / 10,
@@ -10294,6 +10297,8 @@ function runDecoSchedule() {
     firstStopDepth: firstStopDepth || 0,
     finalTissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe || 0 })),  // for ZHL repetitive dive carry
     surfaceGF: computeSurfaceGF(tissues),
+    totalOTU: _headlessExposure.totalOTU,
+    totalCNS: _headlessExposure.totalCNS,
   };
 
   // ── Headless mode early return: skip ceiling/graph/DOM work ─────────────
@@ -10950,20 +10955,74 @@ function planSegDurationMin(seg) {
 function planSegRunEndMin(seg) {
   return seg.run != null ? seg.run : (seg.runtime != null ? seg.runtime : 0);
 }
-function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP, barPerM) {
-  let otu = 0, cnsFrac = 0;
-  const cfg = mergeCCRSettings(settings || {});
+
+function addExposureSample(otu, cnsFrac, ppO2, dur) {
+  if (ppO2 <= 0.5 || dur <= 0) return;
+  otu.val += dur * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
   const cnsLimits = { 6:720, 7:570, 8:450, 9:360, 10:300, 11:240, 12:210, 13:180, 14:150, 15:120, 16:45 };
+  const lo = Math.floor(ppO2 * 10), hi = lo + 1;
+  const lim = (cnsLimits[lo] || 0) + ((cnsLimits[hi] || 0) - (cnsLimits[lo] || 0)) * (ppO2 * 10 - lo);
+  cnsFrac.val += dur / (lim > 0 ? lim : 45);
+}
+
+/** Headless OTU/CNS from Bühlmann collapsed steps (uses diveRuntimeMin-baked pO2 on each step). */
+function accumulateHeadlessPlanExposure(depthM, bt, descentRate, bottomFN2, bottomFHe, bottomFO2, onLoop, collapsedSteps, ccrSettings) {
+  const otu = { val: 0 }, cnsFrac = { val: 0 };
+  const _pdCarry = window._priorDiveCarry;
+  if (_pdCarry) {
+    otu.val += _pdCarry.otuCarry || 0;
+    cnsFrac.val += (_pdCarry.cnsCarry || 0) / 100;
+  }
+  const cfg = mergeCCRSettings(ccrSettings || {});
+  const surfP = altSurfaceP || 1.01325;
+  const barPerM = BAR_PER_METRE || 0.1;
+  const descentTimeMin = depthM / descentRate;
+  const btAtDepthMin = Math.max(0, bt - descentTimeMin);
+
+  function ppo2At(depth, fo2, fhe, runtimeMin, phase) {
+    const pAmb = surfP + depth * barPerM;
+    if (onLoop && cfg.circuit === 'pSCR') {
+      return getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin: runtimeMin, bailout: false }, depth, fhe);
+    }
+    if (onLoop && cfg.circuit === 'CCR') {
+      const sp = getEffectiveSetpointAtDepth(depth, cfg, surfP, phase);
+      return getEffectivePpo2(pAmb, sp, fo2, cfg, depth, fhe);
+    }
+    return fo2 * pAmb;
+  }
+
+  let simRuntime = 0;
+  if (descentTimeMin > 0) {
+    addExposureSample(otu, cnsFrac, ppo2At(depthM / 2, bottomFO2, bottomFHe, simRuntime, 'descent'), descentTimeMin);
+    simRuntime += descentTimeMin;
+  }
+  if (btAtDepthMin > 0) {
+    addExposureSample(otu, cnsFrac, ppo2At(depthM, bottomFO2, bottomFHe, simRuntime, 'bottom'), btAtDepthMin);
+    simRuntime += btAtDepthMin;
+  }
+  (collapsedSteps || []).forEach(s => {
+    const dur = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
+    if (dur <= 0) return;
+    const pp = s.pO2 != null ? parseFloat(s.pO2)
+      : ppo2At(
+          s.type === 'ascent' ? (s.from + s.to) / 2 : (s.depth || 0),
+          Math.max(0, 1 - (s.fN2 ?? bottomFN2) - (s.fHe ?? 0)),
+          s.fHe ?? bottomFHe,
+          simRuntime,
+          s.type === 'deco' || s.type === 'safety' ? 'deco' : 'ascent'
+        );
+    addExposureSample(otu, cnsFrac, pp, dur);
+    simRuntime += dur;
+  });
+  return { totalOTU: Math.round(otu.val), totalCNS: parseFloat((cnsFrac.val * 100).toFixed(1)) };
+}
+
+function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP, barPerM) {
+  const otu = { val: 0 }, cnsFrac = { val: 0 };
+  const cfg = mergeCCRSettings(settings || {});
   function segFrac(val, fallback) {
     if (val == null) return fallback;
     return val > 1 ? val / 100 : val;
-  }
-  function addExposure(ppO2, dur) {
-    if (ppO2 <= 0.5 || dur <= 0) return;
-    otu += dur * Math.pow((ppO2 - 0.5) / 0.5, OTU_EXPONENT);
-    const lo = Math.floor(ppO2 * 10), hi = lo + 1;
-    const lim = (cnsLimits[lo] || 0) + ((cnsLimits[hi] || 0) - (cnsLimits[lo] || 0)) * (ppO2 * 10 - lo);
-    cnsFrac += dur / (lim > 0 ? lim : 45);
   }
   (plan || []).forEach(seg => {
     const dur = planSegDurationMin(seg);
@@ -10972,13 +11031,32 @@ function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP
     const fo2 = segFrac(seg.o2, defaultFO2);
     const fh = segFrac(seg.he, defaultFHe);
     const runEnd = planSegRunEndMin(seg);
-    const scrRuntimeMin = Math.max(0, runEnd - dur);
-    const pAmb = (surfP || altSurfaceP || 1.01325) + depth * (barPerM || BAR_PER_METRE || 0.1);
+    const runStart = Math.max(0, runEnd - dur);
+    const pAmbBase = (surfP || altSurfaceP || 1.01325);
+    const bar = barPerM || BAR_PER_METRE || 0.1;
     const onLoop = isRebreatherCircuit(cfg.circuit) && !cfg.bailout;
-    let ppO2;
+    const baked = seg.pO2 != null ? parseFloat(seg.pO2) : NaN;
+    if (isFinite(baked) && baked > 0) {
+      addExposureSample(otu, cnsFrac, baked, dur);
+      return;
+    }
     if (onLoop && cfg.circuit === 'pSCR') {
-      ppO2 = getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin, bailout: false }, depth, fh);
-    } else if (onLoop && cfg.circuit === 'CCR') {
+      const steps = Math.max(1, Math.min(Math.ceil(dur), 12));
+      for (let i = 0; i < steps; i++) {
+        const subDur = dur / steps;
+        const frac = (i + 0.5) / steps;
+        const rt = runStart + frac * dur;
+        const d = seg.type === 'ascent' && seg.from != null && seg.to != null
+          ? seg.from + (seg.to - seg.from) * frac : depth;
+        const pAmb = pAmbBase + d * bar;
+        const ppO2 = getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin: rt, bailout: false }, d, fh);
+        addExposureSample(otu, cnsFrac, ppO2, subDur);
+      }
+      return;
+    }
+    const pAmb = pAmbBase + depth * bar;
+    let ppO2;
+    if (onLoop && cfg.circuit === 'CCR') {
       const phase = seg.type === 'deco' || seg.type === 'stop' ? 'deco'
         : (seg.type === 'descent' ? 'descent' : (seg.type === 'bottom' ? 'bottom' : 'ascent'));
       const sp = getEffectiveSetpointAtDepth(depth, cfg, surfP || altSurfaceP, phase);
@@ -10986,9 +11064,9 @@ function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP
     } else {
       ppO2 = fo2 * pAmb;
     }
-    addExposure(ppO2, dur);
+    addExposureSample(otu, cnsFrac, ppO2, dur);
   });
-  return { totalOTU: Math.round(otu), totalCNS: parseFloat((cnsFrac * 100).toFixed(1)) };
+  return { totalOTU: Math.round(otu.val), totalCNS: parseFloat((cnsFrac.val * 100).toFixed(1)) };
 }
 if (typeof window !== 'undefined') window.computePlanExposureTotals = computePlanExposureTotals;
 
@@ -11246,6 +11324,7 @@ const ZHLEngine = (() => {
       time:  s.dur,
       run:   null,   // patched below
       gas:   s.gas,
+      pO2:   s.pO2,
       o2:    Math.round((s.fN2 !== undefined ? (1 - s.fN2 - (s.fHe||0)) : fO2bot) * 100),
       he:    Math.round((s.fHe || 0) * 100)
     }));
@@ -11271,9 +11350,11 @@ const ZHLEngine = (() => {
       }
     });
 
-    const exposure = computePlanExposureTotals(
-      plan, s, fO2bot, fHeBot, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
-    );
+    const exposure = (lp.totalCNS != null && lp.totalOTU != null)
+      ? { totalOTU: lp.totalOTU, totalCNS: lp.totalCNS }
+      : computePlanExposureTotals(
+          plan, s, fO2bot, fHeBot, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
+        );
 
     return {
       plan,
