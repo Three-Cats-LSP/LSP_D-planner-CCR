@@ -332,6 +332,16 @@ function refreshFrameWin() {
     return null;
   }
 }
+
+function vpmEngine(w) {
+  if (E && typeof E.calculate === 'function') return E;
+  const vpm = (w && w.VPMEngine) || (WIN && WIN.VPMEngine);
+  if (vpm && typeof vpm.calculate === 'function') {
+    E = vpm;
+    return vpm;
+  }
+  return null;
+}
 let ONLY_FAIL = false;
 let ACTIVE_FILTER = 'all';
 let LAST_RESULTS = null;
@@ -393,7 +403,9 @@ function calc(levels, gases, settings, model) {
       if (!w || !w.ZHLEngine) throw new Error('ZHLEngine not available — iframe not loaded');
       r = w.ZHLEngine.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()));
     } else {
-      r = (w || E).calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()), model);
+      const vpm = vpmEngine(w);
+      if (!vpm) throw new Error('VPMEngine not available — iframe not loaded');
+      r = vpm.calculate(cloneJ(levels), cloneJ(gases || []), cloneJ(settings || S()), model);
     }
     assert(r && typeof r === 'object', 'No result object');
     if (r.error) throw new Error('Engine error: ' + r.error);

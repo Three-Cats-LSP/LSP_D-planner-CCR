@@ -2746,6 +2746,10 @@ if os.path.isfile(massive_html_path):
         ok("tests-massive.html iframe run guard + refreshFrameWin present")
     else:
         fail("tests-massive.html missing iframe hardening (refreshFrameWin / _suiteRunId)")
+    if "function vpmEngine" in massive_html and "(w || E).calculate" not in massive_html:
+        ok("tests-massive.html vpmEngine() resolves VPMEngine (not iframe window)")
+    else:
+        fail("tests-massive.html missing vpmEngine() or still uses (w||E).calculate")
 else:
     fail("tests-massive.html missing")
 
@@ -2768,10 +2772,10 @@ massive_main78_path = os.path.join(os.path.dirname(__file__), "tests-massive-mai
 if os.path.isfile(massive_main78_path):
     with open(massive_main78_path, encoding="utf-8") as f:
         massive_main78 = f.read()
-    if "function refreshFrameWin" in massive_main78 and "_suiteRunId" in massive_main78:
-        ok("BUG-78 fixed: tests-massive-main.html refreshFrameWin + run guard")
+    if "function vpmEngine" in massive_main78 and "(w || E).calculate" not in massive_main78:
+        ok("BUG-81 fixed: tests-massive-main.html vpmEngine() — not (w||E).calculate")
     else:
-        fail("BUG-78: tests-massive-main.html missing iframe hardening")
+        fail("BUG-81: tests-massive-main.html still calls calculate on iframe window")
 else:
     fail("tests-massive-main.html missing")
 
