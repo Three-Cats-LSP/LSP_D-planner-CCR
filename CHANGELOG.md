@@ -4,6 +4,83 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.30.30 — 2026-06-21  ★ Stability & Safety Sign-Off (CCR edition)
+
+Closes all **84 CCR audit findings (BUG-01 through BUG-84)** from independent verification passes v1–v25. pSCR loop physics, gas consumption, dual-engine OTU/CNS plan-walk logic, export labelling, and regression harness hardened. **381/381 `audit.py` checks passing.**
+
+### Highlights
+
+- **pSCR safety complete** — metabolic loop depletion, diluent draw, OTU/CNS, and VPM ceiling logic consistent across every code path.
+- **Dual-engine OTU/CNS parity** — Bühlmann and VPM both walk the full dive plan (descent → bottom → deco) with segment-accurate pSCR runtime and ascent depth interpolation.
+- **Gas plan accuracy** — pSCR diluent formula corrected (was overstating consumption by up to 10×); imperial SAC and volume display fixed.
+- **Export clarity** — deco plans labelled **DECO PLAN (OC)** vs **DECO PLAN (CCR)**; PDF filenames use circuit tag; settings card renamed **DIVE TYPE**; PDF deco banner uses ⚠ when deco required.
+
+### Fixed — pSCR mode safety & loop physics (BUG-04, 07, 25, 32, 43–44, 51, 56–60, 63–68, 75)
+
+- VPM `_scrRuntimeMin` propagation; Trimix He in pSCR `getEffectivePpo2`.
+- pSCR UI hides inapplicable CCR setpoint fields; gas validation uses correct ppO₂ limit.
+- Metabolic O₂ fallback 1.5 L/min (was 0.85); Schreiner pSCR rate dimension fix.
+- Diluent surface flow uses inspired loop fraction; removed double depth-scaling (BUG-57).
+- Gas plan uses depleted loop O₂ at plan time (BUG-58); bailout GF group visible for pSCR bailout-ON (BUG-59).
+- VPM no longer treats pSCR as off-loop path (BUG-60).
+- **BUG-63–68:** Full pSCR OTU/CNS path audit — `vpmAccumPpo2`, continuation helpers, display ppO₂, Bühlmann `_ccrPpo2Opts`, CNS tab, ZHL headless — all sync per-segment `scrRuntimeMin`.
+- **BUG-75:** pSCR diluent draw `metRate × bypass` (was `(metRate / fO₂_loop) × bypass` — overstated gas ~6–10×).
+
+### Fixed — gas consumption & gas plan (BUG-14, 19, 31, 34–36, 45–46, 61, 69–72, 75)
+
+- On-loop segments no longer use full OC SAC; VPM gas consumption uses CCR/pSCR rates.
+- Rebreather Adv. Settings (`sacStress`, `sacDecoCcr`, stress/problem-solve time) wired into gas plan.
+- Stress reserve depth-checked and distributed across deco stops (BUG-70).
+- Imperial SAC converted to L/min before consumption math (BUG-71); volume display uses `gpVolDisp()` (BUG-72).
+- Surface GF uses `altSurfaceP` at altitude (BUG-69).
+
+### Fixed — OTU & CNS accuracy (BUG-03, 08, 13, 17, 50, 63–68, 73, 77, 80, 82)
+
+- Deco table ppO₂ shows maintained setpoint, not diluent pressure.
+- Shared `computePlanExposureTotals()` for final plan totals; pSCR ascent sub-step depth interpolation.
+- ZHL headless API uses CCR setpoint / pSCR loop ppO₂ (BUG-73).
+- **BUG-80–82:** ZHL headless plan walk uses Bühlmann step `pO₂`; full plan integration replaces single bottom sample — caught by `tests-pscr-otu-cns.html` Sections D/F.
+
+### Fixed — CCR / rebreather engine core (BUG-06, 23–24, 27–30, 33, 37–38, 52, 54–55, 76, 79)
+
+- Altitude-adjusted setpoint at depth; graph ceiling and Multi Dive use CCR tissue loading.
+- Bailout GF, SP depth fallback, VPM bottom vs deco setpoint phases, bailout MOD limits.
+- VPM cylinder lookup DOM IDs; `isCcrOnLoopGasLabel` recognises `PSCR` prefix.
+- **BUG-76:** Export `VPMEngine._syncHeHalfTimes()` + `_setHeHT1()` — Bühlmann 2003 He half-times synced to VPM.
+- CCR C3 MultiDeco RT cross-val pin updated (BUG-79).
+
+### Fixed — UI, PWA, export & platform (BUG-01–02, 05, 09–12, 15–16, 18, 20, 22, 26, 47–49, 53, 62, 74, 77, 83–84)
+
+- Android versionCode/SDK sync; service worker cache paths for GitHub Pages / live site.
+- PWA icon, CCR branding across download page, test titles, PDF header, meta tags.
+- `shortMix()` preserves loop gas labels; `appSettings.clear()` clears all app keys.
+- Deco gas 1/2 mix selectors persisted in `DECO_FIELDS` (BUG-77).
+- Version sync across `APP_VERSION`, `package.json`, `build.gradle`, `sw.js`, `audit.py` (BUG-83–84).
+
+### Added — export helpers (v2.30.30)
+
+- `isOcExportMode()`, `getDecoPlanTitle()`, `getExportCircuitTag()` — circuit-aware labels for banner, text, PDF, messenger, and filenames.
+
+### Added — end-to-end regression test suite
+
+| Suite | Scope |
+|-------|--------|
+| [`tests-pscr-otu-cns.html`](tests-pscr-otu-cns.html) | **36 tests** — pSCR OTU/CNS & gas validation (20/40/60 m × EAN32/EAN36); Sections A–F |
+| [`tests-massive.html`](tests-massive.html) | 376+ plans — UI, travel gas, altitude, gas plan, T3-CCR MultiDeco RT |
+| [`tests-massive-main.html`](tests-massive-main.html) | Mobile-optimised massive suite |
+| [`tests-verify.html`](tests-verify.html) | Baker/FORTRAN cross-val — Section I · CCR / Rebreather |
+| [`lsp-test-harness.js`](lsp-test-harness.js) | Shared dual-engine boot helper |
+| [`audit.py`](audit.py) | **381 checks** — includes GROUP 62 (BUG-82), BUG-78/81 iframe guards |
+| [`dev/validate_pscr_e2e.py`](dev/validate_pscr_e2e.py) | Optional Playwright release smoke (5 pSCR profiles) |
+
+Validation docs: `pSCR_OTU_CNS_consistency_audit.md`, `pSCR_gas_consumption_validation_v2.30.15.md`, `errors_bugs_report_v1.md` through `errors_bugs_report_v25.md`.
+
+### Changed
+
+- **`APP_VERSION`** — `2.30.30`. All manifest files synced.
+
+---
+
 ## v2.30.0 — 2026-06-20  ★ Milestone (CCR edition — separate repo)
 
 First release of **LSP D-Planner + CCR** as a standalone product forked from LSP D-Planner v2.20.21. Open-circuit planning continues in the [main LSP D-Planner repo](https://github.com/Three-Cats-LSP/LSP_D-planner).

@@ -2043,7 +2043,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </div><!-- end advancedSettingsSection -->
 <!-- Gas Mix 1 — Bottom Gas -->
 <div id="ccrFieldsRow" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
-<div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔄 REBREATHER</div>
+<div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;">🔄 DIVE TYPE</div>
 <div class="form-grid u0">
 <div class="field">
 <label>Circuit</label>
@@ -2061,7 +2061,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 </select>
 </div>
 </div>
-<!-- ── Rebreather Adv. Settings (collapsible, inside REBREATHER card) ── -->
+<!-- ── Rebreather Adv. Settings (collapsible, inside DIVE TYPE card) ── -->
 <div id="ccrAdvSettingsSection" style="display:none;margin-top:10px;">
 <button id="ccrAdvSettingsToggle" onclick="toggleCcrAdvSettings()" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" style="display:flex;align-items:center;gap:7px;width:100%;background:none;border:1px solid var(--border);border-radius:6px;padding:7px 12px;cursor:pointer;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:left;transition:all .2s;">
 <span id="ccrAdvSettingsChevron" style="transition:transform .25s;display:inline-block;">▶</span>
@@ -4906,10 +4906,30 @@ function buildDecoPlanHeaderData() {
   };
 }
 
+/** True when exports should use OC labelling (open circuit or rebreather bailout). */
+function isOcExportMode(ccr) {
+  const cfg = ccr && ccr.circuit != null ? ccr : getCCRSettingsFromDOM();
+  const circuit = cfg.circuit || document.getElementById('circuitSelect')?.value || 'OC';
+  const bailout = cfg.bailout != null
+    ? cfg.bailout
+    : (document.getElementById('ccrBailoutToggle')?.value === 'on');
+  return circuit === 'OC' || bailout;
+}
+
+/** Returns "DECO PLAN (OC)" or "DECO PLAN (CCR)" from circuit / bailout state. */
+function getDecoPlanTitle(ccr) {
+  return isOcExportMode(ccr) ? 'DECO PLAN (OC)' : 'DECO PLAN (CCR)';
+}
+
+/** Filename segment: OC or CCR (matches getDecoPlanTitle). */
+function getExportCircuitTag(ccr) {
+  return isOcExportMode(ccr) ? 'OC' : 'CCR';
+}
+
 /** Header lines for DECO PLAN — shared by on-screen summary and text export. */
 function buildDecoPlanHeaderLines() {
   const d = buildDecoPlanHeaderData();
-  const lines = ['DECO PLAN', d.stamp, '='.repeat(22)];
+  const lines = [getDecoPlanTitle(d), d.stamp, '='.repeat(22)];
   lines.push(`Algorithm   : ${d.algoNameExp}  (${d.algoSettings})`);
   if (d.circuit && d.circuit !== 'OC') lines.push(`Circuit     : ${d.ccrLabel}${d.ccrBailout ? ' (bailout)' : ''}`);
   if (d.isVPMExport) lines.push(`He Half-Time: ${d.heHtLabel}`);
@@ -4978,7 +4998,7 @@ function renderDecoPlanHeaderHtml(data, opts) {
   let html = `<div class="${bannerCls}">
     <span>${icon}</span>
     <div style="flex:1;min-width:0;">
-      <div class="dpb-title">DECO PLAN <span class="dpb-stamp">${_escHtmlPre(data.stamp)}</span></div>
+      <div class="dpb-title">${_escHtmlPre(getDecoPlanTitle(data))} <span class="dpb-stamp">${_escHtmlPre(data.stamp)}</span></div>
       <div class="dpb-headline">${depthBt} · ${algoLine}</div>
       <div class="dpb-chips">${chips.join('')}</div>
       <div class="dpb-meta">${rates}<br>${stops}<br>${env}${extra}</div>
@@ -5095,8 +5115,8 @@ function drawDecoPlanBannerPdf(doc, y, layout, data, planSum, hasDeco) {
   doc.setFontSize(9);
   doc.setFont('DejaVuSans', 'bold');
   doc.setTextColor(...titleColor);
-  doc.text(hasDeco ? '!' : 'OK', boxX + padX, cy);
-  doc.text('DECO PLAN', boxX + padX + 5, cy);
+  doc.text(hasDeco ? '\u26A0' : 'OK', boxX + padX, cy);
+  doc.text(getDecoPlanTitle(data), boxX + padX + 5, cy);
   doc.setFontSize(7);
   doc.setFont('DejaVuSans', 'normal');
   doc.setTextColor(100, 100, 120);
@@ -14231,7 +14251,7 @@ async function buildGasPlanPDF() {
   });
 
   drawFooter();
-  const fileName = `LSP_CCR_${isoDate}_GasPlan_${gp.rule}.pdf`;
+  const fileName = `LSP_${getExportCircuitTag()}_${isoDate}_GasPlan_${gp.rule}.pdf`;
   doc.save(fileName);
   showExportToast();
 }
@@ -14299,7 +14319,7 @@ function buildExportText(mode) {
     const gasStr  = gasEl?.options[gasEl?.selectedIndex]?.text || '';
     const o2pct   = document.getElementById('customO2')?.value;
 
-    lines.push('DECO PLAN');
+    lines.push('DECO PLAN (OC)');
     lines.push(stamp);
     lines.push(hr);
     lines.push(`Algorithm : ${algo}${gfStr ? '  ' + gfStr : ''}`);
@@ -15062,9 +15082,10 @@ function buildMessengerText(mode) {
   const _msgNow = new Date();
   const _msgStamp = `${_msgNow.getFullYear()}/${String(_msgNow.getMonth()+1).padStart(2,'0')}/${String(_msgNow.getDate()).padStart(2,'0')} ${String(_msgNow.getHours()).padStart(2,'0')}:${String(_msgNow.getMinutes()).padStart(2,'0')}`;
   const _msgHr = '-'.repeat(28);
+  const _msgGasHdr = buildDecoPlanHeaderData();
 
   const result = [];
-  result.push('DECO PLAN');
+  result.push(getDecoPlanTitle(_msgGasHdr));
   result.push(_msgStamp);
   result.push(_msgHr);
   // Algorithm + settings line
@@ -15078,7 +15099,6 @@ function buildMessengerText(mode) {
       ? `${_algoShort} C+${_cons}`
       : `${_algoShort} GFHi${gfH} C+${_cons}`;
   result.push(`${depth}${du} / ${bt}min / ${_algoStr}`);
-  const _msgGasHdr = buildDecoPlanHeaderData();
   if (isCcrOnLoopProfile({ circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })) {
     result.push(`Loop gas    : ${loopMixLabelFor(_msgBotLabel, { circuit: _msgGasHdr.circuit, bailout: _msgGasHdr.ccrBailout })} (on-loop)`);
   } else {
@@ -15738,7 +15758,7 @@ async function exportContingencyPDF(opts) {
   const depth = document.getElementById('decoDepth')?.value || '\u2014';
   const bt    = document.getElementById('decoBT')?.value    || '\u2014';
   const scenarioName = (c.label||'Emergency').replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_').substring(0,30);
-  const fileName = `LSP_CCR_${isoDate}_Emergency_${depth}${du}_${bt}min_${scenarioName}.pdf`;
+  const fileName = `LSP_${getExportCircuitTag()}_${isoDate}_Emergency_${depth}${du}_${bt}min_${scenarioName}.pdf`;
 
   const PW=210, PH=297, ML=14, MR=14, MT=10, MB=10, CW=182;
   let y=MT;
@@ -16907,7 +16927,7 @@ async function exportPDF(opts) {
   let decoStopVal = planSumPdf.decoStop;
   let surfGFVal = planSumPdf.surfGF || '-';
   const algoTag = decoModelSel==='ZHLC_GF'?`GF${mGF.low}-${mGF.high}_Buhlmann`:decoModelSel==='VPMB'?`C${cons}_VPM-B`:`GFHi${mGF.high}_C${cons}_VPM-B_GFS`;
-  const fileName = `LSP_CCR_${isoDate}_Deco_${depthVal}${du}_${btVal}min_${algoTag}.pdf`;
+  const fileName = `LSP_${getExportCircuitTag()}_${isoDate}_Deco_${depthVal}${du}_${btVal}min_${algoTag}.pdf`;
   const PW=210, PH=297, ML=14, MR=14, MT=10, MB=10, CW=182;
   let y=MT;
 
