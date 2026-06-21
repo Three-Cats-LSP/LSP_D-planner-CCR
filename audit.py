@@ -2576,6 +2576,10 @@ if os.path.isfile(verify_path):
         ok("tests-verify CCR zero-inert test uses setpoint crossover (not +0.01 bar)")
     else:
         fail("tests-verify CCR zero-inert test still uses pAmb above crossover threshold")
+    if "assertRtPinned" in verify_html and "VerifyWarn" in verify_html:
+        ok("tests-verify.html RT pinned drift ±1–2 min → WARN (not fail)")
+    else:
+        fail("tests-verify.html missing assertRtPinned / VerifyWarn RT drift handling")
 else:
     fail("tests-verify.html missing")
 
