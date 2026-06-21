@@ -1,4 +1,4 @@
-package com.threecats.lsp.dplanner;
+package com.threecats.lsp.dplannerccr;
 
 import android.os.Bundle;
 import android.webkit.CookieManager;
@@ -29,7 +29,7 @@ public class MainActivity extends BridgeActivity {
      * styles.xml default = windowLightStatusBar true = dark icons (correct for light bg).
      * If cookie says "dark" theme, flip to white icons (visible on dark bg).
      * If no cookie yet (first install), default stays dark icons — correct since app defaults to dark theme.
-     * 
+     *
      * NOTE: First install with dark theme default will show dark icons on dark bg until user
      * toggles theme once (which writes the cookie). This is acceptable — the cookie persists forever after.
      */

@@ -2825,6 +2825,35 @@ if os.path.isfile(v22_path):
 else:
     fail("errors_bugs_report_v22.md missing")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 63 — Android MainActivity package matches applicationId (launch crash)
+# ══════════════════════════════════════════════════════════════════════════════
+
+main_ccr = os.path.join(os.path.dirname(__file__), "android", "app", "src", "main", "java", "com", "threecats", "lsp", "dplannerccr", "MainActivity.java")
+main_oc = os.path.join(os.path.dirname(__file__), "android", "app", "src", "main", "java", "com", "threecats", "lsp", "dplanner", "MainActivity.java")
+gradle_path = os.path.join(os.path.dirname(__file__), "android", "app", "build.gradle")
+
+if os.path.isfile(main_ccr):
+    with open(main_ccr, encoding="utf-8") as f:
+        main_src = f.read()
+    if "package com.threecats.lsp.dplannerccr;" in main_src and "class MainActivity extends BridgeActivity" in main_src:
+        ok("Android MainActivity in com.threecats.lsp.dplannerccr (matches applicationId)")
+    else:
+        fail("Android MainActivity package does not match applicationId dplannerccr")
+else:
+    fail("Android MainActivity missing at dplannerccr/MainActivity.java")
+
+if os.path.isfile(main_oc):
+    fail("Stale Android MainActivity still at dplanner/ — launch ClassNotFoundException risk")
+
+if os.path.isfile(gradle_path):
+    with open(gradle_path, encoding="utf-8") as f:
+        gradle = f.read()
+    if 'applicationId "com.threecats.lsp.dplannerccr"' in gradle and 'namespace "com.threecats.lsp.dplannerccr"' in gradle:
+        ok("Android applicationId/namespace aligned at com.threecats.lsp.dplannerccr")
+    else:
+        fail("Android build.gradle applicationId/namespace mismatch")
+
 print("=" * 60)
 
 if FAIL:
