@@ -1,20 +1,22 @@
 # LSP D-Planner+CCR — Errors & Bugs Report v22
 
-**App version:** v2.30.29  
+**App version:** v2.30.30  
 **Audit date:** 2026-06-21  
 **Previous report:** errors_bugs_report_v21.md (v2.30.28 — BUG-76/BUG-77)  
-**Audit tool:** audit.py — 373 checks, 0 failures  
-**Scope:** v2.30.28 verification + v2.30.29 fixes (massive suite, CCR C3 cross-val, ZHL headless OTU/CNS).
+**Audit tool:** audit.py — 377 checks, 0 failures  
+**Scope:** v2.30.28–v2.30.30 fixes (massive suite, CCR C3, ZHL/pSCR OTU/CNS plan walk).
 
 ---
 
-## Fix status (v2.30.29)
+## Fix status (v2.30.30)
 
 | Bug | Status | Fix summary |
 |-----|--------|-------------|
 | BUG-78 | **FIXED** (v2.30.29) | Massive suite: 51× `ZHLEngine not available — iframe not loaded` |
 | BUG-79 | **FIXED** (v2.30.29) | CCR C3 RT pin stale (MultiDeco 98 vs LSP engine 83) |
-| BUG-80 | **FIXED** (v2.30.29) | ZHL headless OTU/CNS: plan walk uses Bühlmann step `pO2` + collapsed-step accumulation |
+| BUG-80 | **FIXED** (v2.30.29) | ZHL headless OTU/CNS: plan walk uses Bühlmann step `pO2` |
+| BUG-81 | **FIXED** (v2.30.30) | Massive main: 109× VPM `(w\|\|E).calculate is not a function` |
+| BUG-82 | **FIXED** (v2.30.30) | ZHL pSCR OTU: single-sample bottom integration vs plan walk (tests-pscr Section D/F) |
 
 ---
 
@@ -96,6 +98,30 @@ C3 ZHL RT 83 vs ref 98 (±5 min)
 
 ---
 
+## BUG-81 — Massive main VPM calculate on iframe window
+
+**Symptom:** 109 failures in `tests-massive-main.html` — `(w || E).calculate is not a function` on all VPM/VPMB_GFS tests.
+
+**Fix (v2.30.30):** `vpmEngine(w)` helper resolves `VPMEngine` from iframe; audit GROUP 62 (vpmEngine checks).
+
+---
+
+## BUG-82 — ZHL pSCR OTU single-sample vs plan walk
+
+**Symptom:** [tests-pscr-otu-cns.html](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) Section D — ZHL `totalOTU` 30–54 vs plan recompute 1–39 (diluent-level vs loop-depletion walk). Section F — VPM vs ZHL diverge by >12 OTU.
+
+**Root cause:** `accumulateHeadlessPlanExposure()` integrated descent/bottom at a single fixed `scrRuntimeMin` (segment-start ppO₂ for the whole bottom block). VPM already uses `computePlanExposureTotals()` (runtime-subdivided pSCR walk). ZHLEngine.return preferred `lp.totalOTU` from the old accumulator.
+
+**Fix (v2.30.30):**
+
+- `accumulateHeadlessPlanExposure()` builds a plan array and delegates to `computePlanExposureTotals()`
+- `ZHLEngine.calculate()` always returns OTU/CNS from `computePlanExposureTotals()` on the assembled plan (matches VPM `buildResult`)
+- Injected bottom segment uses `btAtDepthMin` (not full BT including descent)
+
+**Regression coverage:** audit.py GROUP 62 (BUG-82).
+
+---
+
 ## Open bugs
 
 | Bug | Severity | Description |
@@ -109,4 +135,4 @@ C3 ZHL RT 83 vs ref 98 (±5 min)
 | Report | Version | Bugs | Status |
 |--------|---------|------|--------|
 | v21 | v2.30.28 | BUG-76, BUG-77 | ✅ Complete (BUG-77 partial persists) |
-| **v22** | **v2.30.29** | **BUG-78, BUG-79, BUG-80** | **✅ Complete** |
+| **v22** | **v2.30.30** | **BUG-78–82** | **✅ Complete** |

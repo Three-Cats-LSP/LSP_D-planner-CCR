@@ -2627,6 +2627,26 @@ if "isFinite(baked)" in js and "seg.pO2" in js:
 else:
     fail("computePlanExposureTotals ignores Bühlmann step pO2")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 62 — v2.30.30 fix (ZHL OTU plan walk / BUG-82)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function accumulateHeadlessPlanExposure" in js and "computePlanExposureTotals(" in js:
+    ahpe_start = js.find("function accumulateHeadlessPlanExposure")
+    ahpe_end = js.find("\nfunction computePlanExposureTotals", ahpe_start)
+    ahpe_block = js[ahpe_start:ahpe_end] if ahpe_end > ahpe_start else ""
+    if ahpe_block.count("computePlanExposureTotals(") >= 1 and "btAtDepthMin" in ahpe_block:
+        ok("BUG-82 fixed: accumulateHeadlessPlanExposure delegates to computePlanExposureTotals")
+    else:
+        fail("BUG-82: accumulateHeadlessPlanExposure still uses single-sample pSCR ppO2 integration")
+else:
+    fail("BUG-82: accumulateHeadlessPlanExposure or computePlanExposureTotals missing")
+
+if "lp.totalOTU" not in js[js.find("const ZHLEngine"):js.find("if (typeof window !== 'undefined') window.ZHLEngine")]:
+    ok("BUG-82 fixed: ZHLEngine.calculate totals from computePlanExposureTotals (not lp.totalOTU)")
+else:
+    fail("BUG-82: ZHLEngine.calculate still prefers lp.totalOTU over plan walk")
+
 pscr_test61 = os.path.join(os.path.dirname(__file__), "tests-pscr-otu-cns.html")
 if os.path.isfile(pscr_test61):
     with open(pscr_test61, encoding="utf-8") as f:

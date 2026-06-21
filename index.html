@@ -3458,7 +3458,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
   }
 })();
 
-const APP_VERSION = '2.30.29';
+const APP_VERSION = '2.30.30';
 window.APP_VERSION = APP_VERSION;
 // Test harness: skip DOM recalc storms when loaded inside tests-massive.html iframe
 (function() {
@@ -10965,56 +10965,50 @@ function addExposureSample(otu, cnsFrac, ppO2, dur) {
   cnsFrac.val += dur / (lim > 0 ? lim : 45);
 }
 
-/** Headless OTU/CNS from Bühlmann collapsed steps (uses diveRuntimeMin-baked pO2 on each step). */
+/** Headless Bühlmann OTU/CNS — build plan from collapsed steps and delegate to computePlanExposureTotals. */
 function accumulateHeadlessPlanExposure(depthM, bt, descentRate, bottomFN2, bottomFHe, bottomFO2, onLoop, collapsedSteps, ccrSettings) {
-  const otu = { val: 0 }, cnsFrac = { val: 0 };
   const _pdCarry = window._priorDiveCarry;
-  if (_pdCarry) {
-    otu.val += _pdCarry.otuCarry || 0;
-    cnsFrac.val += (_pdCarry.cnsCarry || 0) / 100;
-  }
-  const cfg = mergeCCRSettings(ccrSettings || {});
-  const surfP = altSurfaceP || 1.01325;
-  const barPerM = BAR_PER_METRE || 0.1;
+  const otuCarry = _pdCarry ? (_pdCarry.otuCarry || 0) : 0;
+  const cnsCarry = _pdCarry ? (_pdCarry.cnsCarry || 0) : 0;
   const descentTimeMin = depthM / descentRate;
   const btAtDepthMin = Math.max(0, bt - descentTimeMin);
-
-  function ppo2At(depth, fo2, fhe, runtimeMin, phase) {
-    const pAmb = surfP + depth * barPerM;
-    if (onLoop && cfg.circuit === 'pSCR') {
-      return getEffectivePpo2(pAmb, 0, fo2, { ...cfg, scrRuntimeMin: runtimeMin, bailout: false }, depth, fhe);
-    }
-    if (onLoop && cfg.circuit === 'CCR') {
-      const sp = getEffectiveSetpointAtDepth(depth, cfg, surfP, phase);
-      return getEffectivePpo2(pAmb, sp, fo2, cfg, depth, fhe);
-    }
-    return fo2 * pAmb;
-  }
-
-  let simRuntime = 0;
+  const o2pct = Math.round(bottomFO2 * 100);
+  const hepct = Math.round((bottomFHe || 0) * 100);
+  const gasLabel = (collapsedSteps && collapsedSteps[0] && collapsedSteps[0].gas) || 'bottom';
+  const plan = [];
+  let runAccum = 0;
   if (descentTimeMin > 0) {
-    addExposureSample(otu, cnsFrac, ppo2At(depthM / 2, bottomFO2, bottomFHe, simRuntime, 'descent'), descentTimeMin);
-    simRuntime += descentTimeMin;
+    runAccum += descentTimeMin;
+    plan.push({ type: 'descent', depth: depthM, time: descentTimeMin, run: runAccum, o2: o2pct, he: hepct, gas: gasLabel });
   }
   if (btAtDepthMin > 0) {
-    addExposureSample(otu, cnsFrac, ppo2At(depthM, bottomFO2, bottomFHe, simRuntime, 'bottom'), btAtDepthMin);
-    simRuntime += btAtDepthMin;
+    runAccum += btAtDepthMin;
+    plan.push({ type: 'bottom', depth: depthM, time: btAtDepthMin, run: runAccum, o2: o2pct, he: hepct, gas: gasLabel });
   }
   (collapsedSteps || []).forEach(s => {
     const dur = typeof s.dur === 'number' ? s.dur : parseFloat(s.dur) || 0;
     if (dur <= 0) return;
-    const pp = s.pO2 != null ? parseFloat(s.pO2)
-      : ppo2At(
-          s.type === 'ascent' ? (s.from + s.to) / 2 : (s.depth || 0),
-          Math.max(0, 1 - (s.fN2 ?? bottomFN2) - (s.fHe ?? 0)),
-          s.fHe ?? bottomFHe,
-          simRuntime,
-          s.type === 'deco' || s.type === 'safety' ? 'deco' : 'ascent'
-        );
-    addExposureSample(otu, cnsFrac, pp, dur);
-    simRuntime += dur;
+    runAccum += dur;
+    plan.push({
+      type: s.type === 'deco' ? 'stop' : s.type,
+      depth: s.type === 'ascent' ? s.to : s.depth,
+      from: s.type === 'ascent' ? s.from : undefined,
+      to: s.type === 'ascent' ? s.to : undefined,
+      time: dur,
+      run: Math.round(runAccum * 10) / 10,
+      pO2: s.pO2,
+      o2: Math.round((1 - (s.fN2 ?? bottomFN2) - (s.fHe ?? 0)) * 100),
+      he: Math.round((s.fHe ?? 0) * 100),
+      gas: s.gas,
+    });
   });
-  return { totalOTU: Math.round(otu.val), totalCNS: parseFloat((cnsFrac.val * 100).toFixed(1)) };
+  const exposure = computePlanExposureTotals(
+    plan, ccrSettings || {}, bottomFO2, bottomFHe, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
+  );
+  return {
+    totalOTU: Math.round(exposure.totalOTU + otuCarry),
+    totalCNS: parseFloat((exposure.totalCNS + cnsCarry).toFixed(1)),
+  };
 }
 
 function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP, barPerM) {
@@ -11333,8 +11327,9 @@ const ZHLEngine = (() => {
     // rendered directly to DOM, not stored in steps. Add them so assertIntegrity passes.)
     if (plan.length === 0 || plan[0].type !== 'descent') {
       const descentTime = level.depth / (s.descentRate || 20);
+      const btAtDepth = Math.max(0, level.time - descentTime);
       const bottomGasLabel = plan.length > 0 ? (plan[0].gas || 'bottom') : 'bottom';
-      const bottomSeg = { type: 'bottom', depth: level.depth, time: level.time, run: descentTime + level.time, gas: bottomGasLabel, o2: level.o2, he: level.he || 0 };
+      const bottomSeg = { type: 'bottom', depth: level.depth, time: btAtDepth, run: descentTime + btAtDepth, gas: bottomGasLabel, o2: level.o2, he: level.he || 0 };
       const descentSeg = { type: 'descent', depth: level.depth, time: descentTime, run: descentTime, gas: bottomGasLabel, o2: level.o2, he: level.he || 0 };
       plan.unshift(bottomSeg);   // goes to index 0 first
       plan.unshift(descentSeg);  // then pushed to index 0, bottomSeg moves to 1
@@ -11350,19 +11345,20 @@ const ZHLEngine = (() => {
       }
     });
 
-    const exposure = (lp.totalCNS != null && lp.totalOTU != null)
-      ? { totalOTU: lp.totalOTU, totalCNS: lp.totalCNS }
-      : computePlanExposureTotals(
-          plan, s, fO2bot, fHeBot, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
-        );
+    const exposure = computePlanExposureTotals(
+      plan, s, fO2bot, fHeBot, altSurfaceP || 1.01325, BAR_PER_METRE || 0.1
+    );
+    const _pdCarry = window._priorDiveCarry;
+    const otuCarry = _pdCarry ? (_pdCarry.otuCarry || 0) : 0;
+    const cnsCarry = _pdCarry ? (_pdCarry.cnsCarry || 0) : 0;
 
     return {
       plan,
       stops,
       totalRuntime: lp.rt || 0,
       tts: lp.tts || 0,
-      totalOTU: exposure.totalOTU,
-      totalCNS: exposure.totalCNS,
+      totalOTU: Math.round(exposure.totalOTU + otuCarry),
+      totalCNS: parseFloat((exposure.totalCNS + cnsCarry).toFixed(1)),
       finalTissues: lp.finalTissues || null,   // for ZHL repetitive dive carry
       depthUnit: isMetric ? 'm' : 'ft',
       error: null
