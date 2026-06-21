@@ -3955,8 +3955,10 @@ function updateHeHalfTime() {
   const src = mode === 'baker' ? ZHL16C_HE_HT_BAKER : ZHL16C_HE_HT_BUHL2003;
   // Update global array in-place (preserves all references)
   for (let i = 0; i < 16; i++) ZHL16C_HE_HT[i] = src[i];
-  // Patch VPMEngine's internal ZHL16C_He[0].ht to match
-  if (window.VPMEngine && typeof window.VPMEngine._setHeHT1 === 'function') {
+  // Patch VPMEngine's internal ZHL16C_He[].ht to match (comp [0] differs: 1.88 vs 1.51)
+  if (window.VPMEngine && typeof window.VPMEngine._syncHeHalfTimes === 'function') {
+    window.VPMEngine._syncHeHalfTimes(src);
+  } else if (window.VPMEngine && typeof window.VPMEngine._setHeHT1 === 'function') {
     window.VPMEngine._setHeHT1(src[0]);
   }
 }
@@ -9412,6 +9414,16 @@ const VPMEngine = (() => {
     return {
         calculate,
         createVPMState,
+        /** Sync all 16 He compartment half-times from ZHL16C_HE_HT array (Baker / Bühlmann 2003). */
+        _syncHeHalfTimes: function(htArray) {
+            for (let i = 0; i < 16 && htArray && i < htArray.length; i++) {
+                if (ZHL16C_He[i]) {
+                    const v = htArray[i];
+                    ZHL16C_He[i].ht = (v != null && typeof v === 'object') ? v.ht : v;
+                }
+            }
+        },
+        /** Compartment-1-only shortcut — kept for callers that pass a single ht value. */
         _setHeHT1: function(htRow) {
             if (ZHL16C_He[0]) ZHL16C_He[0].ht = (htRow != null && typeof htRow === 'object') ? htRow.ht : htRow;
         },

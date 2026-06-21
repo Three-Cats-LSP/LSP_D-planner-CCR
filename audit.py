@@ -451,12 +451,16 @@ if uht_fn:
 else:
     fail("updateHeHalfTime() function not found")
 
-# 9.3 VPMEngine exports _setHeHT1 (buhl2003 He HT sync — BUG-76 He)
-vpm_ret = re.search(r"return\s*\{[^}]*calculate,\s*createVPMState,\s*_setHeHT1:", js, re.DOTALL)
-if vpm_ret and "ZHL16C_He[0].ht" in js[js.find("_setHeHT1:"):js.find("_setHeHT1:") + 200]:
-    ok("VPMEngine._setHeHT1 exported — buhl2003 He compartment HT sync works")
+# 9.3 VPMEngine exports He HT sync API (buhl2003 — BUG-76 He)
+if "_syncHeHalfTimes:" in js and "_setHeHT1:" in js and "ZHL16C_He[i].ht" in js:
+    ok("VPMEngine._syncHeHalfTimes + _setHeHT1 exported — buhl2003 He HT sync works")
 else:
-    fail("VPMEngine._setHeHT1 missing — buhl2003 mode leaves VPM He HT at Baker 1.88")
+    fail("VPMEngine He HT sync API missing — buhl2003 mode leaves VPM He HT at Baker 1.88")
+uht_fn2 = re.search(r"function updateHeHalfTime\(\)(.*?)^}", js, re.DOTALL | re.MULTILINE)
+if uht_fn2 and "_syncHeHalfTimes" in uht_fn2.group(1):
+    ok("updateHeHalfTime() calls VPMEngine._syncHeHalfTimes (full 16-compartment sync)")
+else:
+    fail("updateHeHalfTime() does not call VPMEngine._syncHeHalfTimes")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 10 — TISSUE OBJECT CONSISTENCY

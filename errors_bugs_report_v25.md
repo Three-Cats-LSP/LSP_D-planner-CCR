@@ -14,7 +14,7 @@ v2.30.27–30 fixed BUG-76 (partial), BUG-77–84 across five rapid patch cycles
 Final commit `13a35c9` fixed BUG-77 (`dg1Mix`/`dg2Mix` persistence), BUG-83
 (audit.py stale version pin) and BUG-84 (version sync).
 
-**1 bug remains open: BUG-76 (`VPMEngine._setHeHT1` never defined).**  
+**1 bug was open: BUG-76 (`VPMEngine._setHeHT1` never defined) — fixed v2.30.30 (`da50845`), enhanced with `_syncHeHalfTimes`.**  
 **0 new bugs found.**
 
 ---
@@ -61,26 +61,23 @@ path as VPM. Both engines now fully consistent. ✅
 
 ## Open Bug
 
-### BUG-76 — VPMEngine `_setHeHT1` never defined (LOW) — still open
+### BUG-76 — VPMEngine He HT sync API (LOW) — fixed v2.30.30
 
-**Location:** `updateHeHalfTime()` line 3959; VPMEngine `return { calculate, … }` line 9412
+**Location:** `updateHeHalfTime()` line ~3959; VPMEngine `return { calculate, … }` line ~9412
 
-`updateHeHalfTime()` checks and calls `window.VPMEngine._setHeHT1(src[0])` but
-`VPMEngine`'s exported API object does not include `_setHeHT1`. The `typeof …
-=== 'function'` guard silently no-ops.
+**Root cause:** v2.6 trimix work added `updateHeHalfTime()` with a defensive
+`typeof VPMEngine._setHeHT1 === 'function'` guard, but the setter was never
+added to the IIFE export object (only `calculate`, `createVPMState`, `MODELS`
+were exported). Bühlmann reads module-level `ZHL16C_HE_HT` updated in-place;
+VPM keeps a private `const ZHL16C_He[]` copy inside the closure — no shared
+reference, so an explicit bridge was required and never wired.
 
-**Effect:** When user selects `heHalfTimeMode = 'buhl2003'`, VPMEngine He
-compartment [0] retains Baker 1998 value (1.88 min) instead of Bühlmann 2003
-(1.51 min). Bühlmann engine correctly updates. 20% half-time error on fastest
-He compartment for trimix VPM dives with buhl2003 mode.
+**Fix (v2.30.30):** Export `_syncHeHalfTimes(htArray)` (all 16 compartments)
+and `_setHeHT1(ht)` (compartment [0] shortcut). `updateHeHalfTime()` calls
+`_syncHeHalfTimes(src)`; falls back to `_setHeHT1(src[0])`.
 
-**Fix:**
-```js
-// In VPMEngine return object (line 9412):
-_setHeHT1: function(htRow) {
-  if (ZHL16C_He[0]) ZHL16C_He[0].ht = htRow.ht;
-},
-```
+**No other missing He HT methods found** — grep of the repo shows
+`VPMEngine._*` is only referenced from `updateHeHalfTime()`.
 
 ---
 
