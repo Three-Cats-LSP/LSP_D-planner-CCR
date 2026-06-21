@@ -9412,6 +9412,9 @@ const VPMEngine = (() => {
     return {
         calculate,
         createVPMState,
+        _setHeHT1: function(htRow) {
+            if (ZHL16C_He[0]) ZHL16C_He[0].ht = (htRow != null && typeof htRow === 'object') ? htRow.ht : htRow;
+        },
         MODELS: ['VPMA', 'VPMB', 'VPMBE', 'VPMB_GFS', 'VPMBFBO'],
         MODEL_NAMES: {
             'VPMA': 'VPM-A',

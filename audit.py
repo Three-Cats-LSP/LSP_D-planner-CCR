@@ -451,6 +451,13 @@ if uht_fn:
 else:
     fail("updateHeHalfTime() function not found")
 
+# 9.3 VPMEngine exports _setHeHT1 (buhl2003 He HT sync — BUG-76 He)
+vpm_ret = re.search(r"return\s*\{[^}]*calculate,\s*createVPMState,\s*_setHeHT1:", js, re.DOTALL)
+if vpm_ret and "ZHL16C_He[0].ht" in js[js.find("_setHeHT1:"):js.find("_setHeHT1:") + 200]:
+    ok("VPMEngine._setHeHT1 exported — buhl2003 He compartment HT sync works")
+else:
+    fail("VPMEngine._setHeHT1 missing — buhl2003 mode leaves VPM He HT at Baker 1.88")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # GROUP 10 — TISSUE OBJECT CONSISTENCY
 # ══════════════════════════════════════════════════════════════════════════════

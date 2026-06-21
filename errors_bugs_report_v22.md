@@ -18,6 +18,7 @@
 | BUG-81 | **FIXED** (v2.30.30) | Massive main: 109× VPM `(w\|\|E).calculate is not a function` |
 | BUG-82 | **FIXED** (v2.30.30) | ZHL pSCR OTU: single-sample bottom integration vs plan walk (tests-pscr Section D/F) |
 | BUG-77 | **FIXED** (v2.30.30) | Deco gas 1/2 mix selectors in `DECO_FIELDS` (persist on reload) |
+| BUG-76 (He HT) | **FIXED** (v2.30.30) | `VPMEngine._setHeHT1` — buhl2003 He compartment HT sync |
 
 ---
 
