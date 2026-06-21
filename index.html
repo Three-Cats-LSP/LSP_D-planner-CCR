@@ -15222,7 +15222,7 @@ function exportTXT(mode) {
     const blob = new Blob([text], { type: 'text/plain' });
     const a    = document.createElement('a');
     a.href     = URL.createObjectURL(blob);
-    a.download = `LSP_${dateStr}_GasPlan_${_gasRule}.txt`;
+    a.download = `LSP_${getExportCircuitTag()}_${dateStr}_GasPlan_${_gasRule}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -15274,7 +15274,7 @@ function exportTXT(mode) {
   const blob = new Blob([text], { type: 'text/plain' });
   const a    = document.createElement('a');
   a.href     = URL.createObjectURL(blob);
-  a.download = `LSP_${dateStr}_${tag}.txt`;
+  a.download = `LSP_${getExportCircuitTag()}_${dateStr}_${tag}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
