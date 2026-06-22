@@ -4,6 +4,49 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.30.31 — 2026-06-22  ★ Issue #1 Deep Audit Fix
+
+Closes **[GitHub Issue #1](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/1)** — nine production defects and five test/CI gaps found in the post–v2.30.30 external deep audit. **405/405 `audit.py` checks passing.** Release gates run static audit, browser regression suites, and pSCR E2E validation on every push.
+
+### Fixed — production (BUG-86–94)
+
+- **pSCR trimix fractions** — `computePSCRFractions()` normalizes inert gas via total source inert; fractions sum to 1.0 at runtime 0 and after depletion (18/45/37 preserved).
+- **True 0.16 bar pSCR O₂ floor** — minimum loop O₂ uses `PSCR_MIN_PPO2 × loopVol` (bar·L), not a 16% fraction that scaled with depth.
+- **Imperial unit persistence** — `__units__` saved/restored; `setUnits(relabelOnly)` updates all labels without double-converting saved values.
+- **Input validation** — shared `validateDiveInputs()` blocks invalid depth/BT on both technical deco and recreational planner paths; 300-minute BT cap matches field limits.
+- **EAN80 deco gas** — selectors and VPM mapping recognize 80%; ZHL no longer silently keeps bottom gas.
+- **Tissue load chart** — reads `gfHighInput` and `algorithmSelect` (was stale `gfHighSel` / `algoSel`).
+- **Recreational text export** — reads `gasMix` control; gas line included in export.
+- **PWA manifest** — relative `start_url` / `scope` (`./`) for live deployment path.
+- **Service worker offline fallback** — app-shell lookup chained after primary cache miss.
+
+### Added — regression & CI
+
+| Component | Scope |
+|-----------|--------|
+| [`tests-pscr-otu-cns.html`](tests-pscr-otu-cns.html) Section G | Trimix 18/45 fraction normalization (3 tests) |
+| [`dev/run_browser_regression.py`](dev/run_browser_regression.py) | Headless runner for verify + pSCR suites over HTTP |
+| [`.github/workflows/audit.yml`](.github/workflows/audit.yml) | **Release gates** — audit + browser regression + pSCR E2E |
+| [`audit.py`](audit.py) GROUP 64 | 14 static checks locking Issue #1 fixes |
+
+### Verification (final sign-off)
+
+| Check | Result |
+|-------|--------|
+| `audit.py` | **405 passed, 0 failed** |
+| `tests-verify.html` | **68 pass, 8 warnings, 0 fail** |
+| `tests-pscr-otu-cns.html` | **39 pass, 0 fail** |
+| `dev/run_browser_regression.py` | **PASS** |
+| `dev/validate_pscr_e2e.py` | **PASS** |
+
+Also includes Android APK launch fix (`MainActivity` package alignment, `sync-apk-d-planner-ccr` site sync) and launcher label **LSP CCR**.
+
+### Changed
+
+- **`APP_VERSION`** — `2.30.31`. Manifest files synced.
+
+---
+
 ## v2.30.30 — 2026-06-21  ★ Stability & Safety Sign-Off (CCR edition)
 
 Closes all **84 CCR audit findings (BUG-01 through BUG-84)** from independent verification passes v1–v25. pSCR loop physics, gas consumption, dual-engine OTU/CNS plan-walk logic, export labelling, and regression harness hardened. **381/381 `audit.py` checks passing.**
