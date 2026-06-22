@@ -2992,6 +2992,63 @@ if os.path.isfile(pscr_test_path):
     else:
         fail("tests-pscr-otu-cns.html missing trimix fraction tests (issue #1)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 65 — CCR differential test harness (issue #2)
+# ══════════════════════════════════════════════════════════════════════════════
+
+ccr_plan = os.path.join(os.path.dirname(__file__), "docs", "CCR_ENGINE_DIFFERENTIAL_TEST_PLAN.md")
+ccr_runner = os.path.join(os.path.dirname(__file__), "dev", "run_ccr_differential.py")
+ccr_html = os.path.join(os.path.dirname(__file__), "tests-ccr-differential.html")
+ccr_lib = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "lib", "ccrdiff.js")
+ccr_build = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "build_assets.py")
+
+for path, label in [
+    (ccr_plan, "CCR_ENGINE_DIFFERENTIAL_TEST_PLAN.md"),
+    (ccr_runner, "dev/run_ccr_differential.py"),
+    (ccr_html, "tests-ccr-differential.html"),
+    (ccr_lib, "tests/ccr-differential/lib/ccrdiff.js"),
+    (ccr_build, "tests/ccr-differential/build_assets.py"),
+]:
+    if os.path.isfile(path):
+        ok(f"{label} present (issue #2)")
+    else:
+        fail(f"{label} missing (issue #2)")
+
+fixture_c1 = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "fixtures", "CCR-C1.json")
+md_golden = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "goldens", "multideco", "CCR-C1.json")
+if os.path.isfile(fixture_c1) and os.path.isfile(md_golden):
+    ok("CCR-C1 fixture and MultiDeco golden migrated (issue #2)")
+else:
+    fail("CCR-C1 fixture or MultiDeco golden missing (issue #2)")
+
+ccr_schema = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "schemas", "scenario.schema.json")
+ccr_defects = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "known-lsp-defects.json")
+if os.path.isfile(ccr_schema):
+    ok("CCR scenario schema present (issue #2)")
+else:
+    fail("CCR scenario schema missing (issue #2)")
+if os.path.isfile(ccr_defects):
+    ok("CCR known LSP defects registry present (issue #2)")
+else:
+    fail("CCR known-lsp-defects.json missing (issue #2)")
+
+if os.path.isfile(ccr_runner):
+    with open(ccr_runner, encoding="utf-8") as f:
+        ccr_src = f.read()
+    if "EXPECTED_DIFFERENCE" in open(ccr_lib, encoding="utf-8").read() and "runMetamorphic" in open(ccr_lib, encoding="utf-8").read():
+        ok("CCR differential lib includes classification + metamorphic tests (issue #2)")
+    else:
+        fail("CCR differential lib incomplete (issue #2)")
+
+audit_wf2 = os.path.join(os.path.dirname(__file__), ".github", "workflows", "audit.yml")
+if os.path.isfile(audit_wf2):
+    with open(audit_wf2, encoding="utf-8") as f:
+        wf2 = f.read()
+    if "run_ccr_differential.py" in wf2:
+        ok("audit.yml runs CCR differential suite (issue #2)")
+    else:
+        fail("audit.yml missing CCR differential step (issue #2)")
+
 print("=" * 60)
 
 if FAIL:

@@ -48,3 +48,6 @@ jobs:
         env:
           SKIP_AUDIT: "1"
         run: python dev/validate_pscr_e2e.py
+
+      - name: Run CCR differential comparison suite
+        run: python dev/run_ccr_differential.py

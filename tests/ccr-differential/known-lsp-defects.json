@@ -1,0 +1,10 @@
+[
+  {
+    "scenarioId": "CCR-INVALID",
+    "defectId": "CCR-DEFECT-INVALID-SETPOINT",
+    "classification": "LSP_SUSPECT",
+    "summary": "Engine accepts impossible 2.5 bar setpoint and still produces a decompression schedule",
+    "evidence": "CCR-INVALID fixture; validatePlannerInputs should reject before ZHLEngine.calculate",
+    "regression": "pending \u2014 add focused test when production validation is fixed"
+  }
+]

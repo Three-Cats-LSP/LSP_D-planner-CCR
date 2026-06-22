@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "lsp": {
+    "engine": "production",
+    "entry": "index.html"
+  },
+  "multideco": {
+    "applicationVersion": "2.26",
+    "source": "captured-application-output",
+    "evidenceRoot": "Knowledge Base/divekit-cross-reference"
+  },
+  "diveprome": {
+    "repository": "https://github.com/VlasovAlexey/DiveProMe",
+    "pinnedCommit": "87741d22dafcd922f11a9307510a1b6778268c83",
+    "provenance": "ApexDeco-derived engine in HTML_SRC; open-source reference slices use divekit.app captures until live adapter is vendored",
+    "vendorPath": "vendor/DiveProMe"
+  },
+  "tolerances": {
+    "firstStopStepM": 3,
+    "roundedStopSec": 60,
+    "roundedTtsMin": { "floor": 2, "pct": 0.05 },
+    "preciseStopSec": 15,
+    "preciseTtsSec": 60,
+    "tissueBar": 0.01
+  }
+}
