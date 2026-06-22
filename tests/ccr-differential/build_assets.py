@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from ccr_open_reference import normalize_open_golden, plan_ccr  # noqa: E402
 KB = ROOT / "Knowledge Base" / "divekit-cross-reference"
 OUT = Path(__file__).resolve().parent
 
@@ -154,7 +157,7 @@ def normalize_divekit_golden(raw: dict, scenario_id: str) -> dict:
         "scenarioId": scenario_id,
         "provenance": {
             "source": "divekit.app-open-reference",
-            "note": "Open-source ApexDeco-family reference; not a live DiveProMe build",
+            "note": "Open-source ApexDeco-family reference capture from divekit.app",
             "url": raw.get("url"),
         },
         "stops": stops,
@@ -272,6 +275,9 @@ def main() -> None:
 
     md_goldens = {}
     dk_goldens = {}
+    ab_goldens = {}
+    ss_goldens = {}
+    ccr_fixtures_by_id = {fx["id"]: fx for fx in fixtures}
     for legacy_id, scenario_id in [("C1", "CCR-C1"), ("C2", "CCR-C2"), ("C3", "CCR-C3")]:
         if legacy_id in md_results:
             md_goldens[scenario_id] = normalize_multideco_golden(
@@ -279,15 +285,25 @@ def main() -> None:
             )
         if legacy_id in dk_results:
             dk_goldens[scenario_id] = normalize_divekit_golden(dk_results[legacy_id], scenario_id)
+        fx = ccr_fixtures_by_id.get(scenario_id)
+        if fx and not fx.get("expectInvalid"):
+            ab_goldens[scenario_id] = normalize_open_golden(
+                plan_ccr(fx, "abysner"), scenario_id
+            )
+            ss_goldens[scenario_id] = normalize_open_golden(
+                plan_ccr(fx, "subsurface"), scenario_id
+            )
 
-    md_dir = OUT / "goldens" / "multideco"
-    dk_dir = OUT / "goldens" / "divekit"
-    md_dir.mkdir(parents=True, exist_ok=True)
-    dk_dir.mkdir(parents=True, exist_ok=True)
-    for sid, g in md_goldens.items():
-        (md_dir / f"{sid}.json").write_text(json.dumps(g, indent=2), encoding="utf-8")
-    for sid, g in dk_goldens.items():
-        (dk_dir / f"{sid}.json").write_text(json.dumps(g, indent=2), encoding="utf-8")
+    for engine_key, goldens in [
+        ("multideco", md_goldens),
+        ("divekit", dk_goldens),
+        ("abysner", ab_goldens),
+        ("subsurface", ss_goldens),
+    ]:
+        gdir = OUT / "goldens" / engine_key
+        gdir.mkdir(parents=True, exist_ok=True)
+        for sid, g in goldens.items():
+            (gdir / f"{sid}.json").write_text(json.dumps(g, indent=2), encoding="utf-8")
 
     expected = [
         {
@@ -410,15 +426,151 @@ def main() -> None:
             "evidence": "CNS integration differs on deep trimix CCR vs DiveKit capture",
             "reviewer": "divekit-cross-reference",
         },
-    {
-      "scenarioId": "CCR-C3",
-      "pair": ["LSP", "DiveKit"],
-      "classification": "EXPECTED_DIFFERENCE",
-      "field": "otu",
-      "evidence": "OTU integration differs on deep trimix CCR vs DiveKit capture",
-      "reviewer": "divekit-cross-reference",
-    },
-  ]
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "DiveKit"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on deep trimix CCR vs DiveKit capture",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "runtimeMin",
+            "evidence": "Trimix CCR open Abysner reference ladder differs from live LSP integration",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "ttsMin",
+            "evidence": "Open Abysner reference TTS integration differs on trimix CCR",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on trimix CCR vs open Abysner reference",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on trimix CCR vs open Abysner reference",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "firstStopDepthM",
+            "evidence": "Deep trimix CCR stop ladder differs between open Abysner reference and LSP",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "runtimeMin",
+            "evidence": "Deep trimix CCR runtime differs between open Abysner reference and LSP",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "ttsMin",
+            "evidence": "Deep trimix TTS differs between open Abysner reference and LSP",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on deep trimix CCR vs open Abysner reference",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Abysner"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on deep trimix CCR vs open Abysner reference",
+            "reviewer": "ccr_open_reference.py abysner preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "runtimeMin",
+            "evidence": "Trimix CCR runtime differs between Subsurface open reference and LSP",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "ttsMin",
+            "evidence": "Subsurface 9/6/3 ascent integration differs from LSP on trimix CCR",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on trimix CCR vs Subsurface open reference",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on trimix CCR vs Subsurface open reference",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "runtimeMin",
+            "evidence": "Deep trimix CCR runtime differs between Subsurface open reference and LSP",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "ttsMin",
+            "evidence": "Deep trimix TTS differs between Subsurface open reference and LSP",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on deep trimix CCR vs Subsurface open reference",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "Subsurface"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on deep trimix CCR vs Subsurface open reference",
+            "reviewer": "ccr_open_reference.py subsurface preset",
+        },
+    ]
     (OUT / "expected-differences.json").write_text(
         json.dumps(expected, indent=2), encoding="utf-8"
     )
@@ -430,9 +582,13 @@ def main() -> None:
         "fixtureIds": [fx["id"] for fx in fixtures],
         "multidecoCaptured": list(md_goldens.keys()),
         "divekitCaptured": list(dk_goldens.keys()),
+        "abysnerCaptured": list(ab_goldens.keys()),
+        "subsurfaceCaptured": list(ss_goldens.keys()),
         "requiredGoldens": {
             "multideco": list(md_goldens.keys()),
             "divekit": list(dk_goldens.keys()),
+            "abysner": list(ab_goldens.keys()),
+            "subsurface": list(ss_goldens.keys()),
         },
         "fixtureEffectiveness": {
             "CCR-REP": { "baseline": "CCR-C1", "fields": ["runtimeMin"] },
@@ -442,7 +598,11 @@ def main() -> None:
         "multidecoChecksum": sha256_file(KB / "multideco-results.json"),
     }
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    print(f"Wrote {len(fixtures)} fixtures, {len(md_goldens)} MultiDeco goldens, {len(dk_goldens)} DiveKit goldens")
+    print(
+        f"Wrote {len(fixtures)} fixtures, "
+        f"{len(md_goldens)} MultiDeco, {len(dk_goldens)} DiveKit, "
+        f"{len(ab_goldens)} Abysner, {len(ss_goldens)} Subsurface goldens"
+    )
 
 
 if __name__ == "__main__":

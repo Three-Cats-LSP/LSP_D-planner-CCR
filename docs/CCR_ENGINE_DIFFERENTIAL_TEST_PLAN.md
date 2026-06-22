@@ -8,7 +8,9 @@ Implement a reproducible differential test suite for closed-circuit rebreather (
 
 - LSP D-planner CCR
 - MultiDeco 2.26
-- DiveProMe+ at a pinned upstream commit
+- DiveKit (divekit.app open captures, ApexDeco-family reference)
+- Abysner (open ZHL-16C CCR reference planner, Abysner preset)
+- Subsurface (open ZHL-16C CCR reference planner, Subsurface preset)
 
 The suite must distinguish genuine LSP defects from expected differences caused by model constants, ascent integration, stop rounding, setpoint handling, or proprietary MultiDeco behavior.
 
@@ -27,11 +29,17 @@ Record:
 - model and all engine settings
 - normalized plan and final tissue state
 
-### DiveProMe+
+### DiveKit
 
-Use the open-source engine from [VlasovAlexey/DiveProMe](https://github.com/VlasovAlexey/DiveProMe) at an explicitly pinned commit. Validate the expected source checksum before running it.
+Use open captures from [divekit.app cross-reference](https://divekit.app/data/cross-reference/) (`Knowledge Base/divekit-cross-reference/divekit-results.json`). DiveKit is an ApexDeco-family open reference; disclose this provenance in reports.
 
-DiveProMe currently exposes an ApexDeco-derived engine. The report must disclose this provenance and must not describe DiveProMe as a fully independent consensus implementation where code or algorithm ancestry overlaps LSP references.
+### Abysner
+
+Use the open CCR reference planner in `tests/ccr-differential/lib/ccr_open_reference.py` with the **Abysner preset** (WV 0.0627, Schreiner transit, fixture ascent rates). This is a Bühlmann ZHL-16C implementation aligned with the [NeoTech-Software/Abysner](https://github.com/NeoTech-Software/Abysner) engine family — not a live vendored Abysner build. Regenerate goldens via `python tests/ccr-differential/build_assets.py`.
+
+### Subsurface
+
+Use the same open reference module with the **Subsurface preset** (WV 0.0627, 9/6/3 m/min ascent between deco stops, whole-minute stops). This extends the OC-focused `Knowledge Base/subsurface_engine.py` analysis with CCR inspired-gas loading. Regenerate goldens via `build_assets.py`. Not a live Subsurface binary capture.
 
 ### MultiDeco
 
@@ -194,7 +202,7 @@ Add engine-level assertions independent of comparator goldens:
 
 ## Harness and Reports
 
-Implement a runner with separate adapters for LSP, DiveProMe, and MultiDeco goldens. Keep engine-specific input translation outside the canonical fixtures.
+Implement a runner with separate adapters for LSP, DiveKit, Abysner, Subsurface, and MultiDeco goldens. Keep engine-specific input translation outside the canonical fixtures.
 
 Generate:
 
@@ -210,7 +218,7 @@ The Markdown report must make setting mismatches visible before presenting outpu
 ## Regression Integration
 
 - Add focused automated regression tests for every confirmed LSP defect.
-- Integrate the automated LSP/DiveProMe comparison into the normal test command or CI workflow.
+- Integrate the automated LSP/comparator comparison into the normal test command or CI workflow.
 - Keep MultiDeco capture verification deterministic and offline; do not require the proprietary application in CI.
 - Run the existing app, engine, massive, verification, and regression suites unchanged.
 - Do not modify production decompression behavior merely to make a comparator test pass without root-cause evidence.
@@ -219,7 +227,8 @@ The Markdown report must make setting mismatches visible before presenting outpu
 
 - [ ] Define and validate canonical scenario/result schemas.
 - [ ] Implement the LSP production-engine adapter.
-- [ ] Pin and implement the DiveProMe adapter with provenance checks.
+- [x] Abysner and Subsurface open-reference goldens via `ccr_open_reference.py`.
+- [x] DiveKit captures from divekit.app cross-reference.
 - [ ] Normalize existing C1-C3 MultiDeco captures.
 - [ ] Capture missing MultiDeco scenarios with raw evidence.
 - [ ] Implement all 14 scenario groups.

@@ -2,7 +2,7 @@
   "appVersion": "2.30.31",
   "scenarios": 21,
   "failures": 0,
-  "inconclusive": 36,
+  "inconclusive": 72,
   "missingRequired": 0,
   "pass": true,
   "rows": [
@@ -170,6 +170,16 @@
         },
         {
           "engine": "DiveKit",
+          "classification": "PASS",
+          "issues": []
+        },
+        {
+          "engine": "Abysner",
+          "classification": "PASS",
+          "issues": []
+        },
+        {
+          "engine": "Subsurface",
           "classification": "PASS",
           "issues": []
         }
@@ -457,6 +467,74 @@
               "lsp": 95,
               "ref": 100.5,
               "delta": 5.5,
+              "tol": 5
+            }
+          ]
+        },
+        {
+          "engine": "Abysner",
+          "classification": "EXPECTED_DIFFERENCE",
+          "issues": [
+            {
+              "field": "runtimeMin",
+              "lsp": 62,
+              "ref": 71.5,
+              "delta": 9.5,
+              "tol": 3.575
+            },
+            {
+              "field": "ttsMin",
+              "lsp": 40.3,
+              "ref": 46.8,
+              "delta": 6.5,
+              "tol": 2.34
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 35.6,
+              "ref": 38.7,
+              "delta": 3.1000000000000014,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 95,
+              "ref": 103,
+              "delta": 8,
+              "tol": 5
+            }
+          ]
+        },
+        {
+          "engine": "Subsurface",
+          "classification": "EXPECTED_DIFFERENCE",
+          "issues": [
+            {
+              "field": "runtimeMin",
+              "lsp": 62,
+              "ref": 71.7,
+              "delta": 9.700000000000003,
+              "tol": 3.5850000000000004
+            },
+            {
+              "field": "ttsMin",
+              "lsp": 40.3,
+              "ref": 47,
+              "delta": 6.700000000000003,
+              "tol": 2.35
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 35.6,
+              "ref": 38.8,
+              "delta": 3.1999999999999957,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 95,
+              "ref": 103.3,
+              "delta": 8.299999999999997,
               "tol": 5
             }
           ]
@@ -847,6 +925,74 @@
               "tol": 5
             }
           ]
+        },
+        {
+          "engine": "Abysner",
+          "classification": "EXPECTED_DIFFERENCE",
+          "issues": [
+            {
+              "field": "runtimeMin",
+              "lsp": 81,
+              "ref": 108.6,
+              "delta": 27.599999999999994,
+              "tol": 5.43
+            },
+            {
+              "field": "ttsMin",
+              "lsp": 65.4,
+              "ref": 88.6,
+              "delta": 23.19999999999999,
+              "tol": 4.43
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 46.6,
+              "ref": 58.8,
+              "delta": 12.199999999999996,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 124,
+              "ref": 156.5,
+              "delta": 32.5,
+              "tol": 5
+            }
+          ]
+        },
+        {
+          "engine": "Subsurface",
+          "classification": "EXPECTED_DIFFERENCE",
+          "issues": [
+            {
+              "field": "runtimeMin",
+              "lsp": 81,
+              "ref": 108.6,
+              "delta": 27.599999999999994,
+              "tol": 5.43
+            },
+            {
+              "field": "ttsMin",
+              "lsp": 65.4,
+              "ref": 88.6,
+              "delta": 23.19999999999999,
+              "tol": 4.43
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 46.6,
+              "ref": 58.8,
+              "delta": 12.199999999999996,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 124,
+              "ref": 156.5,
+              "delta": 32.5,
+              "tol": 5
+            }
+          ]
         }
       ],
       "metamorphic": [],
@@ -954,6 +1100,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -1127,6 +1285,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -1398,6 +1568,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1568,6 +1750,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -1744,6 +1938,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1917,6 +2123,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2068,6 +2286,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -2282,6 +2512,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2493,6 +2735,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2663,6 +2917,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -2839,6 +3105,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -3009,6 +3287,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -3185,6 +3475,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -3358,6 +3660,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -3384,6 +3698,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -3416,6 +3742,18 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -3442,6 +3780,18 @@
         },
         {
           "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
@@ -3474,11 +3824,23 @@
           "classification": "INCONCLUSIVE",
           "detail": "no golden capture",
           "required": false
+        },
+        {
+          "engine": "abysner",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "subsurface",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
       "integrity": "PASS"
     }
   ],
-  "generatedAt": "2026-06-22T09:56:42.993Z"
+  "generatedAt": "2026-06-22T10:36:50.328Z"
 }

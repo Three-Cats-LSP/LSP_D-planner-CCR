@@ -33,6 +33,16 @@
     "CCR-C2",
     "CCR-C3"
   ],
+  "abysnerCaptured": [
+    "CCR-C1",
+    "CCR-C2",
+    "CCR-C3"
+  ],
+  "subsurfaceCaptured": [
+    "CCR-C1",
+    "CCR-C2",
+    "CCR-C3"
+  ],
   "requiredGoldens": {
     "multideco": [
       "CCR-C1",
@@ -40,6 +50,16 @@
       "CCR-C3"
     ],
     "divekit": [
+      "CCR-C1",
+      "CCR-C2",
+      "CCR-C3"
+    ],
+    "abysner": [
+      "CCR-C1",
+      "CCR-C2",
+      "CCR-C3"
+    ],
+    "subsurface": [
       "CCR-C1",
       "CCR-C2",
       "CCR-C3"

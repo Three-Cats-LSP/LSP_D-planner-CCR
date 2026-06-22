@@ -174,5 +174,192 @@
     "field": "otu",
     "evidence": "OTU integration differs on deep trimix CCR vs DiveKit capture",
     "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "runtimeMin",
+    "evidence": "Trimix CCR open Abysner reference ladder differs from live LSP integration",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "ttsMin",
+    "evidence": "Open Abysner reference TTS integration differs on trimix CCR",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on trimix CCR vs open Abysner reference",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on trimix CCR vs open Abysner reference",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "firstStopDepthM",
+    "evidence": "Deep trimix CCR stop ladder differs between open Abysner reference and LSP",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "runtimeMin",
+    "evidence": "Deep trimix CCR runtime differs between open Abysner reference and LSP",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "ttsMin",
+    "evidence": "Deep trimix TTS differs between open Abysner reference and LSP",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on deep trimix CCR vs open Abysner reference",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Abysner"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on deep trimix CCR vs open Abysner reference",
+    "reviewer": "ccr_open_reference.py abysner preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "runtimeMin",
+    "evidence": "Trimix CCR runtime differs between Subsurface open reference and LSP",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "ttsMin",
+    "evidence": "Subsurface 9/6/3 ascent integration differs from LSP on trimix CCR",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on trimix CCR vs Subsurface open reference",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on trimix CCR vs Subsurface open reference",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "runtimeMin",
+    "evidence": "Deep trimix CCR runtime differs between Subsurface open reference and LSP",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "ttsMin",
+    "evidence": "Deep trimix TTS differs between Subsurface open reference and LSP",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on deep trimix CCR vs Subsurface open reference",
+    "reviewer": "ccr_open_reference.py subsurface preset"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "Subsurface"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on deep trimix CCR vs Subsurface open reference",
+    "reviewer": "ccr_open_reference.py subsurface preset"
   }
 ]

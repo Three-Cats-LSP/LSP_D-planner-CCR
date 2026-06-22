@@ -10,7 +10,7 @@ Every check added here must correspond to a real bug or regression
 that was found in production. No theoretical checks.
 """
 
-import re, sys, os
+import re, sys, os, json
 from collections import Counter
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -3026,6 +3026,23 @@ if os.path.isfile(fixture_c1) and os.path.isfile(md_golden):
     ok("CCR-C1 fixture and MultiDeco golden migrated (issue #2)")
 else:
     fail("CCR-C1 fixture or MultiDeco golden missing (issue #2)")
+
+ab_golden = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "goldens", "abysner", "CCR-C1.json")
+ss_golden = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "goldens", "subsurface", "CCR-C1.json")
+if os.path.isfile(ab_golden) and os.path.isfile(ss_golden):
+    ok("CCR-C1 Abysner and Subsurface goldens present (issue #2)")
+else:
+    fail("CCR-C1 Abysner or Subsurface golden missing (issue #2)")
+
+ccr_config = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "config.json")
+if os.path.isfile(ccr_config):
+    with open(ccr_config, encoding="utf-8") as f:
+        ccr_cfg = json.load(f)
+    engines = ccr_cfg.get("comparatorEngines") or []
+    if "abysner" in engines and "subsurface" in engines and "diveprome" not in ccr_cfg:
+        ok("CCR config lists Abysner + Subsurface comparators (issue #2)")
+    else:
+        fail("CCR config missing Abysner/Subsurface or still references diveprome (issue #2)")
 
 ccr_schema = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "schemas", "scenario.schema.json")
 ccr_defects = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "known-lsp-defects.json")
