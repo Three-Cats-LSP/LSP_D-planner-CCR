@@ -3091,6 +3091,24 @@ if os.path.isfile(audit_wf2):
     else:
         fail("audit.yml missing CCR differential step (issue #2)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 66 — validateCcrCalculationInputs pSCR + default setpoints (BUG-95/96)
+# ══════════════════════════════════════════════════════════════════════════════
+
+val_ccr_calc = js[js.find("function validateCcrCalculationInputs"):js.find("function validateCcrCalculationInputs") + 2500]
+if "circuit === 'pSCR'" in val_ccr_calc and "return { ok: errors.length === 0, errors }" in val_ccr_calc:
+    ok("validateCcrCalculationInputs skips setpoint checks for pSCR (BUG-95)")
+else:
+    fail("validateCcrCalculationInputs still validates pSCR setpoints (BUG-95)")
+if re.search(r"descentSetpoint\s*!=\s*null\s*\?\s*s\.descentSetpoint\s*:\s*0\.7", val_ccr_calc):
+    ok("validateCcrCalculationInputs defaults descent setpoint to 0.7 (BUG-96)")
+else:
+    fail("validateCcrCalculationInputs missing descent setpoint default (BUG-96)")
+if re.search(r"bottomSetpoint\s*!=\s*null.*1\.2", val_ccr_calc) and re.search(r"decoSetpoint\s*!=\s*null.*1\.3", val_ccr_calc):
+    ok("validateCcrCalculationInputs defaults bottom/deco setpoints to 1.2/1.3 (BUG-96)")
+else:
+    fail("validateCcrCalculationInputs missing bottom/deco setpoint defaults (BUG-96)")
+
 print("=" * 60)
 
 if FAIL:

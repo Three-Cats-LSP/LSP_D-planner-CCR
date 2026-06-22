@@ -11197,10 +11197,18 @@ function validateCcrCalculationInputs(levels, settings) {
     }
   }
 
+  if (circuit === 'pSCR') {
+    return { ok: errors.length === 0, errors };
+  }
+
+  const descentSP = s.descentSetpoint != null ? s.descentSetpoint : 0.7;
+  const bottomSP = s.bottomSetpoint != null ? s.bottomSetpoint : (s.setpoint != null ? s.setpoint : 1.2);
+  const decoSP = s.decoSetpoint != null ? s.decoSetpoint : (s.setpoint != null ? s.setpoint : 1.3);
+
   for (const [name, value, min, max] of [
-    ['descent', s.descentSetpoint, 0.5, 1.0],
-    ['bottom', s.bottomSetpoint != null ? s.bottomSetpoint : s.setpoint, 0.7, 1.6],
-    ['deco', s.decoSetpoint != null ? s.decoSetpoint : s.setpoint, 0.7, 1.6],
+    ['descent', descentSP, 0.5, 1.0],
+    ['bottom', bottomSP, 0.7, 1.6],
+    ['deco', decoSP, 0.7, 1.6],
   ]) {
     if (!Number.isFinite(value) || value < min || value > max) {
       errors.push({
