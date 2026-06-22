@@ -269,6 +269,14 @@ def validate_profile(prof: dict, raw: dict) -> list[dict]:
     return checks
 
 
+def audit_summary(audit: dict) -> str:
+    passed = audit.get("passed")
+    failed = audit.get("failed")
+    if passed is None or failed is None:
+        return "skipped (run separately in CI)"
+    return f"{passed}/{passed + failed} checks"
+
+
 def all_checks_pass(results: dict) -> bool:
     for p in results["profiles"]:
         if not all(c["pass"] for c in p["checks"]):
@@ -294,7 +302,7 @@ def render_markdown(audit: dict, results: dict) -> str:
         f"**Date:** {ts}  ",
         f"**App version:** {ver}  ",
         f"**Repo:** LSP_D-planner-CCR  ",
-        f"**Automated audit:** {audit.get('passed', '?')}/{audit.get('passed', 0) + audit.get('failed', 0)} checks  ",
+        f"**Automated audit:** {audit_summary(audit)}  ",
         f"**pSCR regression suite:** {suite.get('pass', '?')} pass / {suite.get('fail', '?')} fail  ",
         f"**Verdict:** **{verdict}**",
         "",
@@ -377,7 +385,7 @@ def render_markdown(audit: dict, results: dict) -> str:
         "## 4. Static audit (`audit.py`)",
         "",
         f"- **Result:** {'ALL CHECKS PASSED' if audit.get('all_passed') else 'FAILURES PRESENT'}",
-        f"- **Count:** {audit.get('passed')} passed, {audit.get('failed')} failed",
+        f"- **Count:** {audit_summary(audit)}",
         "",
         "---",
         "",
@@ -390,7 +398,7 @@ def render_markdown(audit: dict, results: dict) -> str:
         f"| VPM ↔ ZHL OTU consistency | {'✅' if profiles_ok else '❌'} | Same plan-walk integrator; ±12 OTU when schedules differ |",
         f"| Bühlmann deco on pSCR | {'✅' if profiles_ok else '❌'} | ZHL headless plans generate finite stops + OTU plan parity |",
         f"| Regression lock | {'✅' if suite.get('fail', 1) == 0 else '❌'} | `tests-pscr-otu-cns.html` |",
-        f"| Static analysis | {'✅' if audit.get('all_passed') else '❌'} | audit.py {audit.get('passed')} checks |",
+        f"| Static analysis | {'✅' if audit.get('all_passed') else '❌'} | audit.py {audit_summary(audit)} |",
         "",
         "## 6. Release recommendation",
         "",
