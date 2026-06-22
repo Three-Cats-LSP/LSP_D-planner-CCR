@@ -5328,7 +5328,9 @@ function injectTtsCells(tbodyId, rtAtBottomEnd) {
   });
 }
 
-function setUnits(u) {
+function setUnits(u, opts) {
+  opts = opts || {};
+  const relabelOnly = !!opts.relabelOnly;
   const prev = units;
   units = u;
   updateMinDecoLabels(u !== 'imperial');
@@ -5336,8 +5338,8 @@ function setUnits(u) {
   const FT_PER_M = 3.28084;
   const PSI_PER_BAR = 14.5038;
   const CUFT_PER_L = 0.0353147;
-  const isToImperial = u === 'imperial' && prev === 'metric';
-  const isToMetric = u === 'metric' && prev === 'imperial';
+  const isToImperial = !relabelOnly && u === 'imperial' && prev === 'metric';
+  const isToMetric = !relabelOnly && u === 'metric' && prev === 'imperial';
 
   const setTxt = (id, txt) => {
     const el = document.getElementById(id);
@@ -6387,6 +6389,13 @@ function padiGroup(depthM, time, mix) {
 // PLANNER
 // ═══════════════════════════════════════════════
 function runPlanner() {
+  if (!window._zhlHeadless) {
+    const inputVal = validatePlannerInputs();
+    if (!inputVal.ok) {
+      alert('Cannot calculate dive:\n\n' + inputVal.msg);
+      return;
+    }
+  }
   const isMetric = units === 'metric';
   const rawD = parseFloat(document.getElementById('depth').value)||30;
   const depthM = isMetric ? rawD : rawD/3.28084;
@@ -9751,24 +9760,37 @@ function updateTravelGasMOD() {
   }
 }
 
-function validateDecoInputs() {
+function validateDiveInputs(depthId, btId, depthLimits) {
   if (window._zhlHeadless) return { ok: true };
-  const rawD = parseFloat(document.getElementById('decoDepth')?.value);
-  const bt = parseInt(document.getElementById('decoBT')?.value, 10);
-  const maxDepth = units === 'imperial' ? 330 : 100;
+  const lim = depthLimits || {};
+  const maxDepth = units === 'imperial'
+    ? (lim.imperial != null ? lim.imperial : 330)
+    : (lim.metric != null ? lim.metric : 100);
+  const maxBt = lim.maxBt != null ? lim.maxBt : 300;
+  const rawD = parseFloat(document.getElementById(depthId)?.value);
+  const bt = parseInt(document.getElementById(btId)?.value, 10);
+  const du = units === 'imperial' ? 'ft' : 'm';
   if (!Number.isFinite(rawD) || rawD <= 0) {
     return { ok: false, msg: 'Depth must be a positive number.' };
   }
   if (rawD > maxDepth) {
-    return { ok: false, msg: `Depth exceeds the ${maxDepth} ${units === 'imperial' ? 'ft' : 'm'} limit.` };
+    return { ok: false, msg: `Depth exceeds the ${maxDepth} ${du} limit.` };
   }
   if (!Number.isFinite(bt) || bt <= 0) {
     return { ok: false, msg: 'Bottom time must be a positive number of minutes.' };
   }
-  if (bt > 999) {
-    return { ok: false, msg: 'Bottom time exceeds the 999 minute limit.' };
+  if (bt > maxBt) {
+    return { ok: false, msg: `Bottom time exceeds the ${maxBt} minute limit.` };
   }
   return { ok: true };
+}
+
+function validatePlannerInputs() {
+  return validateDiveInputs('depth', 'bt', { metric: 100, imperial: 330, maxBt: 300 });
+}
+
+function validateDecoInputs() {
+  return validateDiveInputs('decoDepth', 'decoBT', { metric: 120, imperial: 394, maxBt: 300 });
 }
 
 function runDecoSchedule() {
@@ -17695,15 +17717,6 @@ var appSettings = {
       
       if (values['__units__']) {
         units = values['__units__'];
-        const uEl = document.getElementById('unitsSelect');
-        const uElRec = document.getElementById('unitsSelectRec');
-        if (uEl) uEl.value = values['__units__'];
-        if (uElRec) uElRec.value = values['__units__'];
-        updateMinDecoLabels(values['__units__'] !== 'imperial');
-        ['uImp','uMet'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.toggle('active', id === (values['__units__'] === 'imperial' ? 'uImp' : 'uMet'));
-        });
       }
       
       // First, switch to the correct algorithm if different
@@ -17769,6 +17782,10 @@ var appSettings = {
       restored++;
     };
     applyGfPreset();
+    
+    if (values['__units__']) {
+      setUnits(values['__units__'], { relabelOnly: true });
+    }
     
     console.log('[LSP] ✅ Settings restored (' + restored + ' fields) - Algo: ' + (values['__algo__'] || 'padi'));
   },

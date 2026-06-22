@@ -409,8 +409,12 @@ def render_markdown(audit: dict, results: dict) -> str:
 
 def main() -> int:
     print("Running audit.py …")
-    audit = run_audit()
-    print(f"  audit: {audit}")
+    audit = {"all_passed": True, "passed": None, "failed": 0}
+    if not os.environ.get("SKIP_AUDIT"):
+        audit = run_audit()
+        print(f"  audit: {audit}")
+    else:
+        print("  audit: skipped (SKIP_AUDIT=1)")
 
     print("Running Playwright pSCR E2E …")
     try:

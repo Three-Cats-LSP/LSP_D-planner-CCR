@@ -2893,6 +2893,21 @@ if "function validateDecoInputs" in js and "validateDecoInputs()" in js and "Can
 else:
     fail("validateDecoInputs missing or not wired into runDecoSchedule (issue #1)")
 
+if "function validatePlannerInputs" in js and "validatePlannerInputs()" in js and "Cannot calculate dive" in js:
+    ok("validatePlannerInputs blocks invalid depth/BT before runPlanner (issue #1 follow-up)")
+else:
+    fail("validatePlannerInputs missing or not wired into runPlanner (issue #1 follow-up)")
+
+if "function validateDiveInputs" in js and "maxBt: 300" in js:
+    ok("validateDiveInputs enforces 300 min BT limit matching input max (issue #1 follow-up)")
+else:
+    fail("validateDiveInputs missing or BT limit not 300 (issue #1 follow-up)")
+
+if "setUnits(u, opts)" in js or "relabelOnly" in js:
+    ok("setUnits supports relabelOnly for settings restore without value conversion (issue #1 follow-up)")
+else:
+    fail("setUnits relabelOnly restore path missing (issue #1 follow-up)")
+
 if "__units__" in js and "values['__units__']" in js:
     ok("appSettings persists unit system as __units__ (issue #1)")
 else:
@@ -2956,9 +2971,20 @@ if os.path.isfile(e2e_path):
 
 audit_wf = os.path.join(os.path.dirname(__file__), ".github", "workflows", "audit.yml")
 if os.path.isfile(audit_wf):
-    ok("audit.yml CI workflow present (issue #1)")
+    with open(audit_wf, encoding="utf-8") as f:
+        audit_wf_src = f.read()
+    if "run_browser_regression.py" in audit_wf_src and "validate_pscr_e2e.py" in audit_wf_src:
+        ok("audit.yml CI runs browser regression + pSCR E2E (issue #1 follow-up)")
+    else:
+        fail("audit.yml must run browser regression and pSCR E2E (issue #1 follow-up)")
 else:
     fail("Missing .github/workflows/audit.yml CI workflow (issue #1)")
+
+browser_reg_path = os.path.join(os.path.dirname(__file__), "dev", "run_browser_regression.py")
+if os.path.isfile(browser_reg_path):
+    ok("dev/run_browser_regression.py present (issue #1 follow-up)")
+else:
+    fail("dev/run_browser_regression.py missing (issue #1 follow-up)")
 
 if os.path.isfile(pscr_test_path):
     if "pSCR trimix fraction normalization" in pscr_test and "18/45" in pscr_test:
