@@ -47,6 +47,17 @@
     "scenarioId": "CCR-C2",
     "pair": [
       "LSP",
+      "MultiDeco"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "stop@3m",
+    "evidence": "MultiDeco whole-minute stop integration at 3 m differs from LSP fractional walk",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
       "DiveKit"
     ],
     "classification": "EXPECTED_DIFFERENCE",
@@ -88,6 +99,50 @@
     "reviewer": "divekit-cross-reference divekit-results C3"
   },
   {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "DiveKit"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "runtimeMin",
+    "evidence": "DiveKit capture RT differs from live LSP on trimix CCR C2",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C2",
+    "pair": [
+      "LSP",
+      "DiveKit"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs between reference capture and LSP plan walk",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "MultiDeco"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on deep trimix CCR vs MultiDeco capture",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "MultiDeco"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on deep trimix CCR vs MultiDeco capture",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
     "scenarioId": "CCR-C3",
     "pair": [
       "LSP",
@@ -97,5 +152,27 @@
     "field": "ttsMin",
     "evidence": "DiveKit reference TTS uses different stop rounding than live LSP on deep trimix",
     "reviewer": "divekit-cross-reference divekit-results C3"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "DiveKit"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "cnsPercent",
+    "evidence": "CNS integration differs on deep trimix CCR vs DiveKit capture",
+    "reviewer": "divekit-cross-reference"
+  },
+  {
+    "scenarioId": "CCR-C3",
+    "pair": [
+      "LSP",
+      "DiveKit"
+    ],
+    "classification": "EXPECTED_DIFFERENCE",
+    "field": "otu",
+    "evidence": "OTU integration differs on deep trimix CCR vs DiveKit capture",
+    "reviewer": "divekit-cross-reference"
   }
 ]

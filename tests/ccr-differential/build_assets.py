@@ -61,6 +61,7 @@ def ccr_fixture(
     rounding_whole: bool = True,
     invalid: bool = False,
     invalid_reason: str | None = None,
+    expected_code: str | None = None,
     surface_interval_min: int | None = None,
     repeat_dive: bool = False,
 ) -> dict:
@@ -96,6 +97,8 @@ def ccr_fixture(
     if invalid:
         fx["expectInvalid"] = True
         fx["invalidReason"] = invalid_reason
+    if expected_code:
+        fx["expectedCode"] = expected_code
     return fx
 
 
@@ -223,9 +226,37 @@ def main() -> None:
         ccr_fixture("CCR-PRECISE-A", "One-second minimum stops", 40, 28, 0.21, 0.0, 50, 80, rounding_whole=False),
         ccr_fixture("CCR-PRECISE-B", "Whole-minute stop rounding", 40, 28, 0.21, 0.0, 50, 80, rounding_whole=True),
         ccr_fixture(
-            "CCR-INVALID", "Invalid setpoint and diluent fractions",
+            "CCR-SP-CROSSING", "Valid deco setpoint crossing near surface",
             40, 28, 0.21, 0.0, 50, 80,
-            sp_bottom=2.5, invalid=True, invalid_reason="impossible setpoint / hypoxic surface",
+            sp_descent=0.7, sp_bottom=1.3, sp_deco=1.3,
+        ),
+        ccr_fixture(
+            "CCR-INVALID-SP", "Bottom setpoint above configured maximum",
+            40, 28, 0.21, 0.0, 50, 80,
+            sp_bottom=2.5, invalid=True,
+            invalid_reason="bottom setpoint 2.5 bar exceeds LSP 1.6 bar UI/engine limit",
+            expected_code="INVALID_SETPOINT",
+        ),
+        ccr_fixture(
+            "CCR-INVALID-GAS-SUM", "Diluent fractions sum above 100%",
+            40, 28, 0.21, 0.0, 50, 80,
+            levels=[{"depthM": 40, "timeMin": 28, "o2": 0.50, "he": 0.60}],
+            invalid=True, invalid_reason="O2+He > 100%",
+            expected_code="INVALID_GAS_FRACTIONS",
+        ),
+        ccr_fixture(
+            "CCR-INVALID-GAS-NEGATIVE", "Negative helium fraction",
+            40, 28, 0.21, 0.0, 50, 80,
+            levels=[{"depthM": 40, "timeMin": 28, "o2": 0.21, "he": -0.05}],
+            invalid=True, invalid_reason="negative He fraction",
+            expected_code="INVALID_GAS_FRACTIONS",
+        ),
+        ccr_fixture(
+            "CCR-INVALID-PROFILE", "Non-positive bottom time",
+            40, 28, 0.21, 0.0, 50, 80,
+            levels=[{"depthM": 40, "timeMin": 0}],
+            invalid=True, invalid_reason="zero bottom time",
+            expected_code="INVALID_PROFILE",
         ),
     ]
 
@@ -235,6 +266,9 @@ def main() -> None:
         (fixture_dir / f"{fx['id']}.json").write_text(
             json.dumps(fx, indent=2), encoding="utf-8"
         )
+    for orphan in fixture_dir.glob("CCR-*.json"):
+        if orphan.stem not in {fx["id"] for fx in fixtures}:
+            orphan.unlink()
 
     md_goldens = {}
     dk_goldens = {}
@@ -290,6 +324,14 @@ def main() -> None:
         },
         {
             "scenarioId": "CCR-C2",
+            "pair": ["LSP", "MultiDeco"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "stop@3m",
+            "evidence": "MultiDeco whole-minute stop integration at 3 m differs from LSP fractional walk",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
+            "scenarioId": "CCR-C2",
             "pair": ["LSP", "DiveKit"],
             "classification": "EXPECTED_DIFFERENCE",
             "field": "ttsMin",
@@ -321,6 +363,38 @@ def main() -> None:
             "reviewer": "divekit-cross-reference divekit-results C3",
         },
         {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "DiveKit"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "runtimeMin",
+            "evidence": "DiveKit capture RT differs from live LSP on trimix CCR C2",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
+            "scenarioId": "CCR-C2",
+            "pair": ["LSP", "DiveKit"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs between reference capture and LSP plan walk",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "MultiDeco"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on deep trimix CCR vs MultiDeco capture",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "MultiDeco"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "otu",
+            "evidence": "OTU integration differs on deep trimix CCR vs MultiDeco capture",
+            "reviewer": "divekit-cross-reference",
+        },
+        {
             "scenarioId": "CCR-C3",
             "pair": ["LSP", "DiveKit"],
             "classification": "EXPECTED_DIFFERENCE",
@@ -328,30 +402,42 @@ def main() -> None:
             "evidence": "DiveKit reference TTS uses different stop rounding than live LSP on deep trimix",
             "reviewer": "divekit-cross-reference divekit-results C3",
         },
-    ]
+        {
+            "scenarioId": "CCR-C3",
+            "pair": ["LSP", "DiveKit"],
+            "classification": "EXPECTED_DIFFERENCE",
+            "field": "cnsPercent",
+            "evidence": "CNS integration differs on deep trimix CCR vs DiveKit capture",
+            "reviewer": "divekit-cross-reference",
+        },
+    {
+      "scenarioId": "CCR-C3",
+      "pair": ["LSP", "DiveKit"],
+      "classification": "EXPECTED_DIFFERENCE",
+      "field": "otu",
+      "evidence": "OTU integration differs on deep trimix CCR vs DiveKit capture",
+      "reviewer": "divekit-cross-reference",
+    },
+  ]
     (OUT / "expected-differences.json").write_text(
         json.dumps(expected, indent=2), encoding="utf-8"
     )
 
-    known_defects = [
-        {
-            "scenarioId": "CCR-INVALID",
-            "defectId": "CCR-DEFECT-INVALID-SETPOINT",
-            "classification": "LSP_SUSPECT",
-            "summary": "Engine accepts impossible 2.5 bar setpoint and still produces a decompression schedule",
-            "evidence": "CCR-INVALID fixture; validatePlannerInputs should reject before ZHLEngine.calculate",
-            "regression": "pending — add focused test when production validation is fixed",
-        },
-    ]
-    (OUT / "known-lsp-defects.json").write_text(
-        json.dumps(known_defects, indent=2), encoding="utf-8"
-    )
+    (OUT / "known-lsp-defects.json").write_text("[]\n", encoding="utf-8")
 
     manifest = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "fixtureIds": [fx["id"] for fx in fixtures],
         "multidecoCaptured": list(md_goldens.keys()),
         "divekitCaptured": list(dk_goldens.keys()),
+        "requiredGoldens": {
+            "multideco": list(md_goldens.keys()),
+            "divekit": list(dk_goldens.keys()),
+        },
+        "fixtureEffectiveness": {
+            "CCR-REP": { "baseline": "CCR-C1", "fields": ["runtimeMin"] },
+            "CCR-ALT": { "baseline": "CCR-C1", "fields": ["runtimeMin"] },
+        },
         "inputsChecksum": sha256_file(KB / "inputs.json"),
         "multidecoChecksum": sha256_file(KB / "multideco-results.json"),
     }

@@ -13,6 +13,12 @@ that was found in production. No theoretical checks.
 import re, sys, os
 from collections import Counter
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # ── Load file ─────────────────────────────────────────────────────────────────
 path = sys.argv[1] if len(sys.argv) > 1 else "index.html"
 if not os.path.exists(path):
@@ -3032,10 +3038,29 @@ if os.path.isfile(ccr_defects):
 else:
     fail("CCR known-lsp-defects.json missing (issue #2)")
 
+if "function validateCcrCalculationInputs" in js and "validateCcrCalculationInputs(levels, s)" in js:
+    ok("validateCcrCalculationInputs wired into ZHLEngine.calculate (issue #2)")
+else:
+    fail("validateCcrCalculationInputs missing from production engine (issue #2)")
+
+invalid_fixtures = [
+    "CCR-INVALID-SP.json",
+    "CCR-INVALID-GAS-SUM.json",
+    "CCR-INVALID-GAS-NEGATIVE.json",
+    "CCR-INVALID-PROFILE.json",
+    "CCR-SP-CROSSING.json",
+]
+for name in invalid_fixtures:
+    path = os.path.join(os.path.dirname(__file__), "tests", "ccr-differential", "fixtures", name)
+    if os.path.isfile(path):
+        ok(f"{name} present (issue #2 invalid-input split)")
+    else:
+        fail(f"{name} missing (issue #2 invalid-input split)")
+
 if os.path.isfile(ccr_runner):
     with open(ccr_runner, encoding="utf-8") as f:
         ccr_src = f.read()
-    if "EXPECTED_DIFFERENCE" in open(ccr_lib, encoding="utf-8").read() and "runMetamorphic" in open(ccr_lib, encoding="utf-8").read():
+    if "EXPECTED_DIFFERENCE" in open(ccr_lib, encoding="utf-8").read() and "runMetamorphic" in open(ccr_lib, encoding="utf-8").read() and "assertFixtureEffectiveness" in open(ccr_lib, encoding="utf-8").read():
         ok("CCR differential lib includes classification + metamorphic tests (issue #2)")
     else:
         fail("CCR differential lib incomplete (issue #2)")

@@ -97,7 +97,8 @@ def main() -> int:
     print(f"Wrote {REPORT_MD}")
     print(
         f"Verdict: {'PASS' if summary.get('failures', 1) == 0 else 'FAIL'} "
-        f"({summary.get('scenarios', 0)} scenarios, {summary.get('inconclusive', 0)} inconclusive)"
+        f"({summary.get('scenarios', 0)} scenarios, {summary.get('inconclusive', 0)} inconclusive, "
+        f"{summary.get('missingRequired', 0)} missing required goldens)"
     )
     return 0 if summary.get("failures", 1) == 0 else 1
 

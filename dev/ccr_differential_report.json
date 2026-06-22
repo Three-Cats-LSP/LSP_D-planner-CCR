@@ -1,26 +1,17 @@
 {
   "appVersion": "2.30.31",
-  "scenarios": 17,
+  "scenarios": 21,
   "failures": 0,
-  "inconclusive": 45,
-  "pass": 17,
-  "documentedDefects": [
-    {
-      "scenarioId": "CCR-INVALID",
-      "defectId": "CCR-DEFECT-INVALID-SETPOINT",
-      "classification": "LSP_SUSPECT",
-      "summary": "Engine accepts impossible 2.5 bar setpoint and still produces a decompression schedule",
-      "evidence": "CCR-INVALID fixture; validatePlannerInputs should reject before ZHLEngine.calculate",
-      "regression": "pending \u2014 add focused test when production validation is fixed"
-    }
-  ],
+  "inconclusive": 36,
+  "missingRequired": 0,
+  "pass": true,
   "rows": [
     {
       "scenarioId": "CCR-C1",
       "description": "Air diluent baseline",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-C1",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -106,7 +97,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -181,11 +172,6 @@
           "engine": "DiveKit",
           "classification": "PASS",
           "issues": []
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
         }
       ],
       "metamorphic": [
@@ -200,7 +186,7 @@
       "description": "Tx18/45 trimix",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-C2",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -342,7 +328,7 @@
         "stops": [
           {
             "depthM": 24,
-            "durationMin": 1,
+            "durationMin": 0.8333333333333334,
             "gasLabel": "loop"
           },
           {
@@ -437,7 +423,7 @@
               "lsp": 62,
               "ref": 69,
               "delta": 7,
-              "tol": 6.45
+              "tol": 3.45
             },
             {
               "field": "ttsMin",
@@ -453,18 +439,27 @@
           "classification": "EXPECTED_DIFFERENCE",
           "issues": [
             {
+              "field": "runtimeMin",
+              "lsp": 62,
+              "ref": 68,
+              "delta": 6,
+              "tol": 3.4000000000000004
+            },
+            {
               "field": "ttsMin",
               "lsp": 40.3,
               "ref": 43.4,
               "delta": 3.1000000000000014,
               "tol": 2.17
+            },
+            {
+              "field": "otu",
+              "lsp": 95,
+              "ref": 100.5,
+              "delta": 5.5,
+              "tol": 5
             }
           ]
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
         }
       ],
       "metamorphic": [],
@@ -475,7 +470,7 @@
       "description": "Tx12/60 deep trimix",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-C3",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -673,7 +668,7 @@
         "stops": [
           {
             "depthM": 36,
-            "durationMin": 1,
+            "durationMin": 0.5,
             "gasLabel": "loop"
           },
           {
@@ -794,7 +789,7 @@
               "lsp": 81,
               "ref": 98,
               "delta": 17,
-              "tol": 7.9
+              "tol": 4.9
             },
             {
               "field": "ttsMin",
@@ -802,6 +797,20 @@
               "ref": 78,
               "delta": 12.599999999999994,
               "tol": 3.9000000000000004
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 46.6,
+              "ref": 53,
+              "delta": 6.399999999999999,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 124,
+              "ref": 140,
+              "delta": 16,
+              "tol": 5
             }
           ]
         },
@@ -814,7 +823,7 @@
               "lsp": 81,
               "ref": 97,
               "delta": 16,
-              "tol": 7.8500000000000005
+              "tol": 4.8500000000000005
             },
             {
               "field": "ttsMin",
@@ -822,13 +831,22 @@
               "ref": 77.2,
               "delta": 11.799999999999997,
               "tol": 3.8600000000000003
+            },
+            {
+              "field": "cnsPercent",
+              "lsp": 46.6,
+              "ref": 53.9,
+              "delta": 7.299999999999997,
+              "tol": 3
+            },
+            {
+              "field": "otu",
+              "lsp": 124,
+              "ref": 143.4,
+              "delta": 19.400000000000006,
+              "tol": 5
             }
           ]
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
         }
       ],
       "metamorphic": [],
@@ -839,7 +857,7 @@
       "description": "Shallow no-decompression CCR",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-NDL",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -931,17 +949,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -952,7 +967,7 @@
       "description": "Distinct descent/bottom/deco setpoints",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-SP",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1038,7 +1053,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 3,
+            "durationMin": 2.5,
             "gasLabel": "loop"
           },
           {
@@ -1107,17 +1122,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1128,7 +1140,7 @@
       "description": "Tx18/45 multilevel",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-ML",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1284,7 +1296,7 @@
         "stops": [
           {
             "depthM": 27,
-            "durationMin": 1,
+            "durationMin": 0.6666666666666666,
             "gasLabel": "loop"
           },
           {
@@ -1378,17 +1390,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1399,7 +1408,7 @@
       "description": "GF 50/80 sensitivity (C1 profile)",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-GF-A",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1485,7 +1494,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -1554,17 +1563,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1575,7 +1581,7 @@
       "description": "GF 50/50 sensitivity (C1 profile)",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-GF-B",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1661,7 +1667,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -1730,17 +1736,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1751,7 +1754,7 @@
       "description": "Last stop 3 m (C1 profile)",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-LAST-A",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1837,7 +1840,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -1906,17 +1909,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -1927,7 +1927,7 @@
       "description": "Last stop 6 m (C1 profile)",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-LAST-B",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -1999,7 +1999,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -2063,17 +2063,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2084,7 +2081,7 @@
       "description": "Planned bailout to OC",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-BO",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -2198,7 +2195,7 @@
         "stops": [
           {
             "depthM": 18,
-            "durationMin": 1,
+            "durationMin": 0.55,
             "gasLabel": "loop"
           },
           {
@@ -2277,17 +2274,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2298,7 +2292,7 @@
       "description": "Bailout with EAN50 unavailable",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-LOST-GAS",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -2412,7 +2406,7 @@
         "stops": [
           {
             "depthM": 18,
-            "durationMin": 1,
+            "durationMin": 0.55,
             "gasLabel": "loop"
           },
           {
@@ -2491,17 +2485,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2512,7 +2503,7 @@
       "description": "Repetitive dive \u2014 60 min surface interval",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-REP",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -2583,22 +2574,22 @@
           {
             "type": "stop",
             "depth": 3,
-            "time": 6,
-            "run": 46.8,
+            "time": 12,
+            "run": 52.8,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 0,
             "time": 1,
-            "run": 47.8,
+            "run": 53.8,
             "gas": "CCR Air"
           }
         ],
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -2613,35 +2604,35 @@
           },
           {
             "depthM": 3,
-            "durationMin": 6,
+            "durationMin": 12,
             "gasLabel": "loop"
           }
         ],
         "summary": {
           "firstStopDepthM": 12,
-          "ttsMin": 18.8,
-          "runtimeMin": 47,
-          "cnsPercent": 26.2,
-          "otu": 70,
-          "totalStopMin": 14.666666666666668
+          "ttsMin": 24.8,
+          "runtimeMin": 53,
+          "cnsPercent": 29.5,
+          "otu": 79,
+          "totalStopMin": 20.666666666666668
         },
         "tissuesN2": [
-          0.33128743475568967,
-          0.9922077382365634,
-          1.3902101283009083,
-          1.5715343226912442,
-          1.589043509129287,
-          1.5113372031939791,
-          1.391216275789463,
-          1.2628739152994868,
-          1.1463839278901533,
-          1.0631202859959306,
-          1.0039575079071077,
-          0.9550418911677814,
-          0.9150386681862607,
-          0.8822298115039157,
-          0.855924805584462,
-          0.8349519737754661
+          0.11712779417810829,
+          0.5899850057044828,
+          0.998040740040093,
+          1.267531783608138,
+          1.40950330055502,
+          1.4558499573793626,
+          1.4413532092234007,
+          1.3821249633436725,
+          1.295696123259521,
+          1.214458428514688,
+          1.1463339321338226,
+          1.083166764912469,
+          1.026724768353688,
+          0.9771162394560808,
+          0.9351253650654558,
+          0.900202881444825
         ],
         "tissuesHe": [
           0,
@@ -2667,17 +2658,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2688,7 +2676,7 @@
       "description": "Acclimatized dive at 1500 m",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-ALT",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -2717,57 +2705,57 @@
           {
             "type": "stop",
             "depth": 12,
-            "time": 1.6666666666666667,
-            "run": 32.8,
+            "time": 2,
+            "run": 33.1,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 9,
             "time": 0.3333333333333333,
-            "run": 33.1,
+            "run": 33.4,
             "gas": "CCR Air"
           },
           {
             "type": "stop",
             "depth": 9,
             "time": 3,
-            "run": 36.1,
+            "run": 36.4,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 6,
             "time": 0.3333333333333333,
-            "run": 36.4,
+            "run": 36.8,
             "gas": "CCR Air"
           },
           {
             "type": "stop",
             "depth": 6,
             "time": 4,
-            "run": 40.4,
+            "run": 40.8,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 3,
             "time": 0.3333333333333333,
-            "run": 40.8,
+            "run": 41.1,
             "gas": "CCR Air"
           },
           {
             "type": "stop",
             "depth": 3,
-            "time": 6,
-            "run": 46.8,
+            "time": 8,
+            "run": 49.1,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 0,
             "time": 1,
-            "run": 47.8,
+            "run": 50.1,
             "gas": "CCR Air"
           }
         ],
@@ -2789,35 +2777,35 @@
           },
           {
             "depthM": 3,
-            "durationMin": 6,
+            "durationMin": 8,
             "gasLabel": "loop"
           }
         ],
         "summary": {
           "firstStopDepthM": 12,
-          "ttsMin": 18.8,
-          "runtimeMin": 47,
-          "cnsPercent": 26.2,
-          "otu": 70,
-          "totalStopMin": 14.666666666666668
+          "ttsMin": 21.1,
+          "runtimeMin": 49,
+          "cnsPercent": 26.5,
+          "otu": 71,
+          "totalStopMin": 17
         },
         "tissuesN2": [
-          0.33128743475568967,
-          0.9922077382365634,
-          1.3902101283009083,
-          1.5715343226912442,
-          1.589043509129287,
-          1.5113372031939791,
-          1.391216275789463,
-          1.2628739152994868,
-          1.1463839278901533,
-          1.0631202859959306,
-          1.0039575079071077,
-          0.9550418911677814,
-          0.9150386681862607,
-          0.8822298115039157,
-          0.855924805584462,
-          0.8349519737754661
+          0.19077860169045882,
+          0.7419098771262834,
+          1.1298505435507225,
+          1.3331325922025583,
+          1.3799094080192384,
+          1.3263516714790815,
+          1.2244409229352826,
+          1.10868229339365,
+          1.0004437315177046,
+          0.9218116202357743,
+          0.8654277173025267,
+          0.8185300369498958,
+          0.7800060883541584,
+          0.7483036501717315,
+          0.7228199508983328,
+          0.7024617490580043
         ],
         "tissuesHe": [
           0,
@@ -2843,17 +2831,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -2864,7 +2849,7 @@
       "description": "One-second minimum stops",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-PRECISE-A",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -2950,7 +2935,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -3019,17 +3004,14 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
@@ -3040,7 +3022,7 @@
       "description": "Whole-minute stop rounding",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
+        "engineVersion": "2.30.31",
         "scenarioId": "CCR-PRECISE-B",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
@@ -3126,7 +3108,7 @@
         "stops": [
           {
             "depthM": 12,
-            "durationMin": 2,
+            "durationMin": 1.6666666666666667,
             "gasLabel": "loop"
           },
           {
@@ -3195,29 +3177,26 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
       "integrity": "PASS"
     },
     {
-      "scenarioId": "CCR-INVALID",
-      "description": "Invalid setpoint and diluent fractions",
+      "scenarioId": "CCR-SP-CROSSING",
+      "description": "Valid deco setpoint crossing near surface",
       "lsp": {
         "engine": "LSP",
-        "engineVersion": "unknown",
-        "scenarioId": "CCR-INVALID",
+        "engineVersion": "2.30.31",
+        "scenarioId": "CCR-SP-CROSSING",
         "commit": "not_available",
         "inputChecksum": "5d7955d44da527267803c9bf9ec7322b9529bc5e9c471f1a51706a2f3f704ffd",
         "segments": [
@@ -3237,59 +3216,115 @@
           },
           {
             "type": "ascent",
+            "depth": 12,
+            "time": 3.111111111111111,
+            "run": 31.1,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "stop",
+            "depth": 12,
+            "time": 1.6666666666666667,
+            "run": 32.8,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "ascent",
+            "depth": 9,
+            "time": 0.3333333333333333,
+            "run": 33.1,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "stop",
+            "depth": 9,
+            "time": 3,
+            "run": 36.1,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "ascent",
+            "depth": 6,
+            "time": 0.3333333333333333,
+            "run": 36.4,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "stop",
+            "depth": 6,
+            "time": 4,
+            "run": 40.4,
+            "gas": "CCR Air"
+          },
+          {
+            "type": "ascent",
             "depth": 3,
-            "time": 4.111111111111111,
-            "run": 32.1,
+            "time": 0.3333333333333333,
+            "run": 40.8,
             "gas": "CCR Air"
           },
           {
             "type": "stop",
             "depth": 3,
-            "time": 2.8333333333333335,
-            "run": 34.9,
+            "time": 6,
+            "run": 46.8,
             "gas": "CCR Air"
           },
           {
             "type": "ascent",
             "depth": 0,
             "time": 1,
-            "run": 35.9,
+            "run": 47.8,
             "gas": "CCR Air"
           }
         ],
         "stops": [
           {
-            "depthM": 3,
+            "depthM": 12,
+            "durationMin": 1.6666666666666667,
+            "gasLabel": "loop"
+          },
+          {
+            "depthM": 9,
             "durationMin": 3,
+            "gasLabel": "loop"
+          },
+          {
+            "depthM": 6,
+            "durationMin": 4,
+            "gasLabel": "loop"
+          },
+          {
+            "depthM": 3,
+            "durationMin": 6,
             "gasLabel": "loop"
           }
         ],
         "summary": {
-          "firstStopDepthM": 3,
-          "ttsMin": 7.9,
-          "runtimeMin": 36,
-          "cnsPercent": 70.8,
-          "otu": 98,
-          "totalStopMin": 2.8333333333333335,
-          "validationNote": "LSP_SUSPECT: invalid inputs produced a schedule"
+          "firstStopDepthM": 12,
+          "ttsMin": 18.8,
+          "runtimeMin": 47,
+          "cnsPercent": 26.2,
+          "otu": 70,
+          "totalStopMin": 14.666666666666668
         },
         "tissuesN2": [
-          0.7890296825513363,
-          1.3150145290261197,
-          1.4721404824015314,
-          1.474028076118179,
-          1.3946790193682947,
-          1.289204170633999,
-          1.1799668386049424,
-          1.0814290952269914,
-          0.9999447823380732,
-          0.9447578684729201,
-          0.9067480273981637,
-          0.8759670858189484,
-          0.8511841203777488,
-          0.8310992520245761,
-          0.8151431608564351,
-          0.8025108837692065
+          0.33128743475568967,
+          0.9922077382365634,
+          1.3902101283009083,
+          1.5715343226912442,
+          1.589043509129287,
+          1.5113372031939791,
+          1.391216275789463,
+          1.2628739152994868,
+          1.1463839278901533,
+          1.0631202859959306,
+          1.0039575079071077,
+          0.9550418911677814,
+          0.9150386681862607,
+          0.8822298115039157,
+          0.855924805584462,
+          0.8349519737754661
         ],
         "tissuesHe": [
           0,
@@ -3315,30 +3350,135 @@
         {
           "engine": "multideco",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
+          "detail": "no golden capture",
+          "required": false
         },
         {
           "engine": "divekit",
           "classification": "INCONCLUSIVE",
-          "detail": "no golden capture"
-        },
-        {
-          "engine": "DiveProMe",
-          "classification": "INCONCLUSIVE",
-          "detail": "pinned commit 87741d22 \u2014 vendor adapter not vendored in CI; DiveKit captures used as open-source reference"
+          "detail": "no golden capture",
+          "required": false
         }
       ],
       "metamorphic": [],
-      "integrity": "LSP_SUSPECT",
-      "documentedDefect": {
-        "scenarioId": "CCR-INVALID",
-        "defectId": "CCR-DEFECT-INVALID-SETPOINT",
-        "classification": "LSP_SUSPECT",
-        "summary": "Engine accepts impossible 2.5 bar setpoint and still produces a decompression schedule",
-        "evidence": "CCR-INVALID fixture; validatePlannerInputs should reject before ZHLEngine.calculate",
-        "regression": "pending \u2014 add focused test when production validation is fixed"
-      }
+      "integrity": "PASS"
+    },
+    {
+      "scenarioId": "CCR-INVALID-SP",
+      "description": "Bottom setpoint above configured maximum",
+      "lsp": {
+        "engine": "LSP",
+        "engineVersion": "2.30.31",
+        "scenarioId": "CCR-INVALID-SP",
+        "error": "bottom setpoint must be between 0.7 and 1.6 bar.",
+        "code": "INVALID_SETPOINT",
+        "stops": [],
+        "summary": {}
+      },
+      "comparisons": [
+        {
+          "engine": "multideco",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        }
+      ],
+      "metamorphic": [],
+      "integrity": "PASS"
+    },
+    {
+      "scenarioId": "CCR-INVALID-GAS-SUM",
+      "description": "Diluent fractions sum above 100%",
+      "lsp": {
+        "engine": "LSP",
+        "engineVersion": "2.30.31",
+        "scenarioId": "CCR-INVALID-GAS-SUM",
+        "error": "O2 and He fractions must be non-negative and total no more than 100%.",
+        "code": "INVALID_GAS_FRACTIONS",
+        "stops": [],
+        "summary": {}
+      },
+      "comparisons": [
+        {
+          "engine": "multideco",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        }
+      ],
+      "metamorphic": [],
+      "integrity": "PASS"
+    },
+    {
+      "scenarioId": "CCR-INVALID-GAS-NEGATIVE",
+      "description": "Negative helium fraction",
+      "lsp": {
+        "engine": "LSP",
+        "engineVersion": "2.30.31",
+        "scenarioId": "CCR-INVALID-GAS-NEGATIVE",
+        "error": "O2 and He fractions must be non-negative and total no more than 100%.",
+        "code": "INVALID_GAS_FRACTIONS",
+        "stops": [],
+        "summary": {}
+      },
+      "comparisons": [
+        {
+          "engine": "multideco",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        }
+      ],
+      "metamorphic": [],
+      "integrity": "PASS"
+    },
+    {
+      "scenarioId": "CCR-INVALID-PROFILE",
+      "description": "Non-positive bottom time",
+      "lsp": {
+        "engine": "LSP",
+        "engineVersion": "2.30.31",
+        "scenarioId": "CCR-INVALID-PROFILE",
+        "error": "Bottom time must be a positive finite number.",
+        "code": "INVALID_PROFILE",
+        "stops": [],
+        "summary": {}
+      },
+      "comparisons": [
+        {
+          "engine": "multideco",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        },
+        {
+          "engine": "divekit",
+          "classification": "INCONCLUSIVE",
+          "detail": "no golden capture",
+          "required": false
+        }
+      ],
+      "metamorphic": [],
+      "integrity": "PASS"
     }
   ],
-  "generatedAt": "2026-06-22T07:24:05.149Z"
+  "generatedAt": "2026-06-22T09:56:42.993Z"
 }

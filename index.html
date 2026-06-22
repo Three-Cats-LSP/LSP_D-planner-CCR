@@ -9814,6 +9814,19 @@ function runDecoSchedule() {
   const rawD   = parseFloat(document.getElementById('decoDepth').value) || 40;
   const depthM = units === 'metric' ? rawD : rawD / 3.28084;
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
+  const _uiCcr = getCCRSettingsFromDOM();
+  if (!_zhlHeadless && isRebreatherCircuit(_uiCcr.circuit)) {
+    const bot = getBottomGasFractions();
+    const ccrVal = validateCcrCalculationInputs(
+      [{ depth: depthM, time: bt, o2: Math.round(bot.fO2 * 100), he: Math.round((bot.fHe || 0) * 100) }],
+      mergeCCRSettings(_uiCcr)
+    );
+    if (!ccrVal.ok) {
+      const msg = ccrVal.errors[0].message;
+      alert('Cannot generate schedule:\n\n' + msg);
+      return;
+    }
+  }
   const rate            = Math.max(1, parseInt(document.getElementById('ascentRate').value)        || 9);
   const decoRate        = Math.max(1, parseInt(document.getElementById('decoAscentRate').value)    || 9);
   const surfaceRate     = Math.max(1, parseInt(document.getElementById('surfaceAscentRate').value) || 9);
@@ -10003,8 +10016,8 @@ function runDecoSchedule() {
       const wv = WATER_VAPOR || 0.0627;
       const inspN2 = 0.7902 * ((altSurfaceP || 1.01325) - wv);
       for (let i = 0; i < tissues.length; i++) {
-        const kN2 = Math.LN2 / ZHL16C_N2[i].ht;
-        const kHe = Math.LN2 / (ZHL16C_He[i].ht || 1);
+        const kN2 = Math.LN2 / ZHL16C[i][0];
+        const kHe = Math.LN2 / (ZHL16C_HE_HT[i] || 1);
         tissues[i].pN2 = inspN2 + (tissues[i].pN2 - inspN2) * Math.exp(-kN2 * siMin);
         tissues[i].pHe = (tissues[i].pHe || 0) * Math.exp(-kHe * siMin);
       }
@@ -11153,6 +11166,55 @@ function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP
 }
 if (typeof window !== 'undefined') window.computePlanExposureTotals = computePlanExposureTotals;
 
+function validateCcrCalculationInputs(levels, settings) {
+  const errors = [];
+  const s = settings || {};
+  const circuit = s.circuit || 'OC';
+  if (!isRebreatherCircuit(circuit)) return { ok: true, errors: [] };
+
+  if (!Array.isArray(levels) || levels.length === 0) {
+    errors.push({ code: 'INVALID_PROFILE', message: 'At least one profile level is required.' });
+  }
+
+  for (const level of (levels || [])) {
+    const depth = Number(level.depth);
+    const time = Number(level.time);
+    if (!Number.isFinite(depth) || depth <= 0) {
+      errors.push({ code: 'INVALID_PROFILE', field: 'depth', message: 'Depth must be a positive finite number.' });
+    }
+    if (!Number.isFinite(time) || time <= 0) {
+      errors.push({ code: 'INVALID_PROFILE', field: 'time', message: 'Bottom time must be a positive finite number.' });
+    }
+    const o2pct = Number(level.o2);
+    const hepct = Number(level.he || 0);
+    const fO2 = o2pct > 1 ? o2pct / 100 : o2pct;
+    const fHe = hepct > 1 ? hepct / 100 : hepct;
+    if (!Number.isFinite(fO2) || !Number.isFinite(fHe) || fO2 < 0 || fHe < 0 || fO2 + fHe > 1 + 1e-9) {
+      errors.push({
+        code: 'INVALID_GAS_FRACTIONS',
+        message: 'O2 and He fractions must be non-negative and total no more than 100%.',
+      });
+    }
+  }
+
+  for (const [name, value, min, max] of [
+    ['descent', s.descentSetpoint, 0.5, 1.0],
+    ['bottom', s.bottomSetpoint != null ? s.bottomSetpoint : s.setpoint, 0.7, 1.6],
+    ['deco', s.decoSetpoint != null ? s.decoSetpoint : s.setpoint, 0.7, 1.6],
+  ]) {
+    if (!Number.isFinite(value) || value < min || value > max) {
+      errors.push({
+        code: 'INVALID_SETPOINT',
+        field: name + 'Setpoint',
+        message: `${name} setpoint must be between ${min} and ${max} bar.`,
+      });
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+if (typeof window !== 'undefined') window.validateCcrCalculationInputs = validateCcrCalculationInputs;
+
 // ═══════════════════════════════════════════════
 // ZHL ENGINE — headless Bühlmann interface for test harnesses
 // Mirrors VPMEngine.calculate(levels, gases, settings, 'ZHLC_GF')
@@ -11165,8 +11227,22 @@ const ZHLEngine = (() => {
   }
 
   function calculate(levels, decoGases, settings) {
-    if (!levels || levels.length === 0) return { error: 'No levels', stops: [], plan: [], totalRuntime: 0 };
+    if (!levels || levels.length === 0) {
+      return { error: 'No levels', code: 'INVALID_PROFILE', stops: [], plan: [], totalRuntime: 0 };
+    }
     const s = settings || {};
+    const ccrVal = validateCcrCalculationInputs(levels, s);
+    if (!ccrVal.ok) {
+      const e = ccrVal.errors[0];
+      return {
+        error: e.message,
+        code: e.code,
+        field: e.field || null,
+        stops: [],
+        plan: [],
+        totalRuntime: 0,
+      };
+    }
     const isMetric = s.metric !== false;
 
     // ── Temporarily wire DOM to match settings ──────────────────────────────
@@ -11180,6 +11256,19 @@ const ZHLEngine = (() => {
     setEl('minStopTime',     s.minStopTime     || 1);
     setEl('decoStep',        s.stepSize        || 3);
     setEl('lastDecoStop',    s.lastStop        || 3);
+    const stopRndEl = document.getElementById('stopRounding');
+    const prevStopRounding = stopRndEl ? stopRndEl.value : 'fractional';
+    if (s.stopRounding === 'wholeminute') {
+      setEl('stopRounding', 'wholeminute');
+    } else {
+      setEl('stopRounding', 'fractional');
+    }
+    const prevAlt = { altitudeM, altSurfaceP, altAcclimatized };
+    if (s.altitude != null) {
+      altitudeM = Math.max(0, Math.min(5000, Number(s.altitude) || 0));
+      altSurfaceP = altToPressure(altitudeM);
+    }
+    if (s.acclimatized != null) altAcclimatized = !!s.acclimatized;
     setEl('ppo2Bottom',      s.ppO2Bottom      || 1.4);
     setEl('ppo2Deco',        s.ppO2Deco        || 1.6);
     const prevCCR = {
@@ -11324,13 +11413,15 @@ const ZHLEngine = (() => {
       }
     });
 
-    // ── Set up repetitive-dive tissue state for headless run ────────────────
-    // BUGFIX (v2.10.12): ZHLEngine.calculate() never forwarded _preTissues /
-    // _surfaceInterval to runDecoSchedule. The hook uses window._zhlRepState
-    // (set here, cleared after restore) so runDecoSchedule can pick it up.
-    window._zhlRepState = (s._preTissues && s._preTissues.length)
-      ? { tissues: s._preTissues, surfaceIntervalMin: s._surfaceInterval || 0 }
-      : null;
+    // Repetitive carry: settings._preTissues takes precedence; otherwise keep hook if already set
+    if (s._preTissues && s._preTissues.length) {
+      window._zhlRepState = {
+        tissues: s._preTissues,
+        surfaceIntervalMin: s._surfaceInterval || 0,
+      };
+    } else if (!window._zhlRepState) {
+      window._zhlRepState = null;
+    }
 
     // ── Forward prior-dive O₂ carry into headless run if set (v2.20.0) ───────
     // The live-app path picks this up via window._priorDiveCarry in runDecoSchedule.
@@ -11384,6 +11475,10 @@ const ZHLEngine = (() => {
     if (prevCCR.stressTimeMin != null) setEl('ccrStressTime', prevCCR.stressTimeMin);
     if (prevCCR.problemSolveMin != null) setEl('ccrProblemSolve', prevCCR.problemSolveMin);
     if (prevCCR.diluentUseAsBailout != null) setEl('diluentUseAsBailout', prevCCR.diluentUseAsBailout);
+    if (stopRndEl) stopRndEl.value = prevStopRounding;
+    altitudeM = prevAlt.altitudeM;
+    altSurfaceP = prevAlt.altSurfaceP;
+    altAcclimatized = prevAlt.altAcclimatized;
     if (typeof toggleCircuitFields === 'function') toggleCircuitFields();
     // Remove any dynamic deco gas cards we added for this headless call
     _addedDGIdxs.forEach(idx => { const card = document.getElementById(`dgCard_${idx}`); if (card) card.remove(); });

@@ -21,6 +21,13 @@
     "roundedTtsMin": { "floor": 2, "pct": 0.05 },
     "preciseStopSec": 15,
     "preciseTtsSec": 60,
-    "tissueBar": 0.01
-  }
+    "tissueBar": 0.01,
+    "cnsPercent": 3,
+    "otu": 5
+  },
+  "requiredGoldens": {
+    "multideco": ["CCR-C1", "CCR-C2", "CCR-C3"],
+    "divekit": ["CCR-C1", "CCR-C2", "CCR-C3"]
+  },
+  "divepromeRequireVendor": false
 }

@@ -10,14 +10,14 @@
     INCONCLUSIVE: 'INCONCLUSIVE',
   };
 
-  function lv(depth, time, o2pct, hepct) {
-    return [{ depth, time, o2: o2pct, he: hepct || 0 }];
-  }
-
   function levelsFromFixture(fx) {
     return fx.profile.levels.map(l => {
-      const o2 = Math.round((fx.circuit.diluent.o2 || 0.21) * 100);
-      const he = Math.round((fx.circuit.diluent.he || 0) * 100);
+      const o2 = l.o2 != null
+        ? Math.round(l.o2 <= 1 ? l.o2 * 100 : l.o2)
+        : Math.round((fx.circuit.diluent.o2 || 0.21) * 100);
+      const he = l.he != null
+        ? Math.round(l.he <= 1 ? l.he * 100 : l.he)
+        : Math.round((fx.circuit.diluent.he || 0) * 100);
       return { depth: l.depthM, time: l.timeMin, o2, he };
     });
   }
@@ -50,10 +50,13 @@
       ppO2Deco: 1.6,
       conservatism: 0,
       altitude: env.altitudeM || 0,
+      acclimatized: env.acclimatized !== false,
     };
     if (round.mode === 'one-second') {
-      s.stopRounding = 'onesecond';
+      s.stopRounding = 'fractional';
       s.minStopTime = (round.minimumStopSec || 1) / 60;
+    } else {
+      s.stopRounding = 'wholeminute';
     }
     if (fx.bailoutGases && fx.bailoutGases.length) {
       s.bailout = true;
@@ -68,19 +71,31 @@
       .map(g => ({ o2: Math.round(g.o2 * 100), he: Math.round((g.he || 0) * 100) }));
   }
 
-  function stopsMap(result) {
+  function stopsMap(result, roundMinutes) {
     const out = {};
     (result.stops || []).forEach(s => {
       const t = s.dur != null ? s.dur : s.time;
       if (!t || t <= 0) return;
       const d = Math.round(s.depth);
-      out[d] = (out[d] || 0) + Math.round(t);
+      const add = roundMinutes ? Math.round(t) : t;
+      out[d] = (out[d] || 0) + add;
+    });
+    return out;
+  }
+
+  function stopsByDepth(stops) {
+    const out = {};
+    (stops || []).forEach(s => {
+      if (s.depthM == null) return;
+      const t = s.durationMin;
+      if (!t || t <= 0) return;
+      out[s.depthM] = (out[s.depthM] || 0) + t;
     });
     return out;
   }
 
   function firstStopDepth(result) {
-    const depths = Object.keys(stopsMap(result)).map(Number);
+    const depths = Object.keys(stopsMap(result, false)).map(Number);
     return depths.length ? Math.max(...depths) : 0;
   }
 
@@ -95,11 +110,12 @@
         engineVersion: meta.version || 'unknown',
         scenarioId: fx.id,
         error: raw && raw.error ? raw.error : 'no result',
+        code: raw && raw.code ? raw.code : null,
         stops: [],
         summary: {},
       };
     }
-    const sm = stopsMap(raw);
+    const sm = stopsMap(raw, false);
     const stops = Object.keys(sm).map(Number).sort((a, b) => b - a).map(d => ({
       depthM: d,
       durationMin: sm[d],
@@ -139,6 +155,13 @@
       throw new Error(`${label}: invalid totalRuntime ${raw.totalRuntime}`);
     }
     if (!Array.isArray(raw.plan) || !raw.plan.length) throw new Error(`${label}: empty plan`);
+    if (raw.finalTissues) {
+      raw.finalTissues.forEach((t, i) => {
+        if (!Number.isFinite(t.pN2) || t.pN2 < 0) throw new Error(`${label}: invalid tissue N2 @${i}`);
+        const pHe = t.pHe || 0;
+        if (!Number.isFinite(pHe) || pHe < 0) throw new Error(`${label}: invalid tissue He @${i}`);
+      });
+    }
     let lastRun = -Infinity;
     let lastStopD = Infinity;
     raw.plan.forEach((seg, i) => {
@@ -169,6 +192,27 @@
     );
   }
 
+  function compareStopSchedules(lsp, ref, fx, cfg) {
+    const precise = fx.rounding && fx.rounding.mode === 'one-second';
+    const tolMin = precise
+      ? ((cfg.tolerances && cfg.tolerances.preciseStopSec) || 15) / 60
+      : ((cfg.tolerances && cfg.tolerances.roundedStopSec) || 60) / 60;
+    const lmap = stopsByDepth(lsp.stops);
+    const rmap = stopsByDepth(ref.stops);
+    const depths = new Set([...Object.keys(lmap), ...Object.keys(rmap)].map(Number));
+    const issues = [];
+    depths.forEach(d => {
+      const lv = lmap[d] || 0;
+      const rv = rmap[d] || 0;
+      if (lv === 0 && rv === 0) return;
+      const delta = Math.abs(lv - rv);
+      if (delta > tolMin) {
+        issues.push({ field: `stop@${d}m`, lsp: lv, ref: rv, delta, tol: tolMin });
+      }
+    });
+    return issues;
+  }
+
   function compareSummaries(lsp, ref, fx, cfg, expected) {
     const pair = [lsp.engine, ref.engine];
     const step = (cfg.tolerances && cfg.tolerances.firstStopStepM) || 3;
@@ -188,7 +232,7 @@
       }
     }
     if (ls.runtimeMin != null && rs.runtimeMin != null) {
-      const tol = roundedTtsTol(rs.runtimeMin, cfg) + 3;
+      const tol = roundedTtsTol(rs.runtimeMin, cfg);
       const d = Math.abs(ls.runtimeMin - rs.runtimeMin);
       if (d > tol) {
         issues.push({ field: 'runtimeMin', lsp: ls.runtimeMin, ref: rs.runtimeMin, delta: d, tol });
@@ -201,6 +245,33 @@
         issues.push({ field: 'ttsMin', lsp: ls.ttsMin, ref: rs.ttsMin, delta: d, tol });
       }
     }
+    if (ls.cnsPercent !== 'not_available' && rs.cnsPercent != null) {
+      const tol = (cfg.tolerances && cfg.tolerances.cnsPercent) || 3;
+      const d = Math.abs(ls.cnsPercent - rs.cnsPercent);
+      if (d > tol) {
+        issues.push({ field: 'cnsPercent', lsp: ls.cnsPercent, ref: rs.cnsPercent, delta: d, tol });
+      }
+    }
+    if (ls.otu !== 'not_available' && rs.otu != null) {
+      const tol = (cfg.tolerances && cfg.tolerances.otu) || 5;
+      const d = Math.abs(ls.otu - rs.otu);
+      if (d > tol) {
+        issues.push({ field: 'otu', lsp: ls.otu, ref: rs.otu, delta: d, tol });
+      }
+    }
+
+    const pairHasDocumentedLadderDiff = ['firstStopDepthM', 'runtimeMin', 'ttsMin'].some(f =>
+      findExpected(expected, fx.id, pair, f)
+    );
+    const stopIssues = (!pairHasDocumentedLadderDiff
+      && ls.firstStopDepthM != null && rs.firstStopDepthM != null
+      && Math.abs(ls.firstStopDepthM - rs.firstStopDepthM) <= step)
+      ? compareStopSchedules(lsp, ref, fx, cfg)
+      : [];
+    stopIssues.forEach(si => {
+      const exp = findExpected(expected, fx.id, pair, si.field);
+      if (!exp) issues.push(si);
+    });
 
     if (!issues.length) return { classification: CLASS.PASS, issues: [] };
 
@@ -217,26 +288,27 @@
     const levels = levelsFromFixture(fx);
     const settings = settingsFromFixture(fx);
     const gases = decoGasesFromFixture(fx);
-    const model = (fx.decompression && fx.decompression.model) || 'ZHLC_GF';
 
     if (fx.expectInvalid) {
       const raw = win.ZHLEngine.calculate(levels, gases, settings);
-      if (raw && raw.error) return normalizeLsp(fx, raw, meta);
-      const suspect = normalizeLsp(fx, raw, meta);
-      suspect.summary.validationNote = 'LSP_SUSPECT: invalid inputs produced a schedule';
-      return suspect;
+      if (raw && raw.error) {
+        if (fx.expectedCode && raw.code !== fx.expectedCode) {
+          throw new Error(`${fx.id}: expected code ${fx.expectedCode}, got ${raw.code || 'none'}: ${raw.error}`);
+        }
+        return normalizeLsp(fx, raw, meta);
+      }
+      throw new Error(`${fx.id}: expected rejection (${fx.expectedCode}), but a schedule was produced`);
     }
 
     if (fx.repetitive && fx.repetitive.repeatProfile) {
       const first = win.ZHLEngine.calculate(levels, gases, settings);
       assertIntegrity(first, fx.id + ' dive1');
       if (!first.finalTissues) throw new Error('dive1 missing finalTissues for repetitive carry');
-      win._zhlRepState = {
-        tissues: first.finalTissues,
-        surfaceIntervalMin: fx.repetitive.surfaceIntervalMin || 60,
-      };
-      const raw = win.ZHLEngine.calculate(levels, gases, settings);
-      win._zhlRepState = null;
+      const repSettings = Object.assign({}, settings, {
+        _preTissues: first.finalTissues.map(t => ({ pN2: t.pN2, pHe: t.pHe || 0 })),
+        _surfaceInterval: fx.repetitive.surfaceIntervalMin || 60,
+      });
+      const raw = win.ZHLEngine.calculate(levels, gases, repSettings);
       assertIntegrity(raw, fx.id);
       return normalizeLsp(fx, raw, meta);
     }
@@ -244,6 +316,35 @@
     const raw = win.ZHLEngine.calculate(levels, gases, settings);
     assertIntegrity(raw, fx.id);
     return normalizeLsp(fx, raw, meta);
+  }
+
+  function assertFixtureEffectiveness(rows, rules) {
+    const byId = {};
+    rows.forEach(r => { byId[r.scenarioId] = r; });
+    const failures = [];
+    Object.keys(rules || {}).forEach(id => {
+      const rule = rules[id];
+      const row = byId[id];
+      const base = byId[rule.baseline];
+      if (!row || !base || !row.lsp || !base.lsp) return;
+      const a = row.lsp.summary || {};
+      const b = base.lsp.summary || {};
+      const same = (rule.fields || []).every(f => JSON.stringify(a[f]) === JSON.stringify(b[f]));
+      if (same) {
+        failures.push(`${id}: identical ${(rule.fields || []).join(', ')} to ${rule.baseline}`);
+      }
+    });
+    return failures;
+  }
+
+  function validateFixtureShape(fx) {
+    const required = ['id', 'description', 'profile', 'circuit', 'decompression'];
+    required.forEach(k => {
+      if (!fx[k]) throw new Error(`fixture ${fx.id || '?'} missing ${k}`);
+    });
+    if (!fx.profile.levels || !fx.profile.levels.length) {
+      throw new Error(`fixture ${fx.id} has no profile levels`);
+    }
   }
 
   function runMetamorphic(win, baseFx, meta) {
@@ -299,6 +400,8 @@
     compareSummaries,
     runLspScenario,
     runMetamorphic,
+    assertFixtureEffectiveness,
+    validateFixtureShape,
     stopsMap,
     firstStopDepth,
   };

@@ -1,6 +1,6 @@
 {
-  "id": "CCR-INVALID",
-  "description": "Invalid setpoint and diluent fractions",
+  "id": "CCR-INVALID-SP",
+  "description": "Bottom setpoint above configured maximum",
   "profile": {
     "levels": [
       {
@@ -49,5 +49,6 @@
   },
   "bailoutGases": [],
   "expectInvalid": true,
-  "invalidReason": "impossible setpoint / hypoxic surface"
+  "invalidReason": "bottom setpoint 2.5 bar exceeds LSP 1.6 bar UI/engine limit",
+  "expectedCode": "INVALID_SETPOINT"
 }
