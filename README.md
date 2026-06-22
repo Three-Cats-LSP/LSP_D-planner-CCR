@@ -8,7 +8,7 @@ Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**. A s
 📦 **GitHub Pages mirror:** https://three-cats-lsp.github.io/LSP_D-planner-CCR/  
 📲 **Android APK:** https://threecats-lsp.com/d-planner-ccr/download.html  
 
-**Current version: 2.30.30** — Safety Sign-Off release. 85 audit findings (BUG-01–85) closed across 28 independent verification passes. 383/383 `audit.py` checks passing. See [SAFETY_CERTIFICATION_v2.30.30.md](SAFETY_CERTIFICATION_v2.30.30.md).
+**Current version: 2.30.31** — [Issue #1](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/1) deep-audit fix milestone on top of the v2.30.30 safety sign-off. **415/415** `audit.py` checks passing. See [RELEASE_NOTES_v2.30.31.md](RELEASE_NOTES_v2.30.31.md) and [SAFETY_CERTIFICATION_v2.30.30.md](SAFETY_CERTIFICATION_v2.30.30.md).
 
 ---
 
@@ -131,20 +131,32 @@ All exports include circuit tag (OC/CCR/pSCR) and algorithm label.
 
 | Suite | Tests | Scope |
 |-------|-------|-------|
-| [`tests-pscr-otu-cns.html`](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) | 36 | pSCR OTU/CNS & gas draw — Sections A–F |
+| [`tests-pscr-otu-cns.html`](https://threecats-lsp.com/d-planner-ccr/tests-pscr-otu-cns.html) | 39 | pSCR OTU/CNS & gas draw — Sections A–G |
 | [`tests-verify.html`](https://threecats-lsp.com/d-planner-ccr/tests-verify.html) | 68 | Baker/FORTRAN cross-val, Section I CCR/Rebreather |
 | [`tests-massive.html`](https://threecats-lsp.com/d-planner-ccr/tests-massive.html) | 376+ | Full engine plans, gas plan, T3-CCR MultiDeco RT |
 | [`tests-massive-main.html`](https://threecats-lsp.com/d-planner-ccr/tests-massive-main.html) | 376+ | Mobile-optimised |
 | [`tests-extended.html`](https://threecats-lsp.com/d-planner-ccr/tests-extended.html) | — | GF, trimix, conservatism ordering |
 | [`tests.html`](https://threecats-lsp.com/d-planner-ccr/tests.html) | — | Core engine, NDL, VPM-B, CNS/OTU |
-| `audit.py` | **383** | Static analysis — 383/383 passing |
+| [`tests-ccr-differential.html`](tests-ccr-differential.html) | 17 | CCR engine differential — LSP vs MultiDeco/DiveKit goldens ([plan](docs/CCR_ENGINE_DIFFERENTIAL_TEST_PLAN.md)) |
+| `audit.py` | **415** | Static analysis — 415/415 passing |
+
+**Release gates (CI on `main`):** `audit.py` · `dev/run_browser_regression.py` · `dev/validate_pscr_e2e.py` · `dev/run_ccr_differential.py`
+
+Run the CCR differential suite locally:
+
+```bash
+python dev/run_ccr_differential.py
+```
+
+Reports: [`docs/CCR_DIFFERENTIAL_REPORT.md`](docs/CCR_DIFFERENTIAL_REPORT.md) · [`dev/ccr_differential_report.json`](dev/ccr_differential_report.json)
 
 ---
 
 ## Safety & Verification
 
 - **28 independent audit passes** (v2.30.0 → v2.30.30)
-- **85 verified findings closed** (BUG-01 through BUG-85)
+- **85 verified findings closed** (BUG-01 through BUG-85) in the v2.30.30 sign-off; **Issue #1** post-sign-off defects fixed in v2.30.31
+- **CCR differential harness** ([Issue #2](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/2)) — 17 canonical CCR scenarios compared against captured MultiDeco 2.26 and DiveKit reference goldens
 - **Full audit trail:** `errors_bugs_report_v1.md` through `errors_bugs_report_v28.md`
 - **[Safety certification memo](SAFETY_CERTIFICATION_v2.30.30.md)** — approved for production, 2026-06-21
 
