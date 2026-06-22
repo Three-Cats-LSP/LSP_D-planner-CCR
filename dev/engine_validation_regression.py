@@ -93,6 +93,34 @@ def run_checks(page, port: int) -> None:
       out.vpmNanHe = vpm(lv(40, 25, 21, NaN), [], ccr);
       out.o2OnePct = zhl(lv(40, 25, 1, 0), [], ccr);
 
+      const dom = document.getElementById('decoGas');
+      const prevMix = dom ? dom.value : null;
+      const prevO2 = document.getElementById('botTrimixO2')?.value;
+      const prevHe = document.getElementById('botTrimixHe')?.value;
+      if (dom) dom.value = 'trimix';
+      const o2El = document.getElementById('botTrimixO2');
+      const heEl = document.getElementById('botTrimixHe');
+      if (o2El) o2El.value = '50';
+      if (heEl) heEl.value = '60';
+      out.domInvalidBottom = window.validateDomDecoGases();
+      if (dom && prevMix != null) dom.value = prevMix;
+      if (o2El && prevO2 != null) o2El.value = prevO2;
+      if (heEl && prevHe != null) heEl.value = prevHe;
+
+      const dgMix = document.getElementById('dg1Mix');
+      const prevDgMix = dgMix ? dgMix.value : null;
+      const prevDgO2 = document.getElementById('dg1TrimixO2')?.value;
+      const prevDgHe = document.getElementById('dg1TrimixHe')?.value;
+      if (dgMix) dgMix.value = 'trimix';
+      const dgO2 = document.getElementById('dg1TrimixO2');
+      const dgHe = document.getElementById('dg1TrimixHe');
+      if (dgO2) dgO2.value = '-10';
+      if (dgHe) dgHe.value = '35';
+      out.domInvalidDeco = window.validateDomDecoGases();
+      if (dgMix && prevDgMix != null) dgMix.value = prevDgMix;
+      if (dgO2 && prevDgO2 != null) dgO2.value = prevDgO2;
+      if (dgHe && prevDgHe != null) dgHe.value = prevDgHe;
+
       return out;
     }""",
         {"settings": settings, "ccr": ccr, "pscr": pscr},
@@ -131,6 +159,22 @@ def run_checks(page, port: int) -> None:
         ok("O2=1 treated as 1% (matches calculation path)")
     else:
         fail(f"O2=1 percent convention failed: {o2one}")
+
+    dom_bottom = results["domInvalidBottom"]
+    if dom_bottom.get("ok") is False and any(
+        e.get("code") == "INVALID_GAS_FRACTIONS" for e in dom_bottom.get("errors", [])
+    ):
+        ok("validateDomDecoGases rejects invalid bottom trimix in DOM")
+    else:
+        fail(f"DOM bottom gas validation failed: {dom_bottom}")
+
+    dom_deco = results["domInvalidDeco"]
+    if dom_deco.get("ok") is False and any(
+        e.get("code") == "INVALID_GAS_FRACTIONS" for e in dom_deco.get("errors", [])
+    ):
+        ok("validateDomDecoGases rejects negative deco O2 in DOM")
+    else:
+        fail(f"DOM deco gas validation failed: {dom_deco}")
 
 
 def main() -> int:

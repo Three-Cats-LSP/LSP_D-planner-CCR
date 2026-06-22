@@ -3147,6 +3147,30 @@ if os.path.isfile(ccr_val_reg):
 else:
     fail("dev/engine_validation_regression.py missing (BUG-97/98)")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 68 — raw DOM gas validation before clamping (BUG-100)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function getDomBottomGasPct" in js and "function getDomDecoGasPct" in js and "function validateDomDecoGases" in js:
+    ok("getDomBottomGasPct / validateDomDecoGases present (BUG-100)")
+else:
+    fail("raw DOM gas validation helpers missing (BUG-100)")
+
+if "validateDomDecoGases()" in js and "getDomBottomGasPct()" in js:
+    ok("runDecoSchedule validates raw DOM gases before schedule (BUG-100)")
+else:
+    fail("runDecoSchedule still validates clamped gas fractions only (BUG-100)")
+
+if "validateDomDecoGases()" in js[js.find("function validateCcrGasConfiguration"):js.find("function validateCcrGasConfiguration") + 1200]:
+    ok("validateCcrGasConfiguration includes raw DOM gas checks (BUG-100)")
+else:
+    fail("validateCcrGasConfiguration missing raw DOM gas checks (BUG-100)")
+
+if "getDomDecoGasPct(idx)" in js[js.find("function collectDecoGasesPctFromDom"):js.find("function collectDecoGasesPctFromDom") + 400]:
+    ok("collectDecoGasesPctFromDom uses raw DOM percents (BUG-100)")
+else:
+    fail("collectDecoGasesPctFromDom still uses clamped fractions (BUG-100)")
+
 print("=" * 60)
 
 if FAIL:

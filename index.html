@@ -6178,6 +6178,10 @@ function validateCcrGasConfiguration() {
   const modDisp = units === 'imperial' ? Math.round(diluentMod * 3.28084) : diluentMod;
   const errors = [];
   const warnings = [];
+  const gasFrac = validateDomDecoGases();
+  if (!gasFrac.ok) {
+    gasFrac.errors.forEach(e => errors.push(e.message || String(e)));
+  }
   if (depthM > diluentMod + 0.01) {
     errors.push(`Diluent MOD (${modDisp}${du}) is shallower than dive depth (${depthDisp}${du}). Use a richer diluent or reduce depth.`);
   }
@@ -6661,6 +6665,59 @@ function toggleDecoTrimix(idx) {
   if (o2f) o2f.style.display = isTrimix ? 'block' : 'none';
   if (hef) hef.style.display = isTrimix ? 'block' : 'none';
 }
+
+// Read raw percent inputs from DOM without clamping (for validation only).
+function getDomBottomGasPct() {
+  const mix = document.getElementById('decoGas')?.value;
+  if (mix === 'air') return { o2: 21, he: 0 };
+  if (mix === 'ean32') return { o2: 32, he: 0 };
+  if (mix === 'ean36') return { o2: 36, he: 0 };
+  if (mix === 'custom') {
+    return { o2: parseFloat(document.getElementById('decoCustomO2')?.value), he: 0 };
+  }
+  if (mix === 'trimix') {
+    return {
+      o2: parseFloat(document.getElementById('botTrimixO2')?.value),
+      he: parseFloat(document.getElementById('botTrimixHe')?.value),
+    };
+  }
+  return { o2: 21, he: 0 };
+}
+
+function getDomDecoGasPct(idx) {
+  const mix = document.getElementById(`dg${idx}Mix`)?.value;
+  if (!mix || mix === 'none') return null;
+  if (mix === 'ean50') return { o2: 50, he: 0 };
+  if (mix === 'ean80') return { o2: 80, he: 0 };
+  if (mix === 'o2') return { o2: 100, he: 0 };
+  if (mix === 'custom') {
+    return { o2: parseFloat(document.getElementById(`dg${idx}CustomO2`)?.value), he: 0 };
+  }
+  if (mix === 'trimix') {
+    return {
+      o2: parseFloat(document.getElementById(`dg${idx}TrimixO2`)?.value),
+      he: parseFloat(document.getElementById(`dg${idx}TrimixHe`)?.value),
+    };
+  }
+  return null;
+}
+
+function validateDomDecoGases() {
+  const errors = [];
+  const bot = getDomBottomGasPct();
+  const botCheck = validateGasFractionsPct(bot.o2, bot.he, 'bottomGas');
+  if (!botCheck.ok) errors.push(botCheck);
+  if (typeof getAllDecoGasIds === 'function') {
+    for (const idx of getAllDecoGasIds()) {
+      const g = getDomDecoGasPct(idx);
+      if (!g) continue;
+      const chk = validateGasFractionsPct(g.o2, g.he, `dg${idx}`);
+      if (!chk.ok) errors.push(chk);
+    }
+  }
+  return { ok: errors.length === 0, errors };
+}
+if (typeof window !== 'undefined') window.validateDomDecoGases = validateDomDecoGases;
 
 // Get {fO2, fHe, fN2} from a gas card select+custom fields
 function getDecoGasFractions(selectId, customId, trimixO2Id, trimixHeId) {
@@ -9832,9 +9889,15 @@ function runDecoSchedule() {
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
   const _uiCcr = getCCRSettingsFromDOM();
   if (!_zhlHeadless && isRebreatherCircuit(_uiCcr.circuit)) {
-    const bot = getBottomGasFractions();
+    const domGasVal = validateDomDecoGases();
+    if (!domGasVal.ok) {
+      updateCcrGasValidation();
+      alert('Cannot generate schedule:\n\n' + (domGasVal.errors[0].message || 'Invalid gas mixture.'));
+      return;
+    }
+    const bot = getDomBottomGasPct();
     const ccrVal = validateCcrCalculationInputs(
-      [{ depth: depthM, time: bt, o2: Math.round(bot.fO2 * 100), he: Math.round((bot.fHe || 0) * 100) }],
+      [{ depth: depthM, time: bt, o2: bot.o2, he: bot.he }],
       mergeCCRSettings(_uiCcr),
       collectDecoGasesPctFromDom()
     );
@@ -11200,14 +11263,11 @@ if (typeof window !== 'undefined') window.validateGasFractionsPct = validateGasF
 
 function collectDecoGasesPctFromDom() {
   const out = [];
-  if (typeof getAllDecoGasIds !== 'function' || typeof getDecoCardFractions !== 'function') return out;
+  if (typeof getAllDecoGasIds !== 'function') return out;
   for (const idx of getAllDecoGasIds()) {
-    const dgf = getDecoCardFractions(idx);
-    if (!dgf) continue;
-    out.push({
-      o2: Math.round(dgf.fO2 * 100),
-      he: Math.round((dgf.fHe || 0) * 100),
-    });
+    const gas = getDomDecoGasPct(idx);
+    if (!gas) continue;
+    out.push(gas);
   }
   return out;
 }
