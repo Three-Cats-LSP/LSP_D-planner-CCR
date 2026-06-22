@@ -1,5 +1,7 @@
 # CCR Engine Differential Test Plan
 
+Tracking issue: [#2 - Cursor: implement CCR differential tests](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/2)
+
 ## Purpose
 
 Implement a reproducible differential test suite for closed-circuit rebreather (CCR) dive plans produced by:
