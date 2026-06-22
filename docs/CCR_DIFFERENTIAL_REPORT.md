@@ -1,6 +1,6 @@
 # CCR Engine Differential Report
 
-**Generated:** 2026-06-22 10:36 UTC  
+**Generated:** 2026-06-22 12:15 UTC  
 **LSP version:** 2.30.31  
 **Scenarios:** 21  
 **Failures:** 0  

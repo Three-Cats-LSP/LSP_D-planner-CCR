@@ -3055,7 +3055,7 @@ if os.path.isfile(ccr_defects):
 else:
     fail("CCR known-lsp-defects.json missing (issue #2)")
 
-if "function validateCcrCalculationInputs" in js and "validateCcrCalculationInputs(levels, s)" in js:
+if "function validateCcrCalculationInputs" in js and "validateCcrCalculationInputs(levels, s, decoGases)" in js:
     ok("validateCcrCalculationInputs wired into ZHLEngine.calculate (issue #2)")
 else:
     fail("validateCcrCalculationInputs missing from production engine (issue #2)")
@@ -3108,6 +3108,44 @@ if re.search(r"bottomSetpoint\s*!=\s*null.*1\.2", val_ccr_calc) and re.search(r"
     ok("validateCcrCalculationInputs defaults bottom/deco setpoints to 1.2/1.3 (BUG-96)")
 else:
     fail("validateCcrCalculationInputs missing bottom/deco setpoint defaults (BUG-96)")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GROUP 67 — validateGasFractionsPct + deco gas validation (BUG-97/98/99)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if "function validateGasFractionsPct" in js:
+    ok("validateGasFractionsPct present (BUG-97)")
+else:
+    fail("validateGasFractionsPct missing (BUG-97)")
+
+if re.search(
+    r"he == null \|\| he === ''\) \? 0 : Number\(he\)",
+    js[js.find("function validateGasFractionsPct"):js.find("function validateGasFractionsPct") + 600],
+):
+    ok("validateGasFractionsPct rejects NaN He without || 0 coercion (BUG-97)")
+else:
+    fail("validateGasFractionsPct still coerces NaN He via || 0 (BUG-97)")
+
+if "validateCcrCalculationInputs(levels, s, decoGases)" in js:
+    ok("ZHLEngine.calculate passes decoGases to validateCcrCalculationInputs (BUG-98)")
+else:
+    fail("ZHLEngine.calculate missing decoGases in CCR validation (BUG-98)")
+
+if "decoGases.forEach" in val_ccr_calc and "validateGasFractionsPct(g.o2, g.he" in val_ccr_calc:
+    ok("validateCcrCalculationInputs validates deco gases (BUG-98)")
+else:
+    fail("validateCcrCalculationInputs missing deco gas validation (BUG-98)")
+
+if "validateGasFractionsPct(level.o2, level.he" in val_ccr_calc and "o2pct > 1" not in val_ccr_calc:
+    ok("validateCcrCalculationInputs uses percent convention for level gases (BUG-99)")
+else:
+    fail("validateCcrCalculationInputs still mixes fraction/percent conventions (BUG-99)")
+
+ccr_val_reg = os.path.join(os.path.dirname(__file__), "dev", "engine_validation_regression.py")
+if os.path.isfile(ccr_val_reg):
+    ok("dev/engine_validation_regression.py present (BUG-97/98)")
+else:
+    fail("dev/engine_validation_regression.py missing (BUG-97/98)")
 
 print("=" * 60)
 

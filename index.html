@@ -8614,6 +8614,22 @@ const VPMEngine = (() => {
     }
     function calculate(levels, decoGases, settings, model) {
         model = model || 'VPMB';
+        const s = settings || {};
+        if (isRebreatherCircuit(s.circuit || 'OC')) {
+            const ccrVal = validateCcrCalculationInputs(levels, s, decoGases);
+            if (!ccrVal.ok) {
+                const e = ccrVal.errors[0];
+                return {
+                    error: e.message,
+                    code: e.code,
+                    field: e.field || null,
+                    stops: [],
+                    plan: [],
+                    totalTime: 0,
+                    totalRuntime: 0,
+                };
+            }
+        }
         if (!levels || levels.length === 0) {
             return { error: 'No bottom segments defined', stops: [], totalTime: 0 };
         }
@@ -9819,7 +9835,8 @@ function runDecoSchedule() {
     const bot = getBottomGasFractions();
     const ccrVal = validateCcrCalculationInputs(
       [{ depth: depthM, time: bt, o2: Math.round(bot.fO2 * 100), he: Math.round((bot.fHe || 0) * 100) }],
-      mergeCCRSettings(_uiCcr)
+      mergeCCRSettings(_uiCcr),
+      collectDecoGasesPctFromDom()
     );
     if (!ccrVal.ok) {
       const msg = ccrVal.errors[0].message;
@@ -11166,7 +11183,36 @@ function computePlanExposureTotals(plan, settings, defaultFO2, defaultFHe, surfP
 }
 if (typeof window !== 'undefined') window.computePlanExposureTotals = computePlanExposureTotals;
 
-function validateCcrCalculationInputs(levels, settings) {
+function validateGasFractionsPct(o2, he, field) {
+  const o = Number(o2);
+  const h = (he == null || he === '') ? 0 : Number(he);
+  if (!Number.isFinite(o) || !Number.isFinite(h) || o < 0 || o > 100 || h < 0 || h > 100 || o + h > 100) {
+    return {
+      ok: false,
+      code: 'INVALID_GAS_FRACTIONS',
+      field: field || 'gas',
+      message: 'O2 and He must be between 0 and 100 percent and total no more than 100 percent.',
+    };
+  }
+  return { ok: true, o2: o, he: h };
+}
+if (typeof window !== 'undefined') window.validateGasFractionsPct = validateGasFractionsPct;
+
+function collectDecoGasesPctFromDom() {
+  const out = [];
+  if (typeof getAllDecoGasIds !== 'function' || typeof getDecoCardFractions !== 'function') return out;
+  for (const idx of getAllDecoGasIds()) {
+    const dgf = getDecoCardFractions(idx);
+    if (!dgf) continue;
+    out.push({
+      o2: Math.round(dgf.fO2 * 100),
+      he: Math.round((dgf.fHe || 0) * 100),
+    });
+  }
+  return out;
+}
+
+function validateCcrCalculationInputs(levels, settings, decoGases) {
   const errors = [];
   const s = settings || {};
   const circuit = s.circuit || 'OC';
@@ -11176,7 +11222,8 @@ function validateCcrCalculationInputs(levels, settings) {
     errors.push({ code: 'INVALID_PROFILE', message: 'At least one profile level is required.' });
   }
 
-  for (const level of (levels || [])) {
+  for (let li = 0; li < (levels || []).length; li++) {
+    const level = levels[li];
     const depth = Number(level.depth);
     const time = Number(level.time);
     if (!Number.isFinite(depth) || depth <= 0) {
@@ -11185,16 +11232,20 @@ function validateCcrCalculationInputs(levels, settings) {
     if (!Number.isFinite(time) || time <= 0) {
       errors.push({ code: 'INVALID_PROFILE', field: 'time', message: 'Bottom time must be a positive finite number.' });
     }
-    const o2pct = Number(level.o2);
-    const hepct = Number(level.he || 0);
-    const fO2 = o2pct > 1 ? o2pct / 100 : o2pct;
-    const fHe = hepct > 1 ? hepct / 100 : hepct;
-    if (!Number.isFinite(fO2) || !Number.isFinite(fHe) || fO2 < 0 || fHe < 0 || fO2 + fHe > 1 + 1e-9) {
-      errors.push({
-        code: 'INVALID_GAS_FRACTIONS',
-        message: 'O2 and He fractions must be non-negative and total no more than 100%.',
-      });
+    const gasCheck = validateGasFractionsPct(level.o2, level.he, `levels[${li}]`);
+    if (!gasCheck.ok) {
+      errors.push({ code: gasCheck.code, field: gasCheck.field, message: gasCheck.message });
     }
+  }
+
+  if (Array.isArray(decoGases)) {
+    decoGases.forEach((g, index) => {
+      if (g.o2 == null && g.he == null) return;
+      const gasCheck = validateGasFractionsPct(g.o2, g.he, `decoGases[${index}]`);
+      if (!gasCheck.ok) {
+        errors.push({ code: gasCheck.code, field: gasCheck.field, message: gasCheck.message });
+      }
+    });
   }
 
   if (circuit === 'pSCR') {
@@ -11239,7 +11290,7 @@ const ZHLEngine = (() => {
       return { error: 'No levels', code: 'INVALID_PROFILE', stops: [], plan: [], totalRuntime: 0 };
     }
     const s = settings || {};
-    const ccrVal = validateCcrCalculationInputs(levels, s);
+    const ccrVal = validateCcrCalculationInputs(levels, s, decoGases);
     if (!ccrVal.ok) {
       const e = ccrVal.errors[0];
       return {

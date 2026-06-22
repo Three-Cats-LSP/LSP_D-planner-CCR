@@ -3725,7 +3725,7 @@
         "engine": "LSP",
         "engineVersion": "2.30.31",
         "scenarioId": "CCR-INVALID-GAS-SUM",
-        "error": "O2 and He fractions must be non-negative and total no more than 100%.",
+        "error": "O2 and He must be between 0 and 100 percent and total no more than 100 percent.",
         "code": "INVALID_GAS_FRACTIONS",
         "stops": [],
         "summary": {}
@@ -3766,7 +3766,7 @@
         "engine": "LSP",
         "engineVersion": "2.30.31",
         "scenarioId": "CCR-INVALID-GAS-NEGATIVE",
-        "error": "O2 and He fractions must be non-negative and total no more than 100%.",
+        "error": "O2 and He must be between 0 and 100 percent and total no more than 100 percent.",
         "code": "INVALID_GAS_FRACTIONS",
         "stops": [],
         "summary": {}
@@ -3842,5 +3842,5 @@
       "integrity": "PASS"
     }
   ],
-  "generatedAt": "2026-06-22T10:36:50.328Z"
+  "generatedAt": "2026-06-22T12:15:02.252Z"
 }
