@@ -3171,6 +3171,12 @@ if "getDomDecoGasPct(idx)" in js[js.find("function collectDecoGasesPctFromDom"):
 else:
     fail("collectDecoGasesPctFromDom still uses clamped fractions (BUG-100)")
 
+vpm_empty = js[js.find("function calculate(levels, decoGases, settings, model)"):js.find("function calculate(levels, decoGases, settings, model)") + 3500]
+if "No bottom segments defined" in vpm_empty and "totalRuntime: 0" in vpm_empty.split("No bottom segments defined")[1][:400]:
+    ok("VPM empty-levels error includes totalRuntime: 0 (VPM/ZHL parity)")
+else:
+    fail("VPM empty-levels error missing totalRuntime: 0 (VPM/ZHL parity)")
+
 print("=" * 60)
 
 if FAIL:

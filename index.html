@@ -8688,7 +8688,14 @@ const VPMEngine = (() => {
             }
         }
         if (!levels || levels.length === 0) {
-            return { error: 'No bottom segments defined', stops: [], totalTime: 0 };
+            return {
+                error: 'No bottom segments defined',
+                code: 'INVALID_PROFILE',
+                stops: [],
+                plan: [],
+                totalTime: 0,
+                totalRuntime: 0,
+            };
         }
         function ctxUseOCForPpo2(calcSettings) {
             return calcSettings.bailout || calcSettings.circuit !== 'pSCR';

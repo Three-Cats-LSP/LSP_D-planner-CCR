@@ -91,6 +91,8 @@ def run_checks(page, port: int) -> None:
       out.ccrBadDecoMix = zhl(lv(40, 25, 21, 0), [{ o2: 50, he: 60 }], ccr);
       out.ccrNegDecoO2 = zhl(lv(40, 25, 21, 0), [{ o2: -10, he: 0 }], ccr);
       out.vpmNanHe = vpm(lv(40, 25, 21, NaN), [], ccr);
+      out.vpmEmpty = vpm([], [], ccr);
+      out.zhlEmpty = zhl([], [], ccr);
       out.o2OnePct = zhl(lv(40, 25, 1, 0), [], ccr);
 
       const dom = document.getElementById('decoGas');
@@ -147,12 +149,24 @@ def run_checks(page, port: int) -> None:
         ("CCR deco O2+He>100%", "ccrBadDecoMix", "INVALID_GAS_FRACTIONS"),
         ("CCR deco negative O2", "ccrNegDecoO2", "INVALID_GAS_FRACTIONS"),
         ("VPM CCR NaN He", "vpmNanHe", "INVALID_GAS_FRACTIONS"),
+        ("VPM empty levels", "vpmEmpty", "INVALID_PROFILE"),
+        ("ZHL empty levels", "zhlEmpty", "INVALID_PROFILE"),
     ]:
         got = results[key].get("code")
         if got == code:
             ok(f"{label} → {code}")
         else:
             fail(f"{label}: expected {code}, got {got!r} ({results[key]})")
+
+    for label, key in [
+        ("VPM empty levels totalRuntime", "vpmEmpty"),
+        ("ZHL empty levels totalRuntime", "zhlEmpty"),
+    ]:
+        r = results[key]
+        if r.get("totalRuntime") == 0 and r.get("error"):
+            ok(f"{label} is 0")
+        else:
+            fail(f"{label}: expected totalRuntime 0, got {r!r}")
 
     o2one = results["o2OnePct"]
     if not o2one.get("code") and o2one.get("totalRuntime", 0) > 0:
