@@ -93,7 +93,17 @@ def run_checks(page, port: int) -> None:
       out.vpmNanHe = vpm(lv(40, 25, 21, NaN), [], ccr);
       out.vpmEmpty = vpm([], [], ccr);
       out.zhlEmpty = zhl([], [], ccr);
+      out.zhlMl = zhl(
+        [{ depth: 60, time: 20, o2: 18, he: 45 }, { depth: 42, time: 8, o2: 18, he: 45 }],
+        [],
+        ccr
+      );
+      out.zhlSingle = zhl([{ depth: 60, time: 20, o2: 18, he: 45 }], [], ccr);
       out.o2OnePct = zhl(lv(40, 25, 1, 0), [], ccr);
+      out.vpmNoSettings = vpm(lv(40, 25, 21, 0), null, null);
+      out.vpmNoGases = vpm(lv(40, 25, 21, 0), undefined, {});
+      out.vpmNullLevel = vpm([null], [], {});
+      out.vpmNullGas = vpm(lv(40, 25, 21, 0), [null], {});
 
       const dom = document.getElementById('decoGas');
       const prevMix = dom ? dom.value : null;
@@ -167,6 +177,39 @@ def run_checks(page, port: int) -> None:
             ok(f"{label} is 0")
         else:
             fail(f"{label}: expected totalRuntime 0, got {r!r}")
+
+    zhl_ml = results["zhlMl"]
+    zhl_single = results["zhlSingle"]
+    if not zhl_ml.get("error") and not zhl_single.get("error"):
+        if zhl_ml.get("totalRuntime", 0) > zhl_single.get("totalRuntime", 0):
+            ok("ZHL multi-level longer than deepest-only profile")
+        else:
+            fail(
+                f"ZHL multi-level not distinguished: ml={zhl_ml.get('totalRuntime')} "
+                f"single={zhl_single.get('totalRuntime')}"
+            )
+    else:
+        fail(f"ZHL multi-level calc failed: ml={zhl_ml!r} single={zhl_single!r}")
+
+    if results["vpmNoSettings"].get("totalRuntime", 0) > 0 and not results["vpmNoSettings"].get("error"):
+        ok("VPM null settings uses defaults (no throw)")
+    else:
+        fail(f"VPM null settings failed: {results['vpmNoSettings']}")
+
+    if results["vpmNoGases"].get("totalRuntime", 0) > 0 and not results["vpmNoGases"].get("error"):
+        ok("VPM undefined decoGases uses empty list (no throw)")
+    else:
+        fail(f"VPM undefined decoGases failed: {results['vpmNoGases']}")
+
+    for label, key, code in [
+        ("VPM null level", "vpmNullLevel", "INVALID_PROFILE"),
+        ("VPM null gas", "vpmNullGas", "INVALID_GAS_FRACTIONS"),
+    ]:
+        got = results[key].get("code")
+        if got == code:
+            ok(f"{label} → {code}")
+        else:
+            fail(f"{label}: expected {code}, got {got!r} ({results[key]})")
 
     o2one = results["o2OnePct"]
     if not o2one.get("code") and o2one.get("totalRuntime", 0) > 0:

@@ -8671,7 +8671,22 @@ const VPMEngine = (() => {
     }
     function calculate(levels, decoGases, settings, model) {
         model = model || 'VPMB';
-        const s = settings || {};
+        settings = settings || {};
+        if (!Array.isArray(levels) || levels.length === 0) {
+            return {
+                error: 'No bottom segments defined',
+                code: 'INVALID_PROFILE',
+                stops: [],
+                plan: [],
+                totalTime: 0,
+                totalRuntime: 0,
+            };
+        }
+        if (typeof validateEngineInputs === 'function') {
+            const validation = validateEngineInputs(levels, decoGases);
+            if (!validation.ok) return engineValidationError(validation);
+        }
+        const s = settings;
         if (isRebreatherCircuit(s.circuit || 'OC')) {
             const ccrVal = validateCcrCalculationInputs(levels, s, decoGases);
             if (!ccrVal.ok) {
@@ -8687,16 +8702,7 @@ const VPMEngine = (() => {
                 };
             }
         }
-        if (!levels || levels.length === 0) {
-            return {
-                error: 'No bottom segments defined',
-                code: 'INVALID_PROFILE',
-                stops: [],
-                plan: [],
-                totalTime: 0,
-                totalRuntime: 0,
-            };
-        }
+        const safeDecoGases = Array.isArray(decoGases) ? decoGases.filter(g => g != null) : [];
         function ctxUseOCForPpo2(calcSettings) {
             return calcSettings.bailout || calcSettings.circuit !== 'pSCR';
         }
@@ -8713,7 +8719,7 @@ const VPMEngine = (() => {
         const firstStopDoubleStep = settings.firstStopDoubleStep || false;
         const state = createVPMState(settings);
         setCriticalRadiiForConservatism(state, conservatism);
-        const normalizedDecoGases = decoGases.map(g => ({
+        const normalizedDecoGases = safeDecoGases.map(g => ({
             o2: g.o2 / 100,
             he: g.he / 100,
             label: `${g.o2}/${g.he}`,
@@ -10138,6 +10144,17 @@ function runDecoSchedule() {
   let rt  = bt; // run time = full BT input (descent already counted in BT)
 
 
+  // ── Multi-level headless: monotonic-shallower continuation after deepest level ──
+  const _zhlContLevels = (window._zhlHeadless && Array.isArray(window._zhlContinuationLevels))
+    ? window._zhlContinuationLevels : [];
+  const _zhlAscentFloors = _zhlContLevels.length
+    ? _zhlContLevels.map(c => c.depth).concat([0]) : [0];
+
+  let firstStopDepth = 0;
+  for (let _zhlPhaseIdx = 0; _zhlPhaseIdx < _zhlAscentFloors.length; _zhlPhaseIdx++) {
+  const _zhlAscentFloor = _zhlAscentFloors[_zhlPhaseIdx];
+  firstStopDepth = 0;
+
   // ── GF anchor: candidate stop list built from ceiling(bottom_tissues, gfL) ──
   // firstStopDepth is NOT pre-computed here — it is anchored dynamically at the
   // FIRST depth where mustStop actually fires. This matches MultiDeco/Baker:
@@ -10151,7 +10168,6 @@ function runDecoSchedule() {
   // firstStopDepth: mutable — set when the first ceiling-forced stop is reached.
   // Until it is set, gfAt() returns gfL (GF Low determines the search for the
   // first stop, per Baker; GF line is not yet anchored/interpolated).
-  let firstStopDepth = 0;
 
   // ── Stop-based ascent engine ──
   // Start stop iteration from candidateFirstStop — ascent from bottom to first stop
@@ -10159,13 +10175,18 @@ function runDecoSchedule() {
   // This matches ApexDeco: ascend to first stop, then iterate stops down to lastStop.
   const startStop = candidateFirstStop > 0 ? candidateFirstStop : lastStop;
   const stopDepths = [];
-  for (let d = startStop; d >= lastStop; d -= decoStep) {
+  const floorStopMin = _zhlAscentFloor > 0 ? Math.max(lastStop, _zhlAscentFloor) : lastStop;
+  for (let d = startStop; d >= floorStopMin; d -= decoStep) {
     stopDepths.push(d);
   }
-  if (stopDepths.length === 0 || stopDepths[stopDepths.length - 1] !== lastStop) stopDepths.push(lastStop);
+  if (_zhlAscentFloor > 0) {
+    if (stopDepths.length === 0 || stopDepths[stopDepths.length - 1] !== floorStopMin) stopDepths.push(floorStopMin);
+  } else if (stopDepths.length === 0 || stopDepths[stopDepths.length - 1] !== lastStop) {
+    stopDepths.push(lastStop);
+  }
 
   let prevEngineGas = loopMixLabel; // track gas for switch pause
-  let decoZoneEntered = false; // true once first ceiling-forced stop fires
+  let decoZoneEntered = _zhlPhaseIdx > 0; // true once first ceiling-forced stop fires
 
   // firstSwitchDepth — find first deco gas switch depth
   let firstDecoDepth   = null;
@@ -10265,8 +10286,9 @@ function runDecoSchedule() {
     // not the current stop. Baker/ApexDeco: "can I ascend TO the next stop?"
     // At last stop: target=0 → uses gfH (surface GF). This is correct.
     // Use nextStop exactly — ceiling must be strictly below the next stop.
-    const ceilTarget = (nextStop < lastStop) ? 0 : nextStop;
-    const gfForClear = gfAt((nextStop < lastStop) ? 0 : nextStop);
+    const phaseNextStop = (_zhlAscentFloor > 0) ? Math.max(_zhlAscentFloor, nextStop) : nextStop;
+    const ceilTarget = (phaseNextStop < lastStop) ? 0 : phaseNextStop;
+    const gfForClear = gfAt((phaseNextStop < lastStop) ? 0 : phaseNextStop);
 
     const isFirstDecoStop = (firstDecoDepth === null);
     // Step resolution: first deco stop uses fine (10-sec) resolution, matching
@@ -10413,17 +10435,27 @@ function runDecoSchedule() {
       steps.push({ type: stopType, depth: cur, dur: lastStopDisplay, gas: gasLabel, pO2: ppO2Check(cur, stopFN2, stopFHe, _ccrPpo2Opts(cur, onLoop, stopFO2, 'deco')), fN2: stopFN2, fHe: stopFHe, _tissues: tissues.map(t => ({ pN2: t.pN2, pHe: t.pHe })) });
     }
     // No stop needed and not lastStop — continue ascending
+    if (_zhlAscentFloor > 0 && cur <= _zhlAscentFloor && stopDepth <= _zhlAscentFloor) break;
   }
 
-  // ── Final ascent from lastStop (or last computed depth) to surface ──────
-  // BUGFIX (v2.10.13): this leg was previously missing entirely — the model
-  // treated surfacing as instantaneous (zero time, zero off-gassing) once the
-  // ascent loop finished. MultiDeco/DiveKit both use a dedicated, slower
-  // surface ascent rate (typically 3 m/min) for this final leg — confirmed via
-  // divekit.app's published inputs.json which lists surfaceAscentMPerMin as a
-  // dedicated separate field. Adding this leg makes LSP's RT/TTS include the
-  // same final-ascent time the reference tools already count.
-  if (cur > 0) {
+  // ── Final ascent from lastStop (or last computed depth) to surface or continuation floor ──
+  if (_zhlAscentFloor > 0 && cur > _zhlAscentFloor) {
+    const travelRate = decoZoneEntered ? decoRate : rate;
+    const travelDur = (cur - _zhlAscentFloor) / travelRate;
+    const travelGas = zhlGasAt(cur);
+    const travelOnLoop = zhlOnLoopAt(cur, travelGas);
+    const tFO2 = travelOnLoop ? bottomFO2 : (travelGas.fO2 != null ? travelGas.fO2 : Math.max(0, 1 - travelGas.fN2 - (travelGas.fHe || 0)));
+    const tFHe = travelOnLoop ? bottomFHe : (travelGas.fHe || 0);
+    tissues = zhlLoadLinear(tissues, cur, _zhlAscentFloor, travelDur, tFO2, tFHe, travelOnLoop, 'deco');
+    steps.push({
+      type: 'ascent', from: cur, to: _zhlAscentFloor,
+      dur: travelDur, gas: travelOnLoop ? loopMixLabel : travelGas.label,
+      pO2: ppO2Check(cur, travelGas.fN2, travelGas.fHe || 0, _ccrPpo2Opts(cur, travelOnLoop, tFO2, 'deco')),
+      fN2: travelGas.fN2, fHe: travelGas.fHe || 0,
+    });
+    rt += travelDur;
+    cur = _zhlAscentFloor;
+  } else if (_zhlAscentFloor === 0 && cur > 0) {
     const finalAscentDur = cur / surfaceRate;
     const finalGas = zhlGasAt(cur);
     const finalOnLoop = zhlOnLoopAt(cur, finalGas);
@@ -10438,6 +10470,23 @@ function runDecoSchedule() {
     rt += finalAscentDur;
     cur = 0;
   }
+
+  // ── Shallow continuation hold before next ascent phase ───────────────────
+  if (_zhlPhaseIdx < _zhlContLevels.length) {
+    const cont = _zhlContLevels[_zhlPhaseIdx];
+    cur = cont.depth;
+    const cO2 = cont.o2 / 100;
+    const cHe = (cont.he || 0) / 100;
+    tissues = zhlLoadConst(tissues, cur, cont.time, cO2, cHe, _zhlOnLoop, 'bottom');
+    rt += cont.time;
+    steps.push({
+      type: 'bottom', depth: cur, dur: cont.time,
+      gas: getGasLabel(cO2, cHe), pO2: ppO2Check(cur, Math.max(0, 1 - cO2 - cHe), cHe, _ccrPpo2Opts(cur, _zhlOnLoop, cO2, 'bottom')),
+      fN2: Math.max(0, 1 - cO2 - cHe), fHe: cHe,
+    });
+  }
+
+  } // end multi-level ascent phase
 
   // Collapse consecutive ascent steps with the same gas into single rows
   const collapsed = [];
@@ -11268,6 +11317,55 @@ function validateGasFractionsPct(o2, he, field) {
 }
 if (typeof window !== 'undefined') window.validateGasFractionsPct = validateGasFractionsPct;
 
+function validateEngineInputs(levels, decoGases) {
+  const errors = [];
+  if (!Array.isArray(levels) || levels.length === 0) {
+    errors.push({ code: 'INVALID_PROFILE', field: 'levels', message: 'At least one dive level is required.' });
+  } else {
+    levels.forEach((level, index) => {
+      if (level == null) {
+        errors.push({ code: 'INVALID_PROFILE', field: `levels[${index}]`, message: 'Level entry is required.' });
+        return;
+      }
+      if (!Number.isFinite(level.depth) || level.depth <= 0) {
+        errors.push({ code: 'INVALID_DEPTH', field: `levels[${index}].depth`, message: 'Depth must be a positive number.' });
+      }
+      if (!Number.isFinite(level.time) || level.time <= 0) {
+        errors.push({ code: 'INVALID_TIME', field: `levels[${index}].time`, message: 'Bottom time must be a positive number.' });
+      }
+      const gasCheck = validateGasFractionsPct(level.o2, level.he, `levels[${index}]`);
+      if (!gasCheck.ok) errors.push(gasCheck);
+    });
+  }
+  if (Array.isArray(decoGases)) {
+    decoGases.forEach((g, index) => {
+      if (g == null) {
+        errors.push({ code: 'INVALID_GAS_FRACTIONS', field: `decoGases[${index}]`, message: 'Deco gas entry is required.' });
+        return;
+      }
+      if (g.o2 == null && g.he == null) return;
+      const gasCheck = validateGasFractionsPct(g.o2, g.he, `decoGases[${index}]`);
+      if (!gasCheck.ok) errors.push(gasCheck);
+    });
+  }
+  return { ok: errors.length === 0, errors };
+}
+if (typeof window !== 'undefined') window.validateEngineInputs = validateEngineInputs;
+
+function engineValidationError(validation) {
+  const first = validation.errors[0];
+  return {
+    error: first.message || 'Invalid input.',
+    code: first.code,
+    field: first.field,
+    errors: validation.errors,
+    stops: [],
+    plan: [],
+    totalRuntime: 0,
+    totalTime: 0,
+  };
+}
+
 function collectDecoGasesPctFromDom() {
   const out = [];
   if (typeof getAllDecoGasIds !== 'function') return out;
@@ -11341,6 +11439,28 @@ function validateCcrCalculationInputs(levels, settings, decoGases) {
 }
 if (typeof window !== 'undefined') window.validateCcrCalculationInputs = validateCcrCalculationInputs;
 
+/** Deepest level + monotonic-shallower continuation (matches VPMEngine profile split). */
+function splitZhlProfileLevels(levels) {
+  if (!levels || levels.length <= 1) return { primary: levels || [], continuation: [] };
+  let deepest = 0;
+  for (let i = 1; i < levels.length; i++) {
+    if (levels[i].depth > levels[deepest].depth) deepest = i;
+  }
+  let continuation = [];
+  let primary = levels;
+  if (deepest < levels.length - 1) {
+    let monotonic = true;
+    for (let i = deepest + 1; i < levels.length; i++) {
+      if (levels[i].depth > levels[i - 1].depth) { monotonic = false; break; }
+    }
+    if (monotonic) {
+      continuation = levels.slice(deepest + 1);
+      primary = levels.slice(0, deepest + 1);
+    }
+  }
+  return { primary, continuation };
+}
+
 // ═══════════════════════════════════════════════
 // ZHL ENGINE — headless Bühlmann interface for test harnesses
 // Mirrors VPMEngine.calculate(levels, gases, settings, 'ZHLC_GF')
@@ -11370,9 +11490,15 @@ const ZHLEngine = (() => {
       };
     }
     const isMetric = s.metric !== false;
+    const profileSplit = splitZhlProfileLevels(levels);
+    const deepestLevel = profileSplit.primary[profileSplit.primary.length - 1] || levels[0];
 
     // ── Temporarily wire DOM to match settings ──────────────────────────────
-    const level = levels[0];  // primary bottom level
+    const level = deepestLevel;
+    const prevDecoDepth = document.getElementById('decoDepth')?.value;
+    const prevDecoBT = document.getElementById('decoBT')?.value;
+    const prevContLevels = window._zhlContinuationLevels;
+    window._zhlContinuationLevels = profileSplit.continuation.length ? profileSplit.continuation : null;
     setEl('decoDepth', isMetric ? level.depth : Math.round(level.depth * 3.28084));
     setEl('decoBT',    level.time);
     setEl('ascentRate',      s.ascentRate      || 10);
@@ -11539,13 +11665,13 @@ const ZHLEngine = (() => {
       }
     });
 
-    // Repetitive carry: settings._preTissues takes precedence; otherwise keep hook if already set
+    // Repetitive carry: settings._preTissues only — never leak stale state between calls
     if (s._preTissues && s._preTissues.length) {
       window._zhlRepState = {
         tissues: s._preTissues,
         surfaceIntervalMin: s._surfaceInterval || 0,
       };
-    } else if (!window._zhlRepState) {
+    } else {
       window._zhlRepState = null;
     }
 
@@ -11562,21 +11688,27 @@ const ZHLEngine = (() => {
     }
 
     // ── Run the Bühlmann engine (headless — skip DOM rendering) ─────────────
-    const _headlessEntry = !!window._zhlHeadless;
+    const _headlessEntry = window._zhlHeadlessDepth || 0;
+    window._zhlHeadlessDepth = _headlessEntry + 1;
     window._zhlHeadless = true;
     window._lastPlan = null;
     try {
       runDecoSchedule();
     } catch(e) {
-      window._zhlHeadless = _headlessEntry;
-      window._zhlRepState = null;   // clear on error path too
-      window._priorDiveCarry = _prevPriorDiveCarry; // restore on error path too
+      window._zhlHeadlessDepth = _headlessEntry;
+      window._zhlHeadless = _headlessEntry > 0;
+      window._zhlRepState = null;
+      window._zhlContinuationLevels = prevContLevels;
+      window._priorDiveCarry = _prevPriorDiveCarry;
+      if (prevDecoDepth != null) setEl('decoDepth', prevDecoDepth);
+      if (prevDecoBT != null) setEl('decoBT', prevDecoBT);
       mGF.low = prevGF.low; mGF.high = prevGF.high;
       if (units !== prevUnits) setUnits(prevUnits);
       if (algoEl) algoEl.value = prevAlgo;
       return { error: e.message, stops: [], plan: [], totalRuntime: 0 };
     }
-    window._zhlHeadless = _headlessEntry;
+    window._zhlHeadlessDepth = _headlessEntry;
+    window._zhlHeadless = _headlessEntry > 0;
 
     const lp = window._lastPlan;
 
@@ -11612,7 +11744,10 @@ const ZHLEngine = (() => {
 
     // Clear repetitive state — must not leak into subsequent calls
     window._zhlRepState = null;
+    window._zhlContinuationLevels = prevContLevels;
     window._priorDiveCarry = _prevPriorDiveCarry; // restore prior-dive carry to pre-call state
+    if (prevDecoDepth != null) setEl('decoDepth', prevDecoDepth);
+    if (prevDecoBT != null) setEl('decoBT', prevDecoBT);
 
     if (!lp) return { error: 'No plan generated', stops: [], plan: [], totalRuntime: 0 };
 
