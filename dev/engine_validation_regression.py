@@ -99,6 +99,16 @@ def run_checks(page, port: int) -> None:
         ccr
       );
       out.zhlSingle = zhl([{ depth: 60, time: 20, o2: 18, he: 45 }], [], ccr);
+      out.zhlRedescend = zhl(
+        [{ depth: 60, time: 20, o2: 18, he: 45 }, { depth: 42, time: 8, o2: 18, he: 45 }, { depth: 50, time: 5, o2: 18, he: 45 }],
+        [],
+        ccr
+      );
+      out.zhlDeepNotFirst = zhl(
+        [{ depth: 30, time: 10, o2: 21, he: 0 }, { depth: 60, time: 20, o2: 18, he: 45 }],
+        [],
+        ccr
+      );
       out.o2OnePct = zhl(lv(40, 25, 1, 0), [], ccr);
       out.vpmNoSettings = vpm(lv(40, 25, 21, 0), null, null);
       out.vpmNoGases = vpm(lv(40, 25, 21, 0), undefined, {});
@@ -190,6 +200,16 @@ def run_checks(page, port: int) -> None:
             )
     else:
         fail(f"ZHL multi-level calc failed: ml={zhl_ml!r} single={zhl_single!r}")
+
+    for label, key in [
+        ("ZHL re-descend profile", "zhlRedescend"),
+        ("ZHL deepest not first", "zhlDeepNotFirst"),
+    ]:
+        r = results[key]
+        if r.get("code") == "INVALID_PROFILE" and r.get("error"):
+            ok(f"{label} → INVALID_PROFILE")
+        else:
+            fail(f"{label}: expected INVALID_PROFILE, got {r!r}")
 
     if results["vpmNoSettings"].get("totalRuntime", 0) > 0 and not results["vpmNoSettings"].get("error"):
         ok("VPM null settings uses defaults (no throw)")

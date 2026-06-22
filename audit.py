@@ -3182,6 +3182,11 @@ if "splitZhlProfileLevels" in js and "_zhlContinuationLevels" in js and "phaseNe
 else:
     fail("ZHL headless multi-level continuation missing")
 
+if "validateZhlHeadlessProfile" in js and "cannot re-descend after a shallower level" in js:
+    ok("validateZhlHeadlessProfile rejects unsupported ZHL profile shapes")
+else:
+    fail("validateZhlHeadlessProfile missing (unsupported multi-level ZHL profiles)")
+
 if "validateEngineInputs" in js and "engineValidationError" in js:
     ok("validateEngineInputs + engineValidationError exported for VPM API hardening")
 else:

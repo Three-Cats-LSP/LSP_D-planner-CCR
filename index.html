@@ -11461,6 +11461,35 @@ function splitZhlProfileLevels(levels) {
   return { primary, continuation };
 }
 
+/** ZHL headless API: deepest segment first, then optional monotonic-shallower holds only. */
+function validateZhlHeadlessProfile(levels) {
+  if (!levels || levels.length <= 1) return { ok: true };
+  let deepestIdx = 0;
+  for (let i = 1; i < levels.length; i++) {
+    if (levels[i].depth > levels[deepestIdx].depth) deepestIdx = i;
+  }
+  if (deepestIdx !== 0) {
+    return {
+      ok: false,
+      code: 'INVALID_PROFILE',
+      field: 'levels',
+      message: 'ZHL profiles must start at the deepest level; add deeper segments before shallower ones.',
+    };
+  }
+  for (let i = 1; i < levels.length; i++) {
+    if (levels[i].depth > levels[i - 1].depth) {
+      return {
+        ok: false,
+        code: 'INVALID_PROFILE',
+        field: `levels[${i}].depth`,
+        message: 'ZHL profiles cannot re-descend after a shallower level.',
+      };
+    }
+  }
+  return { ok: true };
+}
+if (typeof window !== 'undefined') window.validateZhlHeadlessProfile = validateZhlHeadlessProfile;
+
 // ═══════════════════════════════════════════════
 // ZHL ENGINE — headless Bühlmann interface for test harnesses
 // Mirrors VPMEngine.calculate(levels, gases, settings, 'ZHLC_GF')
@@ -11490,11 +11519,14 @@ const ZHLEngine = (() => {
       };
     }
     const isMetric = s.metric !== false;
+    const profileVal = validateZhlHeadlessProfile(levels);
+    if (!profileVal.ok) {
+      return engineValidationError({ ok: false, errors: [profileVal] });
+    }
     const profileSplit = splitZhlProfileLevels(levels);
-    const deepestLevel = profileSplit.primary[profileSplit.primary.length - 1] || levels[0];
+    const level = levels[0];
 
     // ── Temporarily wire DOM to match settings ──────────────────────────────
-    const level = deepestLevel;
     const prevDecoDepth = document.getElementById('decoDepth')?.value;
     const prevDecoBT = document.getElementById('decoBT')?.value;
     const prevContLevels = window._zhlContinuationLevels;
