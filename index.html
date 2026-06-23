@@ -8689,18 +8689,7 @@ const VPMEngine = (() => {
         const s = settings;
         if (isRebreatherCircuit(s.circuit || 'OC')) {
             const ccrVal = validateCcrCalculationInputs(levels, s, decoGases);
-            if (!ccrVal.ok) {
-                const e = ccrVal.errors[0];
-                return {
-                    error: e.message,
-                    code: e.code,
-                    field: e.field || null,
-                    stops: [],
-                    plan: [],
-                    totalTime: 0,
-                    totalRuntime: 0,
-                };
-            }
+            if (!ccrVal.ok) return engineValidationError(ccrVal);
         }
         const safeDecoGases = Array.isArray(decoGases) ? decoGases.filter(g => g != null) : [];
         function ctxUseOCForPpo2(calcSettings) {
@@ -11503,21 +11492,14 @@ const ZHLEngine = (() => {
 
   function calculate(levels, decoGases, settings) {
     if (!levels || levels.length === 0) {
-      return { error: 'No levels', code: 'INVALID_PROFILE', stops: [], plan: [], totalRuntime: 0 };
+      return engineValidationError({
+        ok: false,
+        errors: [{ code: 'INVALID_PROFILE', field: 'levels', message: 'No levels' }],
+      });
     }
     const s = settings || {};
     const ccrVal = validateCcrCalculationInputs(levels, s, decoGases);
-    if (!ccrVal.ok) {
-      const e = ccrVal.errors[0];
-      return {
-        error: e.message,
-        code: e.code,
-        field: e.field || null,
-        stops: [],
-        plan: [],
-        totalRuntime: 0,
-      };
-    }
+    if (!ccrVal.ok) return engineValidationError(ccrVal);
     const isMetric = s.metric !== false;
     const profileVal = validateZhlHeadlessProfile(levels);
     if (!profileVal.ok) {
