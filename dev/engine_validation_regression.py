@@ -114,6 +114,16 @@ def run_checks(page, port: int) -> None:
       out.vpmNoGases = vpm(lv(40, 25, 21, 0), undefined, {});
       out.vpmNullLevel = vpm([null], [], {});
       out.vpmNullGas = vpm(lv(40, 25, 21, 0), [null], {});
+      out.vpmOmittedHe = vpm(lv(40, 25, 21, 0), [{ o2: 50 }], ccr);
+      out.vpmOmittedHeFinite = (() => {
+        const r = out.vpmOmittedHe;
+        if (r.error || !(r.totalRuntime > 0)) return false;
+        return !(r.plan || []).some(s => {
+          const t = s.time ?? s.runtime;
+          const d = s.depth ?? s.endDepth ?? s.startDepth;
+          return !Number.isFinite(t) || !Number.isFinite(d) || (s.he != null && !Number.isFinite(s.he));
+        });
+      })();
 
       const dom = document.getElementById('decoGas');
       const prevMix = dom ? dom.value : null;
@@ -230,6 +240,11 @@ def run_checks(page, port: int) -> None:
             ok(f"{label} → {code}")
         else:
             fail(f"{label}: expected {code}, got {got!r} ({results[key]})")
+
+    if results.get("vpmOmittedHeFinite"):
+        ok("VPM deco gas with omitted He produces finite schedule")
+    else:
+        fail(f"VPM omitted He deco gas failed: {results.get('vpmOmittedHe')}")
 
     o2one = results["o2OnePct"]
     if not o2one.get("code") and o2one.get("totalRuntime", 0) > 0:

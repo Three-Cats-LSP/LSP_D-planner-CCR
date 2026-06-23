@@ -8708,13 +8708,16 @@ const VPMEngine = (() => {
         const firstStopDoubleStep = settings.firstStopDoubleStep || false;
         const state = createVPMState(settings);
         setCriticalRadiiForConservatism(state, conservatism);
-        const normalizedDecoGases = safeDecoGases.map(g => ({
-            o2: g.o2 / 100,
-            he: g.he / 100,
-            label: `${g.o2}/${g.he}`,
+        const normalizedDecoGases = safeDecoGases.map(g => {
+            const f = gasFractionsFromPct(g.o2, g.he);
+            return {
+            o2: f.o2Frac,
+            he: f.heFrac,
+            label: `${f.o2Pct}/${f.hePct}`,
             depthOverrideOn: g.depthOverrideOn === true || g.depthOverrideOn === 1 || g.depthOverrideOn === '1',
             depthOverride: g.depthOverride != null && g.depthOverride !== '' ? Number(g.depthOverride) : null
-        }));
+        };
+        });
         let deepestLevelIndex = 0;
         for (let i = 1; i < levels.length; i++) {
             if (levels[i].depth > levels[deepestLevelIndex].depth) {
@@ -11303,6 +11306,13 @@ function validateGasFractionsPct(o2, he, field) {
     };
   }
   return { ok: true, o2: o, he: h };
+}
+
+/** Percent (0–100) → fraction (0–1); missing He matches validateGasFractionsPct (0). */
+function gasFractionsFromPct(o2, he) {
+  const o = Number(o2);
+  const h = (he == null || he === '') ? 0 : Number(he);
+  return { o2Frac: o / 100, heFrac: h / 100, o2Pct: o, hePct: h };
 }
 if (typeof window !== 'undefined') window.validateGasFractionsPct = validateGasFractionsPct;
 
