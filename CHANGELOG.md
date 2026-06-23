@@ -4,6 +4,14 @@ All notable changes to LSP D-Planner are documented here.
 
 ---
 
+## v2.30.31-final — 2026-06-24  ★ Final CCR release (archived)
+
+Development has moved to **[LSP D-Planner+](https://github.com/Three-Cats-LSP/LSP_D-planner-plus)** ([live](https://threecats-lsp.com/d-planner-plus/)). This repository is frozen; no further updates will be made here.
+
+Last feature release: **v2.30.31** (Issue #1 deep-audit fixes, pSCR safety, 405 audit checks).
+
+---
+
 ## v2.30.31 — 2026-06-22  ★ Issue #1 Deep Audit Fix
 
 Closes **[GitHub Issue #1](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/1)** — nine production defects and five test/CI gaps found in the post–v2.30.30 external deep audit. **405/405 `audit.py` checks passing.** Release gates run static audit, browser regression suites, and pSCR E2E validation on every push.

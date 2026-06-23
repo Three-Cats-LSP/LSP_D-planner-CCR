@@ -1,5 +1,7 @@
 # LSP D-Planner + CCR
 
+> **Archived — development continues in [LSP D-Planner+](https://github.com/Three-Cats-LSP/LSP_D-planner-plus)** ([live app](https://threecats-lsp.com/d-planner-plus/)). This CCR edition is frozen at **v2.30.31-final**.
+
 **Rebreather decompression planner** — CCR, pSCR, bailout and open-circuit planning on Bühlmann ZHL-16C + GF and VPM-B / VPM-B/GFS.
 
 Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**. A separate product from [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner) (open-circuit line, v2.20.x), maintained in its own repository to keep the OC release clean.
@@ -8,7 +10,7 @@ Part of the [Three Cats LSP](https://threecats-lsp.com) **Diver's Toolkit**. A s
 📦 **GitHub Pages mirror:** https://three-cats-lsp.github.io/LSP_D-planner-CCR/  
 📲 **Android APK:** https://threecats-lsp.com/d-planner-ccr/download.html  
 
-**Current version: 2.30.31** — [Issue #1](https://github.com/Three-Cats-LSP/LSP_D-planner-CCR/issues/1) deep-audit fix milestone on top of the v2.30.30 safety sign-off. **415/415** `audit.py` checks passing. See [RELEASE_NOTES_v2.30.31.md](RELEASE_NOTES_v2.30.31.md) and [SAFETY_CERTIFICATION_v2.30.30.md](SAFETY_CERTIFICATION_v2.30.30.md).
+**Current version: 2.30.31 (final)** — last feature release before unified [LSP D-Planner+](https://github.com/Three-Cats-LSP/LSP_D-planner-plus).
 
 ---
 
