@@ -1299,6 +1299,10 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 <script src="capacitor-bridge.js"></script>
 </head>
 <body>
+<div id="archiveBanner" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a0e04;border-bottom:1px solid #ff8c42;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:system-ui,sans-serif;font-size:13px;color:#ffe8d6;box-sizing:border-box;">
+<span>This edition is <strong>archived</strong>. Use <a href="https://threecats-lsp.com/d-planner-plus/" rel="noopener noreferrer" style="color:#ff8c42">LSP D-Planner+</a> for ongoing updates (OC + CCR, new engine).</span>
+<button onclick="document.getElementById('archiveBanner').remove()" style="background:none;border:1px solid #ff8c42;color:#ff8c42;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:12px;flex-shrink:0;">Dismiss</button>
+</div>
 <!-- Bubbles (PADI mode) -->
 <div class="bubbles" id="bubbles"></div>
 <div class="app">
