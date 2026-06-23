@@ -2737,6 +2737,11 @@ if re.search(r"!window\._zhlHeadless && typeof validateCcrGasConfiguration", js)
 else:
     fail("runDecoSchedule may alert() during headless test runs (BUG-74)")
 
+if re.search(r"!window\._zhlHeadless && isRebreatherCircuit\(_uiCcr\.circuit\)", js):
+    ok("runDecoSchedule DOM gas validation uses window._zhlHeadless (not bare _zhlHeadless)")
+else:
+    fail("runDecoSchedule references bare _zhlHeadless (ReferenceError in UI)")
+
 massive_path = os.path.join(os.path.dirname(__file__), "tests-massive.html")
 if os.path.isfile(massive_path):
     with open(massive_path, encoding="utf-8") as f:

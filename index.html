@@ -9893,7 +9893,7 @@ function runDecoSchedule() {
   const depthM = units === 'metric' ? rawD : rawD / 3.28084;
   const bt     = parseInt(document.getElementById('decoBT').value) || 30;
   const _uiCcr = getCCRSettingsFromDOM();
-  if (!_zhlHeadless && isRebreatherCircuit(_uiCcr.circuit)) {
+  if (!window._zhlHeadless && isRebreatherCircuit(_uiCcr.circuit)) {
     const domGasVal = validateDomDecoGases();
     if (!domGasVal.ok) {
       updateCcrGasValidation();
