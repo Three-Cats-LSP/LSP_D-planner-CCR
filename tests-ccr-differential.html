@@ -84,17 +84,49 @@ function waitForApp(iframe, timeoutMs) {
 
     iframe.src = 'index.html?massiveSuite=1&ts=' + Date.now();
 
+    function enginesReady(w) {
+
+      return !!(w && w.ZHLEngine && w.ZHLEngine.calculate && w.validateEngineInputs);
+
+    }
+
+    function armHeadless(w) {
+
+      w._zhlHeadless = true;
+
+      w._zhlHeadlessDepth = (w._zhlHeadlessDepth || 0) + 1;
+
+    }
+
     const check = () => {
 
       try {
 
         const w = iframe.contentWindow;
 
-        if (w && w.ZHLEngine && w.ZHLEngine.calculate) {
+        if (enginesReady(w)) {
 
-          w._zhlHeadless = true;
+          armHeadless(w);
 
-          return setTimeout(() => resolve(w), 1200);
+          return setTimeout(() => {
+
+            try {
+
+              const w2 = iframe.contentWindow;
+
+              if (enginesReady(w2)) {
+
+                armHeadless(w2);
+
+                return resolve(w2);
+
+              }
+
+            } catch (_) {}
+
+            setTimeout(check, 250);
+
+          }, 1200);
 
         }
 
