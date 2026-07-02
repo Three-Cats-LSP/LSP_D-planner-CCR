@@ -1,6 +1,6 @@
 # CCR Engine Differential Report
 
-**Generated:** 2026-06-22 12:15 UTC  
+**Generated:** 2026-06-23 07:02 UTC  
 **LSP version:** 2.30.31  
 **Scenarios:** 21  
 **Failures:** 0  
@@ -51,7 +51,7 @@
 
 ## CCR-ML — Tx18/45 multilevel
 
-- **LSP:** RT 64 min · first stop 27 m · TTS 44.3
+- **LSP:** RT 80 min · first stop 24 m · TTS 59.8
 - **multideco:** `INCONCLUSIVE` no golden capture
 - **divekit:** `INCONCLUSIVE` no golden capture
 - **abysner:** `INCONCLUSIVE` no golden capture
