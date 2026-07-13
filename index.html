@@ -18,7 +18,7 @@
 <!-- Favicon (inline SVG) -->
 <link href="icon-192.png" rel="icon" type="image/png"/>
 <link href="icon-192.png" rel="apple-touch-icon"/>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=JetBrains+Mono:wght@300;400;500;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="vendor/fonts/fonts.css" rel="stylesheet"/>
 <style>
 /* ═══════════════════════════════════════════
  SHARED DESIGN TOKENS
@@ -1294,7 +1294,7 @@ body.light-theme .switch-legend-icon { color: #FFBF00 !important; }
 .u20{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
 .u21{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
 <!-- Capacitor filesystem save bridge (Android app only — no-op on web/PWA) -->
 <script src="capacitor-bridge.js"></script>
 </head>
@@ -18855,7 +18855,7 @@ window.addEventListener('load', function() {
   })();
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+    const registerServiceWorker = () => {
       navigator.serviceWorker.register(`sw.js?v=${APP_VERSION}`, { updateViaCache: 'none' })
         .then(r => {
           console.log('[SW] registered, scope:', r.scope);
@@ -18878,7 +18878,12 @@ window.addEventListener('load', function() {
           });
         })
         .catch(e => console.warn('[SW] registration failed:', e));
-    });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', registerServiceWorker, { once: true });
+    } else {
+      registerServiceWorker();
+    }
   }
 
   // Install prompt banner (Android Chrome)

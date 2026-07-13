@@ -30,12 +30,33 @@ function getAppBasePath() {
 
 const APP_BASE = getAppBasePath();
 const OFFLINE_INDEX = APP_BASE + 'index.html';
+const PRECACHE_ASSETS = [
+  OFFLINE_INDEX,
+  APP_BASE + 'capacitor-bridge.js',
+  APP_BASE + 'manifest.json',
+  APP_BASE + 'icon-192.png',
+  APP_BASE + 'icon-512.png',
+  APP_BASE + 'vendor/jspdf.umd.min.js',
+  APP_BASE + 'vendor/fonts/fonts.css',
+  APP_BASE + 'vendor/fonts/DejaVuSans.ttf',
+  APP_BASE + 'vendor/fonts/DejaVuSans-Bold.ttf',
+  APP_BASE + 'vendor/fonts/JTUSjIg69CK48gW7PXoo9Wdhyzbi.woff2',
+  APP_BASE + 'vendor/fonts/JTUSjIg69CK48gW7PXoo9Wlhyw.woff2',
+  APP_BASE + 'vendor/fonts/QGYvz_MVcBeNP4NJtEtq.woff2',
+  APP_BASE + 'vendor/fonts/QGYvz_MVcBeNP4NJuktqQ4E.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD0OwG_TA.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD1OwG_TA.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD2OwG_TA.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD4OwG_TA.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD7OwE.woff2',
+  APP_BASE + 'vendor/fonts/tDbV2o-flEEny0FZhsfKu5WU4xD_OwG_TA.woff2',
+];
 
 // Install — skip waiting immediately so new SW takes over fast
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(cache => cache.addAll([OFFLINE_INDEX]))
+      .then(cache => Promise.allSettled(PRECACHE_ASSETS.map(url => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -111,7 +132,12 @@ self.addEventListener('fetch', event => {
               caches.open(CACHE_VERSION).then(cache => cache.put(cacheKey, clone));
             }
             return response;
-          });
+          })
+          .catch(() => new Response('Offline - asset unavailable', {
+            status: 503,
+            statusText: 'Offline',
+            headers: { 'Content-Type': 'text/plain' },
+          }));
       })
   );
 });
