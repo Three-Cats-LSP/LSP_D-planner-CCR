@@ -125,3 +125,17 @@ jobs:
           git add "Android Apk/LSP_D-planner-CCR.apk"
           git commit -m "Update Android APK [skip ci]"
           git push
+
+      - name: Notify site APK sync
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "SYNC_TOKEN not set; skipping site APK sync dispatch"
+            exit 0
+          fi
+          curl -X POST \
+            -H "Authorization: token ${SYNC_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/Three-Cats-LSP/threecats-lsp.com/dispatches \
+            -d '{"event_type":"sync-apk-d-planner-ccr"}'
